@@ -73,7 +73,7 @@
 #define MM_PER_SEGMENT  (10)
 
 // Serial communication bitrate
-#define BAUD            (115200)
+#define BAUD            (57600)
 // Maximum length of serial input message.
 #define MAX_BUF         (64)
 
