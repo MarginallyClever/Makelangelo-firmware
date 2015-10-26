@@ -145,6 +145,8 @@
 
 #include "Vector3.h"
 
+// V1 Motor Shield https://learn.adafruit.com/adafruit-motor-shield/library-install
+#include <AFMotor.h>
 
 //------------------------------------------------------------------------------
 // VARIABLES
