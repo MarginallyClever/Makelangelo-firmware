@@ -27,7 +27,7 @@
 #define PEN_DOWN_ANGLE       (10)  // Some steppers don't like 0 degrees
 
 // for serial comms
-#define BAUD                 (115200)  // How fast is the Arduino talking?
+#define BAUD                 (57600)  // How fast is the Arduino talking?
 #define MAX_BUF              (64)  // What is the longest message Arduino can store?
 
 
