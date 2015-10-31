@@ -124,6 +124,8 @@
 #include <SPI.h>  // pkm fix for Arduino 1.5
 // Adafruit motor driver library
 #include <AFMotorDrawbot.h>
+// V1 Motor Shield https://learn.adafruit.com/adafruit-motor-shield/library-install
+//#include <AFMotor.h>
 #endif
 
 #if MOTHERBOARD == 2
@@ -144,9 +146,6 @@
 #include <Arduino.h>  // for type definitions
 
 #include "Vector3.h"
-
-// V1 Motor Shield https://learn.adafruit.com/adafruit-motor-shield/library-install
-#include <AFMotor.h>
 
 //------------------------------------------------------------------------------
 // VARIABLES
