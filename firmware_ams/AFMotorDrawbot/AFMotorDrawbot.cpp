@@ -252,7 +252,5 @@ void AF_Stepper::onestep(uint8_t dir) {
 
   // change the energized state now
   MC.latch_tx();
-
-  return currentstep;
 }
 
