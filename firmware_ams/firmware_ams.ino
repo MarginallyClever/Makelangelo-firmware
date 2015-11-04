@@ -223,7 +223,7 @@ long line_number;
 
 //------------------------------------------------------------------------------
 // calculate max velocity, threadperstep.
-static void adjustSpoolDiameter(float diameter1) {
+void adjustSpoolDiameter(float diameter1) {
   SPOOL_DIAMETER = diameter1;
   float SPOOL_CIRC = SPOOL_DIAMETER*PI;  // circumference
   THREAD_PER_STEP = SPOOL_CIRC/STEPS_PER_TURN;  // thread per step
@@ -237,7 +237,7 @@ static void adjustSpoolDiameter(float diameter1) {
 
 //------------------------------------------------------------------------------
 // returns angle of dy/dx as a value from 0...2PI
-static float atan3(float dy,float dx) {
+float atan3(float dy,float dx) {
   float a=atan2(dy,dx);
   if(a<0) a=(PI*2.0)+a;
   return a;
@@ -245,7 +245,7 @@ static float atan3(float dy,float dx) {
 
 
 //------------------------------------------------------------------------------
-static char readSwitches() {
+char readSwitches() {
 #ifdef USE_LIMIT_SWITCH
   // get the current switch state
   return ( (analogRead(L_PIN) < SWITCH_HALF) | (analogRead(R_PIN) < SWITCH_HALF) );
@@ -257,7 +257,7 @@ static char readSwitches() {
 
 //------------------------------------------------------------------------------
 // feed rate is given in units/min and converted to cm/s
-static void setFeedRate(float v) {
+void setFeedRate(float v) {
   if(feed_rate==v) return;
   feed_rate=v;
 
@@ -282,7 +282,7 @@ static void setFeedRate(float v) {
 
 
 //------------------------------------------------------------------------------
-static void printFeedRate() {
+void printFeedRate() {
   Serial.print(F("F"));
   Serial.println(feed_rate);
 }
@@ -290,7 +290,7 @@ static void printFeedRate() {
 
 //------------------------------------------------------------------------------
 // Change pen state.
-static void setPenAngle(int pen_angle) {
+void setPenAngle(int pen_angle) {
   if(posz!=pen_angle) {
     posz=pen_angle;
 
@@ -305,7 +305,7 @@ static void setPenAngle(int pen_angle) {
 
 //------------------------------------------------------------------------------
 // Inverse Kinematics - turns XY coordinates into lengths L1,L2
-static void IK(float x, float y, long &l1, long &l2) {
+void IK(float x, float y, long &l1, long &l2) {
 #ifdef COREXY
   l1 = floor((x+y) / THREAD_PER_STEP);
   l2 = floor((x-y) / THREAD_PER_STEP);
@@ -330,7 +330,7 @@ static void IK(float x, float y, long &l1, long &l2) {
 // Forward Kinematics - turns L1,L2 lengths into XY coordinates
 // use law of cosines: theta = acos((a*a+b*b-c*c)/(2*a*b));
 // to find angle between M1M2 and M1P where P is the plotter position.
-static void FK(float l1, float l2,float &x,float &y) {
+void FK(float l1, float l2,float &x,float &y) {
 #ifdef COREXY
   l1 *= THREAD_PER_STEP;
   l2 *= THREAD_PER_STEP;
@@ -373,7 +373,7 @@ void pause(long us) {
 
 
 //------------------------------------------------------------------------------
-static void line(float x,float y,float z) {
+void line(float x,float y,float z) {
   long l1,l2;
   IK(x,y,l1,l2);
   long d1 = l1 - laststep1;
@@ -451,7 +451,7 @@ static void line(float x,float y,float z) {
 
 
 //------------------------------------------------------------------------------
-static void line_safe(float x,float y,float z) {
+void line_safe(float x,float y,float z) {
   // split up long lines to make them straighter?
   float dx=x-posx;
   float dy=y-posy;
@@ -484,7 +484,7 @@ static void line_safe(float x,float y,float z) {
 // cx/cy - center of circle
 // x/y - end position
 // dir - ARC_CW or ARC_CCW to control direction of arc
-static void arc(float cx,float cy,float x,float y,float z,float dir) {
+void arc(float cx,float cy,float x,float y,float z,float dir) {
   // get radius
   float dx = posx - cx;
   float dy = posy - cy;
@@ -529,7 +529,7 @@ static void arc(float cx,float cy,float x,float y,float z,float dir) {
 //------------------------------------------------------------------------------
 // instantly move the virtual plotter position
 // does not validate if the move is valid
-static void teleport(float x,float y) {
+void teleport(float x,float y) {
   posx=x;
   posy=y;
 
@@ -542,7 +542,7 @@ static void teleport(float x,float y) {
 
 
 //------------------------------------------------------------------------------
-static void help() {
+void help() {
   Serial.print(F("\n\nHELLO WORLD! I AM DRAWBOT #"));
   Serial.println(robot_uid);
   Serial.println(F("M100 - display this message"));
@@ -555,7 +555,7 @@ static void help() {
 
 //------------------------------------------------------------------------------
 // find the current robot position and
-static void FindHome() {
+void FindHome() {
 #ifdef USE_LIMIT_SWITCH
   Serial.println(F("Homing..."));
 
@@ -610,7 +610,7 @@ static void FindHome() {
 
 
 //------------------------------------------------------------------------------
-static void where() {
+void where() {
   Serial.print(F("X"));
   Serial.print(posx);
   Serial.print(F(" Y"));
@@ -624,7 +624,7 @@ static void where() {
 
 
 //------------------------------------------------------------------------------
-static void printConfig() {
+void printConfig() {
   Serial.print(m1d);              Serial.print(F("="));
   Serial.print(limit_top);        Serial.print(F(","));
   Serial.print(limit_left);       Serial.print(F("\n"));
@@ -657,19 +657,19 @@ float EEPROM_readLong(int ee) {
 
 
 //------------------------------------------------------------------------------
-static void SaveUID() {
+void SaveUID() {
   EEPROM_writeLong(ADDR_UUID,(long)robot_uid);
 }
 
 //------------------------------------------------------------------------------
-static void SaveSpoolDiameter() {
+void SaveSpoolDiameter() {
   EEPROM_writeLong(ADDR_SPOOL_DIA1,SPOOL_DIAMETER*10000);
   EEPROM_writeLong(ADDR_SPOOL_DIA2,SPOOL_DIAMETER*10000);
 }
 
 
 //------------------------------------------------------------------------------
-static void LoadConfig() {
+void LoadConfig() {
   char version_number=EEPROM.read(ADDR_VERSION);
   if(version_number<3 || version_number>EEPROM_VERSION) {
     // If not the current EEPROM_VERSION or the EEPROM_VERSION is sullied (i.e. unknown data)
@@ -727,14 +727,14 @@ void SD_PrintDirectory(File dir, int numTabs) {
 
 
 //------------------------------------------------------------------------------
-static void SD_ListFiles() {
+void SD_ListFiles() {
   File f = SD.open("/");
   SD_PrintDirectory(f,0);
 }
 
 
 //------------------------------------------------------------------------------
-static void SD_ProcessFile(char *filename) {
+void SD_ProcessFile(char *filename) {
   File f=SD.open(filename);
   if(!f) {
     Serial.print(F("File "));
@@ -866,7 +866,7 @@ void processConfig() {
 
 
 //------------------------------------------------------------------------------
-static void processCommand() {
+void processCommand() {
   long cmd;
 
   // is there a line number?
