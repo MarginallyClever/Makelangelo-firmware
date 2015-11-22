@@ -12,8 +12,8 @@
 // CONSTANTS
 //------------------------------------------------------------------------------
 //#define VERBOSE           (1)  // add to get a lot more serial output.
-#define HAS_SD  // comment this out if there is no SD card
-#define HAS_LCD  // comment this out if there is no SMART LCD controller
+//#define HAS_SD  // comment this out if there is no SD card
+//#define HAS_LCD  // comment this out if there is no SMART LCD controller
 //#define USE_LIMIT_SWITCH  (1)  // Comment out this line to disable findHome and limit switches
 
 // machine style
@@ -81,13 +81,11 @@
 #define encrot2            3
 #define encrot3            1
 
-#define NUM_SERVOS         (1)
-#define SERVO0_PIN         (5)
-#define SERVO1_PIN         (4)
 
 
-#define MOTHERBOARD 1 // RUMBA
+//#define MOTHERBOARD 1 // RUMBA
 //#define MOTHERBOARD 2 // RAMPS
+#define MOTHERBOARD 3 // SANGUINOLOLU
 
 #if MOTHERBOARD == 1
 #define MOTOR_0_DIR_PIN           (16)
@@ -121,9 +119,27 @@
 #define MOTOR_5_ENABLE_PIN        (39)
 #define MOTOR_5_LIMIT_SWITCH_PIN  (32)
 
+#define NUM_SERVOS         (1)
+#define SERVO0_PIN         (5)
+#define SERVO1_PIN         (4)
+
 #endif
 
 #if MOTHERBOARD == 2
+#endif
+
+#if MOTHERBOARD == 3
+#define MOTOR_0_DIR_PIN           (21)
+#define MOTOR_0_STEP_PIN          (15)
+#define MOTOR_0_ENABLE_PIN        (14)
+#define MOTOR_0_LIMIT_SWITCH_PIN  (18)
+
+#define MOTOR_1_DIR_PIN           (23)
+#define MOTOR_1_STEP_PIN          (22)
+#define MOTOR_1_ENABLE_PIN        (14)
+#define MOTOR_1_LIMIT_SWITCH_PIN  (19)
+#define NUM_SERVOS         (0)
+#define SERVO0_PIN         (A0)
 #endif
 
 
