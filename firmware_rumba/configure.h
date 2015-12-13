@@ -140,7 +140,7 @@
 #define MOTOR_1_LIMIT_SWITCH_PIN  (19)
 
 #define NUM_SERVOS         (0)
-#define SERVO0_PIN         (A0)
+#define SERVO0_PIN         (12)
 #endif
 
 
