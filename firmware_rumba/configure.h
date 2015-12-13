@@ -83,9 +83,9 @@
 
 
 
-//#define MOTHERBOARD 1 // RUMBA
+#define MOTHERBOARD 1 // RUMBA
 //#define MOTHERBOARD 2 // RAMPS
-#define MOTHERBOARD 3 // SANGUINOLOLU
+//#define MOTHERBOARD 3 // SANGUINOLOLU
 
 #if MOTHERBOARD == 1
 #define MOTOR_0_DIR_PIN           (16)
