@@ -83,17 +83,17 @@ float max_speed_allowed(float acceleration, float target_velocity, float distanc
  * set up the pins for each motor
  */
 void motor_setup() {
-  motors[0].step_pin=17;
-  motors[0].dir_pin=16;
-  motors[0].enable_pin=48;
-  motors[0].limit_switch_pin=37;
+  motors[0].step_pin=MOTOR_0_STEP_PIN;
+  motors[0].dir_pin=MOTOR_0_DIR_PIN;
+  motors[0].enable_pin=MOTOR_0_ENABLE_PIN;
+  motors[0].limit_switch_pin=MOTOR_0_LIMIT_SWITCH_PIN;
   motors[0].reel_in  = HIGH;
   motors[0].reel_out = LOW;
 
-  motors[1].step_pin=54;
-  motors[1].dir_pin=47;
-  motors[1].enable_pin=55;
-  motors[1].limit_switch_pin=36;
+  motors[1].step_pin=MOTOR_1_STEP_PIN;
+  motors[1].dir_pin=MOTOR_1_DIR_PIN;
+  motors[1].enable_pin=MOTOR_1_ENABLE_PIN;
+  motors[1].limit_switch_pin=MOTOR_1_LIMIT_SWITCH_PIN;
   motors[1].reel_in  = HIGH;
   motors[1].reel_out = LOW;
 
@@ -541,7 +541,9 @@ void motor_line(long n0,long n1,long n2,float new_feed_rate) {
   }
 
   // use LCD to adjust speed while drawing
+#ifdef HAS_LCD
   new_feed_rate *= (float)speed_adjust * 0.01f;
+#endif
 
   int prev_segment = get_prev_segment(last_segment);
   Segment &new_seg = line_segments[last_segment];

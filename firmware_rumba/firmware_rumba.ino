@@ -767,7 +767,9 @@ void Serial_listen() {
 void loop() {
   Serial_listen();
   SD_check();
+#ifdef HAS_LCD
   LCD_update();
+#endif
 
   // The PC will wait forever for the ready signal.
   // if Arduino hasn't received a new instruction in a while, send ready() again

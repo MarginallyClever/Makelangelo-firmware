@@ -81,13 +81,11 @@
 #define encrot2            3
 #define encrot3            1
 
-#define NUM_SERVOS         (1)
-#define SERVO0_PIN         (5)
-#define SERVO1_PIN         (4)
 
 
 #define MOTHERBOARD 1 // RUMBA
 //#define MOTHERBOARD 2 // RAMPS
+//#define MOTHERBOARD 3 // SANGUINOLOLU
 
 #if MOTHERBOARD == 1
 #define MOTOR_0_DIR_PIN           (16)
@@ -121,9 +119,28 @@
 #define MOTOR_5_ENABLE_PIN        (39)
 #define MOTOR_5_LIMIT_SWITCH_PIN  (32)
 
+#define NUM_SERVOS         (1)
+#define SERVO0_PIN         (5)
+#define SERVO1_PIN         (4)
+
 #endif
 
 #if MOTHERBOARD == 2
+#endif
+
+#if MOTHERBOARD == 3
+#define MOTOR_0_DIR_PIN           (21)
+#define MOTOR_0_STEP_PIN          (15)
+#define MOTOR_0_ENABLE_PIN        (14)
+#define MOTOR_0_LIMIT_SWITCH_PIN  (18)
+
+#define MOTOR_1_DIR_PIN           (23)
+#define MOTOR_1_STEP_PIN          (22)
+#define MOTOR_1_ENABLE_PIN        (14)
+#define MOTOR_1_LIMIT_SWITCH_PIN  (19)
+
+#define NUM_SERVOS         (0)
+#define SERVO0_PIN         (12)
 #endif
 
 
