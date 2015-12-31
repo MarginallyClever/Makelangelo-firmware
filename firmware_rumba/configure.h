@@ -23,7 +23,7 @@
 
 
 // servo angles for pen control
-#define PEN_UP_ANGLE         (80)
+#define PEN_UP_ANGLE         (90)
 #define PEN_DOWN_ANGLE       (10)  // Some steppers don't like 0 degrees
 
 // for serial comms
@@ -121,7 +121,6 @@
 
 #define NUM_SERVOS         (1)
 #define SERVO0_PIN         (5)
-#define SERVO1_PIN         (4)
 
 #endif
 
@@ -139,7 +138,7 @@
 #define MOTOR_1_ENABLE_PIN        (14)
 #define MOTOR_1_LIMIT_SWITCH_PIN  (19)
 
-#define NUM_SERVOS         (0)
+#define NUM_SERVOS         (1)
 #define SERVO0_PIN         (12)
 #endif
 

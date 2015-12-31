@@ -1,5 +1,6 @@
 //------------------------------------------------------------------------------
-// Draw robot
+// Makelangelo polargraph robot firmware
+// Supports Adafruit Motor Shield v1 and v2
 // dan@marginallycelver.com 2012 feb 11
 //------------------------------------------------------------------------------
 // Copyright at end of file.  Please see
@@ -1040,7 +1041,7 @@ void processCommand() {
  */
 void ready() {
   sofar=0;  // clear input buffer
-  Serial.print(F("\n> "));  // signal ready to receive input
+  Serial.println(F("> "));  // signal ready to receive input
   last_cmd_time = millis();
 }
 

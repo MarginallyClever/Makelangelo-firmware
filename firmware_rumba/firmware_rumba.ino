@@ -1,5 +1,6 @@
 //------------------------------------------------------------------------------
-// Makelangelo - supports raprapdiscount RUMBA controller
+// Makelangelo polargraph robot firmware
+// Supports raprapdiscount RUMBA controller.
 // dan@marginallycelver.com 2013-12-26
 // RUMBA should be treated like a MEGA 2560 Arduino.
 //------------------------------------------------------------------------------
@@ -702,7 +703,7 @@ void processCommand() {
  */
 void ready() {
   sofar=0;  // clear input buffer
-  Serial.print(F("\n> "));  // signal ready to receive input
+  Serial.println(F("> "));  // signal ready to receive input
   last_cmd_time = millis();
 }
 
