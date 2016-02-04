@@ -121,13 +121,6 @@ void pause(long us) {
 
 
 //------------------------------------------------------------------------------
-// delay in milliseconds
-void pauseMs(long ms) {
-  delay(ms);
-}
-
-
-//------------------------------------------------------------------------------
 void printFeedRate() {
   Serial.print(F("F"));
   Serial.print(feed_rate);
@@ -633,7 +626,7 @@ void processCommand() {
   case 4:  {  // dwell
       wait_for_empty_segment_buffer();
       float delayTime = parsenumber('S',0) + parsenumber('P',0)*1000.0f;
-      pauseMs(delayTime);
+      pause(delayTime);
       break;
     }
   case 28:  FindHome();  break;
