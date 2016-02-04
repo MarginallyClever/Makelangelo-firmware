@@ -367,11 +367,18 @@ void FK(float l1, float l2,float &x,float &y) {
 
 
 //------------------------------------------------------------------------------
+// pause microseconds
 void pause(long us) {
   delay(us/1000);
   delayMicroseconds(us%1000);
 }
 
+
+//------------------------------------------------------------------------------
+// pause milliseconds
+void pauseMs(long ms) {
+  delay(ms);
+}
 
 //------------------------------------------------------------------------------
 void line(float x,float y,float z) {
@@ -942,7 +949,7 @@ void processCommand() {
       break;
     }
   case 4:  // dwell
-    pause(parsenumber('S',0) + parsenumber('P',0)*1000.0f);
+    pauseMs(parsenumber('S',0) + parsenumber('P',0)*1000.0f);
     break;
   case 20: // inches -> cm
     mode_scale=2.54f;  // inches -> cm

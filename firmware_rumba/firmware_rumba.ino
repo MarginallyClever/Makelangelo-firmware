@@ -113,9 +113,17 @@ void setFeedRate(float v1) {
 
 
 //------------------------------------------------------------------------------
-void pause(long ms) {
-  delay(ms / 1000);
-  delayMicroseconds(ms % 1000);
+// delay in microseconds
+void pause(long us) {
+  delay(us / 1000);
+  delayMicroseconds(us % 1000);
+}
+
+
+//------------------------------------------------------------------------------
+// delay in milliseconds
+void pauseMs(long ms) {
+  delay(ms);
 }
 
 
@@ -624,7 +632,8 @@ void processCommand() {
     }
   case 4:  {  // dwell
       wait_for_empty_segment_buffer();
-      pause(parsenumber('S',0) + parsenumber('P',0)*1000.0f);
+      float delayTime = parsenumber('S',0) + parsenumber('P',0)*1000.0f;
+      pauseMs(delayTime);
       break;
     }
   case 28:  FindHome();  break;
