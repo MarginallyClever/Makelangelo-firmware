@@ -115,7 +115,6 @@ void setFeedRate(float v1) {
 
 //------------------------------------------------------------------------------
 void pause(long ms) {
-  wait_for_empty_segment_buffer();
   delay(ms / 1000);
   delayMicroseconds(ms % 1000);
 }
