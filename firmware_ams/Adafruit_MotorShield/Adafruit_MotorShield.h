@@ -36,8 +36,8 @@
 
 #define BRAKE 0
 #define FORWARD 1
-#define BACKWARD -1
-#define RELEASE 2
+#define BACKWARD 2
+#define RELEASE 3
 
 #define SINGLE 1
 #define DOUBLE 2

@@ -20,13 +20,15 @@
 #else
  #include "WProgram.h"
 #endif
+
 #include <Wire.h>
 #include "Adafruit_MotorShield.h"
-#include <Adafruit_PWMServoDriver.h>
-#ifdef __AVR__
- #define WIRE Wire
-#else // Arduino Due
+#include "utility/Adafruit_PWMServoDriver.h"
+
+#if defined(ARDUINO_SAM_DUE)
  #define WIRE Wire1
+#else
+ #define WIRE Wire
 #endif
 
 

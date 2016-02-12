@@ -15,12 +15,12 @@
   BSD license, all text above must be included in any redistribution
  ****************************************************/
 
-#include <Adafruit_PWMServoDriver.h>
+#include "Adafruit_PWMServoDriver.h"
 #include <Wire.h>
-#ifdef __AVR__
- #define WIRE Wire
-#else // Arduino Due
+#if defined(ARDUINO_SAM_DUE)
  #define WIRE Wire1
+#else
+ #define WIRE Wire
 #endif
 
 Adafruit_PWMServoDriver::Adafruit_PWMServoDriver(uint8_t addr) {

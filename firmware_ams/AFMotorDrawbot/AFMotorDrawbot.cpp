@@ -6,7 +6,6 @@
 #if (ARDUINO >= 100)
  #include "Arduino.h"
 #else
- #include <avr/io.h>
  #include "WProgram.h"
 #endif
 #include "AFMotorDrawbot.h"

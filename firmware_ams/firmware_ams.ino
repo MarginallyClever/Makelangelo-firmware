@@ -32,8 +32,8 @@
 #define M2_PIN          (2)
 
 // which limit switch is on which pin?
-#define L_PIN           (A3)
-#define R_PIN           (A5)
+#define L_PIN           (3)
+#define R_PIN           (5)
 
 // Marginally Clever steppers are 400 steps per turn.
 #define STEPPER_STEPS_PER_TURN    (400.0)
@@ -124,14 +124,14 @@
 #if MOTHERBOARD == 1
 #include <SPI.h>  // pkm fix for Arduino 1.5
 // Adafruit motor driver library
-#include <AFMotorDrawbot.h>
+#include "AFMotorDrawbot/AFMotorDrawbot.h"
 // V1 Motor Shield https://learn.adafruit.com/adafruit-motor-shield/library-install
 //#include <AFMotor.h>
 #endif
 
 #if MOTHERBOARD == 2
 #include <Wire.h>
-#include <Adafruit_MotorShield.h>
+#include "Adafruit_MotorShield/Adafruit_MotorShield.h"
 #endif
 
 // Default servo library
