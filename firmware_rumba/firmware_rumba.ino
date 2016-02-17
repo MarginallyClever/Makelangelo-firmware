@@ -132,21 +132,21 @@ void printFeedRate() {
 // Inverse Kinematics - turns XY coordinates into lengths L1,L2
 void IK(float x, float y, long &l1, long &l2) {
 #ifdef COREXY
-  l1 = floor((x+y) / THREAD_PER_STEP);
-  l2 = floor((x-y) / THREAD_PER_STEP);
+  l1 = lround((x+y) / THREAD_PER_STEP);
+  l2 = lround((x-y) / THREAD_PER_STEP);
 #endif
 #ifdef TRADITIONALXY
-  l1 = floor((x) / THREAD_PER_STEP);
-  l2 = floor((y) / THREAD_PER_STEP);
+  l1 = lround((x) / THREAD_PER_STEP);
+  l2 = lround((y) / THREAD_PER_STEP);
 #endif
 #ifdef POLARGRAPH2
   // find length to M1
   float dy = y - limit_top;
   float dx = x - limit_left;
-  l1 = floor( sqrt(dx*dx+dy*dy) / THREAD_PER_STEP );
+  l1 = lround( sqrt(dx*dx+dy*dy) / THREAD_PER_STEP );
   // find length to M2
   dx = limit_right - x;
-  l2 = floor( sqrt(dx*dx+dy*dy) / THREAD_PER_STEP );
+  l2 = lround( sqrt(dx*dx+dy*dy) / THREAD_PER_STEP );
 #endif
 }
 
@@ -253,6 +253,27 @@ void test_kinematics(float x,float y) {
   Serial.print(F("\tdy="));  Serial.println(D-y);
 }
 
+
+void test_kinematics2() {
+  long A,B,i;
+  float C,D,x=0,y=0;
+
+  for(i=0;i<3000;++i) {
+    x = random(limit_right,limit_right)*0.1;
+    y = random(limit_bottom,limit_top)*0.1;
+
+    IK(x,y,A,B);
+    FK(A,B,C,D);
+    Serial.print(F("\tx="));  Serial.print(x);
+    Serial.print(F("\ty="));  Serial.print(y);
+    Serial.print(F("\tL="));  Serial.print(A);
+    Serial.print(F("\tR="));  Serial.print(B);
+    Serial.print(F("\tx'="));  Serial.print(C);
+    Serial.print(F("\ty'="));  Serial.print(D);
+    Serial.print(F("\tdx="));  Serial.print(C-x);
+    Serial.print(F("\tdy="));  Serial.println(D-y);
+  }
+}
 
 /**
  * Translate the XYZ through the IK to get the number of motor steps and move the motors.
