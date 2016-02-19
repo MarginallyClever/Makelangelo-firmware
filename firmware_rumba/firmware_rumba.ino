@@ -723,7 +723,7 @@ void processCommand() {
 /**
  * prepares the input buffer to receive a new message and tells the serial connected device it is ready for more.
  */
-void ready() {
+void parser_ready() {
   sofar=0;  // clear input buffer
   Serial.print(F("\n> "));  // signal ready to receive input
   last_cmd_time = millis();
@@ -760,7 +760,7 @@ void setup() {
   teleport(0,0);
   setPenAngle(PEN_UP_ANGLE);
   setFeedRate(DEFAULT_FEEDRATE);
-  ready();
+  parser_ready();
 }
 
 
@@ -780,7 +780,7 @@ void Serial_listen() {
 
       // do something with the command
       processCommand();
-      ready();
+      parser_ready();
     }
   }
 }
@@ -798,7 +798,7 @@ void loop() {
   // if Arduino hasn't received a new instruction in a while, send ready() again
   // just in case USB garbled ready and each half is waiting on the other.
   if( !segment_buffer_full() && (millis() - last_cmd_time) > TIMEOUT_OK ) {
-    ready();
+    parser_ready();
   }
 }
 

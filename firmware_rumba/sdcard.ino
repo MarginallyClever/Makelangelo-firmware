@@ -101,7 +101,7 @@ void SD_check() {
         // process command
         processCommand();
         // reset buffer for next line
-        ready();
+        parser_ready();
         // quit this loop so we can update the LCD and listen for commands from the laptop (if any)
         break;
       }
