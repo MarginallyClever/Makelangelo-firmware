@@ -446,8 +446,9 @@ void line(float x,float y,float z) {
 
   laststep1=l1;
   laststep2=l2;
-  posx=x;
-  posy=y;
+  // I hope this prevents rounding errors.  Small fractions of lines
+  // over a long time could lead to lost steps and drawing problems.
+  FK(l1,l2,posx,posy);
   posz=z;
 }
 
