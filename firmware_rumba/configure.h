@@ -32,7 +32,7 @@
 
 
 #define MICROSTEPS           (16.0)  // microstepping on this microcontroller
-#define STEPS_PER_TURN       (400 * MICROSTEPS)  // default number of steps per turn * microsteps
+#define STEPS_PER_TURN       (200 * MICROSTEPS)  // default number of steps per turn * microsteps
 
 #define MAX_FEEDRATE         (30000.0)  // depends on timer interrupt & hardware
 #define MIN_FEEDRATE         (1000)
@@ -59,20 +59,10 @@
 #define SDPOWER            -1
 #define SDSS               53
 #define SDCARDDETECT       49
-// Smart controller settings
-#define BEEPER             44
-#define LCD_PINS_RS        19
-#define LCD_PINS_ENABLE    42
-#define LCD_PINS_D4        18
-#define LCD_PINS_D5        38
-#define LCD_PINS_D6        41
-#define LCD_PINS_D7        40
+
 #define LCD_HEIGHT         4
 #define LCD_WIDTH          20
-// Encoder rotation values
-#define BTN_EN1            11
-#define BTN_EN2            12
-#define BTN_ENC            43
+
 #define BLEN_C             2
 #define BLEN_B             1
 #define BLEN_A             0
@@ -82,9 +72,8 @@
 #define encrot3            1
 
 
-
-#define MOTHERBOARD 1 // RUMBA
-//#define MOTHERBOARD 2 // RAMPS
+//#define MOTHERBOARD 1 // RUMBA
+#define MOTHERBOARD 2 // RAMPS
 //#define MOTHERBOARD 3 // SANGUINOLOLU
 
 #if MOTHERBOARD == 1
@@ -122,9 +111,72 @@
 #define NUM_SERVOS         (1)
 #define SERVO0_PIN         (5)
 
+// Smart controller settings
+#define BEEPER             44
+#define LCD_PINS_RS        19
+#define LCD_PINS_ENABLE    42
+#define LCD_PINS_D4        18
+#define LCD_PINS_D5        38
+#define LCD_PINS_D6        41
+#define LCD_PINS_D7        40
+
+// Encoder rotation values
+#define BTN_EN1            11
+#define BTN_EN2            12
+#define BTN_ENC            43
+
 #endif
 
 #if MOTHERBOARD == 2
+#define MOTOR_0_DIR_PIN           (55)
+#define MOTOR_0_STEP_PIN          (54)
+#define MOTOR_0_ENABLE_PIN        (38)
+#define MOTOR_0_LIMIT_SWITCH_PIN  (3)   /* X min */
+
+#define MOTOR_1_DIR_PIN           (61)
+#define MOTOR_1_STEP_PIN          (60)
+#define MOTOR_1_ENABLE_PIN        (56)
+#define MOTOR_1_LIMIT_SWITCH_PIN  (14)  /* Y min */
+
+// alternate pins in case you want to do something interesting
+#define MOTOR_2_DIR_PIN           (48)
+#define MOTOR_2_STEP_PIN          (46)
+#define MOTOR_2_ENABLE_PIN        (62)
+#define MOTOR_2_LIMIT_SWITCH_PIN  (18)  /* Z Min */
+
+#define MOTOR_3_DIR_PIN           (28)
+#define MOTOR_3_STEP_PIN          (26)
+#define MOTOR_3_ENABLE_PIN        (24)
+#define MOTOR_3_LIMIT_SWITCH_PIN  (2)   /* X Max */
+
+#define MOTOR_4_DIR_PIN           (34)
+#define MOTOR_4_STEP_PIN          (36)
+#define MOTOR_4_ENABLE_PIN        (30)
+#define MOTOR_4_LIMIT_SWITCH_PIN  (15)  /* Y Max */
+
+#define NUM_SERVOS         (4)
+#define SERVO0_PIN         (11)   /* Servo 1 */
+#define SERVO1_PIN         (6)
+#define SERVO2_PIN         (5)
+#define SERVO3_PIN         (4)
+
+// Smart controller settings
+#define BEEPER             37   /* Pin on SMART Adapter */
+#define LCD_PINS_RS        16   /* Pin on SMART Adapter */
+#define LCD_PINS_ENABLE    17   /* Pin on SMART Adapter */ 
+#define LCD_PINS_D4        23   /* Pin on SMART Adapter */
+#define LCD_PINS_D5        25   /* Pin on SMART Adapter */
+#define LCD_PINS_D6        27   /* Pin on SMART Adapter */
+#define LCD_PINS_D7        29   /* Pin on SMART Adapter */
+
+// Encoder rotation values
+#define BTN_EN1            31   /* Pin on SMART Adapter */
+#define BTN_EN2            33   /* Pin on SMART Adapter */
+#define BTN_ENC            35  /* Pin on SMART Adapter */
+
+
+#define KILL_PIN    41    /* Pin on SMART Adapter */
+
 #endif
 
 #if MOTHERBOARD == 3
@@ -140,6 +192,7 @@
 
 #define NUM_SERVOS         (1)
 #define SERVO0_PIN         (12)
+
 #endif
 
 
