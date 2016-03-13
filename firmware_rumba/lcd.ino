@@ -89,6 +89,7 @@ void LCD_init() {
   digitalWrite(BTN_EN2,HIGH);
   digitalWrite(BTN_ENC,HIGH);
   current_menu=LCD_status_menu;
+  menu_position_sum=1;    /* 20160313-NM-Added so the clicking without any movement will display a menu */
 }
 
 
@@ -141,12 +142,13 @@ void LCD_update() {
       if(num_menu_items>0) {
         if( menu_position_sum > (num_menu_items-1) * LCD_TURN_PER_MENU ) menu_position_sum = (num_menu_items-1) * LCD_TURN_PER_MENU;
       }
+      if( menu_position_sum < 1)  menu_position_sum=1;  /* 20160313-NM-Added to stop the positon going negative at needing more winds to come back */
 
       menu_position = menu_position_sum / LCD_TURN_PER_MENU;
       if(op != menu_position) lcd.clear();
 
       if(menu_position>num_menu_items-1) menu_position=num_menu_items-1;
-      if(menu_position<0) menu_position=0;
+      if(menu_position<0) { menu_position=0;  }   
       if(screen_position>menu_position) screen_position=menu_position;
       if(screen_position<menu_position-(LCD_HEIGHT-1)) screen_position=menu_position-(LCD_HEIGHT-1);
       screen_end=screen_position+LCD_HEIGHT;
