@@ -20,7 +20,7 @@
 #define POLARGRAPH2  // uncomment this line if you use a polargraph like the Makelangelo
 //#define COREXY  // uncomment this line if you use a CoreXY setup.
 //#define TRADITIONALXY  // uncomment this line if you use a traditional XY setup.
-#define ZARPLOTTER  // uncomment this line if you use a 4 motor ZAR plotter
+//#define ZARPLOTTER  // uncomment this line if you use a 4 motor ZAR plotter
 
 // servo angles for pen control
 #define PEN_UP_ANGLE         (90)
