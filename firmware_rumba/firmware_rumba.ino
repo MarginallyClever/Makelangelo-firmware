@@ -285,8 +285,11 @@ void test_kinematics2() {
 void polargraph_line(float x,float y,float z,float new_feed_rate) {
   long l1,l2;
   IK(x,y,l1,l2);
-  posx=x;
-  posy=y;
+  // I hope this prevents rounding errors.  Small fractions of lines
+  // over a long time could lead to lost steps and drawing problems.
+  FK(l1,l2,posx,posy);
+  //posx=x;
+  //posy=y;
   posz=z;
 
   feed_rate = new_feed_rate;

@@ -20,7 +20,7 @@
 #define POLARGRAPH2  // uncomment this line if you use a polargraph like the Makelangelo
 //#define COREXY  // uncomment this line if you use a CoreXY setup.
 //#define TRADITIONALXY  // uncomment this line if you use a traditional XY setup.
-
+//#define ZARPLOTTER  // uncomment this line if you use a 4 motor ZAR plotter
 
 // servo angles for pen control
 #define PEN_UP_ANGLE         (90)
@@ -71,12 +71,17 @@
 #define encrot2            3
 #define encrot3            1
 
+// Board types.  Don't change this!
+#define BOARD_RUMBA 1
+#define BOARD_RAMPS 2
+#define BOARD_SANGUINOLULU 3
 
-//#define MOTHERBOARD 1 // RUMBA
-#define MOTHERBOARD 2 // RAMPS
-//#define MOTHERBOARD 3 // SANGUINOLOLU
+// Your choice of board
+#define MOTHERBOARD BOARD_RUMBA
+//#define MOTHERBOARD BOARD_RAMPS
+//#define MOTHERBOARD BOARD_SANGUINOLULU
 
-#if MOTHERBOARD == 1
+#if MOTHERBOARD == BOARD_RUMBA 
 #define MOTOR_0_DIR_PIN           (16)
 #define MOTOR_0_STEP_PIN          (17)
 #define MOTOR_0_ENABLE_PIN        (48)
@@ -127,7 +132,7 @@
 
 #endif
 
-#if MOTHERBOARD == 2
+#if MOTHERBOARD == BOARD_RAMPS 
 #define MOTOR_0_DIR_PIN           (55)
 #define MOTOR_0_STEP_PIN          (54)
 #define MOTOR_0_ENABLE_PIN        (38)
@@ -174,12 +179,10 @@
 #define BTN_EN2            33   /* Pin on SMART Adapter */
 #define BTN_ENC            35  /* Pin on SMART Adapter */
 
-
 #define KILL_PIN    41    /* Pin on SMART Adapter */
-
 #endif
 
-#if MOTHERBOARD == 3
+#if MOTHERBOARD == BOARD_SANGUINOLULU 
 #define MOTOR_0_DIR_PIN           (21)
 #define MOTOR_0_STEP_PIN          (15)
 #define MOTOR_0_ENABLE_PIN        (14)
@@ -190,9 +193,10 @@
 #define MOTOR_1_ENABLE_PIN        (14)
 #define MOTOR_1_LIMIT_SWITCH_PIN  (19)
 
+// TODO: if ZARPLOTTER & SANGUINOLULU throw a compile error, not enough motors.
+
 #define NUM_SERVOS         (1)
 #define SERVO0_PIN         (12)
-
 #endif
 
 

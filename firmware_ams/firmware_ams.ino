@@ -13,6 +13,12 @@
 #define MOTHERBOARD 1  // Adafruit Motor Shield 1
 //#define MOTHERBOARD 2  // Adafruit Motor Shield 2
 
+#if MOTHERBOARD == 2
+// stacked motor shields have different addresses. The default is 0x60
+// 0x70 is the "all call" address - every shield will respond as one.
+#define SHIELD_ADDRESS (0x60)
+#endif
+
 // machine style
 #define POLARGRAPH2  // uncomment this line if you use a polargraph like the Makelangelo
 //#define COREXY  // uncomment this line if you use a CoreXY setup.
@@ -89,7 +95,6 @@
 #define File int
 #endif
 
-
 #if MOTHERBOARD == 1
 #define M1_STEP  m1.step
 #define M2_STEP  m2.step
@@ -103,9 +108,6 @@
 #define M2_STEP(a,b)  m2->step(a,b,MICROSTEP)
 #define M1_ONESTEP(x)  m1->onestep(x,MICROSTEP)
 #define M2_ONESTEP(x)  m2->onestep(x,MICROSTEP)
-// stacked motor shields have different addresses. The default is 0x60
-// 0x70 is the "all call" address - every shield will respond as one.
-#define SHIELD_ADDRESS (0x61)
 #endif
 
 //------------------------------------------------------------------------------
@@ -446,8 +448,9 @@ void line(float x,float y,float z) {
 
   laststep1=l1;
   laststep2=l2;
-  posx=x;
-  posy=y;
+  // I hope this prevents rounding errors.  Small fractions of lines
+  // over a long time could lead to lost steps and drawing problems.
+  FK(l1,l2,posx,posy);
   posz=z;
 }
 
