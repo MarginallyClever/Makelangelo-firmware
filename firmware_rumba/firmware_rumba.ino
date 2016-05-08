@@ -37,16 +37,13 @@ char m1d='L';
 char m2d='R';
 
 // calculate some numbers to help us find feed_rate
-float SPOOL_DIAMETER = 1.5;  // cm
+float SPOOL_DIAMETER = 4.0/PI;  // cm
 float THREAD_PER_STEP=0;
 
 // plotter position.
 float posx, posy, posz;  // pen state
 float feed_rate=DEFAULT_FEEDRATE;
 float acceleration=DEFAULT_ACCELERATION;
-
-// motor position as read from the LCD
-volatile long laststep[NUM_AXIES];
 
 char absolute_mode=1;  // absolute or incremental programming mode?
 
@@ -385,6 +382,8 @@ void arc(float cx,float cy,float x,float y,float z,float dir,float new_feed_rate
  * Instantly move the virtual plotter position.  Does not check if the move is valid.
  */
 void teleport(float x,float y) {
+  wait_for_empty_segment_buffer();
+  
   posx=x;
   posy=y;
 
@@ -438,7 +437,6 @@ void FindHome() {
     digitalWrite(motors[1].step_pin,LOW);
     pause(STEP_DELAY);
   } while(!readSwitches());
-  laststep1=0;
 
   // back off so we don't get a false positive on the next motor
   int i;
@@ -448,7 +446,6 @@ void FindHome() {
     digitalWrite(motors[0].step_pin,LOW);
     pause(STEP_DELAY);
   }
-  laststep1=safe_out;
 
   // reel in the right motor until contact is made
   Serial.println(F("Find right..."));
@@ -462,7 +459,6 @@ void FindHome() {
     pause(STEP_DELAY);
     laststep1++;
   } while(!readSwitches());
-  laststep2=0;
 
   // back off so we don't get a false positive that kills line()
   digitalWrite(motors[1].dir_pin,LOW);
@@ -471,10 +467,9 @@ void FindHome() {
     digitalWrite(motors[1].step_pin,LOW);
     pause(STEP_DELAY);
   }
-  laststep2=safe_out;
 
   Serial.println(F("Centering..."));
-  line(0,0,posz);
+  polargraph_line(0,0,posz);
 #endif // USE_LIMIT_SWITCH
 }
 
@@ -668,10 +663,7 @@ void processCommand() {
   case 92: {  // set position (teleport)
       Vector3 offset = get_end_plus_offset();
       teleport( parsenumber('X',offset.x),
-                         parsenumber('Y',offset.y)
-                         //,
-                         //parsenumber('Z',offset.z)
-                         );
+                parsenumber('Y',offset.y));
       break;
     }
   }

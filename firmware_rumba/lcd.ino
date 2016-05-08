@@ -171,7 +171,7 @@ void LCD_status_menu() {
     lcd.setCursor(10, 0);  lcd.print('Y');  LCD_print_float(posy);
     lcd.setCursor( 0, 1);  lcd.print('Z');  LCD_print_float(posz);
     lcd.setCursor(10, 1);  lcd.print('F');  LCD_print_float(feed_rate);
-    lcd.setCursor( 0, 2);  lcd.print(F("Makelangelo.com #"));  lcd.print(robot_uid);
+    lcd.setCursor( 0, 2);  lcd.print(F("Makelangelo #"));  lcd.print(robot_uid);
     lcd.setCursor( 0, 3);  LCD_print_long(speed_adjust);  lcd.print(F("% "));
     if(sd_printing_now==true/* && sd_printing_paused==false*/) {
       LCD_print_float(sd_percent_complete);

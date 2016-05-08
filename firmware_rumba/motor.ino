@@ -368,9 +368,6 @@ void motor_set_step_count(long a0,long a1,long a2) {
     old_seg.a[0].step_count=a0;
     old_seg.a[1].step_count=a1;
     old_seg.a[2].step_count=a2;
-    laststep[0]=a0;
-    laststep[1]=a1;
-    laststep[2]=a2;
   }
 }
 
@@ -540,14 +537,15 @@ void motor_line(long n0,long n1,long n2,float new_feed_rate) {
     delay(1);
   }
 
+  int prev_segment = get_prev_segment(last_segment);
+  Segment &new_seg = line_segments[last_segment];
+  Segment &old_seg = line_segments[prev_segment];
+
+
   // use LCD to adjust speed while drawing
 #ifdef HAS_LCD
   new_feed_rate *= (float)speed_adjust * 0.01f;
 #endif
-
-  int prev_segment = get_prev_segment(last_segment);
-  Segment &new_seg = line_segments[last_segment];
-  Segment &old_seg = line_segments[prev_segment];
 
   new_seg.a[0].step_count = n0;
   new_seg.a[1].step_count = n1;
