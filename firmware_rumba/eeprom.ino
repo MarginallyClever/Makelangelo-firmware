@@ -75,8 +75,8 @@ void SaveUID() {
 
 //------------------------------------------------------------------------------
 void SaveSpoolDiameter() {
-  EEPROM_writeLong(ADDR_SPOOL_DIA1,SPOOL_DIAMETER*10000);
-  EEPROM_writeLong(ADDR_SPOOL_DIA2,SPOOL_DIAMETER*10000);
+  EEPROM_writeLong(ADDR_SPOOL_DIA1,pulleyDiameter*10000);
+  EEPROM_writeLong(ADDR_SPOOL_DIA2,pulleyDiameter*10000);
 }
 
 

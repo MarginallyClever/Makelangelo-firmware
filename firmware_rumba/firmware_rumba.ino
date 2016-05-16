@@ -37,8 +37,8 @@ char m1d='L';
 char m2d='R';
 
 // calculate some numbers to help us find feed_rate
-float SPOOL_DIAMETER = 4.0/PI;  // cm
-float THREAD_PER_STEP=0;
+float pulleyDiameter = 4.0f/PI;  // cm
+float threadPerStep=0;
 
 // plotter position.
 float posx, posy, posz;  // pen state
@@ -68,9 +68,9 @@ long line_number=0;
 //------------------------------------------------------------------------------
 // calculate max velocity, threadperstep.
 void adjustSpoolDiameter(float diameter1) {
-  SPOOL_DIAMETER = diameter1;
-  float SPOOL_CIRC = SPOOL_DIAMETER*PI;  // circumference
-  THREAD_PER_STEP = SPOOL_CIRC/STEPS_PER_TURN;  // thread per step
+  pulleyDiameter = diameter1;
+  float circumference = pulleyDiameter*PI;  // circumference
+  threadPerStep = circumference/STEPS_PER_TURN;  // thread per step
 }
 
 
@@ -129,21 +129,21 @@ void printFeedRate() {
 // Inverse Kinematics - turns XY coordinates into lengths L1,L2
 void IK(float x, float y, long &l1, long &l2) {
 #ifdef COREXY
-  l1 = lround((x+y) / THREAD_PER_STEP);
-  l2 = lround((x-y) / THREAD_PER_STEP);
+  l1 = lround((x+y) / threadPerStep);
+  l2 = lround((x-y) / threadPerStep);
 #endif
 #ifdef TRADITIONALXY
-  l1 = lround((x) / THREAD_PER_STEP);
-  l2 = lround((y) / THREAD_PER_STEP);
+  l1 = lround((x) / threadPerStep);
+  l2 = lround((y) / threadPerStep);
 #endif
 #ifdef POLARGRAPH2
   // find length to M1
   float dy = y - limit_top;
   float dx = x - limit_left;
-  l1 = lround( sqrt(dx*dx+dy*dy) / THREAD_PER_STEP );
+  l1 = lround( sqrt(dx*dx+dy*dy) / threadPerStep );
   // find length to M2
   dx = limit_right - x;
-  l2 = lround( sqrt(dx*dx+dy*dy) / THREAD_PER_STEP );
+  l2 = lround( sqrt(dx*dx+dy*dy) / threadPerStep );
 #endif
 }
 
@@ -154,20 +154,20 @@ void IK(float x, float y, long &l1, long &l2) {
 // to find angle between M1M2 and M1P where P is the plotter position.
 void FK(long l1, long l2,float &x,float &y) {
 #ifdef COREXY
-  l1 *= THREAD_PER_STEP;
-  l2 *= THREAD_PER_STEP;
+  l1 *= threadPerStep;
+  l2 *= threadPerStep;
 
   x = (float)( l1 + l2 ) / 2.0;
   y = x - (float)l2;
 #endif
 #ifdef TRADITIONALXY
-  x = l1 * THREAD_PER_STEP;
-  y = l2 * THREAD_PER_STEP;
+  x = l1 * threadPerStep;
+  y = l2 * threadPerStep;
 #endif
 #ifdef POLARGRAPH2
-  float a = (float)l1 * THREAD_PER_STEP;
+  float a = (float)l1 * threadPerStep;
   float b = (limit_right-limit_left);
-  float c = (float)l2 * THREAD_PER_STEP;
+  float c = (float)l2 * threadPerStep;
 
   // slow, uses trig
   // we know law of cosines:   cc = aa + bb -2ab * cos( theta )
@@ -285,7 +285,14 @@ void polargraph_line(float x,float y,float z,float new_feed_rate) {
   posx=x;
   posy=y;
   posz=z;
-
+/*
+  Serial.print('~');
+  Serial.print(x);  Serial.print('\t');
+  Serial.print(y);  Serial.print('\t');
+  Serial.print(z);  Serial.print('\t');
+  Serial.print(l1);  Serial.print('\t');
+  Serial.print(l2);  Serial.print('\n');
+  */
   feed_rate = new_feed_rate;
   motor_line(l1,l2,z,new_feed_rate);
 }
@@ -310,7 +317,7 @@ void line_safe(float x,float y,float z,float new_feed_rate) {
   Vector3 temp;
 
   float len=dp.Length();
-  int pieces = ceil(dp.Length() * (float)MM_PER_SEGMENT );
+  int pieces = ceil(dp.Length() * (float)CM_PER_SEGMENT_LINE );
 
   float a;
   long j;
@@ -358,7 +365,7 @@ void arc(float cx,float cy,float x,float y,float z,float dir,float new_feed_rate
   // simplifies to
   float len = abs(theta) * radius;
 
-  int i, segments = floor( len * MM_PER_SEGMENT );
+  int i, segments = floor( len * CM_PER_SEGMENT_ARC );
 
   float nx, ny, nz, angle3, scale;
 
@@ -693,19 +700,19 @@ void processCommand() {
     break;
   case 1: {
       // adjust spool diameters
-      float amountL=parsenumber('L',SPOOL_DIAMETER);
+      float amountL=parsenumber('L',pulleyDiameter);
 
-      float tps1=STEPS_PER_TURN;
+      float d1=pulleyDiameter;
       adjustSpoolDiameter(amountL);
-      if(STEPS_PER_TURN != tps1) {
+      if(pulleyDiameter != d1) {
         // Update EEPROM
         SaveSpoolDiameter();
       }
     }
     break;
   case 2:
-    Serial.print('L');  Serial.print(SPOOL_DIAMETER);
-    Serial.print(F(" R"));   Serial.println(SPOOL_DIAMETER);
+    Serial.print('L');  Serial.print(pulleyDiameter);
+    Serial.print(F(" R"));   Serial.println(pulleyDiameter);
     break;
   case 4:  SD_StartPrintingFile(strchr(buffer,' ')+1);  break;  // read file
   }

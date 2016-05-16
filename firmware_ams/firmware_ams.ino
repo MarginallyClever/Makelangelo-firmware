@@ -189,7 +189,7 @@ int M2_REEL_IN  = FORWARD;
 int M2_REEL_OUT = BACKWARD;
 
 // calculate some numbers to help us find feed_rate
-float SPOOL_DIAMETER = 1.5;
+float SPOOL_DIAMETER = 4.0f/PI;
 float THREAD_PER_STEP=0;  // thread per step
 
 // plotter position.

@@ -259,11 +259,11 @@ void recalculate_forward() {
 }
 
 
-int intersection_time(float acceleration,float distance,float start_speed,float end_speed) {
+int intersection_time(float accel,float distance,float start_speed,float end_speed) {
 #if 0
-  return ( ( 2.0*acceleration*distance - start_speed*start_speed + end_speed*end_speed ) / (4.0*acceleration) );
+  return ( ( 2.0*accel*distance - start_speed*start_speed + end_speed*end_speed ) / (4.0*accel) );
 #else
-  float t2 = ( start_speed - end_speed + acceleration * distance ) / ( 2.0 * acceleration );
+  float t2 = ( start_speed - end_speed + accel * distance ) / ( 2.0 * accel );
   return distance - t2;
 #endif
 }
@@ -279,7 +279,6 @@ void segment_update_trapezoid(Segment *s,float start_speed,float end_speed) {
   int steps_to_decel = floor( ( end_speed - s->feed_rate_max ) / -acceleration );
 
   int steps_at_top_speed = s->steps_total - steps_to_accel - steps_to_decel;
-
   if(steps_at_top_speed<=0) {
     steps_to_accel = ceil( intersection_time(acceleration,s->steps_total,start_speed,end_speed) );
     steps_at_top_speed=0;
@@ -546,7 +545,12 @@ void motor_line(long n0,long n1,long n2,float new_feed_rate) {
 #ifdef HAS_LCD
   new_feed_rate *= (float)speed_adjust * 0.01f;
 #endif
-
+/*
+  Serial.print('^');
+  Serial.print(n0);  Serial.print('\t');
+  Serial.print(n1);  Serial.print('\t');
+  Serial.print(n2);  Serial.print('\n');
+*/
   new_seg.a[0].step_count = n0;
   new_seg.a[1].step_count = n1;
   new_seg.a[2].step_count = n2;
