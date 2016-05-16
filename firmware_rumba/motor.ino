@@ -209,15 +209,20 @@ void recalculate_reverse2(Segment *prev,Segment *current,Segment *next) {
 
 
 void recalculate_reverse() {
+CRITICAL_SECTION_START
   int s = last_segment;
-  Segment *blocks[3] = {NULL,NULL,NULL};
+CRITICAL_SECTION_END
 
-  while(s != current_segment) {
-    s=get_prev_segment(s);
-    blocks[2]=blocks[1];
-    blocks[1]=blocks[0];
-    blocks[0]=&line_segments[s];
-    recalculate_reverse2(blocks[0],blocks[1],blocks[2]);
+  Segment *blocks[3] = {NULL,NULL,NULL};
+  int count = SEGMOD( last_segment + current_segment + MAX_SEGMENTS );
+  if(count>3) {
+    while(s != current_segment) {
+      s=get_prev_segment(s);
+      blocks[2]=blocks[1];
+      blocks[1]=blocks[0];
+      blocks[0]=&line_segments[s];
+      recalculate_reverse2(blocks[0],blocks[1],blocks[2]);
+    }
   }
 }
 
@@ -616,9 +621,9 @@ void motor_line(long n0,long n1,long n2,float new_feed_rate) {
   // when should we accelerate and decelerate in this segment?
   segment_update_trapezoid(&new_seg,new_seg.feed_rate_start,MIN_FEEDRATE);
 
-  recalculate_acceleration();
-
   last_segment = next_segment;
+
+  recalculate_acceleration();
 }
 
 

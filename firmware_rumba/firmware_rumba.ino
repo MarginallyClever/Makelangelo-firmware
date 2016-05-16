@@ -218,7 +218,6 @@ void processConfig() {
   // @TODO: check t>b, r>l ?
   printConfig();
 
-  teleport(0,0);
 /*
   test_kinematics(0,0);
   test_kinematics(10,0);

@@ -43,7 +43,8 @@
 
 #define NUM_AXIES            (3)  // x,y,z
 #define NUM_TOOLS            (6)
-#define MAX_SEGMENTS         (32)  // number of line segments to buffer ahead
+#define MAX_SEGMENTS         (32)  // number of line segments to buffer ahead. must be a power of two.
+#define SEGMOD(x)            ((x)&(MAX_SEGMENTS-1))
 
 // for arc directions
 #define ARC_CW               (1)
