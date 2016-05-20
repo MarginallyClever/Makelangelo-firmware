@@ -35,7 +35,7 @@
 #define STEPS_PER_TURN       (400 * MICROSTEPS)  // default number of steps per turn * microsteps
 
 #define MAX_FEEDRATE         (30000.0)  // depends on timer interrupt & hardware
-#define MIN_FEEDRATE         (1000)
+#define MIN_FEEDRATE         (100)
 #define DEFAULT_FEEDRATE     (8500.0)
 #define DEFAULT_ACCELERATION (250)
 
@@ -49,8 +49,8 @@
 // for arc directions
 #define ARC_CW               (1)
 #define ARC_CCW              (-1)
-#define CM_PER_SEGMENT_LINE  (1)  // Arcs are split into many line segments.  How long are the segments?
-#define CM_PER_SEGMENT_ARC   (5)  // Arcs are split into many line segments.  How long are the segments?
+#define SEGMENT_PER_CM_LINE  (2)  // lines are split into segments.  How long are the segments?
+#define SEGMENT_PER_CM_ARC   (3)  // Arcs are split into segments.  How long are the segments?
 
 
 #ifdef HAS_LCD

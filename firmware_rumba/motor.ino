@@ -39,6 +39,7 @@ long current_feed_rate;
 long old_feed_rate=0;
 long start_feed_rate,end_feed_rate;
 long time_accelerating,time_decelerating;
+float max_xy_jerk = 20.0f;
 
 /*
 long prescalers[] = {CLOCK_FREQ /   1,
@@ -63,13 +64,13 @@ FORCE_INLINE Segment *segment_get_working() {
 }
 
 
-int get_next_segment(int i) {
-  return ( i + 1 ) & ( MAX_SEGMENTS - 1 );
+FORCE_INLINE int get_next_segment(int i) {
+  return SEGMOD( i + 1 );
 }
 
 
-int get_prev_segment(int i) {
-  return ( i + MAX_SEGMENTS - 1 ) & ( MAX_SEGMENTS - 1 );
+FORCE_INLINE int get_prev_segment(int i) {
+  return SEGMOD( i - 1 );
 }
 
 
@@ -284,11 +285,11 @@ void segment_update_trapezoid(Segment *s,float start_speed,float end_speed) {
   int steps_to_decel = floor( ( end_speed - s->feed_rate_max ) / -acceleration );
 
   int steps_at_top_speed = s->steps_total - steps_to_accel - steps_to_decel;
-  if(steps_at_top_speed<=0) {
+  if(steps_at_top_speed<0) {
     steps_to_accel = ceil( intersection_time(acceleration,s->steps_total,start_speed,end_speed) );
-    steps_at_top_speed=0;
     steps_to_accel = max(steps_to_accel,0);
     steps_to_accel = min(steps_to_accel,s->steps_total);
+    steps_at_top_speed=0;
   }
 /*
   Serial.print("M");  Serial.println(s->feed_rate_max);
@@ -299,7 +300,7 @@ void segment_update_trapezoid(Segment *s,float start_speed,float end_speed) {
   Serial.print("D");  Serial.println(steps_to_decel);
 */
 CRITICAL_SECTION_START
-  if(s->busy==false) {
+  if(!s->busy) {
     s->accel_until = steps_to_accel;
     s->decel_after = steps_to_accel+steps_at_top_speed;
     s->feed_rate_start = start_speed;
@@ -511,6 +512,8 @@ ISR(TIMER1_COMPA_vect) {
       step_multiplier = nominal_step_multiplier;
     }
 
+    OCR1A = (OCR1A < (TCNT1 + 16)) ? (TCNT1 + 16) : OCR1A;
+    
     // Is this segment done?
     if( steps_taken >= steps_total ) {
       // Move on to next segment without wasting an interrupt tick.
@@ -563,6 +566,7 @@ void motor_line(long n0,long n1,long n2,float new_feed_rate) {
   new_seg.a[1].delta = n1 - old_seg.a[1].step_count;
   new_seg.a[2].delta = n2 - old_seg.a[2].step_count;
   new_seg.feed_rate_max = new_feed_rate;
+  new_seg.busy=false;
 
   // the axis that has the most steps will control the overall acceleration
   new_seg.steps_total = 0;
@@ -571,7 +575,7 @@ void motor_line(long n0,long n1,long n2,float new_feed_rate) {
   for(i=0;i<NUM_AXIES;++i) {
     new_seg.a[i].dir = (new_seg.a[i].delta < 0 ? motors[i].reel_in:motors[i].reel_out);
     new_seg.a[i].absdelta = abs(new_seg.a[i].delta);
-    len += new_seg.a[i].absdelta * new_seg.a[i].absdelta;
+    len += square(new_seg.a[i].delta);
     if( new_seg.steps_total < new_seg.a[i].absdelta ) {
       new_seg.steps_total = new_seg.a[i].absdelta;
     }
@@ -582,6 +586,8 @@ void motor_line(long n0,long n1,long n2,float new_feed_rate) {
 
   len = sqrt( len );
   float ilen = 1.0f / len;
+  float iSecond = new_feed_rate * ilen;
+  
   for(i=0;i<NUM_AXIES;++i) {
     new_seg.a[i].delta_normalized = new_seg.a[i].delta * ilen;
   }
@@ -589,25 +595,24 @@ void motor_line(long n0,long n1,long n2,float new_feed_rate) {
 
   // what is the maximum starting speed for this segment?
   float feed_rate_start_max = MIN_FEEDRATE;
-    // is the robot changing direction sharply?
-      // aka is there a previous segment with a wildly different delta_normalized?
-    if(last_segment != current_segment) {
-      float cos_theta = 0;
-      for(i=0;i<NUM_AXIES;++i) {
-        cos_theta += new_seg.a[i].delta_normalized * old_seg.a[i].delta_normalized;
-      }
-
-      feed_rate_start_max = min( new_seg.feed_rate_max, old_seg.feed_rate_max );
-      if(cos_theta<0.95) {
-        if(cos_theta<0) cos_theta = 0;
-        feed_rate_start_max *= cos_theta;
-      }
+  // is the robot changing direction sharply?
+  // aka is there a previous segment with a wildly different delta_normalized?
+  if(last_segment != current_segment) {
+    float dsx = new_seg.a[0].delta_normalized - old_seg.a[0].delta_normalized;
+    float dsy = new_seg.a[1].delta_normalized - old_seg.a[1].delta_normalized;
+    float dsz = new_seg.a[2].delta_normalized - old_seg.a[2].delta_normalized;
+    float jerk = sqrt(dsx*dsx + dsy*dsy + dsz*dsz);
+    float vmax_junction_factor = 1.0;
+    if(jerk> max_xy_jerk) {
+      vmax_junction_factor = max_xy_jerk / jerk;
     }
+    feed_rate_start_max = min( new_seg.feed_rate_max * vmax_junction_factor, old_seg.feed_rate_max );
+  }
 
   float allowable_speed = max_speed_allowed(-acceleration, MIN_FEEDRATE, new_seg.steps_total);
 
   // come to a stop for entering or exiting a Z move
-  if( new_seg.a[2].delta != 0 || old_seg.a[2].delta != 0 ) allowable_speed = MIN_FEEDRATE;
+  //if( new_seg.a[2].delta != 0 || old_seg.a[2].delta != 0 ) allowable_speed = MIN_FEEDRATE;
 
   //Serial.print("max = ");  Serial.println(feed_rate_start_max);
 //  Serial.print("allowed = ");  Serial.println(allowable_speed);
@@ -616,7 +621,6 @@ void motor_line(long n0,long n1,long n2,float new_feed_rate) {
 
   new_seg.nominal_length_flag = ( allowable_speed >= new_seg.feed_rate_max );
   new_seg.recalculate_flag = true;
-  new_seg.busy=false;
 
   // when should we accelerate and decelerate in this segment?
   segment_update_trapezoid(&new_seg,new_seg.feed_rate_start,MIN_FEEDRATE);

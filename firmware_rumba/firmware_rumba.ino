@@ -218,6 +218,7 @@ void processConfig() {
   // @TODO: check t>b, r>l ?
   printConfig();
 
+  teleport(posx,posy);
 /*
   test_kinematics(0,0);
   test_kinematics(10,0);
@@ -316,7 +317,7 @@ void line_safe(float x,float y,float z,float new_feed_rate) {
   Vector3 temp;
 
   float len=dp.Length();
-  int pieces = ceil(dp.Length() * (float)CM_PER_SEGMENT_LINE );
+  int pieces = ceil(dp.Length() * (float)SEGMENT_PER_CM_LINE );
 
   float a;
   long j;
@@ -364,7 +365,7 @@ void arc(float cx,float cy,float x,float y,float z,float dir,float new_feed_rate
   // simplifies to
   float len = abs(theta) * radius;
 
-  int i, segments = floor( len * CM_PER_SEGMENT_ARC );
+  int i, segments = floor( len * SEGMENT_PER_CM_ARC );
 
   float nx, ny, nz, angle3, scale;
 
