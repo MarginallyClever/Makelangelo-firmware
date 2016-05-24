@@ -100,8 +100,8 @@
 #define M2_STEP  m2.step
 //#define M1_ONESTEP(x)  m1.onestep(x)
 //#define M2_ONESTEP(x)  m2.onestep(x)
-#define M1_ONESTEP(x)  m1.step(1,x)
-#define M2_ONESTEP(x)  m2.step(1,x)
+#define M1_ONESTEP(x)  m1.onestep(x)
+#define M2_ONESTEP(x)  m2.onestep(x)
 #endif
 #if MOTHERBOARD == 2
 #define M1_STEP(a,b)  m1->step(a,b,MICROSTEP)
@@ -411,12 +411,10 @@ void line(float x,float y,float z) {
   if(ad1>ad2) {
     for(i=0;i<ad1;++i) {
       M1_ONESTEP(dir1);
-//      delay(2);
       over+=ad2;
       if(over>=ad1) {
         over-=ad1;
         M2_ONESTEP(dir2);
-//        delay(2);
       }
 
       //if(i<accelerate_until) d--;
@@ -429,12 +427,10 @@ void line(float x,float y,float z) {
   } else {
     for(i=0;i<ad2;++i) {
       M2_ONESTEP(dir2);
-//      delay(2);
       over+=ad1;
       if(over>=ad2) {
         over-=ad2;
         M1_ONESTEP(dir1);
-//        delay(2);
       }
 
       //if(i<accelerate_until) d--;
@@ -987,7 +983,7 @@ void processCommand() {
   cmd=parsenumber('D',-1);
   switch(cmd) {
   case 0: {
-      // move one motor
+      // jog one motor
       char *ptr=strchr(serial_buffer,' ')+1;
       int amount = atoi(ptr+1);
       int i, dir;
@@ -1000,7 +996,7 @@ void processCommand() {
         Serial.print(' ');
         Serial.println(dir);
 #endif
-        for(i=0;i<amount;++i) {  M1_STEP(1,dir);  delay(2);  }
+        for(i=0;i<amount;++i) {  M1_STEP(1,dir);  }
       } else if(*ptr == m2d) {
         dir = amount < 0 ? M2_REEL_IN : M2_REEL_OUT;
         amount = abs(amount);
@@ -1010,7 +1006,7 @@ void processCommand() {
         Serial.print(' ');
         Serial.println(dir);
 #endif
-        for(i=0;i<amount;++i) {  M2_STEP(1,dir);  delay(2);  }
+        for(i=0;i<amount;++i) {  M2_STEP(1,dir);  }
       }
     }
     break;

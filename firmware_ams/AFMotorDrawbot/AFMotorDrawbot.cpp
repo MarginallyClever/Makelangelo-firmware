@@ -152,14 +152,15 @@ void AF_Stepper::step(uint16_t steps, uint8_t dir) {
 
   while (steps--) {
     onestep(dir);
-//*
+/*
     delay(uspers/1000);  // in ms
     steppingcounter += (uspers % 1000);
     if (steppingcounter >= 1000) {
       delay(1);
       steppingcounter -= 1000;
     }
-//*/    delayMicroseconds(uspers);
+//*/
+    delayMicroseconds(uspers);
   }
 }
 
