@@ -96,16 +96,10 @@
 #endif
 
 #if MOTHERBOARD == 1
-#define M1_STEP  m1.step
-#define M2_STEP  m2.step
-//#define M1_ONESTEP(x)  m1.onestep(x)
-//#define M2_ONESTEP(x)  m2.onestep(x)
 #define M1_ONESTEP(x)  m1.onestep(x)
 #define M2_ONESTEP(x)  m2.onestep(x)
 #endif
 #if MOTHERBOARD == 2
-#define M1_STEP(a,b)  m1->step(a,b,MICROSTEP)
-#define M2_STEP(a,b)  m2->step(a,b,MICROSTEP)
 #define M1_ONESTEP(x)  m1->onestep(x,MICROSTEP)
 #define M2_ONESTEP(x)  m2->onestep(x,MICROSTEP)
 #endif
@@ -573,8 +567,8 @@ void FindHome() {
   // reel in the left motor until contact is made.
   Serial.println(F("Find left..."));
   do {
-    M1_STEP(1,M1_REEL_IN );
-    M2_STEP(1,M2_REEL_OUT);
+    M1_ONESTEP(M1_REEL_IN );
+    M2_ONESTEP(M2_REEL_OUT);
     delayMicroseconds(home_step_delay);
   } while(!readSwitches());
   laststep1=0;
@@ -582,7 +576,7 @@ void FindHome() {
   // back off so we don't get a false positive on the next motor
   int i;
   for(i=0;i<safe_out;++i) {
-    M1_STEP(1,M1_REEL_OUT);
+    M1_ONESTEP(M1_REEL_OUT);
     delayMicroseconds(home_step_delay);
   }
   laststep1=safe_out;
@@ -590,8 +584,8 @@ void FindHome() {
   // reel in the right motor until contact is made
   Serial.println(F("Find right..."));
   do {
-    M1_STEP(1,M1_REEL_OUT);
-    M2_STEP(1,M2_REEL_IN );
+    M1_ONESTEP(M1_REEL_OUT);
+    M2_ONESTEP(M2_REEL_IN );
     delay(step_delay);
     laststep1++;
   } while(!readSwitches());
@@ -599,7 +593,7 @@ void FindHome() {
 
   // back off so we don't get a false positive that kills line()
   for(i=0;i<safe_out;++i) {
-    M2_STEP(1,M2_REEL_OUT);
+    M2_ONESTEP(M2_REEL_OUT);
     delay(step_delay);
   }
   laststep2=safe_out;
@@ -780,8 +774,8 @@ void disable_motors() {
 
 
 void activate_motors() {
-  M1_STEP(1,1);  M1_STEP(1,-1);
-  M2_STEP(1,1);  M2_STEP(1,-1);
+  M1_ONESTEP(M1_REEL_IN);  M1_ONESTEP(M1_REEL_OUT);
+  M2_ONESTEP(M2_REEL_IN);  M2_ONESTEP(M2_REEL_OUT);
 }
 
 
@@ -996,7 +990,7 @@ void processCommand() {
         Serial.print(' ');
         Serial.println(dir);
 #endif
-        for(i=0;i<amount;++i) {  M1_STEP(1,dir);  }
+        for(i=0;i<amount;++i) {  M1_ONESTEP(dir);  }
       } else if(*ptr == m2d) {
         dir = amount < 0 ? M2_REEL_IN : M2_REEL_OUT;
         amount = abs(amount);
@@ -1006,7 +1000,7 @@ void processCommand() {
         Serial.print(' ');
         Serial.println(dir);
 #endif
-        for(i=0;i<amount;++i) {  M2_STEP(1,dir);  }
+        for(i=0;i<amount;++i) {  M2_ONESTEP(dir);  }
       }
     }
     break;
