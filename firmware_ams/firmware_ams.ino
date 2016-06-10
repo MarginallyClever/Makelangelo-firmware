@@ -96,8 +96,8 @@
 #endif
 
 #if MOTHERBOARD == 1
-#define M1_ONESTEP(x)  m1.onestep(x)
-#define M2_ONESTEP(x)  m2.onestep(x)
+#define M1_ONESTEP(x)  m1.onestep(x)//,MICROSTEP)
+#define M2_ONESTEP(x)  m2.onestep(x)//,MICROSTEP)
 #endif
 #if MOTHERBOARD == 2
 #define M1_ONESTEP(x)  m1->onestep(x,MICROSTEP)
@@ -119,10 +119,8 @@
 //------------------------------------------------------------------------------
 #if MOTHERBOARD == 1
 #include <SPI.h>  // pkm fix for Arduino 1.5
-// Adafruit motor driver library
+// Adafruit motor driver library, optimized
 #include "AFMotorDrawbot/AFMotorDrawbot.h"
-// V1 Motor Shield https://learn.adafruit.com/adafruit-motor-shield/library-install
-//#include <AFMotor.h>
 #endif
 
 #if MOTHERBOARD == 2
@@ -149,8 +147,8 @@
 //------------------------------------------------------------------------------
 #if MOTHERBOARD == 1
 // Initialize Adafruit stepper controller
-static AF_Stepper m1((int)STEPS_PER_TURN, M2_PIN);
-static AF_Stepper m2((int)STEPS_PER_TURN, M1_PIN);
+static AF_Stepper m1((int)STEPPER_STEPS_PER_TURN, M2_PIN);
+static AF_Stepper m2((int)STEPPER_STEPS_PER_TURN, M1_PIN);
 #endif
 #if MOTHERBOARD == 2
 // Initialize Adafruit stepper controller
@@ -1064,11 +1062,11 @@ void setup() {
   SD_ListFiles();
 #endif
 
-#if MOTHERBOARD == 2
   // start the shield
+#if MOTHERBOARD == 2
   AFMS0.begin();
-  m1 = AFMS0.getStepper(STEPS_PER_TURN, M2_PIN);
-  m2 = AFMS0.getStepper(STEPS_PER_TURN, M1_PIN);
+  m1 = AFMS0.getStepper(STEPPER_STEPS_PER_TURN, M2_PIN);
+  m2 = AFMS0.getStepper(STEPPER_STEPS_PER_TURN, M1_PIN);
 #endif
 
   // initialize the scale
