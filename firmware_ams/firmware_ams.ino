@@ -1099,6 +1099,34 @@ void setup() {
   // display the help at startup.
   help();
   ready();
+  testKinematics();
+}
+
+
+void testKinematics() {
+  // test IK/FK
+  limit_top = 500;
+  limit_bottom = -500;
+  limit_right = 500;
+  limit_left = -500;
+
+  float a,b,e,f;
+  long c,d;
+  for(int i=0;i<1000;++i) {
+    a = random(-500,500);
+    b = random(-500,500);
+    IK(a,b,c,d);
+    FK(c,d,e,f);
+
+    if(abs(a-e)>0.1f || abs(b-f)>0.1f) {
+      Serial.print(a);  Serial.print("\t");
+      Serial.print(b);  Serial.print("\t");
+      Serial.print(c);  Serial.print("\t");
+      Serial.print(d);  Serial.print("\t");
+      Serial.print(e);  Serial.print("\t");
+      Serial.print(f);  Serial.print("\n");
+    }
+  }
 }
 
 
