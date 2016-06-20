@@ -1099,7 +1099,7 @@ void setup() {
   // display the help at startup.
   help();
   ready();
-  testKinematics();
+  //testKinematics();
 }
 
 

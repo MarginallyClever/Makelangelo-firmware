@@ -166,88 +166,31 @@ void AF_Stepper::step(uint16_t steps, uint8_t dir) {
 
 
 void AF_Stepper::onestep(uint8_t dir) {
-  /*
-  if((currentstep/(MICROSTEPS/2)) % 2) { // we're at an odd step, weird
-    if(dir == FORWARD) currentstep += MICROSTEPS/2;
-    else               currentstep -= MICROSTEPS/2;
-  } else {           // go to the next even step
-    if(dir == FORWARD) currentstep += MICROSTEPS;
-    else               currentstep -= MICROSTEPS;
+  if (dir == FORWARD) {
+    currentstep++;
+  } else {
+    // BACKWARDS
+    currentstep--;
   }
-  *//*
-  currentstep += ( dir * MICROSTEPS );
+
   currentstep += MICROSTEPS*4;
   currentstep %= MICROSTEPS*4;
-*/
-/*
-  // next determine what sort of stepping procedure we're up to
-  if (style == SINGLE) {
-    if ((currentstep/(MICROSTEPS/2)) % 2) { // we're at an odd step, weird
-      if (dir == FORWARD) {
-  currentstep += MICROSTEPS/2;
-      }
-      else {
-  currentstep -= MICROSTEPS/2;
-      }
-    } else {           // go to the next even step
-      if (dir == FORWARD) {
-  currentstep += MICROSTEPS;
-      }
-      else {
-  currentstep -= MICROSTEPS;
-      }
-    }
-  } else if (style == DOUBLE) {
-    if (! (currentstep/(MICROSTEPS/2) % 2)) { // we're at an even step, weird
-      if (dir == FORWARD) {
-  currentstep += MICROSTEPS/2;
-      } else {
-  currentstep -= MICROSTEPS/2;
-      }
-    } else {           // go to the next odd step
-      if (dir == FORWARD) {
-  currentstep += MICROSTEPS;
-      } else {
-  currentstep -= MICROSTEPS;
-      }
-    }
-  } else if (style == INTERLEAVE) {
-    if (dir == FORWARD) {
-       currentstep += MICROSTEPS/2;
-    } else {
-       currentstep -= MICROSTEPS/2;
-    }
-  } 
-
-  if (style == MICROSTEP) {*/
-    if (dir == FORWARD) {
-      currentstep++;
-    } else {
-      // BACKWARDS
-      currentstep--;
-    }
-
-    currentstep += MICROSTEPS*4;
-    currentstep %= MICROSTEPS*4;
-//  }
 
 #ifdef MOTORDEBUG
   Serial.print("current step: "); Serial.println(currentstep, DEC);
 #endif
 
   // preprare to release all coils
-  latch_state =0;//&= ~a & ~b & ~c & ~d; // all motor pins to 0
-
   // No wait!  Keep some energized.
   switch (currentstep/(MICROSTEPS/2)) {
-  case 0:  latch_state |= a;      break;  // energize coil 1 only
-  case 1:  latch_state |= a | b;  break;  // energize coil 1+2
-  case 2:  latch_state |= b;      break;  // energize coil 2 only
-  case 3:  latch_state |= b | c;  break;  // energize coil 2+3
-  case 4:  latch_state |= c;      break;  // energize coil 3 only
-  case 5:  latch_state |= c | d;  break;  // energize coil 3+4
-  case 6:  latch_state |= d;      break;  // energize coil 4 only
-  case 7:  latch_state |= d | a;  break;  // energize coil 1+4
+  case 0:  latch_state = a;      break;  // energize coil 1 only
+  case 1:  latch_state = a | b;  break;  // energize coil 1+2
+  case 2:  latch_state = b;      break;  // energize coil 2 only
+  case 3:  latch_state = b | c;  break;  // energize coil 2+3
+  case 4:  latch_state = c;      break;  // energize coil 3 only
+  case 5:  latch_state = c | d;  break;  // energize coil 3+4
+  case 6:  latch_state = d;      break;  // energize coil 4 only
+  case 7:  latch_state = d | a;  break;  // energize coil 1+4
   }
 
   // change the energized state now
