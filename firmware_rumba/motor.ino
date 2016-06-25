@@ -40,6 +40,11 @@ long old_feed_rate=0;
 long start_feed_rate,end_feed_rate;
 long time_accelerating,time_decelerating;
 float max_xy_jerk = 20.0f;
+long global_steps_0;
+long global_steps_1;
+int global_step_dir_0;
+int global_step_dir_1;
+
 
 /*
 long prescalers[] = {CLOCK_FREQ /   1,
@@ -368,12 +373,15 @@ void recalculate_acceleration() {
 
 
 void motor_set_step_count(long a0,long a1,long a2) {
-  if( current_segment==last_segment ) {
-    Segment &old_seg = line_segments[get_prev_segment(last_segment)];
-    old_seg.a[0].step_count=a0;
-    old_seg.a[1].step_count=a1;
-    old_seg.a[2].step_count=a2;
-  }
+  wait_for_empty_segment_buffer();
+
+  Segment &old_seg = line_segments[get_prev_segment(last_segment)];
+  old_seg.a[0].step_count=a0;
+  old_seg.a[1].step_count=a1;
+  old_seg.a[2].step_count=a2;
+
+  global_steps_0=0;
+  global_steps_1=0;
 }
 
 
@@ -440,6 +448,8 @@ ISR(TIMER1_COMPA_vect) {
       // set the direction pins
       digitalWrite( MOTOR_0_DIR_PIN, working_seg->a[0].dir );
       digitalWrite( MOTOR_1_DIR_PIN, working_seg->a[1].dir );
+      global_step_dir_0 = (working_seg->a[0].dir==HIGH)?1:-1;
+      global_step_dir_1 = (working_seg->a[1].dir==HIGH)?1:-1;
 
       //move the z axis
       servos[0].write(working_seg->a[2].step_count);
@@ -460,8 +470,8 @@ ISR(TIMER1_COMPA_vect) {
       steps_taken=0;
       delta_x = working_seg->a[0].absdelta;
       delta_y = working_seg->a[1].absdelta;
-      over_x = -steps_total;
-      over_y = -steps_total;
+      over_x = -(steps_total>>1);
+      over_y = -(steps_total>>1);
       accel_until=working_seg->accel_until;
       decel_after=working_seg->decel_after;
       return;
@@ -478,16 +488,26 @@ ISR(TIMER1_COMPA_vect) {
       over_x += delta_x;
       if(over_x > 0) {
         digitalWrite(MOTOR_0_STEP_PIN,LOW);
-        over_x -= steps_total;
-        digitalWrite(MOTOR_0_STEP_PIN,HIGH);
       }
       // M1
       over_y += delta_y;
       if(over_y > 0) {
         digitalWrite(MOTOR_1_STEP_PIN,LOW);
+      }
+      // now that the pins have had a moment to settle, do the second half of the steps.
+      // M0
+      if(over_x > 0) {
+        over_x -= steps_total;
+        global_steps_0+=global_step_dir_0;
+        digitalWrite(MOTOR_0_STEP_PIN,HIGH);
+      }
+      // M1
+      if(over_y > 0) {
         over_y -= steps_total;
+        global_steps_1+=global_step_dir_1;
         digitalWrite(MOTOR_1_STEP_PIN,HIGH);
       }
+      
       // make a step
       steps_taken++;
       if(steps_taken>=steps_total) break;
@@ -498,12 +518,18 @@ ISR(TIMER1_COMPA_vect) {
     if( steps_taken <= accel_until ) {
       current_feed_rate = (acceleration * time_accelerating / 1000000);
       current_feed_rate += start_feed_rate;
+      if(current_feed_rate > working_seg->feed_rate_max) {
+        current_feed_rate = working_seg->feed_rate_max;
+      }
       t = calc_timer(current_feed_rate);
       OCR1A = t;
       time_accelerating+=t;
     } else if( steps_taken > decel_after ) {
       unsigned short step_time = (acceleration * time_decelerating / 1000000);
       long end_feed_rate = current_feed_rate - step_time;
+      if( end_feed_rate < working_seg->feed_rate_end ) {
+        end_feed_rate = working_seg->feed_rate_end;
+      }
       t = calc_timer(end_feed_rate);
       OCR1A = t;
       time_decelerating+=t;

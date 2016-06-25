@@ -379,7 +379,7 @@ void line(float x,float y,float z) {
   long ad2=abs(d2);
   int dir1=d1<0?M1_REEL_IN:M1_REEL_OUT;
   int dir2=d2<0?M2_REEL_IN:M2_REEL_OUT;
-  long over=0;
+  long over;
   long i;
 
   long ad = max(ad1,ad2);
@@ -401,6 +401,7 @@ void line(float x,float y,float z) {
 
   // bresenham's line algorithm.
   if(ad1>ad2) {
+    over = ad1/2;
     for(i=0;i<ad1;++i) {
       M1_ONESTEP(dir1);
       over+=ad2;
@@ -417,6 +418,7 @@ void line(float x,float y,float z) {
 #endif
     }
   } else {
+    over = ad2/2;
     for(i=0;i<ad2;++i) {
       M2_ONESTEP(dir2);
       over+=ad1;

@@ -60,6 +60,10 @@ int current_tool=0;
 long line_number=0;
 
 
+extern long global_steps_0;
+extern long global_steps_1;
+
+
 //------------------------------------------------------------------------------
 // METHODS
 //------------------------------------------------------------------------------
@@ -219,39 +223,15 @@ void processConfig() {
   printConfig();
 
   teleport(posx,posy);
-/*
-  test_kinematics(0,0);
-  test_kinematics(10,0);
-  test_kinematics(-10,0);
-  test_kinematics(0,10);
-  test_kinematics(0,-10);
-  test_kinematics(10,10);
-  test_kinematics(-6.2,0.41);
-  test_kinematics(-8,-3);
-  test_kinematics(9.24,-7.55);
-*/
+
+  //test_kinematics();
 }
 
 
-//------------------------------------------------------------------------------
-// test FK(IK(x,y))=x,y
-void test_kinematics(float x,float y) {
-  long A,B;
-  float C,D;
-  IK(x,y,A,B);
-  FK(A,B,C,D);
-  Serial.print(F("\tx="));  Serial.print(x);
-  Serial.print(F("\ty="));  Serial.print(y);
-  Serial.print(F("\tL="));  Serial.print(A);
-  Serial.print(F("\tR="));  Serial.print(B);
-  Serial.print(F("\tx'="));  Serial.print(C);
-  Serial.print(F("\ty'="));  Serial.print(D);
-  Serial.print(F("\tdx="));  Serial.print(C-x);
-  Serial.print(F("\tdy="));  Serial.println(D-y);
-}
-
-
-void test_kinematics2() {
+/**
+ * Test that IK(FK(A))=A
+ */
+void test_kinematics() {
   long A,B,i;
   float C,D,x=0,y=0;
 
@@ -312,8 +292,8 @@ void line_safe(float x,float y,float z,float new_feed_rate) {
 
   // split up long lines to make them straighter?
   Vector3 destination(x,y,z);
-  Vector3 start(posx,posy,posz);
-  Vector3 dp = destination - start;
+  Vector3 startPoint(posx,posy,posz);
+  Vector3 dp = destination - startPoint;
   Vector3 temp;
 
   float len=dp.Length();
@@ -322,12 +302,20 @@ void line_safe(float x,float y,float z,float new_feed_rate) {
   float a;
   long j;
 
+  // draw everything up to (but not including) the destination.
   for(j=1;j<pieces;++j) {
     a=(float)j/(float)pieces;
-    temp = dp * a + start;
+    temp = dp * a + startPoint;
     polargraph_line(temp.x,temp.y,temp.z,new_feed_rate);
   }
+  // guarantee we stop exactly at the destination (no rounding errors).
   polargraph_line(x,y,z,new_feed_rate);
+  /*
+  long l1,l2;
+  IK(x,y,l1,l2);
+  Serial.print(F("H0="));  Serial.print(l1);
+  Serial.print(F("\tH1="));  Serial.println(l2);
+  */
 }
 
 
@@ -486,16 +474,16 @@ void FindHome() {
  * Equivalent to gcode M114
  */
 void where() {
-  Serial.print(F("X"));
-  Serial.print(posx);
-  Serial.print(F(" Y"));
-  Serial.print(posy);
-  Serial.print(F(" Z"));
-  Serial.print(posz);
-  Serial.print(F(" "));
-  printFeedRate();
-  Serial.print(F(" A"));
-  Serial.print(acceleration);
+  wait_for_empty_segment_buffer();
+
+  Serial.print(F("X"));   Serial.print(posx);
+  Serial.print(F(" Y"));  Serial.print(posy);
+  Serial.print(F(" Z"));  Serial.print(posz);
+  Serial.print(F(" "));   printFeedRate();
+  Serial.print(F(" A"));  Serial.println(acceleration);
+  
+  Serial.print(F(" G0="));  Serial.print(global_steps_0);
+  Serial.print(F(" G1="));  Serial.print(global_steps_1);
 }
 
 
