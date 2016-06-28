@@ -865,7 +865,7 @@ void processConfig() {
  */
 void processCommand() {
   // blank lines
-  if(buffer[0]==';') return;
+  if(serialBuffer[0]==';') return;
   
   long cmd;
 
