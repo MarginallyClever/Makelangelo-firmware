@@ -48,7 +48,7 @@ float acceleration=DEFAULT_ACCELERATION;
 char absolute_mode=1;  // absolute or incremental programming mode?
 
 // Serial comm reception
-char buffer[MAX_BUF+1];  // Serial buffer
+char serialBuffer[MAX_BUF+1];  // Serial buffer
 int sofar;               // Serial buffer progress
 static long last_cmd_time;    // prevent timeouts
 
@@ -408,7 +408,7 @@ void help() {
 /**
  * if limit switches are installed, move to touch each switch so that the pen holder can move to home position.
  */
-void FindHome() {
+void findHome() {
 #ifdef USE_LIMIT_SWITCH
   Serial.println(F("Homing..."));
 
@@ -539,8 +539,8 @@ void tool_change(int tool_id) {
  * @input val the return value if /code/ is not found.
  **/
 float parsenumber(char code,float val) {
-  char *ptr=buffer;  // start at the beginning of buffer
-  while(ptr && *ptr && ptr<buffer+sofar) {  // walk to the end
+  char *ptr=serialBuffer;  // start at the beginning of buffer
+  while(ptr && *ptr && ptr<serialBuffer+sofar) {  // walk to the end
     if(*ptr==code) {  // if you find code on your walk,
       return atof(ptr+1);  // convert the digits that follow into a float and return it
     }
@@ -555,13 +555,13 @@ float parsenumber(char code,float val) {
  */
 void processCommand() {
   // blank lines
-  if(buffer[0]==';') return;
+  if(serialBuffer[0]==';') return;
 
   long cmd;
 
   // is there a line number?
   cmd=parsenumber('N',-1);
-  if(cmd!=-1 && buffer[0]=='N') {  // line number must appear first on the line
+  if(cmd!=-1 && serialBuffer[0]=='N') {  // line number must appear first on the line
     if( cmd != line_number ) {
       // wrong line number error
       Serial.print(F("BADLINENUM "));
@@ -570,13 +570,13 @@ void processCommand() {
     }
 
     // is there a checksum?
-    if(strchr(buffer,'*')!=0) {
+    if(strchr(serialBuffer,'*')!=0) {
       // yes.  is it valid?
       char checksum=0;
       int c=0;
-      while(buffer[c]!='*' && c<MAX_BUF) checksum ^= buffer[c++];
+      while(serialBuffer[c]!='*' && c<MAX_BUF) checksum ^= serialBuffer[c++];
       c++; // skip *
-      int against = strtod(buffer+c,NULL);
+      int against = strtod(serialBuffer+c,NULL);
       if( checksum != against ) {
         Serial.print(F("BADCHECKSUM "));
         Serial.println(line_number);
@@ -591,8 +591,8 @@ void processCommand() {
     line_number++;
   }
 
-  if(!strncmp(buffer,"UID",3)) {
-    robot_uid=atoi(strchr(buffer,' ')+1);
+  if(!strncmp(serialBuffer,"UID",3)) {
+    robot_uid=atoi(strchr(serialBuffer,' ')+1);
     SaveUID();
   }
 
@@ -640,7 +640,7 @@ void processCommand() {
       pause(delayTime);
       break;
     }
-  case 28:  FindHome();  break;
+  case 28:  findHome();  break;
   case 54:
   case 55:
   case 56:
@@ -702,7 +702,7 @@ void processCommand() {
     Serial.print('L');  Serial.print(pulleyDiameter);
     Serial.print(F(" R"));   Serial.println(pulleyDiameter);
     break;
-  case 4:  SD_StartPrintingFile(strchr(buffer,' ')+1);  break;  // read file
+  case 4:  SD_StartPrintingFile(strchr(serialBuffer,' ')+1);  break;  // read file
   }
 }
 
@@ -758,12 +758,12 @@ void Serial_listen() {
   while(Serial.available() > 0) {
     char c = Serial.read();
     if(c=='\r') continue;
-    if(sofar<MAX_BUF) buffer[sofar++]=c;
+    if(sofar<MAX_BUF) serialBuffer[sofar++]=c;
     if(c=='\n') {
-      buffer[sofar]=0;
+      serialBuffer[sofar]=0;
 
       // echo confirmation
-//      Serial.println(F(buffer));
+//      Serial.println(F(serialBuffer));
 
       // do something with the command
       processCommand();

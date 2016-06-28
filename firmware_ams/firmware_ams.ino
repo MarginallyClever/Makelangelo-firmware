@@ -201,7 +201,7 @@ static char mode_name[3];
 
 
 // Serial comm reception
-static char serial_buffer[MAX_BUF+1];  // Serial buffer
+static char serialBuffer[MAX_BUF+1];  // Serial buffer
 static int sofar;               // Serial buffer progress
 static long last_cmd_time;      // prevent timeouts
 
@@ -741,13 +741,13 @@ void SD_ProcessFile(char *filename) {
   int c;
   while(f.peek() != -1) {
     c=f.read();
-    if(sofar<MAX_BUF) serial_buffer[sofar++]=c;
+    if(sofar<MAX_BUF) serialBuffer[sofar++]=c;
     if(c=='\n') {
       // end string
-      serial_buffer[sofar]=0;
+      serialBuffer[sofar]=0;
 #if VERBOSE > 0
       // print for our benefit
-      Serial.println(serial_buffer);
+      Serial.println(serialBuffer);
 #endif
       processCommand();
       // reset buffer for next line
@@ -786,8 +786,8 @@ void activate_motors() {
  * @input val the return value if /code/ is not found.
  **/
 float parsenumber(char code,float val) {
-  char *ptr=serial_buffer;  // start at the beginning of buffer
-  while(ptr && *ptr && ptr<serial_buffer+sofar) {  // walk to the end
+  char *ptr=serialBuffer;  // start at the beginning of buffer
+  while(ptr && *ptr && ptr<serialBuffer+sofar) {  // walk to the end
     if(*ptr==code) {  // if you find code on your walk,
       return atof(ptr+1);  // convert the digits that follow into a float and return it
     }
@@ -860,13 +860,18 @@ void processConfig() {
 }
 
 
-//------------------------------------------------------------------------------
+/**
+ * process commands in the serial receive buffer
+ */
 void processCommand() {
+  // blank lines
+  if(buffer[0]==';') return;
+  
   long cmd;
 
   // is there a line number?
   cmd=parsenumber('N',-1);
-  if(cmd!=-1 && serial_buffer[0] == 'N') {  // line number must appear first on the line
+  if(cmd!=-1 && serialBuffer[0] == 'N') {  // line number must appear first on the line
     if( cmd != line_number ) {
       // Wrong line number error
       Serial.print(F("BADLINENUM "));
@@ -876,13 +881,13 @@ void processCommand() {
 
 
     // is there a checksum?
-    if(strchr(serial_buffer,'*')!=0) {
+    if(strchr(serialBuffer,'*')!=0) {
       // Yes.  Is it valid?
       unsigned char checksum=0;
       int c=0;
-      while(serial_buffer[c]!='*' && c<MAX_BUF) checksum ^= serial_buffer[c++];
+      while(serialBuffer[c]!='*' && c<MAX_BUF) checksum ^= serialBuffer[c++];
       c++; // skip *
-      unsigned char against = (unsigned char)strtod(serial_buffer+c,NULL);
+      int against = strtod(serialBuffer+c,NULL);
       if( checksum != against ) {
         Serial.print(F("BADCHECKSUM "));
         Serial.println(line_number);
@@ -897,8 +902,8 @@ void processCommand() {
     line_number++;
   }
 
-  if(!strncmp(serial_buffer,"UID",3)) {
-    robot_uid=atoi(strchr(serial_buffer,' ')+1);
+  if(!strncmp(serialBuffer,"UID",3)) {
+    robot_uid=atoi(strchr(serialBuffer,' ')+1);
     SaveUID();
   }
 
@@ -978,7 +983,7 @@ void processCommand() {
   switch(cmd) {
   case 0: {
       // jog one motor
-      char *ptr=strchr(serial_buffer,' ')+1;
+      char *ptr=strchr(serialBuffer,' ')+1;
       int amount = atoi(ptr+1);
       int i, dir;
       if(*ptr == m1d) {
@@ -1023,7 +1028,7 @@ void processCommand() {
     break;
 #ifdef USE_SD_CARD
   case 3:  SD_ListFiles();  break;    // read directory
-  case 4:  SD_ProcessFile(strchr(serial_buffer,' ')+1);  break;  // read file
+  case 4:  SD_ProcessFile(strchr(serialBuffer,' ')+1);  break;  // read file
 #endif
   }
 }
@@ -1138,13 +1143,13 @@ void Serial_listen() {
   // listen for serial commands
   while(Serial.available() > 0) {
     char c = Serial.read();
-    if(sofar<MAX_BUF) serial_buffer[sofar++]=c;
+    if(sofar<MAX_BUF) serialBuffer[sofar++]=c;
     if(c=='\n') {
-      serial_buffer[sofar]=0;
+      serialBuffer[sofar]=0;
 
 #if VERBOSE > 0
       // echo confirmation
-      Serial.println(serial_buffer);
+      Serial.println(serialBuffer);
 #endif
 
       // do something with the command

@@ -80,7 +80,7 @@ void SD_check() {
     int c;
     while(sd_print_file.peek() != -1) {
       c=sd_print_file.read();
-      buffer[sofar++]=c;
+      serialBuffer[sofar++]=c;
       sd_bytes_read++;
       if(c==';') {
         // eat to the end of the line
@@ -95,9 +95,9 @@ void SD_check() {
         sd_percent_complete = (float)sd_bytes_read * 100.0 / (float)sd_file_size;
 
         // end string
-        buffer[sofar]=0;
+        serialBuffer[sofar]=0;
         // print for our benefit
-        Serial.println(buffer);
+        Serial.println(serialBuffer);
         // process command
         processCommand();
         // reset buffer for next line
