@@ -180,17 +180,19 @@ void AF_Stepper::onestep(uint8_t dir) {
   Serial.print("current step: "); Serial.println(currentstep, DEC);
 #endif
 
-  // preprare to release all coils
+  // set all of this motor's pins to 0 (don't smash other motor)
+  latch_state &= ~a & ~b & ~c & ~d;
+
   // No wait!  Keep some energized.
   switch (currentstep/(MICROSTEPS/2)) {
-  case 0:  latch_state = a;      break;  // energize coil 1 only
-  case 1:  latch_state = a | b;  break;  // energize coil 1+2
-  case 2:  latch_state = b;      break;  // energize coil 2 only
-  case 3:  latch_state = b | c;  break;  // energize coil 2+3
-  case 4:  latch_state = c;      break;  // energize coil 3 only
-  case 5:  latch_state = c | d;  break;  // energize coil 3+4
-  case 6:  latch_state = d;      break;  // energize coil 4 only
-  case 7:  latch_state = d | a;  break;  // energize coil 1+4
+  case 0:  latch_state |= a;      break;  // energize coil 1 only
+  case 1:  latch_state |= a | b;  break;  // energize coil 1+2
+  case 2:  latch_state |= b;      break;  // energize coil 2 only
+  case 3:  latch_state |= b | c;  break;  // energize coil 2+3
+  case 4:  latch_state |= c;      break;  // energize coil 3 only
+  case 5:  latch_state |= c | d;  break;  // energize coil 3+4
+  case 6:  latch_state |= d;      break;  // energize coil 4 only
+  case 7:  latch_state |= d | a;  break;  // energize coil 1+4
   }
 
   // change the energized state now
