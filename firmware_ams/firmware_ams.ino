@@ -887,7 +887,7 @@ void processCommand() {
       int c=0;
       while(serialBuffer[c]!='*' && c<MAX_BUF) checksum ^= serialBuffer[c++];
       c++; // skip *
-      int against = strtod(serialBuffer+c,NULL);
+      int against = strtol(serialBuffer+c,NULL,10);
       if( checksum != against ) {
         Serial.print(F("BADCHECKSUM "));
         Serial.println(line_number);
