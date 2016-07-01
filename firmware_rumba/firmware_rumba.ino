@@ -331,45 +331,47 @@ void line_safe(float x,float y,float z,float new_feed_rate) {
  * @input dir - ARC_CW or ARC_CCW to control direction of arc
  * @input new_feed_rate speed to travel along arc
  */
-void arc(float cx,float cy,float x,float y,float z,float dir,float new_feed_rate) {
+void arc(float cx,float cy,float x,float y,float z,char clockwise,float new_feed_rate) {
   // get radius
   float dx = posx - cx;
   float dy = posy - cy;
-  float radius=sqrt(dx*dx+dy*dy);
+  float sr=sqrt(dx*dx+dy*dy);
 
   // find angle of arc (sweep)
-  float angle1=atan3(dy,dx);
-  float angle2=atan3(y-cy,x-cx);
-  float theta=angle2-angle1;
-
-  if(dir>0 && theta<0) angle2+=2*PI;
-  else if(dir<0 && theta>0) angle1+=2*PI;
-
-  theta=angle2-angle1;
+  float sa=atan3(dy,dx);
+  float ea=atan3(y-cy,x-cx);
+  float er=sqrt(dx*dx+dy*dy);
+  
+  float da=ea-sa;
+  if(clockwise!=0 && da<0) ea+=2*PI;
+  else if(clockwise==0 && da>0) sa+=2*PI;
+  da=ea-sa;
+  float dr = er-sr;
 
   // get length of arc
   // float circ=PI*2.0*radius;
   // float len=theta*circ/(PI*2.0);
   // simplifies to
-  float len = abs(theta) * radius;
+  float len1 = abs(da) * sr;
+  float len = sqrt( len1 * len1 + dr * dr );
 
-  int i, segments = floor( len * SEGMENT_PER_CM_ARC );
+  int i, segments = ceil( len * SEGMENT_PER_CM_ARC );
 
   float nx, ny, nz, angle3, scale;
-
-  for(i=0;i<segments;++i) {
+  float a,r;
+  for(i=0;i<=segments;++i) {
     // interpolate around the arc
     scale = ((float)i)/((float)segments);
 
-    angle3 = ( theta * scale ) + angle1;
-    nx = cx + cos(angle3) * radius;
-    ny = cy + sin(angle3) * radius;
+    a = ( da * scale ) + sa;
+    r = ( dr * scale ) + sr;
+    
+    nx = cx + cos(a) * r;
+    ny = cy + sin(a) * r;
     nz = ( z - posz ) * scale + posz;
     // send it to the planner
-    line_safe(nx,ny,nz,new_feed_rate);
+    line_safe(nx,ny,nz);
   }
-
-  line_safe(x,y,z,new_feed_rate);
 }
 
 
@@ -630,7 +632,7 @@ void processCommand() {
           parsenumber('X',(absolute_mode?offset.x:0)*10)*0.1 + (absolute_mode?0:offset.x),
           parsenumber('Y',(absolute_mode?offset.y:0)*10)*0.1 + (absolute_mode?0:offset.y),
           parsenumber('Z',(absolute_mode?offset.z:0)) + (absolute_mode?0:offset.z),
-          (cmd==2) ? -1 : 1,
+          (cmd==2) ? 1 : 0,
           parsenumber('F',feed_rate) );
       break;
     }
@@ -657,8 +659,10 @@ void processCommand() {
   case 91:  absolute_mode=0;  break;  // relative mode
   case 92: {  // set position (teleport)
       Vector3 offset = get_end_plus_offset();
-      teleport( parsenumber('X',offset.x),
-                parsenumber('Y',offset.y));
+      teleport( parsenumber('X',(absolute_mode?offset.x:0)*10)*0.1 + (absolute_mode?0:offset.x),
+                 parsenumber('Y',(absolute_mode?offset.y:0)*10)*0.1 + (absolute_mode?0:offset.y)
+               //parsenumber('Z',(absolute_mode?offset.z:0)) + (absolute_mode?0:offset.z)
+                 );
       break;
     }
   }
