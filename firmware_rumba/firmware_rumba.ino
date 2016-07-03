@@ -370,7 +370,7 @@ void arc(float cx,float cy,float x,float y,float z,char clockwise,float new_feed
     ny = cy + sin(a) * r;
     nz = ( z - posz ) * scale + posz;
     // send it to the planner
-    line_safe(nx,ny,nz);
+    line_safe(nx,ny,nz,new_feed_rate);
   }
 }
 

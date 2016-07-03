@@ -973,7 +973,7 @@ void processCommand() {
   case 92: {  // set position (teleport)
       Vector3 offset = get_end_plus_offset();
       teleport( parsenumber('X',(absolute_mode?offset.x:0)*10)*0.1 + (absolute_mode?0:offset.x),
-                parsenumber('Y',(absolute_mode?offset.y:0)*10)*0.1 + (absolute_mode?0:offset.y),//,
+                parsenumber('Y',(absolute_mode?offset.y:0)*10)*0.1 + (absolute_mode?0:offset.y)//,
               //parsenumber('Z',(absolute_mode?offset.z:0)) + (absolute_mode?0:offset.z)
               );
       break;
