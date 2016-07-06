@@ -763,7 +763,7 @@ void SD_ProcessFile(char *filename) {
 
 
 //------------------------------------------------------------------------------
-void disable_motors() {
+void motor_disengage() {
 #if MOTHERBOARD == 1
   m1.release();
   m2.release();
@@ -775,7 +775,7 @@ void disable_motors() {
 }
 
 
-void activate_motors() {
+void motor_engage() {
   M1_ONESTEP(M1_REEL_IN);  M1_ONESTEP(M1_REEL_OUT);
   M2_ONESTEP(M2_REEL_IN);  M2_ONESTEP(M2_REEL_OUT);
 }
@@ -911,8 +911,8 @@ void processCommand() {
 
   cmd=parsenumber('M',-1);
   switch(cmd) {
-  case 18:  disable_motors();  break;
-  case 17:  activate_motors();  break;
+  case 17:  motor_engage();  break;
+  case 18:  motor_disengage();  break;
   case 100:  help();  break;
   case 101:  processConfig();  break;
   case 110:  line_number = parsenumber('N',line_number);  break;

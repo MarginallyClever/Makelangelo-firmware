@@ -602,8 +602,8 @@ void processCommand() {
   cmd=parsenumber('M',-1);
   switch(cmd) {
   case 6:  tool_change(parsenumber('T',current_tool));  break;
-  case 18:  motor_enable();  break;
-  case 17:  motor_disable();  break;
+  case 17:  motor_engage();  break;
+  case 18:  motor_disengage();  break;
   case 100:  help();  break;
   case 101:  processConfig();  break;
   case 110:  line_number = parsenumber('N',line_number);  break;
@@ -740,7 +740,7 @@ void setup() {
   help();
 
   motor_setup();
-  motor_enable();
+  motor_engage();
   tools_setup();
 
   //easyPWM_init();

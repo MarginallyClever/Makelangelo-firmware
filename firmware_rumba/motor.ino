@@ -163,7 +163,7 @@ void motor_setup() {
 
 
 // turn on power to the motors (make them immobile)
-void motor_enable() {
+void motor_engage() {
   int i;
   for(i=0;i<NUM_AXIES;++i) {
     digitalWrite(motors[i].enable_pin,LOW);
@@ -172,7 +172,7 @@ void motor_enable() {
 
 
 // turn off power to the motors (make them move freely)
-void motor_disable() {
+void motor_disengage() {
   int i;
   for(i=0;i<NUM_AXIES;++i) {
     digitalWrite(motors[i].enable_pin,HIGH);

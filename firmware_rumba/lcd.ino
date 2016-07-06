@@ -219,12 +219,12 @@ void LCD_stop() {
 }
 
 void LCD_disable_motors() {
-  motor_disable();
+  motor_disengage();
   MENU_GOTO(LCD_main_menu);
 }
 
 void LCD_enable_motors() {
-  motor_enable();
+  motor_engage();
   MENU_GOTO(LCD_main_menu);
 }
 
