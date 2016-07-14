@@ -182,7 +182,7 @@ int M2_REEL_OUT = BACKWARD;
 
 // calculate some numbers to help us find feed_rate
 float SPOOL_DIAMETER = 4.0f/PI;
-float THREAD_PER_STEP=0;  // thread per step
+float threadPerStep=0;  // thread per step
 
 // plotter position.
 static float posx, velx;
@@ -221,11 +221,11 @@ long line_number;
 void adjustSpoolDiameter(float diameter1) {
   SPOOL_DIAMETER = diameter1;
   float SPOOL_CIRC = SPOOL_DIAMETER*PI;  // circumference
-  THREAD_PER_STEP = SPOOL_CIRC/STEPS_PER_TURN;  // thread per step
+  threadPerStep = SPOOL_CIRC/STEPS_PER_TURN;  // thread per step
 
 #if VERBOSE > 2
   Serial.print(F("SpoolDiameter = "));  Serial.println(SPOOL_DIAMETER,3);
-  Serial.print(F("THREAD_PER_STEP="));  Serial.println(THREAD_PER_STEP,3);
+  Serial.print(F("threadPerStep="));  Serial.println(threadPerStep,3);
 #endif
 }
 
@@ -302,21 +302,21 @@ void setPenAngle(int pen_angle) {
 // Inverse Kinematics - turns XY coordinates into lengths L1,L2
 void IK(float x, float y, long &l1, long &l2) {
 #ifdef COREXY
-  l1 = floor((x+y) / THREAD_PER_STEP);
-  l2 = floor((x-y) / THREAD_PER_STEP);
+  l1 = lround((x+y) / threadPerStep);
+  l2 = lround((x-y) / threadPerStep);
 #endif
 #ifdef TRADITIONALXY
-  l1 = floor((x) / THREAD_PER_STEP);
-  l2 = floor((y) / THREAD_PER_STEP);
+  l1 = lround((x) / threadPerStep);
+  l2 = lround((y) / threadPerStep);
 #endif
 #ifdef POLARGRAPH2
   // find length to M1
   float dy = y - limit_top;
   float dx = x - limit_left;
-  l1 = floor( sqrt(dx*dx+dy*dy) / THREAD_PER_STEP );
+  l1 = lround( sqrt(dx*dx+dy*dy) / threadPerStep );
   // find length to M2
   dx = limit_right - x;
-  l2 = floor( sqrt(dx*dx+dy*dy) / THREAD_PER_STEP );
+  l2 = lround( sqrt(dx*dx+dy*dy) / threadPerStep );
 #endif
 }
 
@@ -327,22 +327,22 @@ void IK(float x, float y, long &l1, long &l2) {
 // to find angle between M1M2 and M1P where P is the plotter position.
 void FK(float l1, float l2,float &x,float &y) {
 #ifdef COREXY
-  l1 *= THREAD_PER_STEP;
-  l2 *= THREAD_PER_STEP;
+  l1 *= threadPerStep;
+  l2 *= threadPerStep;
 
   x = (float)( l1 + l2 ) / 2.0;
   y = x - (float)l2;
 #endif
 #ifdef TRADITIONALXY
-  l1 *= THREAD_PER_STEP;
-  l2 *= THREAD_PER_STEP;
+  l1 *= threadPerStep;
+  l2 *= threadPerStep;
   x = l1;
   y = l2;
 #endif
 #ifdef POLARGRAPH2
-  float a = (float)l1 * THREAD_PER_STEP;
+  float a = (float)l1 * threadPerStep;
   float b = (limit_right-limit_left);
-  float c = (float)l2 * THREAD_PER_STEP;
+  float c = (float)l2 * threadPerStep;
 
   // slow, uses trig
   // we know law of cosines:   cc = aa + bb -2ab * cos( theta )
@@ -762,7 +762,10 @@ void SD_ProcessFile(char *filename) {
 #endif // USE_SD_CARD
 
 
-//------------------------------------------------------------------------------
+
+/**
+ * 
+ */
 void motor_disengage() {
 #if MOTHERBOARD == 1
   m1.release();
@@ -775,6 +778,9 @@ void motor_disengage() {
 }
 
 
+/**
+ * 
+ */
 void motor_engage() {
   M1_ONESTEP(M1_REEL_IN);  M1_ONESTEP(M1_REEL_OUT);
   M2_ONESTEP(M2_REEL_IN);  M2_ONESTEP(M2_REEL_OUT);
@@ -1015,9 +1021,9 @@ void processCommand() {
       float amountL=parsenumber('L',SPOOL_DIAMETER);
       float amountR=parsenumber('R',SPOOL_DIAMETER);
 
-      float tps1=THREAD_PER_STEP;
+      float tps1=threadPerStep;
       adjustSpoolDiameter(amountL);
-      if(THREAD_PER_STEP != tps1) {
+      if(threadPerStep != tps1) {
         // Update EEPROM
         SaveSpoolDiameter();
       }
