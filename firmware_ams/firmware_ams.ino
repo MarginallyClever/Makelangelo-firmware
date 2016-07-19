@@ -405,7 +405,7 @@ void line(float x,float y,float z) {
     for(i=0;i<ad1;++i) {
       M1_ONESTEP(dir1);
       over+=ad2;
-      if(over>=ad1) {
+      if(over>ad1) {
         over-=ad1;
         M2_ONESTEP(dir2);
       }
@@ -422,7 +422,7 @@ void line(float x,float y,float z) {
     for(i=0;i<ad2;++i) {
       M2_ONESTEP(dir2);
       over+=ad1;
-      if(over>=ad2) {
+      if(over>ad2) {
         over-=ad2;
         M1_ONESTEP(dir1);
       }
