@@ -34,9 +34,9 @@
 #define MICROSTEPS           (16.0)  // microstepping on this microcontroller
 #define STEPS_PER_TURN       (400 * MICROSTEPS)  // default number of steps per turn * microsteps
 
-#define MAX_FEEDRATE         (30000.0)  // depends on timer interrupt & hardware
+#define MAX_FEEDRATE         (9000.0)  // depends on timer interrupt & hardware
 #define MIN_FEEDRATE         (100)
-#define DEFAULT_FEEDRATE     (8500.0)
+#define DEFAULT_FEEDRATE     (6000.0)
 #define DEFAULT_ACCELERATION (250)
 
 #define STEP_DELAY           (150)  // delay between steps, in microseconds, when doing fixed tasks like homing
@@ -205,11 +205,17 @@
 //------------------------------------------------------------------------------
 // EEPROM MEMORY MAP
 //------------------------------------------------------------------------------
-#define EEPROM_VERSION   4                         // Increment EEPROM_VERSION when adding new variables
-#define ADDR_VERSION     0                         // address of the version number (one byte)
-#define ADDR_UUID        (ADDR_VERSION+1)          // address of the UUID (long - 4 bytes)
-#define ADDR_SPOOL_DIA1  (ADDR_UUID+4)             // address of the spool diameter (float - 4 bytes)
-#define ADDR_SPOOL_DIA2  (ADDR_SPOOL_DIA1+4)       // address of the spool diameter (float - 4 bytes)
+#define EEPROM_VERSION   5                    // Increment EEPROM_VERSION when adding new variables
+#define ADDR_VERSION     0                    // address of the version number (one byte)
+#define ADDR_UUID        (ADDR_VERSION+1)     // long - 4 bytes)
+#define ADDR_PULLEY_DIA1 (ADDR_UUID+4)        // float - 4 bytes
+#define ADDR_PULLEY_DIA2 (ADDR_PULLEY_DIA1+4) // float - 4 bytes
+#define ADDR_LEFT        (ADDR_PULLEY_DIA2+4) // float - 4 bytes
+#define ADDR_RIGHT       (ADDR_LEFT+4)        // float - 4 bytes
+#define ADDR_TOP         (ADDR_RIGHT+4)       // float - 4 bytes
+#define ADDR_BOTTOM      (ADDR_TOP+4)         // float - 4 bytes
+#define ADDR_INVL        (ADDR_BOTTOM+4)      // bool - 1 byte
+#define ADDR_INVR        (ADDR_INVL+1)        // bool - 1 byte
 
 
 //------------------------------------------------------------------------------

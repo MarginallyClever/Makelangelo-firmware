@@ -24,9 +24,7 @@
 // robot UID
 int robot_uid=0;
 
-// plotter limits
-// all distances are relative to the calibration point of the plotter.
-// (normally this is the center of the drawing area)
+// plotter limits, relative to the center of the plotter.
 float limit_top = 0;  // distance to top of drawing area.
 float limit_bottom = 0;  // Distance to bottom of drawing area.
 float limit_right = 0;  // Distance to right of drawing area.
@@ -35,6 +33,10 @@ float limit_left = 0;  // Distance to left of drawing area.
 // what are the motors called?
 char m1d='L';
 char m2d='R';
+
+// motor inversions
+char m1i=1;
+char m2i=1;
 
 // calculate some numbers to help us find feed_rate
 float pulleyDiameter = 4.0f/PI;  // cm
@@ -71,7 +73,7 @@ extern long global_steps_1;
 
 //------------------------------------------------------------------------------
 // calculate max velocity, threadperstep.
-void adjustSpoolDiameter(float diameter1) {
+void adjustPulleyDiameter(float diameter1) {
   pulleyDiameter = diameter1;
   float circumference = pulleyDiameter*PI;  // circumference
   threadPerStep = circumference/STEPS_PER_TURN;  // thread per step
@@ -191,40 +193,54 @@ void FK(long l1, long l2,float &x,float &y) {
 
 //------------------------------------------------------------------------------
 void processConfig() {
-  limit_top=parsenumber('T',limit_top);
-  limit_bottom=parsenumber('B',limit_bottom);
-  limit_right=parsenumber('R',limit_right);
-  limit_left=parsenumber('L',limit_left);
+  float newT = parseNumber('T',limit_top);
+  float newB = parseNumber('B',limit_bottom);
+  float newR = parseNumber('R',limit_right);
+  float newL = parseNumber('L',limit_left);
 
-  char gg=parsenumber('G',m1d);
-  char hh=parsenumber('H',m2d);
-  char i=parsenumber('I',0);
-  char j=parsenumber('J',0);
-  if(i!=0) {
-    if(i>0) {
-      motors[0].reel_in  = HIGH;
-      motors[0].reel_out = LOW;
-    } else {
-      motors[0].reel_in  = LOW;
-      motors[0].reel_out = HIGH;
-    }
-  }
-  if(j!=0) {
-    if(j>0) {
-      motors[1].reel_in  = HIGH;
-      motors[1].reel_out = LOW;
-    } else {
-      motors[1].reel_in  = LOW;
-      motors[1].reel_out = HIGH;
-    }
-  }
+  adjustDimensions(newT,newB,newR,newL);
 
+  // programmatically swap motors
+  char gg=parseNumber('G',m1d);
+  char hh=parseNumber('H',m2d);
+
+  // invert motor direction
+  char i=parseNumber('I',0);
+  char j=parseNumber('J',0);
+  
+  adjustInversions(i,j);
+  
   // @TODO: check t>b, r>l ?
+  
   printConfig();
 
   teleport(posx,posy);
+}
 
-  //test_kinematics();
+
+//------------------------------------------------------------------------------
+void adjustInversions(int m1,int m2) {
+  if(m1>0) {
+    motors[0].reel_in  = HIGH;
+    motors[0].reel_out = LOW;
+  } else if(m1<0) {
+    motors[0].reel_in  = LOW;
+    motors[0].reel_out = HIGH;
+  }
+
+  if(m2>0) {
+    motors[1].reel_in  = HIGH;
+    motors[1].reel_out = LOW;
+  } else if(m2<0) {
+    motors[1].reel_in  = LOW;
+    motors[1].reel_out = HIGH;
+  }
+
+  if( m1!=m1i || m2 != m2i) {
+    m1i=m1;
+    m2i=m2;
+    saveInversions();
+  }
 }
 
 
@@ -396,9 +412,14 @@ void teleport(float x,float y) {
  * Print a helpful message to serial.  The first line must never be changed to play nice with the JAVA software.
  */
 void help() {
+  char versionNumber = loadVersion();
+  
   Serial.print(F("\n\nHELLO WORLD! I AM DRAWBOT #"));
   Serial.println(robot_uid);
-  Serial.println(F("== DRAWBOT - http://www.makelangelo.com/ =="));
+  Serial.print('v');
+  Serial.print(versionNumber,DEC);
+  Serial.println(F(" model RUMBA"));
+  Serial.println(F("== http://www.makelangelo.com/ =="));
   Serial.println(F("M100 - display this message"));
   Serial.println(F("M101 [Tx.xx] [Bx.xx] [Rx.xx] [Lx.xx]"));
   Serial.println(F("       - display/update board dimensions."));
@@ -540,7 +561,7 @@ void tool_change(int tool_id) {
  * @input code the character to look for.
  * @input val the return value if /code/ is not found.
  **/
-float parsenumber(char code,float val) {
+float parseNumber(char code,float val) {
   char *ptr=serialBuffer;  // start at the beginning of buffer
   while(ptr && *ptr && ptr<serialBuffer+sofar) {  // walk to the end
     if(*ptr==code) {  // if you find code on your walk,
@@ -562,7 +583,7 @@ void processCommand() {
   long cmd;
 
   // is there a line number?
-  cmd=parsenumber('N',-1);
+  cmd=parseNumber('N',-1);
   if(cmd!=-1 && serialBuffer[0]=='N') {  // line number must appear first on the line
     if( cmd != line_number ) {
       // wrong line number error
@@ -595,50 +616,50 @@ void processCommand() {
 
   if(!strncmp(serialBuffer,"UID",3)) {
     robot_uid=atoi(strchr(serialBuffer,' ')+1);
-    SaveUID();
+    saveUID();
   }
 
 
-  cmd=parsenumber('M',-1);
+  cmd=parseNumber('M',-1);
   switch(cmd) {
-  case 6:  tool_change(parsenumber('T',current_tool));  break;
+  case 6:  tool_change(parseNumber('T',current_tool));  break;
   case 17:  motor_engage();  break;
   case 18:  motor_disengage();  break;
   case 100:  help();  break;
   case 101:  processConfig();  break;
-  case 110:  line_number = parsenumber('N',line_number);  break;
+  case 110:  line_number = parseNumber('N',line_number);  break;
   case 114:  where();  break;
   }
 
-  cmd=parsenumber('G',-1);
+  cmd=parseNumber('G',-1);
   switch(cmd) {
   case 0:
   case 1: {  // line
       Vector3 offset=get_end_plus_offset();
-      acceleration = min(max(parsenumber('A',acceleration),1),2000);
-      line_safe( parsenumber('X',(absolute_mode?offset.x:0)*10)*0.1 + (absolute_mode?0:offset.x),
-                 parsenumber('Y',(absolute_mode?offset.y:0)*10)*0.1 + (absolute_mode?0:offset.y),
-                 parsenumber('Z',(absolute_mode?offset.z:0)) + (absolute_mode?0:offset.z),
-                 parsenumber('F',feed_rate) );
+      acceleration = min(max(parseNumber('A',acceleration),1),2000);
+      line_safe( parseNumber('X',(absolute_mode?offset.x:0)*10)*0.1 + (absolute_mode?0:offset.x),
+                 parseNumber('Y',(absolute_mode?offset.y:0)*10)*0.1 + (absolute_mode?0:offset.y),
+                 parseNumber('Z',(absolute_mode?offset.z:0)) + (absolute_mode?0:offset.z),
+                 parseNumber('F',feed_rate) );
       break;
     }
   case 2:
   case 3: {  // arc
       Vector3 offset=get_end_plus_offset();
-      acceleration = min(max(parsenumber('A',acceleration),1),2000);
-      setFeedRate(parsenumber('F',feed_rate));
-      arc(parsenumber('I',(absolute_mode?offset.x:0)*10)*0.1 + (absolute_mode?0:offset.x),
-          parsenumber('J',(absolute_mode?offset.y:0)*10)*0.1 + (absolute_mode?0:offset.y),
-          parsenumber('X',(absolute_mode?offset.x:0)*10)*0.1 + (absolute_mode?0:offset.x),
-          parsenumber('Y',(absolute_mode?offset.y:0)*10)*0.1 + (absolute_mode?0:offset.y),
-          parsenumber('Z',(absolute_mode?offset.z:0)) + (absolute_mode?0:offset.z),
+      acceleration = min(max(parseNumber('A',acceleration),1),2000);
+      setFeedRate(parseNumber('F',feed_rate));
+      arc(parseNumber('I',(absolute_mode?offset.x:0)*10)*0.1 + (absolute_mode?0:offset.x),
+          parseNumber('J',(absolute_mode?offset.y:0)*10)*0.1 + (absolute_mode?0:offset.y),
+          parseNumber('X',(absolute_mode?offset.x:0)*10)*0.1 + (absolute_mode?0:offset.x),
+          parseNumber('Y',(absolute_mode?offset.y:0)*10)*0.1 + (absolute_mode?0:offset.y),
+          parseNumber('Z',(absolute_mode?offset.z:0)) + (absolute_mode?0:offset.z),
           (cmd==2) ? 1 : 0,
-          parsenumber('F',feed_rate) );
+          parseNumber('F',feed_rate) );
       break;
     }
   case 4:  {  // dwell
       wait_for_empty_segment_buffer();
-      float delayTime = parsenumber('S',0) + parsenumber('P',0)*1000.0f;
+      float delayTime = parseNumber('S',0) + parseNumber('P',0)*1000.0f;
       pause(delayTime);
       break;
     }
@@ -650,28 +671,28 @@ void processCommand() {
   case 58:
   case 59: {  // 54-59 tool offsets
     int tool_id=cmd-54;
-    set_tool_offset(tool_id,parsenumber('X',tool_offset[tool_id].x),
-                            parsenumber('Y',tool_offset[tool_id].y),
-                            parsenumber('Z',tool_offset[tool_id].z));
+    set_tool_offset(tool_id,parseNumber('X',tool_offset[tool_id].x),
+                            parseNumber('Y',tool_offset[tool_id].y),
+                            parseNumber('Z',tool_offset[tool_id].z));
     break;
     }
   case 90:  absolute_mode=1;  break;  // absolute mode
   case 91:  absolute_mode=0;  break;  // relative mode
   case 92: {  // set position (teleport)
       Vector3 offset = get_end_plus_offset();
-      teleport( parsenumber('X',(absolute_mode?offset.x:0)*10)*0.1 + (absolute_mode?0:offset.x),
-                 parsenumber('Y',(absolute_mode?offset.y:0)*10)*0.1 + (absolute_mode?0:offset.y)
-               //parsenumber('Z',(absolute_mode?offset.z:0)) + (absolute_mode?0:offset.z)
+      teleport( parseNumber('X',(absolute_mode?offset.x:0)*10)*0.1 + (absolute_mode?0:offset.x),
+                 parseNumber('Y',(absolute_mode?offset.y:0)*10)*0.1 + (absolute_mode?0:offset.y)
+               //parseNumber('Z',(absolute_mode?offset.z:0)) + (absolute_mode?0:offset.z)
                  );
       break;
     }
   }
 
-  cmd=parsenumber('D',-1);
+  cmd=parseNumber('D',-1);
   switch(cmd) {
   case 0: {
       // move one motor
-      int i,amount=parsenumber(m1d,0);
+      int i,amount=parseNumber(m1d,0);
       digitalWrite(MOTOR_0_DIR_PIN,amount < 0 ? motors[0].reel_in : motors[0].reel_out);
       amount=abs(amount);
       for(i=0;i<amount;++i) {
@@ -680,7 +701,7 @@ void processCommand() {
         pause(STEP_DELAY);
       }
 
-      amount=parsenumber(m2d,0);
+      amount=parseNumber(m2d,0);
       digitalWrite(MOTOR_1_DIR_PIN,amount < 0 ? motors[1].reel_in : motors[1].reel_out);
       amount = abs(amount);
       for(i=0;i<amount;++i) {
@@ -692,13 +713,13 @@ void processCommand() {
     break;
   case 1: {
       // adjust spool diameters
-      float amountL=parsenumber('L',pulleyDiameter);
+      float amountL=parseNumber('L',pulleyDiameter);
 
       float d1=pulleyDiameter;
-      adjustSpoolDiameter(amountL);
+      adjustPulleyDiameter(amountL);
       if(pulleyDiameter != d1) {
         // Update EEPROM
-        SaveSpoolDiameter();
+        savePulleyDiameter();
       }
     }
     break;
@@ -731,7 +752,7 @@ void tools_setup() {
 
 //------------------------------------------------------------------------------
 void setup() {
-  LoadConfig();
+  loadConfig();
 
   // start communications
   Serial.begin(BAUD);
@@ -795,14 +816,14 @@ void loop() {
 
 
 /**
- * This file is part of DrawbotGUI.
+ * This file is part of makelangelo-firmware.
  *
- * DrawbotGUI is free software: you can redistribute it and/or modify
+ * makelangelo-firmware is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * DrawbotGUI is distributed in the hope that it will be useful,
+ * makelangelo-firmware is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.

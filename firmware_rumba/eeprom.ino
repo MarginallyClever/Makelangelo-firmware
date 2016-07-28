@@ -36,63 +36,107 @@ float EEPROM_readLong(int ee) {
 
 
 //------------------------------------------------------------------------------
-void LoadConfig() {
-  char version_number=EEPROM.read(ADDR_VERSION);
-  if(version_number!=EEPROM_VERSION) {
+char loadVersion() {
+  return EEPROM.read(ADDR_VERSION);
+}
+
+
+//------------------------------------------------------------------------------
+void loadConfig() {
+  char versionNumber = loadVersion();
+  if( versionNumber != EEPROM_VERSION ) {
     // If not the current EEPROM_VERSION or the EEPROM_VERSION is sullied (i.e. unknown data)
     // Update the version number
     EEPROM.write(ADDR_VERSION,EEPROM_VERSION);
-    // Update robot uuid
-    robot_uid=0;
-    SaveUID();
-    // Update spool diameter variables
-    SaveSpoolDiameter();
   }
-
-  if(version_number==3) {
-    // Retrieve Stored Configuration
-    robot_uid=EEPROM_readLong(ADDR_UUID);
-    adjustSpoolDiameter((float)EEPROM_readLong(ADDR_SPOOL_DIA1)/10000.0f);   //3 decimal places of percision is enough
-    // save the new data so the next load doesn't screw up one bobbin size
-    SaveSpoolDiameter();
-  } else if(version_number==4) {
-    // Retrieve Stored Configuration
-    robot_uid=EEPROM_readLong(ADDR_UUID);
-    adjustSpoolDiameter((float)EEPROM_readLong(ADDR_SPOOL_DIA1)/10000.0f);   //3 decimal places of percision is enough
-  } else if(version_number==5) {
-
-  } else {
-    // Code should not get here if it does we should display some meaningful error message
-    Serial.println(F("An Error Occurred during LoadConfig"));
-  }
+  
+  // Retrieve stored configuration
+  robot_uid=EEPROM_readLong(ADDR_UUID);
+  adjustPulleyDiameter((float)EEPROM_readLong(ADDR_PULLEY_DIA1)/10000.0f);   //4 decimal places of percision is enough
+  loadDimensions();
+  loadInversions();
 }
 
 
 //------------------------------------------------------------------------------
-void SaveUID() {
+void saveUID() {
   EEPROM_writeLong(ADDR_UUID,(long)robot_uid);
 }
 
+
 //------------------------------------------------------------------------------
-void SaveSpoolDiameter() {
-  EEPROM_writeLong(ADDR_SPOOL_DIA1,pulleyDiameter*10000);
-  EEPROM_writeLong(ADDR_SPOOL_DIA2,pulleyDiameter*10000);
+void savePulleyDiameter() {
+  EEPROM_writeLong(ADDR_PULLEY_DIA1,pulleyDiameter*10000);
+  //EEPROM_writeLong(ADDR_PULLEY_DIA2,pulleyDiameter*10000);
 }
 
 
+//------------------------------------------------------------------------------
+void saveDimensions() {
+  EEPROM_writeLong(ADDR_LEFT,limit_left*100);
+  EEPROM_writeLong(ADDR_RIGHT,limit_right*100);
+  EEPROM_writeLong(ADDR_TOP,limit_top*100);
+  EEPROM_writeLong(ADDR_BOTTOM,limit_bottom*100);
+}
+
+
+//------------------------------------------------------------------------------
+void loadDimensions() {
+  limit_left   = (float)EEPROM_readLong(ADDR_LEFT)/100.0f;
+  limit_right  = (float)EEPROM_readLong(ADDR_RIGHT)/100.0f;
+  limit_top    = (float)EEPROM_readLong(ADDR_TOP)/100.0f;
+  limit_bottom = (float)EEPROM_readLong(ADDR_BOTTOM)/100.0f;
+}
+
+
+//------------------------------------------------------------------------------
+void adjustDimensions(float newT,float newB,float newR,float newL) {
+  // round off
+  newT = floor(newT*100)/100.0f;
+  newB = floor(newB*100)/100.0f;
+  newR = floor(newR*100)/100.0f;
+  newL = floor(newL*100)/100.0f;
+
+  if( limit_top    != newT ||
+      limit_bottom != newB ||
+      limit_right  != newR ||
+      limit_left   != newL) {
+        limit_top=newT;
+        limit_bottom=newB;
+        limit_right=newR;
+        limit_left=newL;
+        saveDimensions();
+      }
+}
+
+
+//------------------------------------------------------------------------------
+void saveInversions() {
+  EEPROM.write(ADDR_INVL,m1i>0?1:0);
+  EEPROM.write(ADDR_INVR,m2i>0?1:0);
+}
+
+
+//------------------------------------------------------------------------------
+void loadInversions() {
+  m1i = EEPROM.read(ADDR_INVL)>0?1:-1;
+  m2i = EEPROM.read(ADDR_INVR)>0?1:-1;
+  adjustInversions(m1i,m2i);
+}
+
 /**
- * This file is part of DrawbotGUI.
+ * This file is part of makelangelo-firmware.
  *
- * DrawbotGUI is free software: you can redistribute it and/or modify
+ * makelangelo-firmware is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * DrawbotGUI is distributed in the hope that it will be useful,
+ * makelangelo-firmware is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with DrawbotGUI.  If not, see <http://www.gnu.org/licenses/>.
+ * along with makelangelo-firmware.  If not, see <http://www.gnu.org/licenses/>.
  */

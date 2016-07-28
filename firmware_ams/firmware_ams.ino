@@ -107,11 +107,17 @@
 //------------------------------------------------------------------------------
 // EEPROM MEMORY MAP
 //------------------------------------------------------------------------------
-#define EEPROM_VERSION   4             // Increment EEPROM_VERSION when adding new variables
-#define ADDR_VERSION     0             // address of the version number (one byte)
-#define ADDR_UUID        1             // address of the UUID (long - 4 bytes)
-#define ADDR_SPOOL_DIA1  5             // address of the spool diameter (float - 4 bytes)
-#define ADDR_SPOOL_DIA2  9             // address of the spool diameter (float - 4 bytes)
+#define EEPROM_VERSION    5                   // Increment EEPROM_VERSION when adding new variables
+#define ADDR_VERSION      0                   // address of the version number (one byte)
+#define ADDR_UUID        (ADDR_VERSION+1)     // long - 4 bytes)
+#define ADDR_PULLEY_DIA1 (ADDR_UUID+4)        // float - 4 bytes
+#define ADDR_PULLEY_DIA2 (ADDR_PULLEY_DIA1+4) // float - 4 bytes
+#define ADDR_LEFT        (ADDR_PULLEY_DIA2+4) // float - 4 bytes
+#define ADDR_RIGHT       (ADDR_LEFT+4)        // float - 4 bytes
+#define ADDR_TOP         (ADDR_RIGHT+4)       // float - 4 bytes
+#define ADDR_BOTTOM      (ADDR_TOP+4)         // float - 4 bytes
+#define ADDR_INVL        (ADDR_BOTTOM+4)      // bool - 1 byte
+#define ADDR_INVR        (ADDR_INVL+1)        // bool - 1 byte
 
 
 //------------------------------------------------------------------------------
@@ -174,6 +180,10 @@ static float limit_left = 0;  // Distance to left of drawing area.
 char m1d='L';
 char m2d='R';
 
+// motor inversions
+char m1i = 1;
+char m2i = 1;
+
 // which way are the spools wound, relative to motor movement?
 int M1_REEL_IN  = FORWARD;
 int M1_REEL_OUT = BACKWARD;
@@ -181,7 +191,7 @@ int M2_REEL_IN  = FORWARD;
 int M2_REEL_OUT = BACKWARD;
 
 // calculate some numbers to help us find feed_rate
-float SPOOL_DIAMETER = 4.0f/PI;
+float pulleyDiameter = 4.0f/PI;  // cm
 float threadPerStep=0;  // thread per step
 
 // plotter position.
@@ -218,13 +228,13 @@ long line_number;
 
 //------------------------------------------------------------------------------
 // calculate max velocity, threadperstep.
-void adjustSpoolDiameter(float diameter1) {
-  SPOOL_DIAMETER = diameter1;
-  float SPOOL_CIRC = SPOOL_DIAMETER*PI;  // circumference
-  threadPerStep = SPOOL_CIRC/STEPS_PER_TURN;  // thread per step
+void adjustPulleyDiameter(float diameter1) {
+  pulleyDiameter = diameter1;
+  float PULLEY_CIRC = pulleyDiameter*PI;  // circumference
+  threadPerStep = PULLEY_CIRC/STEPS_PER_TURN;  // thread per step
 
 #if VERBOSE > 2
-  Serial.print(F("SpoolDiameter = "));  Serial.println(SPOOL_DIAMETER,3);
+  Serial.print(F("PulleyDiameter = "));  Serial.println(pulleyDiameter,3);
   Serial.print(F("threadPerStep="));  Serial.println(threadPerStep,3);
 #endif
 }
@@ -540,8 +550,13 @@ void teleport(float x,float y) {
 
 //------------------------------------------------------------------------------
 void help() {
+  int versionNumber = loadVersion();
+  
   Serial.print(F("\n\nHELLO WORLD! I AM DRAWBOT #"));
   Serial.println(robot_uid);
+  Serial.print('v');
+  Serial.print(versionNumber,DEC);
+  Serial.println(F(" model AMS"));
   Serial.println(F("M100 - display this message"));
   Serial.println(F("M101 [Tx.xx] [Bx.xx] [Rx.xx] [Lx.xx]"));
   Serial.println(F("       - display/update board dimensions."));
@@ -654,46 +669,100 @@ float EEPROM_readLong(int ee) {
 
 
 //------------------------------------------------------------------------------
-void SaveUID() {
+void saveUID() {
   EEPROM_writeLong(ADDR_UUID,(long)robot_uid);
 }
 
+
 //------------------------------------------------------------------------------
-void SaveSpoolDiameter() {
-  EEPROM_writeLong(ADDR_SPOOL_DIA1,SPOOL_DIAMETER*10000);
-  EEPROM_writeLong(ADDR_SPOOL_DIA2,SPOOL_DIAMETER*10000);
+void savePulleyDiameter() {
+  EEPROM_writeLong(ADDR_PULLEY_DIA1,pulleyDiameter*10000);
+  //EEPROM_writeLong(ADDR_PULLEY_DIA2,pulleyDiameter*10000);
 }
 
 
 //------------------------------------------------------------------------------
-void LoadConfig() {
-  char version_number=EEPROM.read(ADDR_VERSION);
-  if(version_number<3 || version_number>EEPROM_VERSION) {
+void saveDimensions() {
+  EEPROM_writeLong(ADDR_LEFT,limit_left*100);
+  EEPROM_writeLong(ADDR_RIGHT,limit_right*100);
+  EEPROM_writeLong(ADDR_TOP,limit_top*100);
+  EEPROM_writeLong(ADDR_BOTTOM,limit_bottom*100);
+}
+
+
+//------------------------------------------------------------------------------
+void loadDimensions() {
+  limit_left   = (float)EEPROM_readLong(ADDR_LEFT)/100.0f;
+  limit_right  = (float)EEPROM_readLong(ADDR_RIGHT)/100.0f;
+  limit_top    = (float)EEPROM_readLong(ADDR_TOP)/100.0f;
+  limit_bottom = (float)EEPROM_readLong(ADDR_BOTTOM)/100.0f;
+}
+
+
+//------------------------------------------------------------------------------
+void saveInversions() {
+  EEPROM.write(ADDR_INVL,m1i>0?1:0);
+  EEPROM.write(ADDR_INVR,m2i>0?1:0);
+}
+
+
+//------------------------------------------------------------------------------
+void loadInversions() {
+  m1i = EEPROM.read(ADDR_INVL)>0?1:-1;
+  m2i = EEPROM.read(ADDR_INVR)>0?1:-1;
+  adjustInversions(m1i,m2i);
+}
+
+
+//------------------------------------------------------------------------------
+void adjustDimensions(float newT,float newB,float newR,float newL) {
+  // round off
+  newT = floor(newT*100)/100.0f;
+  newB = floor(newB*100)/100.0f;
+  newR = floor(newR*100)/100.0f;
+  newL = floor(newL*100)/100.0f;
+
+  if( limit_top    != newT ||
+      limit_bottom != newB ||
+      limit_right  != newR ||
+      limit_left   != newL) {
+        limit_top=newT;
+        limit_bottom=newB;
+        limit_right=newR;
+        limit_left=newL;
+        saveDimensions();
+      }
+}
+
+
+//------------------------------------------------------------------------------
+char loadVersion() {
+  return EEPROM.read(ADDR_VERSION);
+}
+
+
+//------------------------------------------------------------------------------
+void loadConfig() {
+  int versionNumber = loadVersion();
+  
+  if( versionNumber != EEPROM_VERSION ) {
     // If not the current EEPROM_VERSION or the EEPROM_VERSION is sullied (i.e. unknown data)
     // Update the version number
     EEPROM.write(ADDR_VERSION,EEPROM_VERSION);
-    // Update robot uuid
-    robot_uid=0;
-    SaveUID();
-    // Update spool diameter variables
-    SaveSpoolDiameter();
   }
-  if(version_number==3) {
-    // Retrieve Stored Configuration
-    robot_uid=EEPROM_readLong(ADDR_UUID);
-    adjustSpoolDiameter((float)EEPROM_readLong(ADDR_SPOOL_DIA1)/10000.0f);   //3 decimal places of percision is enough
-    // save the new data so the next load doesn't screw up one bobbin size
-    SaveSpoolDiameter();
-    // update the EEPROM version
-    EEPROM.write(ADDR_VERSION,EEPROM_VERSION);
-  } else if(version_number==EEPROM_VERSION) {
-    // Retrieve Stored Configuration
-    robot_uid=EEPROM_readLong(ADDR_UUID);
-    adjustSpoolDiameter((float)EEPROM_readLong(ADDR_SPOOL_DIA1)/10000.0f);   //3 decimal places of percision is enough
-  } else {
-    // Code should not get here if it does we should display some meaningful error message
-    Serial.println(F("An Error Occurred during LoadConfig"));
-  }
+
+  // Retrieve stored configuration
+  robot_uid=EEPROM_readLong(ADDR_UUID);
+  loadDimensions();
+  loadPulleyDiameter();
+  loadInversions();
+}
+
+
+//------------------------------------------------------------------------------
+void loadPulleyDiameter() {
+  //4 decimal places of percision is enough
+  adjustPulleyDiameter((float)EEPROM_readLong(ADDR_PULLEY_DIA1)/10000.0f);
 }
 
 
@@ -842,29 +911,38 @@ void processConfig() {
   char hh=parsenumber('H',m2d);
   char i=parsenumber('I',0);
   char j=parsenumber('J',0);
-  if(i!=0) {
-    if(i>0) {
-      M1_REEL_IN  = FORWARD;
-      M1_REEL_OUT = BACKWARD;
-    } else {
-      M1_REEL_IN  = BACKWARD;
-      M1_REEL_OUT = FORWARD;
-    }
-  }
-  if(j!=0) {
-    if(j>0) {
-      M2_REEL_IN  = FORWARD;
-      M2_REEL_OUT = BACKWARD;
-    } else {
-      M2_REEL_IN  = BACKWARD;
-      M2_REEL_OUT = FORWARD;
-    }
-  }
+
+  adjustInversions(i,j);
 
   // @TODO: check t>b, r>l ?
   printConfig();
 
   teleport(0,0);
+}
+
+
+void adjustInversions(int m1,int m2) {
+  if(m1>0) {
+    M1_REEL_IN  = FORWARD;
+    M1_REEL_OUT = BACKWARD;
+  } else if(m1<0) {
+    M1_REEL_IN  = BACKWARD;
+    M1_REEL_OUT = FORWARD;
+  }
+
+  if(m2>0) {
+    M2_REEL_IN  = FORWARD;
+    M2_REEL_OUT = BACKWARD;
+  } else if(m2<0) {
+    M2_REEL_IN  = BACKWARD;
+    M2_REEL_OUT = FORWARD;
+  }
+
+  if( m1!=m1i || m2 != m2i) {
+    m1i=m1;
+    m2i=m2;
+    saveInversions();
+  }
 }
 
 
@@ -912,7 +990,7 @@ void processCommand() {
 
   if(!strncmp(serialBuffer,"UID",3)) {
     robot_uid=atoi(strchr(serialBuffer,' ')+1);
-    SaveUID();
+    saveUID();
   }
 
   cmd=parsenumber('M',-1);
@@ -1018,20 +1096,20 @@ void processCommand() {
     break;
   case 1: {
       // adjust spool diameters
-      float amountL=parsenumber('L',SPOOL_DIAMETER);
-      float amountR=parsenumber('R',SPOOL_DIAMETER);
+      float amountL=parsenumber('L',pulleyDiameter);
+      float amountR=parsenumber('R',pulleyDiameter);
 
       float tps1=threadPerStep;
-      adjustSpoolDiameter(amountL);
+      adjustPulleyDiameter(amountL);
       if(threadPerStep != tps1) {
         // Update EEPROM
-        SaveSpoolDiameter();
+        savePulleyDiameter();
       }
     }
     break;
   case 2:
-    Serial.print('L');  Serial.print(SPOOL_DIAMETER);
-    Serial.print(F(" R"));   Serial.println(SPOOL_DIAMETER);
+    Serial.print('L');  Serial.print(pulleyDiameter);
+    Serial.print(F(" R"));   Serial.println(pulleyDiameter);
     break;
 #ifdef USE_SD_CARD
   case 3:  SD_ListFiles();  break;    // read directory
@@ -1062,7 +1140,7 @@ void tools_setup() {
 
 //------------------------------------------------------------------------------
 void setup() {
-  LoadConfig();
+  loadConfig();
 
   // initialize the read buffer
   sofar=0;
@@ -1182,14 +1260,14 @@ void loop() {
 
 
 /**
- * This file is part of DrawbotGUI.
+ * This file is part of makelangelo-firmware.
  *
- * DrawbotGUI is free software: you can redistribute it and/or modify
+ * makelangelo-firmware is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * DrawbotGUI is distributed in the hope that it will be useful,
+ * makelangelo-firmware is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
