@@ -95,6 +95,8 @@
 #define File int
 #endif
 
+
+
 #if MOTHERBOARD == 1
 #define M1_ONESTEP(x)  m1.onestep(x)//,MICROSTEP)
 #define M2_ONESTEP(x)  m2.onestep(x)//,MICROSTEP)
@@ -108,8 +110,8 @@
 // EEPROM MEMORY MAP
 //------------------------------------------------------------------------------
 #define EEPROM_VERSION    5                   // Increment EEPROM_VERSION when adding new variables
-#define ADDR_VERSION      0                   // address of the version number (one byte)
-#define ADDR_UUID        (ADDR_VERSION+1)     // long - 4 bytes)
+#define ADDR_VERSION      0                   // 0..255 (1 byte)
+#define ADDR_UUID        (ADDR_VERSION+1)     // long - 4 bytes
 #define ADDR_PULLEY_DIA1 (ADDR_UUID+4)        // float - 4 bytes
 #define ADDR_PULLEY_DIA2 (ADDR_PULLEY_DIA1+4) // float - 4 bytes
 #define ADDR_LEFT        (ADDR_PULLEY_DIA2+4) // float - 4 bytes
@@ -118,6 +120,8 @@
 #define ADDR_BOTTOM      (ADDR_TOP+4)         // float - 4 bytes
 #define ADDR_INVL        (ADDR_BOTTOM+4)      // bool - 1 byte
 #define ADDR_INVR        (ADDR_INVL+1)        // bool - 1 byte
+#define ADDR_HOMEX       (ADDR_INVR+1)        // float - 4 bytes
+#define ADDR_HOMEY       (ADDR_HOMEX+4)       // float - 4 bytes
 
 
 //------------------------------------------------------------------------------
@@ -176,6 +180,9 @@ static float limit_bottom = 0;  // Distance to bottom of drawing area.
 static float limit_right = 0;  // Distance to right of drawing area.
 static float limit_left = 0;  // Distance to left of drawing area.
 
+static float homeX=0;
+static float homeY=0;
+
 // what are the motors called?
 char m1d='L';
 char m2d='R';
@@ -195,8 +202,8 @@ float pulleyDiameter = 4.0f/PI;  // cm
 float threadPerStep=0;  // thread per step
 
 // plotter position.
-static float posx, velx;
-static float posy, vely;
+static float posx;
+static float posy;
 static float posz;  // pen state
 static float feed_rate=0;
 static long step_delay;
@@ -550,12 +557,8 @@ void teleport(float x,float y) {
 
 //------------------------------------------------------------------------------
 void help() {
-  int versionNumber = loadVersion();
-  
   Serial.print(F("\n\nHELLO WORLD! I AM DRAWBOT #"));
   Serial.println(robot_uid);
-  Serial.print('v');
-  Serial.print(versionNumber,DEC);
   Serial.println(F(" model AMS"));
   Serial.println(F("M100 - display this message"));
   Serial.println(F("M101 [Tx.xx] [Bx.xx] [Rx.xx] [Lx.xx]"));
@@ -565,8 +568,15 @@ void help() {
 }
 
 
-//------------------------------------------------------------------------------
-// find the current robot position and
+void sayVersionNumber() {
+  int versionNumber = loadVersion();
+  
+  Serial.print('v');
+  Serial.print(versionNumber,DEC);
+}
+
+
+// touch some limit switches, then go to the home position.
 void findHome() {
 #ifdef USE_LIMIT_SWITCH
   Serial.println(F("Homing..."));
@@ -616,22 +626,21 @@ void findHome() {
   laststep2=safe_out;
 
   Serial.println(F("Centering..."));
-  line(0,0,posz);
+  line(homeX,homeY,posz);
 #endif // USE_LIMIT_SWITCH
 }
 
 
 //------------------------------------------------------------------------------
 void where() {
-  Serial.print(F("X"));
-  Serial.print(posx);
-  Serial.print(F(" Y"));
-  Serial.print(posy);
-  Serial.print(F(" Z"));
-  Serial.print(posz);
-  Serial.print(' ');
-  printFeedRate();
+  Serial.print(F("X"));  Serial.print(posx);
+  Serial.print(F(" Y"));  Serial.print(posy);
+  Serial.print(F(" Z"));  Serial.print(posz);
+  Serial.print(' ');  printFeedRate();
   Serial.print(F("\n"));
+  
+  Serial.print(F(" HX="));  Serial.print(homeX);
+  Serial.print(F(" HY="));  Serial.println(homeY);
 }
 
 
@@ -670,6 +679,7 @@ float EEPROM_readLong(int ee) {
 
 //------------------------------------------------------------------------------
 void saveUID() {
+  Serial.println(F("Saving UID."));
   EEPROM_writeLong(ADDR_UUID,(long)robot_uid);
 }
 
@@ -683,10 +693,13 @@ void savePulleyDiameter() {
 
 //------------------------------------------------------------------------------
 void saveDimensions() {
+  Serial.println(F("Saving dimensions."));
   EEPROM_writeLong(ADDR_LEFT,limit_left*100);
   EEPROM_writeLong(ADDR_RIGHT,limit_right*100);
   EEPROM_writeLong(ADDR_TOP,limit_top*100);
   EEPROM_writeLong(ADDR_BOTTOM,limit_bottom*100);
+  EEPROM_writeLong(ADDR_HOMEX,homeX*100);
+  EEPROM_writeLong(ADDR_HOMEY,homeY*100);
 }
 
 
@@ -700,7 +713,23 @@ void loadDimensions() {
 
 
 //------------------------------------------------------------------------------
+void saveHome() {
+  Serial.println(F("Saving home."));
+  homeX = (float)EEPROM_readLong(ADDR_HOMEX)/100.0f;
+  homeY = (float)EEPROM_readLong(ADDR_HOMEY)/100.0f;
+}
+
+
+//------------------------------------------------------------------------------
+void loadHome() {
+  homeX = (float)EEPROM_readLong(ADDR_HOMEX)/100.0f;
+  homeY = (float)EEPROM_readLong(ADDR_HOMEY)/100.0f;
+}
+
+
+//------------------------------------------------------------------------------
 void saveInversions() {
+  Serial.println(F("Saving inversions."));
   EEPROM.write(ADDR_INVL,m1i>0?1:0);
   EEPROM.write(ADDR_INVR,m2i>0?1:0);
 }
@@ -756,6 +785,7 @@ void loadConfig() {
   loadDimensions();
   loadPulleyDiameter();
   loadInversions();
+  loadHome();
 }
 
 
@@ -862,7 +892,7 @@ void motor_engage() {
  * @input code the character to look for.
  * @input val the return value if /code/ is not found.
  **/
-float parsenumber(char code,float val) {
+float parseNumber(char code,float val) {
   char *ptr=serialBuffer;  // start at the beginning of buffer
   while(ptr && *ptr && ptr<serialBuffer+sofar) {  // walk to the end
     if(*ptr==code) {  // if you find code on your walk,
@@ -902,15 +932,15 @@ void tool_change(int tool_id) {
 
 //------------------------------------------------------------------------------
 void processConfig() {
-  limit_top=parsenumber('T',limit_top);
-  limit_bottom=parsenumber('B',limit_bottom);
-  limit_right=parsenumber('R',limit_right);
-  limit_left=parsenumber('L',limit_left);
+  limit_top=parseNumber('T',limit_top);
+  limit_bottom=parseNumber('B',limit_bottom);
+  limit_right=parseNumber('R',limit_right);
+  limit_left=parseNumber('L',limit_left);
 
-  char gg=parsenumber('G',m1d);
-  char hh=parsenumber('H',m2d);
-  char i=parsenumber('I',0);
-  char j=parsenumber('J',0);
+  char gg=parseNumber('G',m1d);
+  char hh=parseNumber('H',m2d);
+  char i=parseNumber('I',0);
+  char j=parseNumber('J',0);
 
   adjustInversions(i,j);
 
@@ -956,7 +986,7 @@ void processCommand() {
   long cmd;
 
   // is there a line number?
-  cmd=parsenumber('N',-1);
+  cmd=parseNumber('N',-1);
   if(cmd!=-1 && serialBuffer[0] == 'N') {  // line number must appear first on the line
     if( cmd != line_number ) {
       // Wrong line number error
@@ -993,41 +1023,41 @@ void processCommand() {
     saveUID();
   }
 
-  cmd=parsenumber('M',-1);
+  cmd=parseNumber('M',-1);
   switch(cmd) {
   case 17:  motor_engage();  break;
   case 18:  motor_disengage();  break;
   case 100:  help();  break;
   case 101:  processConfig();  break;
-  case 110:  line_number = parsenumber('N',line_number);  break;
+  case 110:  line_number = parseNumber('N',line_number);  break;
   case 114:  where();  break;
   }
 
-  cmd=parsenumber('G',-1);
+  cmd=parseNumber('G',-1);
   switch(cmd) {
   case 0:
   case 1: {  // line
       Vector3 offset=get_end_plus_offset();
-      setFeedRate(parsenumber('F',feed_rate));
-      line_safe( parsenumber('X',(absolute_mode?offset.x:0)*10)*0.1 + (absolute_mode?0:offset.x),
-                 parsenumber('Y',(absolute_mode?offset.y:0)*10)*0.1 + (absolute_mode?0:offset.y),
-                 parsenumber('Z',(absolute_mode?offset.z:0)) + (absolute_mode?0:offset.z) );
+      setFeedRate(parseNumber('F',feed_rate));
+      line_safe( parseNumber('X',(absolute_mode?offset.x:0)*10)*0.1 + (absolute_mode?0:offset.x),
+                 parseNumber('Y',(absolute_mode?offset.y:0)*10)*0.1 + (absolute_mode?0:offset.y),
+                 parseNumber('Z',(absolute_mode?offset.z:0)) + (absolute_mode?0:offset.z) );
     break;
     }
   case 2:
   case 3: {  // arc
       Vector3 offset=get_end_plus_offset();
-      setFeedRate(parsenumber('F',feed_rate));
-      arc(parsenumber('I',(absolute_mode?offset.x:0)*10)*0.1 + (absolute_mode?0:offset.x),
-          parsenumber('J',(absolute_mode?offset.y:0)*10)*0.1 + (absolute_mode?0:offset.y),
-          parsenumber('X',(absolute_mode?offset.x:0)*10)*0.1 + (absolute_mode?0:offset.x),
-          parsenumber('Y',(absolute_mode?offset.y:0)*10)*0.1 + (absolute_mode?0:offset.y),
-          parsenumber('Z',(absolute_mode?offset.z:0)) + (absolute_mode?0:offset.z),
+      setFeedRate(parseNumber('F',feed_rate));
+      arc(parseNumber('I',(absolute_mode?offset.x:0)*10)*0.1 + (absolute_mode?0:offset.x),
+          parseNumber('J',(absolute_mode?offset.y:0)*10)*0.1 + (absolute_mode?0:offset.y),
+          parseNumber('X',(absolute_mode?offset.x:0)*10)*0.1 + (absolute_mode?0:offset.x),
+          parseNumber('Y',(absolute_mode?offset.y:0)*10)*0.1 + (absolute_mode?0:offset.y),
+          parseNumber('Z',(absolute_mode?offset.z:0)) + (absolute_mode?0:offset.z),
           (cmd==2) ? 1 : 0);
       break;
     }
   case 4:  // dwell
-    pause(parsenumber('S',0) + parsenumber('P',0)*1000.0f);
+    pause(parseNumber('S',0) + parseNumber('P',0)*1000.0f);
     break;
   case 20: // inches -> cm
     mode_scale=2.54f;  // inches -> cm
@@ -1047,24 +1077,24 @@ void processCommand() {
   case 58:
   case 59: {  // 54-59 tool offsets
     int tool_id=cmd-54;
-    set_tool_offset(tool_id,parsenumber('X',tool_offset[tool_id].x),
-                            parsenumber('Y',tool_offset[tool_id].y),
-                            parsenumber('Z',tool_offset[tool_id].z));
+    set_tool_offset(tool_id,parseNumber('X',tool_offset[tool_id].x),
+                            parseNumber('Y',tool_offset[tool_id].y),
+                            parseNumber('Z',tool_offset[tool_id].z));
     break;
     }
   case 90:  absolute_mode=1;  break;  // absolute mode
   case 91:  absolute_mode=0;  break;  // relative mode
   case 92: {  // set position (teleport)
       Vector3 offset = get_end_plus_offset();
-      teleport( parsenumber('X',(absolute_mode?offset.x:0)*10)*0.1 + (absolute_mode?0:offset.x),
-                parsenumber('Y',(absolute_mode?offset.y:0)*10)*0.1 + (absolute_mode?0:offset.y)//,
-              //parsenumber('Z',(absolute_mode?offset.z:0)) + (absolute_mode?0:offset.z)
+      teleport( parseNumber('X',(absolute_mode?offset.x:0)*10)*0.1 + (absolute_mode?0:offset.x),
+                parseNumber('Y',(absolute_mode?offset.y:0)*10)*0.1 + (absolute_mode?0:offset.y)//,
+              //parseNumber('Z',(absolute_mode?offset.z:0)) + (absolute_mode?0:offset.z)
               );
       break;
     }
   }
 
-  cmd=parsenumber('D',-1);
+  cmd=parseNumber('D',-1);
   switch(cmd) {
   case 0: {
       // jog one motor
@@ -1096,8 +1126,8 @@ void processCommand() {
     break;
   case 1: {
       // adjust spool diameters
-      float amountL=parsenumber('L',pulleyDiameter);
-      float amountR=parsenumber('R',pulleyDiameter);
+      float amountL=parseNumber('L',pulleyDiameter);
+      float amountR=parseNumber('R',pulleyDiameter);
 
       float tps1=threadPerStep;
       adjustPulleyDiameter(amountL);
@@ -1115,7 +1145,20 @@ void processCommand() {
   case 3:  SD_ListFiles();  break;    // read directory
   case 4:  SD_ProcessFile(strchr(serialBuffer,' ')+1);  break;  // read file
 #endif
+  case 5:
+    sayVersionNumber();
+    break;
+  case 6:  // set home
+    setHome(parseNumber('X',(absolute_mode?homeX:0)*10)*0.1 + (absolute_mode?0:homeX),
+            parseNumber('Y',(absolute_mode?homeY:0)*10)*0.1 + (absolute_mode?0:homeY));
+    break;
   }
+}
+
+
+void setHome(float x,float y) {
+  homeX = x;
+  homeY = y;
 }
 
 
@@ -1183,9 +1226,7 @@ void setup() {
   tools_setup();
 
   // initialize the plotter position.
-  teleport(0,0);
-  velx=0;
-  vely=0;
+  teleport(homeX,homeY);
   setPenAngle(PEN_UP_ANGLE);
 
   // display the help at startup.

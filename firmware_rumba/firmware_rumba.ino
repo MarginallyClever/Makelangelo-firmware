@@ -30,6 +30,9 @@ float limit_bottom = 0;  // Distance to bottom of drawing area.
 float limit_right = 0;  // Distance to right of drawing area.
 float limit_left = 0;  // Distance to left of drawing area.
 
+static float homeX=0;
+static float homeY=0;
+
 // what are the motors called?
 char m1d='L';
 char m2d='R';
@@ -412,12 +415,8 @@ void teleport(float x,float y) {
  * Print a helpful message to serial.  The first line must never be changed to play nice with the JAVA software.
  */
 void help() {
-  char versionNumber = loadVersion();
-  
   Serial.print(F("\n\nHELLO WORLD! I AM DRAWBOT #"));
   Serial.println(robot_uid);
-  Serial.print('v');
-  Serial.print(versionNumber,DEC);
   Serial.println(F(" model RUMBA"));
   Serial.println(F("== http://www.makelangelo.com/ =="));
   Serial.println(F("M100 - display this message"));
@@ -425,6 +424,14 @@ void help() {
   Serial.println(F("       - display/update board dimensions."));
   Serial.println(F("As well as the following G-codes (http://en.wikipedia.org/wiki/G-code):"));
   Serial.println(F("G00,G01,G02,G03,G04,G28,G90,G91,G92,M18,M114"));
+}
+
+
+void sayVersionNumber() {
+  char versionNumber = loadVersion();
+  
+  Serial.print('v');
+  Serial.print(versionNumber,DEC);
 }
 
 
@@ -502,11 +509,14 @@ void where() {
   Serial.print(F("X"));   Serial.print(posx);
   Serial.print(F(" Y"));  Serial.print(posy);
   Serial.print(F(" Z"));  Serial.print(posz);
-  Serial.print(F(" "));   printFeedRate();
+  Serial.print(' ');  printFeedRate();
   Serial.print(F(" A"));  Serial.println(acceleration);
   
-  Serial.print(F(" G0="));  Serial.print(global_steps_0);
-  Serial.print(F(" G1="));  Serial.print(global_steps_1);
+  Serial.print(F(" HX="));  Serial.print(homeX);
+  Serial.print(F(" HY="));  Serial.println(homeY);
+  
+  //Serial.print(F(" G0="));  Serial.print(global_steps_0);
+  //Serial.print(F(" G1="));  Serial.print(global_steps_1);
 }
 
 
@@ -727,8 +737,21 @@ void processCommand() {
     Serial.print('L');  Serial.print(pulleyDiameter);
     Serial.print(F(" R"));   Serial.println(pulleyDiameter);
     break;
+//  case 3:  SD_ListFiles();  break;
   case 4:  SD_StartPrintingFile(strchr(serialBuffer,' ')+1);  break;  // read file
+  case 5:
+    sayVersionNumber();
+  case 6:  // set home
+    setHome(parseNumber('X',(absolute_mode?homeX:0)*10)*0.1 + (absolute_mode?0:homeX),
+            parseNumber('Y',(absolute_mode?homeY:0)*10)*0.1 + (absolute_mode?0:homeY));
+    break;
   }
+}
+
+
+void setHome(float x,float y) {
+  homeX = x;
+  homeY = y;
 }
 
 

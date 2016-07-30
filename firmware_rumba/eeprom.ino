@@ -55,11 +55,13 @@ void loadConfig() {
   adjustPulleyDiameter((float)EEPROM_readLong(ADDR_PULLEY_DIA1)/10000.0f);   //4 decimal places of percision is enough
   loadDimensions();
   loadInversions();
+  loadHome();
 }
 
 
 //------------------------------------------------------------------------------
 void saveUID() {
+  Serial.println(F("Saving UID."));
   EEPROM_writeLong(ADDR_UUID,(long)robot_uid);
 }
 
@@ -73,6 +75,7 @@ void savePulleyDiameter() {
 
 //------------------------------------------------------------------------------
 void saveDimensions() {
+  Serial.println(F("Saving dimensions."));
   EEPROM_writeLong(ADDR_LEFT,limit_left*100);
   EEPROM_writeLong(ADDR_RIGHT,limit_right*100);
   EEPROM_writeLong(ADDR_TOP,limit_top*100);
@@ -112,6 +115,7 @@ void adjustDimensions(float newT,float newB,float newR,float newL) {
 
 //------------------------------------------------------------------------------
 void saveInversions() {
+  Serial.println(F("Saving inversions."));
   EEPROM.write(ADDR_INVL,m1i>0?1:0);
   EEPROM.write(ADDR_INVR,m2i>0?1:0);
 }
@@ -122,6 +126,21 @@ void loadInversions() {
   m1i = EEPROM.read(ADDR_INVL)>0?1:-1;
   m2i = EEPROM.read(ADDR_INVR)>0?1:-1;
   adjustInversions(m1i,m2i);
+}
+
+
+//------------------------------------------------------------------------------
+void saveHome() {
+  Serial.println(F("Saving home."));
+  homeX = (float)EEPROM_readLong(ADDR_HOMEX)/100.0f;
+  homeY = (float)EEPROM_readLong(ADDR_HOMEY)/100.0f;
+}
+
+
+//------------------------------------------------------------------------------
+void loadHome() {
+  homeX = (float)EEPROM_readLong(ADDR_HOMEX)/100.0f;
+  homeY = (float)EEPROM_readLong(ADDR_HOMEY)/100.0f;
 }
 
 /**
