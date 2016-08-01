@@ -132,8 +132,8 @@ void loadInversions() {
 //------------------------------------------------------------------------------
 void saveHome() {
   Serial.println(F("Saving home."));
-  homeX = (float)EEPROM_readLong(ADDR_HOMEX)/100.0f;
-  homeY = (float)EEPROM_readLong(ADDR_HOMEY)/100.0f;
+  EEPROM_writeLong(ADDR_HOMEX,homeX*100);
+  EEPROM_writeLong(ADDR_HOMEY,homeY*100);
 }
 
 

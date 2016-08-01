@@ -8,6 +8,16 @@
 // Copyright at end of file.  Please see
 // http://www.github.com/MarginallyClever/Makelangelo for more information.
 
+
+//------------------------------------------------------------------------------
+// Sanity check
+//------------------------------------------------------------------------------
+#if defined(__AVR_ATmega328P__)
+// wrong board type set
+#error This code is not meant for Arduino UNO boards.
+#endif
+
+
 //------------------------------------------------------------------------------
 // CONSTANTS
 //------------------------------------------------------------------------------

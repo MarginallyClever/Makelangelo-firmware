@@ -417,7 +417,8 @@ void teleport(float x,float y) {
 void help() {
   Serial.print(F("\n\nHELLO WORLD! I AM DRAWBOT #"));
   Serial.println(robot_uid);
-  Serial.println(F(" model RUMBA"));
+  sayVersionNumber();
+  Serial.println(F("Model RUMBA"));
   Serial.println(F("== http://www.makelangelo.com/ =="));
   Serial.println(F("M100 - display this message"));
   Serial.println(F("M101 [Tx.xx] [Bx.xx] [Rx.xx] [Lx.xx]"));
@@ -430,7 +431,7 @@ void help() {
 void sayVersionNumber() {
   char versionNumber = loadVersion();
   
-  Serial.print('v');
+  Serial.print(F("Firmware v"));
   Serial.print(versionNumber,DEC);
 }
 
@@ -750,8 +751,11 @@ void processCommand() {
 
 
 void setHome(float x,float y) {
-  homeX = x;
-  homeY = y;
+  if(x != homeX || y!=homeY) {
+    homeX = x;
+    homeY = y;
+    saveHome();
+  }
 }
 
 
