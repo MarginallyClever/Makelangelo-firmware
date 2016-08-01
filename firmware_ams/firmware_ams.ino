@@ -583,7 +583,7 @@ void sayVersionNumber() {
   int versionNumber = loadVersion();
   
   Serial.print(F("Firmware v"));
-  Serial.print(versionNumber,DEC);
+  Serial.println(versionNumber,DEC);
 }
 
 
