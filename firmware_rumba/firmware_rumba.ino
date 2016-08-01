@@ -418,7 +418,6 @@ void help() {
   Serial.print(F("\n\nHELLO WORLD! I AM DRAWBOT #"));
   Serial.println(robot_uid);
   sayVersionNumber();
-  Serial.println(F("Model RUMBA"));
   Serial.println(F("== http://www.makelangelo.com/ =="));
   Serial.println(F("M100 - display this message"));
   Serial.println(F("M101 [Tx.xx] [Bx.xx] [Rx.xx] [Lx.xx]"));

@@ -8,6 +8,15 @@
 
 
 //------------------------------------------------------------------------------
+// Sanity check
+//------------------------------------------------------------------------------
+#if defined(__AVR_ATmega2560__)
+// wrong board type set
+#error This code is not meant for Arduino MEGA or RUMBA boards.
+#endif
+
+
+//------------------------------------------------------------------------------
 // CONSTANTS
 //------------------------------------------------------------------------------
 #define MOTHERBOARD 1  // Adafruit Motor Shield 1
@@ -555,11 +564,13 @@ void teleport(float x,float y) {
 }
 
 
-//------------------------------------------------------------------------------
+/**
+ * Print a helpful message to serial.  The first line must never be changed to play nice with the JAVA software.
+ */
 void help() {
   Serial.print(F("\n\nHELLO WORLD! I AM DRAWBOT #"));
   Serial.println(robot_uid);
-  Serial.println(F(" model AMS"));
+  sayVersionNumber();
   Serial.println(F("M100 - display this message"));
   Serial.println(F("M101 [Tx.xx] [Bx.xx] [Rx.xx] [Lx.xx]"));
   Serial.println(F("       - display/update board dimensions."));
@@ -571,7 +582,7 @@ void help() {
 void sayVersionNumber() {
   int versionNumber = loadVersion();
   
-  Serial.print('v');
+  Serial.print(F("Firmware v"));
   Serial.print(versionNumber,DEC);
 }
 
