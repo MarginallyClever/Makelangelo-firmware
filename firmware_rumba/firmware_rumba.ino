@@ -436,7 +436,7 @@ void sayVersionNumber() {
 
 
 /**
- * if limit switches are installed, move to touch each switch so that the pen holder can move to home position.
+ * If limit switches are installed, move to touch each switch so that the pen holder can move to home position.
  */
 void findHome() {
 #ifdef USE_LIMIT_SWITCH
