@@ -96,7 +96,7 @@ float atan3(float dy,float dx) {
 char readSwitches() {
 #ifdef USE_LIMIT_SWITCH
   // get the current switch state
-  return ( (analogRead(L_PIN) < SWITCH_HALF) | (analogRead(R_PIN) < SWITCH_HALF) );
+  return ( (digitalRead(LIMIT_SWITCH_PIN_LEFT)==LOW) | (digitalRead(LIMIT_SWITCH_PIN_RIGHT)==LOW) );
 #else
   return 0;
 #endif  // USE_LIMIT_SWITCH
@@ -240,6 +240,7 @@ void adjustInversions(int m1,int m2) {
   }
 
   if( m1!=m1i || m2 != m2i) {
+    // loadInversions() should never reach this point in the code.
     m1i=m1;
     m2i=m2;
     saveInversions();
@@ -440,7 +441,9 @@ void sayVersionNumber() {
  */
 void findHome() {
 #ifdef USE_LIMIT_SWITCH
-  Serial.println(F("Homing..."));
+  wait_for_empty_segment_buffer();
+  
+  Serial.println(F("Searching for switches..."));
 
   if(readSwitches()) {
     Serial.println(F("** ERROR **"));
@@ -449,52 +452,66 @@ void findHome() {
     return;
   }
 
-  int safe_out=50;
+  int safeOut=50;
 
-  // reel in the left motor until contact is made.
+  // reel in the left motor and the right motor out until contact is made.
   Serial.println(F("Find left..."));
-  digitalWrite(motors[0].dir_pin,HIGH);
-  digitalWrite(motors[1].dir_pin,LOW);
+  digitalWrite(MOTOR_0_DIR_PIN,motors[0].reel_in );
+  digitalWrite(MOTOR_1_DIR_PIN,motors[1].reel_out);
   do {
     digitalWrite(motors[0].step_pin,HIGH);
-    digitalWrite(motors[0].step_pin,LOW);
     digitalWrite(motors[1].step_pin,HIGH);
+    digitalWrite(motors[0].step_pin,LOW);
     digitalWrite(motors[1].step_pin,LOW);
     pause(STEP_DELAY);
-  } while(!readSwitches());
+    Serial.print  (digitalRead(LIMIT_SWITCH_PIN_LEFT )==LOW?"*":" ");
+    Serial.println(digitalRead(LIMIT_SWITCH_PIN_RIGHT)==LOW?"*":" ");
+  } while(digitalRead(LIMIT_SWITCH_PIN_LEFT )==HIGH);
 
   // back off so we don't get a false positive on the next motor
   int i;
+  digitalWrite(MOTOR_0_DIR_PIN,motors[0].reel_out);
   digitalWrite(motors[0].dir_pin,LOW);
-  for(i=0;i<safe_out;++i) {
+  for(i=0;i<safeOut;++i) {
     digitalWrite(motors[0].step_pin,HIGH);
     digitalWrite(motors[0].step_pin,LOW);
     pause(STEP_DELAY);
   }
+
+  int lastStep=safeOut;
 
   // reel in the right motor until contact is made
   Serial.println(F("Find right..."));
-  digitalWrite(motors[0].dir_pin,LOW);
-  digitalWrite(motors[1].dir_pin,HIGH);
+  digitalWrite(MOTOR_0_DIR_PIN,motors[0].reel_out);
+  digitalWrite(MOTOR_1_DIR_PIN,motors[1].reel_in);
   do {
+    lastStep++;
     digitalWrite(motors[0].step_pin,HIGH);
-    digitalWrite(motors[0].step_pin,LOW);
     digitalWrite(motors[1].step_pin,HIGH);
+    digitalWrite(motors[0].step_pin,LOW);
     digitalWrite(motors[1].step_pin,LOW);
+    Serial.print  (digitalRead(LIMIT_SWITCH_PIN_LEFT )==LOW?"*":" ");
+    Serial.println(digitalRead(LIMIT_SWITCH_PIN_RIGHT)==LOW?"*":" ");
     pause(STEP_DELAY);
-    laststep1++;
-  } while(!readSwitches());
+  } while(digitalRead(LIMIT_SWITCH_PIN_RIGHT)==HIGH);
+  lastStep--;
 
   // back off so we don't get a false positive that kills line()
-  digitalWrite(motors[1].dir_pin,LOW);
-  for(i=0;i<safe_out;++i) {
+  digitalWrite(MOTOR_1_DIR_PIN,motors[1].reel_out);
+  for(i=0;i<safeOut;++i) {
     digitalWrite(motors[1].step_pin,HIGH);
     digitalWrite(motors[1].step_pin,LOW);
     pause(STEP_DELAY);
   }
 
-  Serial.println(F("Centering..."));
-  polargraph_line(0,0,posz);
+  // current position is...
+  float x,y;
+  FK(lastStep,safeOut,x,y);
+  teleport(x,y);
+
+  // go home.
+  Serial.println(F("Homing..."));
+  polargraph_line(homeX,homeY,offset.z,feed_rate);
 #endif // USE_LIMIT_SWITCH
 }
 
@@ -700,8 +717,7 @@ void processCommand() {
 
   cmd=parseNumber('D',-1);
   switch(cmd) {
-  case 0: {
-      // move one motor
+  case 0: {  // jog one motor
       int i,amount=parseNumber(m1d,0);
       digitalWrite(MOTOR_0_DIR_PIN,amount < 0 ? motors[0].reel_in : motors[0].reel_out);
       amount=abs(amount);
@@ -749,8 +765,26 @@ void processCommand() {
 }
 
 
+// equal to three decimal places?
+boolean equalEpsilon(float a,float b) {
+  int aa = a*10;
+  int bb = b*10;
+  //Serial.print("aa=");        Serial.print(aa);
+  //Serial.print("\tbb=");      Serial.print(bb);
+  //Serial.print("\taa==bb ");  Serial.println(aa==bb?"yes":"no");
+  
+  return aa==bb;
+}
+
+
 void setHome(float x,float y) {
-  if(x != homeX || y!=homeY) {
+  boolean dx = equalEpsilon(x,homeX);
+  boolean dy = equalEpsilon(y,homeY);
+  if( dx==false || dy==false ) {
+    //Serial.print(F("Was    "));    Serial.print(homeX);    Serial.print(',');    Serial.println(homeY);
+    //Serial.print(F("Is now "));    Serial.print(    x);    Serial.print(',');    Serial.println(    y);
+    //Serial.print(F("DX="));    Serial.println(dx?"true":"false");
+    //Serial.print(F("DY="));    Serial.println(dy?"true":"false");
     homeX = x;
     homeY = y;
     saveHome();

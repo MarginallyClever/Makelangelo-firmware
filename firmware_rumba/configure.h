@@ -22,9 +22,9 @@
 // CONSTANTS
 //------------------------------------------------------------------------------
 //#define VERBOSE           (1)  // add to get a lot more serial output.
-#define HAS_SD  // comment this out if there is no SD card
-#define HAS_LCD  // comment this out if there is no SMART LCD controller
-//#define USE_LIMIT_SWITCH  (1)  // Comment out this line to disable findHome and limit switches
+#define HAS_SD                   // comment this out if there is no SD card
+#define HAS_LCD                  // comment this out if there is no SMART LCD controller
+#define USE_LIMIT_SWITCH    (1)  // Comment out this line to disable findHome and limit switches
 
 // machine style
 #define POLARGRAPH2  // uncomment this line if you use a polargraph like the Makelangelo
@@ -125,8 +125,11 @@
 #define MOTOR_5_ENABLE_PIN        (39)
 #define MOTOR_5_LIMIT_SWITCH_PIN  (32)
 
-#define NUM_SERVOS         (1)
-#define SERVO0_PIN         (5)
+#define NUM_SERVOS                (1)
+#define SERVO0_PIN                (5)
+
+#define LIMIT_SWITCH_PIN_LEFT     (MOTOR_0_LIMIT_SWITCH_PIN)
+#define LIMIT_SWITCH_PIN_RIGHT    (MOTOR_1_LIMIT_SWITCH_PIN)
 
 // Smart controller settings
 #define BEEPER             44
