@@ -123,6 +123,7 @@ void saveInversions() {
 
 //------------------------------------------------------------------------------
 void loadInversions() {
+  Serial.println(F("Loading inversions."));
   m1i = EEPROM.read(ADDR_INVL)>0?1:-1;
   m2i = EEPROM.read(ADDR_INVR)>0?1:-1;
   adjustInversions(m1i,m2i);

@@ -223,6 +223,7 @@ void processConfig() {
 
 //------------------------------------------------------------------------------
 void adjustInversions(int m1,int m2) {
+  Serial.println(F("Adjusting inversions."));
   if(m1>0) {
     motors[0].reel_in  = HIGH;
     motors[0].reel_out = LOW;
@@ -455,63 +456,42 @@ void findHome() {
   int safeOut=50;
 
   // reel in the left motor and the right motor out until contact is made.
-  Serial.println(F("Find left..."));
-  digitalWrite(MOTOR_0_DIR_PIN,motors[0].reel_in );
-  digitalWrite(MOTOR_1_DIR_PIN,motors[1].reel_out);
-  do {
-    digitalWrite(motors[0].step_pin,HIGH);
-    digitalWrite(motors[1].step_pin,HIGH);
-    digitalWrite(motors[0].step_pin,LOW);
-    digitalWrite(motors[1].step_pin,LOW);
-    pause(STEP_DELAY);
-    Serial.print  (digitalRead(LIMIT_SWITCH_PIN_LEFT )==LOW?"*":" ");
-    Serial.println(digitalRead(LIMIT_SWITCH_PIN_RIGHT)==LOW?"*":" ");
-  } while(digitalRead(LIMIT_SWITCH_PIN_LEFT )==HIGH);
-
-  // back off so we don't get a false positive on the next motor
-  int i;
+  Serial.println(F("Find switches..."));
   digitalWrite(MOTOR_0_DIR_PIN,motors[0].reel_out);
-  digitalWrite(motors[0].dir_pin,LOW);
-  for(i=0;i<safeOut;++i) {
-    digitalWrite(motors[0].step_pin,HIGH);
-    digitalWrite(motors[0].step_pin,LOW);
-    pause(STEP_DELAY);
-  }
-
-  int lastStep=safeOut;
-
-  // reel in the right motor until contact is made
-  Serial.println(F("Find right..."));
-  digitalWrite(MOTOR_0_DIR_PIN,motors[0].reel_out);
-  digitalWrite(MOTOR_1_DIR_PIN,motors[1].reel_in);
-  do {
-    lastStep++;
-    digitalWrite(motors[0].step_pin,HIGH);
-    digitalWrite(motors[1].step_pin,HIGH);
-    digitalWrite(motors[0].step_pin,LOW);
-    digitalWrite(motors[1].step_pin,LOW);
-    Serial.print  (digitalRead(LIMIT_SWITCH_PIN_LEFT )==LOW?"*":" ");
-    Serial.println(digitalRead(LIMIT_SWITCH_PIN_RIGHT)==LOW?"*":" ");
-    pause(STEP_DELAY);
-  } while(digitalRead(LIMIT_SWITCH_PIN_RIGHT)==HIGH);
-  lastStep--;
-
-  // back off so we don't get a false positive that kills line()
   digitalWrite(MOTOR_1_DIR_PIN,motors[1].reel_out);
-  for(i=0;i<safeOut;++i) {
-    digitalWrite(motors[1].step_pin,HIGH);
-    digitalWrite(motors[1].step_pin,LOW);
+  int left=0, right=0;
+  do {
+    if( digitalRead(LIMIT_SWITCH_PIN_LEFT )==LOW ) {
+      left=1;
+    }
+    if(left==0) {
+      digitalWrite(MOTOR_0_STEP_PIN,HIGH);
+      digitalWrite(MOTOR_0_STEP_PIN,LOW);
+    }
+    if( digitalRead(LIMIT_SWITCH_PIN_RIGHT )==LOW ) {
+      right=1;
+    }
+    if(right==0) {
+      digitalWrite(MOTOR_1_STEP_PIN,HIGH);
+      digitalWrite(MOTOR_1_STEP_PIN,LOW);
+    }
     pause(STEP_DELAY);
-  }
+  } while(left+right<2);
 
+  Serial.println(F("Estimating position..."));
+  float leftD = lround( 110.0f / threadPerStep );
+  float rightD = lround( 110.0f / threadPerStep );
+  
   // current position is...
   float x,y;
-  FK(lastStep,safeOut,x,y);
+  FK(leftD,rightD,x,y);
   teleport(x,y);
-
+  where();
+/*
   // go home.
   Serial.println(F("Homing..."));
-  polargraph_line(homeX,homeY,offset.z,feed_rate);
+  Vector3 offset=get_end_plus_offset();
+  polargraph_line(homeX,homeY,offset.z,feed_rate);*/
 #endif // USE_LIMIT_SWITCH
 }
 
