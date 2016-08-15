@@ -48,6 +48,7 @@ void loadConfig() {
     // If not the current EEPROM_VERSION or the EEPROM_VERSION is sullied (i.e. unknown data)
     // Update the version number
     EEPROM.write(ADDR_VERSION,EEPROM_VERSION);
+    saveCalibration();
   }
   
   // Retrieve stored configuration
@@ -56,6 +57,7 @@ void loadConfig() {
   loadDimensions();
   loadInversions();
   loadHome();
+  loadCalibration();
 }
 
 
@@ -123,7 +125,7 @@ void saveInversions() {
 
 //------------------------------------------------------------------------------
 void loadInversions() {
-  Serial.println(F("Loading inversions."));
+  //Serial.println(F("Loading inversions."));
   m1i = EEPROM.read(ADDR_INVL)>0?1:-1;
   m2i = EEPROM.read(ADDR_INVR)>0?1:-1;
   adjustInversions(m1i,m2i);
@@ -142,6 +144,21 @@ void saveHome() {
 void loadHome() {
   homeX = (float)EEPROM_readLong(ADDR_HOMEX)/100.0f;
   homeY = (float)EEPROM_readLong(ADDR_HOMEY)/100.0f;
+}
+
+
+//------------------------------------------------------------------------------
+void saveCalibration() {
+  Serial.println(F("Saving calibration."));
+  EEPROM_writeLong(ADDR_CALIBRATION_LEFT,calibrateLeft*100);
+  EEPROM_writeLong(ADDR_CALIBRATION_RIGHT,calibrateRight*100);
+}
+
+
+//------------------------------------------------------------------------------
+void loadCalibration() {
+  calibrateLeft = (float)EEPROM_readLong(ADDR_CALIBRATION_LEFT)/100.0f;
+  calibrateRight = (float)EEPROM_readLong(ADDR_CALIBRATION_RIGHT)/100.0f;
 }
 
 /**

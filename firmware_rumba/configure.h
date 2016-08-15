@@ -49,7 +49,7 @@
 #define DEFAULT_FEEDRATE     (6000.0)
 #define DEFAULT_ACCELERATION (250)
 
-#define STEP_DELAY           (150)  // delay between steps, in microseconds, when doing fixed tasks like homing
+#define STEP_DELAY           (100)  // delay between steps, in milliseconds, when doing fixed tasks like homing
 
 #define NUM_AXIES            (3)  // x,y,z
 #define NUM_TOOLS            (6)
@@ -218,19 +218,21 @@
 //------------------------------------------------------------------------------
 // EEPROM MEMORY MAP
 //------------------------------------------------------------------------------
-#define EEPROM_VERSION   5                    // Increment EEPROM_VERSION when adding new variables
-#define ADDR_VERSION     0                    // 0..255 (1 byte)
-#define ADDR_UUID        (ADDR_VERSION+1)     // long - 4 bytes
-#define ADDR_PULLEY_DIA1 (ADDR_UUID+4)        // float - 4 bytes
-#define ADDR_PULLEY_DIA2 (ADDR_PULLEY_DIA1+4) // float - 4 bytes
-#define ADDR_LEFT        (ADDR_PULLEY_DIA2+4) // float - 4 bytes
-#define ADDR_RIGHT       (ADDR_LEFT+4)        // float - 4 bytes
-#define ADDR_TOP         (ADDR_RIGHT+4)       // float - 4 bytes
-#define ADDR_BOTTOM      (ADDR_TOP+4)         // float - 4 bytes
-#define ADDR_INVL        (ADDR_BOTTOM+4)      // bool - 1 byte
-#define ADDR_INVR        (ADDR_INVL+1)        // bool - 1 byte
-#define ADDR_HOMEX       (ADDR_INVR+1)        // float - 4 bytes
-#define ADDR_HOMEY       (ADDR_HOMEX+4)       // float - 4 bytes
+#define EEPROM_VERSION          6  // Increment EEPROM_VERSION when adding new variables
+#define ADDR_VERSION            0                          // 0..255 (1 byte)
+#define ADDR_UUID               (ADDR_VERSION+1)           // long - 4 bytes
+#define ADDR_PULLEY_DIA1        (ADDR_UUID+4)              // float - 4 bytes
+#define ADDR_PULLEY_DIA2        (ADDR_PULLEY_DIA1+4)       // float - 4 bytes
+#define ADDR_LEFT               (ADDR_PULLEY_DIA2+4)       // float - 4 bytes
+#define ADDR_RIGHT              (ADDR_LEFT+4)              // float - 4 bytes
+#define ADDR_TOP                (ADDR_RIGHT+4)             // float - 4 bytes
+#define ADDR_BOTTOM             (ADDR_TOP+4)               // float - 4 bytes
+#define ADDR_INVL               (ADDR_BOTTOM+4)            // bool - 1 byte
+#define ADDR_INVR               (ADDR_INVL+1)              // bool - 1 byte
+#define ADDR_HOMEX              (ADDR_INVR+1)              // float - 4 bytes
+#define ADDR_HOMEY              (ADDR_HOMEX+4)             // float - 4 bytes
+#define ADDR_CALIBRATION_LEFT   (ADDR_HOMEY+4)             // float - 4 bytes
+#define ADDR_CALIBRATION_RIGHT  (ADDR_CALIBRATION_LEFT+4)  // float - 4 bytes
 
 
 //------------------------------------------------------------------------------

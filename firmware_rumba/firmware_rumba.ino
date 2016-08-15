@@ -33,6 +33,10 @@ float limit_left = 0;  // Distance to left of drawing area.
 static float homeX=0;
 static float homeY=0;
 
+// length of belt when weights hit limit switch
+float calibrateRight = 115;
+float calibrateLeft = 115;
+
 // what are the motors called?
 char m1d='L';
 char m2d='R';
@@ -223,10 +227,7 @@ void processConfig() {
 
 //------------------------------------------------------------------------------
 void adjustInversions(int m1,int m2) {
-  Serial.print(F("Adjusting inversions to "));
-  Serial.print(m1);
-  Serial.print(',');
-  Serial.println(m2);
+  //Serial.print(F("Adjusting inversions to "));
 
   if(m1>0) {
     motors[0].reel_in  = HIGH;
@@ -482,9 +483,12 @@ void findHome() {
     pause(STEP_DELAY);
   } while(left+right<2);
 
+  // make sure there's no momentum to skip the belt on the pulley.
+  delay(500);
+  
   Serial.println(F("Estimating position..."));
-  float leftD = lround( 115.0f / threadPerStep );
-  float rightD = lround( 115.0f / threadPerStep );
+  float leftD = lround( calibrateLeft / threadPerStep );
+  float rightD = lround( calibrateRight / threadPerStep );
   
   // current position is...
   float x,y;
@@ -493,10 +497,8 @@ void findHome() {
   where();
 
   // go home.
-  Serial.println(F("Homing to "));
-  Serial.print(F("X"));   Serial.print(homeX);
-  Serial.print(F(" Y"));  Serial.print(homeY);
-  
+  Serial.println(F("Homing..."));
+
   Vector3 offset=get_end_plus_offset();
   line_safe(homeX,homeY,offset.z,feed_rate);
   Serial.println(F("Done."));
@@ -644,6 +646,7 @@ void processCommand() {
   case 101:  processConfig();  break;
   case 110:  line_number = parseNumber('N',line_number);  break;
   case 114:  where();  break;
+  default:  break;
   }
 
   cmd=parseNumber('G',-1);
@@ -701,6 +704,7 @@ void processCommand() {
                  );
       break;
     }
+  default:  break;
   }
 
   cmd=parseNumber('D',-1);
@@ -748,10 +752,26 @@ void processCommand() {
   case 6:  // set home
     setHome(parseNumber('X',(absolute_mode?homeX:0)*10)*0.1 + (absolute_mode?0:homeX),
             parseNumber('Y',(absolute_mode?homeY:0)*10)*0.1 + (absolute_mode?0:homeY));
+  case 7:  // set calibration length
+      calibrateLeft = parseNumber('L',calibrateLeft);
+      calibrateRight = parseNumber('R',calibrateRight);
+      reportCalibration();
     break;
+  case 8:  reportCalibration();  break;
+  case 9:  // save calibration length
+    saveCalibration();
+    break;
+  default:  break;
   }
 }
 
+
+void reportCalibration() {
+  Serial.print(F("D8 L"));
+  Serial.print(calibrateLeft);
+  Serial.print(F(" R"));
+  Serial.println(calibrateRight);
+}
 
 // equal to three decimal places?
 boolean equalEpsilon(float a,float b) {
