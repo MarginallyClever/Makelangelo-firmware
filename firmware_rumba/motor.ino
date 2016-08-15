@@ -93,15 +93,11 @@ void motor_setup() {
   motors[0].dir_pin=MOTOR_0_DIR_PIN;
   motors[0].enable_pin=MOTOR_0_ENABLE_PIN;
   motors[0].limit_switch_pin=MOTOR_0_LIMIT_SWITCH_PIN;
-  motors[0].reel_in  = HIGH;
-  motors[0].reel_out = LOW;
 
   motors[1].step_pin=MOTOR_1_STEP_PIN;
   motors[1].dir_pin=MOTOR_1_DIR_PIN;
   motors[1].enable_pin=MOTOR_1_ENABLE_PIN;
   motors[1].limit_switch_pin=MOTOR_1_LIMIT_SWITCH_PIN;
-  motors[1].reel_in  = HIGH;
-  motors[1].reel_out = LOW;
 
   int i;
   for(i=0;i<NUM_AXIES;++i) {

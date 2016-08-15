@@ -223,7 +223,11 @@ void processConfig() {
 
 //------------------------------------------------------------------------------
 void adjustInversions(int m1,int m2) {
-  Serial.println(F("Adjusting inversions."));
+  Serial.print(F("Adjusting inversions to "));
+  Serial.print(m1);
+  Serial.print(',');
+  Serial.println(m2);
+
   if(m1>0) {
     motors[0].reel_in  = HIGH;
     motors[0].reel_out = LOW;
@@ -479,19 +483,23 @@ void findHome() {
   } while(left+right<2);
 
   Serial.println(F("Estimating position..."));
-  float leftD = lround( 110.0f / threadPerStep );
-  float rightD = lround( 110.0f / threadPerStep );
+  float leftD = lround( 115.0f / threadPerStep );
+  float rightD = lround( 115.0f / threadPerStep );
   
   // current position is...
   float x,y;
   FK(leftD,rightD,x,y);
   teleport(x,y);
   where();
-/*
+
   // go home.
-  Serial.println(F("Homing..."));
+  Serial.println(F("Homing to "));
+  Serial.print(F("X"));   Serial.print(homeX);
+  Serial.print(F(" Y"));  Serial.print(homeY);
+  
   Vector3 offset=get_end_plus_offset();
-  polargraph_line(homeX,homeY,offset.z,feed_rate);*/
+  line_safe(homeX,homeY,offset.z,feed_rate);
+  Serial.println(F("Done."));
 #endif // USE_LIMIT_SWITCH
 }
 
@@ -792,13 +800,11 @@ void tools_setup() {
 
 //------------------------------------------------------------------------------
 void setup() {
-  loadConfig();
-
   // start communications
   Serial.begin(BAUD);
+  
+  loadConfig();
 
-  // display the help at startup.
-  help();
 
   motor_setup();
   motor_engage();
@@ -812,6 +818,10 @@ void setup() {
   teleport(0,0);
   setPenAngle(PEN_UP_ANGLE);
   setFeedRate(DEFAULT_FEEDRATE);
+  
+  // display the help at startup.
+  help();
+  
   parser_ready();
 }
 
