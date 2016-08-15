@@ -118,7 +118,7 @@
 //------------------------------------------------------------------------------
 // EEPROM MEMORY MAP
 //------------------------------------------------------------------------------
-#define EEPROM_VERSION    5                   // Increment EEPROM_VERSION when adding new variables
+#define EEPROM_VERSION    6                   // Increment EEPROM_VERSION when adding new variables
 #define ADDR_VERSION      0                   // 0..255 (1 byte)
 #define ADDR_UUID        (ADDR_VERSION+1)     // long - 4 bytes
 #define ADDR_PULLEY_DIA1 (ADDR_UUID+4)        // float - 4 bytes
