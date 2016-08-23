@@ -51,9 +51,9 @@
 #define R_PIN           (5)
 
 // Marginally Clever steppers are 400 steps per turn.
-#define STEPPER_STEPS_PER_TURN    (400.0)
+#define STEPPER_STEPS_PER_TURN    (400)
 // We don't use microstepping on the AMS shield.
-#define MICROSTEPPING_MULTIPLIER  (16.0)
+#define MICROSTEPPING_MULTIPLIER  (2)
 #define STEPS_PER_TURN            (STEPPER_STEPS_PER_TURN*MICROSTEPPING_MULTIPLIER)
 
 
@@ -78,7 +78,7 @@
 // 2.5132741228718345 / 200 = 0.0125663706 thread moved each step.
 // NEMA17 are rated up to 3000RPM.  Adafruit can handle >1000RPM.
 // These numbers directly affect the maximum velocity.
-#define MAX_STEPS_S     (STEPS_PER_TURN*MAX_RPM/60.0)  // steps/s
+#define MAX_STEPS_S     (((float)STEPS_PER_TURN)*MAX_RPM/60.0)  // steps/s
 
 #define MAX_FEEDRATE    (10000.0)
 #define MIN_FEEDRATE    (1.0) // steps / second
@@ -168,8 +168,8 @@
 //------------------------------------------------------------------------------
 #if MOTHERBOARD == 1
 // Initialize Adafruit stepper controller
-static AF_Stepper m1((int)STEPPER_STEPS_PER_TURN, M2_PIN);
-static AF_Stepper m2((int)STEPPER_STEPS_PER_TURN, M1_PIN);
+static AF_Stepper m1(STEPS_PER_TURN, M2_PIN);
+static AF_Stepper m2(STEPS_PER_TURN, M1_PIN);
 #endif
 #if MOTHERBOARD == 2
 // Initialize Adafruit stepper controller
@@ -394,10 +394,18 @@ void FK(float l1, float l2,float &x,float &y) {
 
 
 //------------------------------------------------------------------------------
-// pause microseconds
-void pause(long us) {
-  delay(us/1000);
-  delayMicroseconds(us%1000);
+// Pause microseconds.
+// Every 70 minutes, micros() will overflow but will result in the same
+// delay due to the substraction and comparison.
+// This function is intended to be more precise than delay(...), but less
+// than delayMicroseconds(...). However, it will be more accurate than delayMicroseconds(...)
+// over longer durations since that is implemented with NOP counts rather than a clock
+// comparison. A typical duration to pause beween steps is 500-10000us.
+void pause(unsigned long us) {
+  unsigned long start = micros();
+  while (micros() - start < us) {
+    yield();
+  }
 }
 
 
@@ -634,7 +642,7 @@ void findHome() {
   do {
     M1_ONESTEP(M1_REEL_OUT);
     M2_ONESTEP(M2_REEL_IN );
-    delay(step_delay);
+    pause(step_delay);
     laststep1++;
   } while(!readSwitches());
   laststep2=0;
@@ -642,7 +650,7 @@ void findHome() {
   // back off so we don't get a false positive that kills line()
   for(i=0;i<safe_out;++i) {
     M2_ONESTEP(M2_REEL_OUT);
-    delay(step_delay);
+    pause(step_delay);
   }
   laststep2=safe_out;
 
@@ -880,7 +888,6 @@ void SD_ProcessFile(char *filename) {
   f.close();
 }
 #endif // USE_SD_CARD
-
 
 
 /**
@@ -1141,7 +1148,10 @@ void processCommand() {
         Serial.print(' ');
         Serial.println(dir);
 #endif
-        for(i=0;i<amount;++i) {  M1_ONESTEP(dir);  }
+        for(i=0;i<amount;++i) {
+          M1_ONESTEP(dir);
+          pause(step_delay);
+        }
       } else if(*ptr == m2d) {
         dir = amount < 0 ? M2_REEL_IN : M2_REEL_OUT;
         amount = abs(amount);
@@ -1151,7 +1161,10 @@ void processCommand() {
         Serial.print(' ');
         Serial.println(dir);
 #endif
-        for(i=0;i<amount;++i) {  M2_ONESTEP(dir);  }
+        for(i=0;i<amount;++i) {
+          M2_ONESTEP(dir);
+          pause(step_delay);
+        }
       }
     }
     break;

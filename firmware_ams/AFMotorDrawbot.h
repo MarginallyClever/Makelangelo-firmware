@@ -13,8 +13,9 @@
 
 //#define MOTORDEBUG 1
 
-#define MICROSTEPS 16  // 8 or 16
+#define MICROSTEPS 2  // 8 or 16
 
+// Bit positions in the 74HCT595 shift register output
 #define MOTOR1_A 2
 #define MOTOR1_B 3
 #define MOTOR2_A 1
@@ -24,12 +25,19 @@
 #define MOTOR3_A 5
 #define MOTOR3_B 7
 
+// Constants that the user passes in to the motor calls
 #define FORWARD 1
 #define BACKWARD -1
 #define BRAKE 0
 #define RELEASE 2
 
-// Arduino pin names
+// Constants that the user passes in to the stepper calls
+#define SINGLE 1
+#define DOUBLE 2
+#define INTERLEAVE 3
+#define MICROSTEP 4
+
+// Arduino pin names for interface to 74HCT595 latch
 #define MOTORLATCH 12
 #define MOTORCLK 4
 #define MOTORENABLE 7
@@ -47,19 +55,20 @@ public:
 
 
 class AF_Stepper {
-public:
+ public:
   AF_Stepper(uint16_t, uint8_t);
   void step(uint16_t steps, uint8_t dir);
   void setSpeed(uint16_t);
-  void onestep(uint8_t dir);
+  uint8_t onestep(uint8_t dir);
   void release();
   uint16_t revsteps; // # steps per revolution
   uint8_t steppernum;
-  uint32_t usperstep, steppingcounter;
-private:
+  uint32_t usperstep;
+ private:
   uint8_t currentstep;
   uint8_t a, b, c, d;
 };
+
 
 //------------------------------------------------------------------------------
 #endif
