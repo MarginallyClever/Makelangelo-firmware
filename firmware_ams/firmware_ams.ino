@@ -98,7 +98,8 @@
 #define SERVO_PIN2      (9)
 #define SERVO_PIN       SERVO_PIN1  // switch if you want to use the other pin.  Thanks, Aleksey!
 
-#define TIMEOUT_OK      (1000)  // 1/4 with no instruction?  Make sure PC knows we are waiting.
+#define TIMEOUT_OK      (1000)  // 1s with no instruction? Make sure PC knows we are waiting.
+#define TIMEOUT_MOTORS  (10000) // 10s with no command? Shut off motors.
 
 #ifndef USE_SD_CARD
 #define File int
@@ -229,7 +230,9 @@ static char mode_name[3];
 // Serial comm reception
 static char serialBuffer[MAX_BUF+1];  // Serial buffer
 static int sofar;               // Serial buffer progress
-static long last_cmd_time;      // prevent timeouts
+static long last_ready_time;    // prevent timeouts
+static long last_cmd_time;      // motor disengage timeouts
+static bool motors_engaged = false;
 
 Vector3 tool_offset[NUM_TOOLS];
 int current_tool=0;
@@ -313,6 +316,9 @@ void printFeedRate() {
 // Change pen state.
 void setPenAngle(int pen_angle) {
   if(posz!=pen_angle) {
+#if VERBOSE > 1
+    Serial.print(F("pen_angle="));  Serial.println(pen_angle);
+#endif
     posz=pen_angle;
 
     if(posz<PEN_DOWN_ANGLE) posz=PEN_DOWN_ANGLE;
@@ -396,6 +402,7 @@ void pause(long us) {
 
 //------------------------------------------------------------------------------
 void line(float x,float y,float z) {
+  motors_engaged = true;
   long l1,l2;
   IK(x,y,l1,l2);
   long d1 = l1 - laststep1;
@@ -591,6 +598,8 @@ void sayVersionNumber() {
 void findHome() {
 #ifdef USE_LIMIT_SWITCH
   Serial.println(F("Homing..."));
+
+  motors_engaged = true;
 
   if(readSwitches()) {
     Serial.println(F("** ERROR **"));
@@ -877,6 +886,12 @@ void SD_ProcessFile(char *filename) {
  * 
  */
 void motor_disengage() {
+#if VERBOSE > 1
+  Serial.println(F("motor_disengage"));
+#endif
+
+  motors_engaged = false;
+
 #if MOTHERBOARD == 1
   m1.release();
   m2.release();
@@ -892,6 +907,12 @@ void motor_disengage() {
  * 
  */
 void motor_engage() {
+#if VERBOSE > 1
+  Serial.println(F("motor_engage"));
+#endif
+
+  motors_engaged = true;
+
   M1_ONESTEP(M1_REEL_IN);  M1_ONESTEP(M1_REEL_OUT);
   M2_ONESTEP(M2_REEL_IN);  M2_ONESTEP(M2_REEL_OUT);
 }
@@ -994,10 +1015,8 @@ void processCommand() {
   // blank lines
   if(serialBuffer[0]==';') return;
   
-  long cmd;
-
   // is there a line number?
-  cmd=parseNumber('N',-1);
+  long cmd=parseNumber('N',-1);
   if(cmd!=-1 && serialBuffer[0] == 'N') {  // line number must appear first on the line
     if( cmd != line_number ) {
       // Wrong line number error
@@ -1183,7 +1202,7 @@ void setHome(float x,float y) {
 void ready() {
   sofar=0;  // clear input buffer
   Serial.println(F("> "));  // signal ready to receive input
-  last_cmd_time = millis();
+  last_ready_time = millis();
 }
 
 
@@ -1294,6 +1313,7 @@ void Serial_listen() {
 
       // do something with the command
       processCommand();
+      last_cmd_time = millis();
       ready();
       break;
     }
@@ -1305,10 +1325,17 @@ void Serial_listen() {
 void loop() {
   Serial_listen();
 
+  // Puts motors to sleep after a timeout.
+  // Stepper motors can draw more current when idle than in operation, causing these to potentially
+  // overheat. So this will disengage the steppers after not receiving commands for a while.
+  if( (millis() - last_cmd_time) > TIMEOUT_MOTORS && motors_engaged ) {
+    motor_disengage();
+  }
+
   // The PC will wait forever for the ready signal.
   // if Arduino hasn't received a new instruction in a while, send ready() again
   // just in case USB garbled ready and each half is waiting on the other.
-  if( (millis() - last_cmd_time) > TIMEOUT_OK ) {
+  if( (millis() - last_ready_time) > TIMEOUT_OK ) {
     ready();
   }
 }
