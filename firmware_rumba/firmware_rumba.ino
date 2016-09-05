@@ -761,6 +761,10 @@ void processCommand() {
   case 9:  // save calibration length
     saveCalibration();
     break;
+  case 10:  // get hardware version
+    Serial.print("D10 V");
+    Serial.println(MAKELANGELO_HARDWARE_VERSION);
+    break;
   default:  break;
   }
 }

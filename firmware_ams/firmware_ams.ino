@@ -63,6 +63,7 @@
 // *****************************************************************************
 // *** Don't change the constants below unless you know what you're doing.   ***
 // *****************************************************************************
+#define MAKELANGELO_HARDWARE_VERSION 2
 
 // switch sensitivity
 #define SWITCH_HALF     (512)
@@ -1181,6 +1182,10 @@ void processCommand() {
   case 6:  // set home
     setHome(parseNumber('X',(absolute_mode?homeX:0)*10)*0.1 + (absolute_mode?0:homeX),
             parseNumber('Y',(absolute_mode?homeY:0)*10)*0.1 + (absolute_mode?0:homeY));
+    break;
+  case 10:  // get hardware version
+    Serial.print("D10 V");
+    Serial.println(MAKELANGELO_HARDWARE_VERSION);
     break;
   }
 }

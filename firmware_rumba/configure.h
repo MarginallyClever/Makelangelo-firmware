@@ -21,10 +21,12 @@
 //------------------------------------------------------------------------------
 // CONSTANTS
 //------------------------------------------------------------------------------
+#define MAKELANGELO_HARDWARE_VERSION 3
+
 //#define VERBOSE           (1)  // add to get a lot more serial output.
 #define HAS_SD                   // comment this out if there is no SD card
 #define HAS_LCD                  // comment this out if there is no SMART LCD controller
-#define USE_LIMIT_SWITCH    (1)  // Comment out this line to disable findHome and limit switches
+//#define USE_LIMIT_SWITCH    (1)  // Comment out this line to disable findHome and limit switches
 
 // machine style
 #define POLARGRAPH2  // uncomment this line if you use a polargraph like the Makelangelo
@@ -88,8 +90,19 @@
 #define BOARD_RAMPS 2
 #define BOARD_SANGUINOLULU 3
 
-// Your choice of board
+
+#if MAKELANGELO_HARDWARE_VERSION == 5
+#define USE_LIMIT_SWITCH    (1)  // Comment out this line to disable findHome and limit switches
 #define MOTHERBOARD BOARD_RUMBA
+#endif
+#if MAKELANGELO_HARDWARE_VERSION == 3
+#undef USE_LIMIT_SWITCH
+#define MOTHERBOARD BOARD_RUMBA
+#endif
+
+
+// Your choice of board
+//#define MOTHERBOARD BOARD_RUMBA
 //#define MOTHERBOARD BOARD_RAMPS
 //#define MOTHERBOARD BOARD_SANGUINOLULU
 
