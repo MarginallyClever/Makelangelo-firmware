@@ -445,8 +445,7 @@ void line(float x,float y,float z) {
 
       //if(i<accelerate_until) d--;
       //if(i>=decelerate_after) d++;
-      //pause(d);
-      delayMicroseconds(step_delay);
+      pause(d);
 #ifdef USE_LIMIT_SWITCH
       if(readSwitches()) return;
 #endif
@@ -463,8 +462,7 @@ void line(float x,float y,float z) {
 
       //if(i<accelerate_until) d--;
       //if(i>=decelerate_after) d++;
-      //pause(d);
-      delayMicroseconds(step_delay);
+      pause(d);
 #ifdef USE_LIMIT_SWITCH
       if(readSwitches()) return;
 #endif
