@@ -51,7 +51,7 @@
 #define DEFAULT_FEEDRATE     (6000.0)
 #define DEFAULT_ACCELERATION (250)
 
-#define STEP_DELAY           (100)  // delay between steps, in milliseconds, when doing fixed tasks like homing
+#define STEP_DELAY           (50)  // delay between steps, in milliseconds, when doing fixed tasks like homing
 
 #define NUM_AXIES            (3)  // x,y,z
 #define NUM_TOOLS            (6)
