@@ -141,7 +141,7 @@
 #if MOTHERBOARD == 1
 #include <SPI.h>  // pkm fix for Arduino 1.5
 // Adafruit motor driver library, optimized
-#include "AFMotorDrawbot/AFMotorDrawbot.h"
+#include "AFMotorDrawbot.h"
 #endif
 
 #if MOTHERBOARD == 2
