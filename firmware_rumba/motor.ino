@@ -39,6 +39,12 @@ long current_feed_rate;
 long old_feed_rate=0;
 long start_feed_rate,end_feed_rate;
 long time_accelerating,time_decelerating;
+float max_xy_jerk = 20.0f;
+long global_steps_0;
+long global_steps_1;
+int global_step_dir_0;
+int global_step_dir_1;
+
 
 /*
 long prescalers[] = {CLOCK_FREQ /   1,
@@ -63,13 +69,13 @@ FORCE_INLINE Segment *segment_get_working() {
 }
 
 
-int get_next_segment(int i) {
-  return ( i + 1 ) & ( MAX_SEGMENTS - 1 );
+FORCE_INLINE int get_next_segment(int i) {
+  return SEGMOD( i + 1 );
 }
 
 
-int get_prev_segment(int i) {
-  return ( i + MAX_SEGMENTS - 1 ) & ( MAX_SEGMENTS - 1 );
+FORCE_INLINE int get_prev_segment(int i) {
+  return SEGMOD( i - 1 );
 }
 
 
@@ -87,15 +93,11 @@ void motor_setup() {
   motors[0].dir_pin=MOTOR_0_DIR_PIN;
   motors[0].enable_pin=MOTOR_0_ENABLE_PIN;
   motors[0].limit_switch_pin=MOTOR_0_LIMIT_SWITCH_PIN;
-  motors[0].reel_in  = HIGH;
-  motors[0].reel_out = LOW;
 
   motors[1].step_pin=MOTOR_1_STEP_PIN;
   motors[1].dir_pin=MOTOR_1_DIR_PIN;
   motors[1].enable_pin=MOTOR_1_ENABLE_PIN;
   motors[1].limit_switch_pin=MOTOR_1_LIMIT_SWITCH_PIN;
-  motors[1].reel_in  = HIGH;
-  motors[1].reel_out = LOW;
 
   int i;
   for(i=0;i<NUM_AXIES;++i) {
@@ -157,7 +159,7 @@ void motor_setup() {
 
 
 // turn on power to the motors (make them immobile)
-void motor_enable() {
+void motor_engage() {
   int i;
   for(i=0;i<NUM_AXIES;++i) {
     digitalWrite(motors[i].enable_pin,LOW);
@@ -166,7 +168,7 @@ void motor_enable() {
 
 
 // turn off power to the motors (make them move freely)
-void motor_disable() {
+void motor_disengage() {
   int i;
   for(i=0;i<NUM_AXIES;++i) {
     digitalWrite(motors[i].enable_pin,HIGH);
@@ -209,15 +211,20 @@ void recalculate_reverse2(Segment *prev,Segment *current,Segment *next) {
 
 
 void recalculate_reverse() {
+CRITICAL_SECTION_START
   int s = last_segment;
-  Segment *blocks[3] = {NULL,NULL,NULL};
+CRITICAL_SECTION_END
 
-  while(s != current_segment) {
-    s=get_prev_segment(s);
-    blocks[2]=blocks[1];
-    blocks[1]=blocks[0];
-    blocks[0]=&line_segments[s];
-    recalculate_reverse2(blocks[0],blocks[1],blocks[2]);
+  Segment *blocks[3] = {NULL,NULL,NULL};
+  int count = SEGMOD( last_segment + current_segment + MAX_SEGMENTS );
+  if(count>3) {
+    while(s != current_segment) {
+      s=get_prev_segment(s);
+      blocks[2]=blocks[1];
+      blocks[1]=blocks[0];
+      blocks[0]=&line_segments[s];
+      recalculate_reverse2(blocks[0],blocks[1],blocks[2]);
+    }
   }
 }
 
@@ -259,11 +266,11 @@ void recalculate_forward() {
 }
 
 
-int intersection_time(float acceleration,float distance,float start_speed,float end_speed) {
+int intersection_time(float accel,float distance,float start_speed,float end_speed) {
 #if 0
-  return ( ( 2.0*acceleration*distance - start_speed*start_speed + end_speed*end_speed ) / (4.0*acceleration) );
+  return ( ( 2.0*accel*distance - start_speed*start_speed + end_speed*end_speed ) / (4.0*accel) );
 #else
-  float t2 = ( start_speed - end_speed + acceleration * distance ) / ( 2.0 * acceleration );
+  float t2 = ( start_speed - end_speed + accel * distance ) / ( 2.0 * accel );
   return distance - t2;
 #endif
 }
@@ -279,12 +286,11 @@ void segment_update_trapezoid(Segment *s,float start_speed,float end_speed) {
   int steps_to_decel = floor( ( end_speed - s->feed_rate_max ) / -acceleration );
 
   int steps_at_top_speed = s->steps_total - steps_to_accel - steps_to_decel;
-
-  if(steps_at_top_speed<=0) {
+  if(steps_at_top_speed<0) {
     steps_to_accel = ceil( intersection_time(acceleration,s->steps_total,start_speed,end_speed) );
-    steps_at_top_speed=0;
     steps_to_accel = max(steps_to_accel,0);
     steps_to_accel = min(steps_to_accel,s->steps_total);
+    steps_at_top_speed=0;
   }
 /*
   Serial.print("M");  Serial.println(s->feed_rate_max);
@@ -295,7 +301,7 @@ void segment_update_trapezoid(Segment *s,float start_speed,float end_speed) {
   Serial.print("D");  Serial.println(steps_to_decel);
 */
 CRITICAL_SECTION_START
-  if(s->busy==false) {
+  if(!s->busy) {
     s->accel_until = steps_to_accel;
     s->decel_after = steps_to_accel+steps_at_top_speed;
     s->feed_rate_start = start_speed;
@@ -363,15 +369,15 @@ void recalculate_acceleration() {
 
 
 void motor_set_step_count(long a0,long a1,long a2) {
-  if( current_segment==last_segment ) {
-    Segment &old_seg = line_segments[get_prev_segment(last_segment)];
-    old_seg.a[0].step_count=a0;
-    old_seg.a[1].step_count=a1;
-    old_seg.a[2].step_count=a2;
-    laststep[0]=a0;
-    laststep[1]=a1;
-    laststep[2]=a2;
-  }
+  wait_for_empty_segment_buffer();
+
+  Segment &old_seg = line_segments[get_prev_segment(last_segment)];
+  old_seg.a[0].step_count=a0;
+  old_seg.a[1].step_count=a1;
+  old_seg.a[2].step_count=a2;
+
+  global_steps_0=0;
+  global_steps_1=0;
 }
 
 
@@ -438,6 +444,8 @@ ISR(TIMER1_COMPA_vect) {
       // set the direction pins
       digitalWrite( MOTOR_0_DIR_PIN, working_seg->a[0].dir );
       digitalWrite( MOTOR_1_DIR_PIN, working_seg->a[1].dir );
+      global_step_dir_0 = (working_seg->a[0].dir==HIGH)?1:-1;
+      global_step_dir_1 = (working_seg->a[1].dir==HIGH)?1:-1;
 
       //move the z axis
       servos[0].write(working_seg->a[2].step_count);
@@ -458,8 +466,8 @@ ISR(TIMER1_COMPA_vect) {
       steps_taken=0;
       delta_x = working_seg->a[0].absdelta;
       delta_y = working_seg->a[1].absdelta;
-      over_x = -steps_total;
-      over_y = -steps_total;
+      over_x = -(steps_total>>1);
+      over_y = -(steps_total>>1);
       accel_until=working_seg->accel_until;
       decel_after=working_seg->decel_after;
       return;
@@ -476,16 +484,26 @@ ISR(TIMER1_COMPA_vect) {
       over_x += delta_x;
       if(over_x > 0) {
         digitalWrite(MOTOR_0_STEP_PIN,LOW);
-        over_x -= steps_total;
-        digitalWrite(MOTOR_0_STEP_PIN,HIGH);
       }
       // M1
       over_y += delta_y;
       if(over_y > 0) {
         digitalWrite(MOTOR_1_STEP_PIN,LOW);
+      }
+      // now that the pins have had a moment to settle, do the second half of the steps.
+      // M0
+      if(over_x > 0) {
+        over_x -= steps_total;
+        global_steps_0+=global_step_dir_0;
+        digitalWrite(MOTOR_0_STEP_PIN,HIGH);
+      }
+      // M1
+      if(over_y > 0) {
         over_y -= steps_total;
+        global_steps_1+=global_step_dir_1;
         digitalWrite(MOTOR_1_STEP_PIN,HIGH);
       }
+      
       // make a step
       steps_taken++;
       if(steps_taken>=steps_total) break;
@@ -496,12 +514,18 @@ ISR(TIMER1_COMPA_vect) {
     if( steps_taken <= accel_until ) {
       current_feed_rate = (acceleration * time_accelerating / 1000000);
       current_feed_rate += start_feed_rate;
+      if(current_feed_rate > working_seg->feed_rate_max) {
+        current_feed_rate = working_seg->feed_rate_max;
+      }
       t = calc_timer(current_feed_rate);
       OCR1A = t;
       time_accelerating+=t;
     } else if( steps_taken > decel_after ) {
       unsigned short step_time = (acceleration * time_decelerating / 1000000);
       long end_feed_rate = current_feed_rate - step_time;
+      if( end_feed_rate < working_seg->feed_rate_end ) {
+        end_feed_rate = working_seg->feed_rate_end;
+      }
       t = calc_timer(end_feed_rate);
       OCR1A = t;
       time_decelerating+=t;
@@ -510,6 +534,8 @@ ISR(TIMER1_COMPA_vect) {
       step_multiplier = nominal_step_multiplier;
     }
 
+    OCR1A = (OCR1A < (TCNT1 + 16)) ? (TCNT1 + 16) : OCR1A;
+    
     // Is this segment done?
     if( steps_taken >= steps_total ) {
       // Move on to next segment without wasting an interrupt tick.
@@ -540,15 +566,21 @@ void motor_line(long n0,long n1,long n2,float new_feed_rate) {
     delay(1);
   }
 
-  // use LCD to adjust speed while drawing
-#ifdef HAS_LCD
-  new_feed_rate *= (float)speed_adjust * 0.01f;
-#endif
-
   int prev_segment = get_prev_segment(last_segment);
   Segment &new_seg = line_segments[last_segment];
   Segment &old_seg = line_segments[prev_segment];
 
+
+  // use LCD to adjust speed while drawing
+#ifdef HAS_LCD
+  new_feed_rate *= (float)speed_adjust * 0.01f;
+#endif
+/*
+  Serial.print('^');
+  Serial.print(n0);  Serial.print('\t');
+  Serial.print(n1);  Serial.print('\t');
+  Serial.print(n2);  Serial.print('\n');
+*/
   new_seg.a[0].step_count = n0;
   new_seg.a[1].step_count = n1;
   new_seg.a[2].step_count = n2;
@@ -556,6 +588,7 @@ void motor_line(long n0,long n1,long n2,float new_feed_rate) {
   new_seg.a[1].delta = n1 - old_seg.a[1].step_count;
   new_seg.a[2].delta = n2 - old_seg.a[2].step_count;
   new_seg.feed_rate_max = new_feed_rate;
+  new_seg.busy=false;
 
   // the axis that has the most steps will control the overall acceleration
   new_seg.steps_total = 0;
@@ -564,7 +597,7 @@ void motor_line(long n0,long n1,long n2,float new_feed_rate) {
   for(i=0;i<NUM_AXIES;++i) {
     new_seg.a[i].dir = (new_seg.a[i].delta < 0 ? motors[i].reel_in:motors[i].reel_out);
     new_seg.a[i].absdelta = abs(new_seg.a[i].delta);
-    len += new_seg.a[i].absdelta * new_seg.a[i].absdelta;
+    len += square(new_seg.a[i].delta);
     if( new_seg.steps_total < new_seg.a[i].absdelta ) {
       new_seg.steps_total = new_seg.a[i].absdelta;
     }
@@ -575,6 +608,8 @@ void motor_line(long n0,long n1,long n2,float new_feed_rate) {
 
   len = sqrt( len );
   float ilen = 1.0f / len;
+  float iSecond = new_feed_rate * ilen;
+  
   for(i=0;i<NUM_AXIES;++i) {
     new_seg.a[i].delta_normalized = new_seg.a[i].delta * ilen;
   }
@@ -582,25 +617,24 @@ void motor_line(long n0,long n1,long n2,float new_feed_rate) {
 
   // what is the maximum starting speed for this segment?
   float feed_rate_start_max = MIN_FEEDRATE;
-    // is the robot changing direction sharply?
-      // aka is there a previous segment with a wildly different delta_normalized?
-    if(last_segment != current_segment) {
-      float cos_theta = 0;
-      for(i=0;i<NUM_AXIES;++i) {
-        cos_theta += new_seg.a[i].delta_normalized * old_seg.a[i].delta_normalized;
-      }
-
-      feed_rate_start_max = min( new_seg.feed_rate_max, old_seg.feed_rate_max );
-      if(cos_theta<0.95) {
-        if(cos_theta<0) cos_theta = 0;
-        feed_rate_start_max *= cos_theta;
-      }
+  // is the robot changing direction sharply?
+  // aka is there a previous segment with a wildly different delta_normalized?
+  if(last_segment != current_segment) {
+    float dsx = new_seg.a[0].delta_normalized - old_seg.a[0].delta_normalized;
+    float dsy = new_seg.a[1].delta_normalized - old_seg.a[1].delta_normalized;
+    float dsz = new_seg.a[2].delta_normalized - old_seg.a[2].delta_normalized;
+    float jerk = sqrt(dsx*dsx + dsy*dsy + dsz*dsz);
+    float vmax_junction_factor = 1.0;
+    if(jerk> max_xy_jerk) {
+      vmax_junction_factor = max_xy_jerk / jerk;
     }
+    feed_rate_start_max = min( new_seg.feed_rate_max * vmax_junction_factor, old_seg.feed_rate_max );
+  }
 
   float allowable_speed = max_speed_allowed(-acceleration, MIN_FEEDRATE, new_seg.steps_total);
 
   // come to a stop for entering or exiting a Z move
-  if( new_seg.a[2].delta != 0 || old_seg.a[2].delta != 0 ) allowable_speed = MIN_FEEDRATE;
+  //if( new_seg.a[2].delta != 0 || old_seg.a[2].delta != 0 ) allowable_speed = MIN_FEEDRATE;
 
   //Serial.print("max = ");  Serial.println(feed_rate_start_max);
 //  Serial.print("allowed = ");  Serial.println(allowable_speed);
@@ -609,14 +643,13 @@ void motor_line(long n0,long n1,long n2,float new_feed_rate) {
 
   new_seg.nominal_length_flag = ( allowable_speed >= new_seg.feed_rate_max );
   new_seg.recalculate_flag = true;
-  new_seg.busy=false;
 
   // when should we accelerate and decelerate in this segment?
   segment_update_trapezoid(&new_seg,new_seg.feed_rate_start,MIN_FEEDRATE);
 
-  recalculate_acceleration();
-
   last_segment = next_segment;
+
+  recalculate_acceleration();
 }
 
 
@@ -626,18 +659,18 @@ void wait_for_empty_segment_buffer() {
 
 
 /**
- * This file is part of DrawbotGUI.
+ * This file is part of makelangelo-firmware.
  *
- * DrawbotGUI is free software: you can redistribute it and/or modify
+ * makelangelo-firmware is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * DrawbotGUI is distributed in the hope that it will be useful,
+ * makelangelo-firmware is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with DrawbotGUI.  If not, see <http://www.gnu.org/licenses/>.
+ * along with makelangelo-firmware.  If not, see <http://www.gnu.org/licenses/>.
  */

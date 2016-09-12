@@ -2,6 +2,7 @@
 #define SDCARD_H
 
 
+#include <SPI.h>
 #include <SD.h>
 
 #ifdef HAS_SD
