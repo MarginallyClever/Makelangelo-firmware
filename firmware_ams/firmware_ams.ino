@@ -1249,7 +1249,7 @@ void setup() {
 #if MOTHERBOARD == 2
   // Change the i2c clock from 100KHz to 400KHz
   // https://learn.adafruit.com/adafruit-motor-shield-v2-for-arduino/faq
-  //TWBR = ((F_CPU /400000l) - 16) / 2;
+  TWBR = ((F_CPU / 400000l) - 16) / 2;
 #endif
 
   setFeedRate(MAX_FEEDRATE);  // *30 because i also /2
