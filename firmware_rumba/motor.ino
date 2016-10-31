@@ -80,8 +80,8 @@ FORCE_INLINE int get_prev_segment(int i) {
 
 
 float max_speed_allowed(float acceleration, float target_velocity, float distance) {
-  //return sqrt(target_velocity*target_velocity - 2*acceleration*distance);
-  return target_velocity - acceleration * distance;
+  return sqrt(target_velocity*target_velocity - 2*acceleration*distance);
+  //return target_velocity - acceleration * distance;
 }
 
 
