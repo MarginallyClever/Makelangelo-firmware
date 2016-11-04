@@ -34,8 +34,8 @@ static float homeX=0;
 static float homeY=0;
 
 // length of belt when weights hit limit switch
-float calibrateRight = 115;
-float calibrateLeft = 115;
+float calibrateRight = 101.1;
+float calibrateLeft = 101.1;
 
 // what are the motors called?
 char m1d='L';
@@ -441,6 +441,78 @@ void sayVersionNumber() {
   Serial.println(versionNumber,DEC);
 }
 
+/**
+ * Starting from the home position, bump the switches and measure the length of each belt.
+ * Does not save the values, only reports them to serial.
+ */
+void calibrateBelts() {
+#ifdef USE_LIMIT_SWITCH
+  wait_for_empty_segment_buffer();
+  
+  Serial.println(F("Searching for switches..."));
+
+  if(readSwitches()) {
+    Serial.println(F("** ERROR **"));
+    Serial.println(F("Problem: Plotter is already touching switches."));
+    Serial.println(F("Solution: Please unwind the strings a bit and try again."));
+    return;
+  }
+
+  int safeOut=50;
+
+  // reel in the left motor and the right motor out until contact is made.
+  Serial.println(F("Find switches..."));
+  digitalWrite(MOTOR_0_DIR_PIN,motors[0].reel_out);
+  digitalWrite(MOTOR_1_DIR_PIN,motors[1].reel_out);
+  int left=0, right=0;
+  long leftSteps, rightSteps;
+  
+  IK(homeX,homeY,leftSteps,rightSteps);
+
+  do {
+    if( digitalRead(LIMIT_SWITCH_PIN_LEFT )==LOW ) {
+      left=1;
+    }
+    if(left==0) {
+      digitalWrite(MOTOR_0_STEP_PIN,HIGH);
+      digitalWrite(MOTOR_0_STEP_PIN,LOW);
+      leftSteps++;
+    }
+    if( digitalRead(LIMIT_SWITCH_PIN_RIGHT )==LOW ) {
+      right=1;
+    }
+    if(right==0) {
+      digitalWrite(MOTOR_1_STEP_PIN,HIGH);
+      digitalWrite(MOTOR_1_STEP_PIN,LOW);
+      rightSteps++;
+    }
+    pause(STEP_DELAY);
+  } while(left+right<2);
+
+  // make sure there's no momentum to skip the belt on the pulley.
+  delay(500);
+  
+  Serial.println(F("Estimating position..."));
+  calibrateLeft = (float)leftSteps * threadPerStep;
+  calibrateRight = (float)rightSteps * threadPerStep;
+  Serial.print(F("D8 L"));  Serial.println(calibrateLeft);
+  Serial.print(F(" R"));  Serial.println(calibrateRight);
+  
+  // current position is...
+  float x,y;
+  FK(leftSteps,rightSteps,x,y);
+  teleport(x,y);
+  where();
+
+  // go home.
+  Serial.println(F("Homing..."));
+
+  Vector3 offset=get_end_plus_offset();
+  line_safe(homeX,homeY,offset.z,feed_rate);
+  Serial.println(F("Done."));
+#endif // USE_LIMIT_SWITCH
+}
+
 
 /**
  * If limit switches are installed, move to touch each switch so that the pen holder can move to home position.
@@ -682,6 +754,7 @@ void processCommand() {
       break;
     }
   case 28:  findHome();  break;
+  case 29:  calibrateBelts();  break;
   case 54:
   case 55:
   case 56:
