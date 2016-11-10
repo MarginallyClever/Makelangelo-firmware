@@ -39,7 +39,7 @@ long current_feed_rate;
 long old_feed_rate=0;
 long start_feed_rate,end_feed_rate;
 long time_accelerating,time_decelerating;
-float max_xy_jerk = 20.0f;
+float max_xy_jerk = MAX_JERK;
 long global_steps_0;
 long global_steps_1;
 int global_step_dir_0;
