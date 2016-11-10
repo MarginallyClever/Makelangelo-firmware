@@ -46,6 +46,7 @@
 
 #define MAX_FEEDRATE         (10000.0)  // depends on timer interrupt & hardware
 #define MIN_FEEDRATE         (100)
+#define MAX_JERK             (5.0)
 #define DEFAULT_FEEDRATE     (7000.0)
 #define DEFAULT_ACCELERATION (3000)
 
