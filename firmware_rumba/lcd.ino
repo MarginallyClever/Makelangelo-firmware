@@ -189,6 +189,9 @@ void LCD_main_menu() {
     if(!sd_printing_now) {
       MENU_ACTION("Disable motors",LCD_disable_motors);
       MENU_ACTION("Enable motors",LCD_enable_motors);
+#if MAKELANGELO_HARDWARE_VERSION  == 5
+      MENU_ACTION("Find home",LCD_find_home);
+#endif
       MENU_ACTION("This is home",LCD_this_is_home);
       MENU_ACTION("Go home",LCD_go_home);
       if(sd_inserted) {
@@ -225,6 +228,12 @@ void LCD_disable_motors() {
 
 void LCD_enable_motors() {
   motor_engage();
+  MENU_GOTO(LCD_main_menu);
+}
+
+
+void LCD_find_home() {
+  findHome();
   MENU_GOTO(LCD_main_menu);
 }
 
