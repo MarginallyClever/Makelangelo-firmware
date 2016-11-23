@@ -44,11 +44,11 @@
 #define MICROSTEPS           (16.0)  // microstepping on this microcontroller
 #define STEPS_PER_TURN       (400 * MICROSTEPS)  // default number of steps per turn * microsteps
 
-#define MAX_FEEDRATE         (10000.0)  // depends on timer interrupt & hardware
+#define MAX_FEEDRATE         (9000.0)  // depends on timer interrupt & hardware
 #define MIN_FEEDRATE         (100)
 #define MAX_JERK             (5.0)
 #define DEFAULT_FEEDRATE     (7000.0)
-#define DEFAULT_ACCELERATION (3000)
+#define DEFAULT_ACCELERATION (2500)
 
 #define STEP_DELAY           (50)  // delay between steps, in milliseconds, when doing fixed tasks like homing
 
