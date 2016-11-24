@@ -659,9 +659,6 @@ void where() {
   Serial.print(F(" Z"));  Serial.print(posz);
   Serial.print(' ');  printFeedRate();
   Serial.print(F("\n"));
-  
-  Serial.print(F(" HX="));  Serial.print(homeX);
-  Serial.print(F(" HY="));  Serial.println(homeY);
 }
 
 
@@ -743,8 +740,11 @@ void saveHome() {
 
 //------------------------------------------------------------------------------
 void loadHome() {
+  Serial.print(F("Load home."));
   homeX = (float)EEPROM_readLong(ADDR_HOMEX)/100.0f;
   homeY = (float)EEPROM_readLong(ADDR_HOMEY)/100.0f;
+  Serial.print(F(" x="));  Serial.print(homeX);
+  Serial.print(F(" y="));  Serial.print(homeY);
 }
 
 
@@ -799,7 +799,7 @@ void loadConfig() {
     // If not the current EEPROM_VERSION or the EEPROM_VERSION is sullied (i.e. unknown data)
     // Update the version number
     EEPROM.write(ADDR_VERSION,EEPROM_VERSION);
-    
+    savePulleyDiameter();
   }
 
   // Retrieve stored configuration
@@ -1193,7 +1193,8 @@ void processCommand() {
 
 
 void setHome(float x,float y) {
-  if(x != homeX || y!=homeY) {
+  if( (int)(x*100) != (int)(homeX*100)
+   || (int)(y*100) != (int)(homeY*100) ) {
     homeX = x;
     homeY = y;
     saveHome();
