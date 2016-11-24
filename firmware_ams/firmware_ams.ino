@@ -569,9 +569,6 @@ void teleport(float x,float y) {
   IK(posx,posy,L1,L2);
   laststep1=L1;
   laststep2=L2;
-  Serial.print(F("Teleport:"));
-  Serial.print(laststep1);  Serial.print("\t");
-  Serial.print(laststep2);  Serial.print("\n");
 }
 
 
