@@ -47,7 +47,7 @@ char m2i=1;
 
 // calculate some numbers to help us find feed_rate
 float pulleyDiameter = 4.0f/PI;  // cm; 20 teeth * 2mm per tooth / PI
-float threadPerStep=0;
+float threadPerStep=4.0f/STEPS_PER_TURN;  // pulleyDiameter * PI / STEPS_PER_TURN
 
 // plotter position.
 float posx, posy, posz;  // pen state
@@ -80,8 +80,10 @@ extern long global_steps_1;
 
 //------------------------------------------------------------------------------
 // calculate max velocity, threadperstep.
-void adjustPulleyDiameter(float diameter1) {
-  pulleyDiameter = diameter1;
+void adjustPulleyDiameter(float diameter) {
+  Serial.print(F("adjustPulleyDiameter "));
+  Serial.println(diameter);
+  pulleyDiameter = diameter;
   float circumference = pulleyDiameter*PI;  // circumference
   threadPerStep = circumference/STEPS_PER_TURN;  // thread per step
 }
@@ -652,7 +654,7 @@ void tool_change(int tool_id) {
  **/
 float parseNumber(char code,float val) {
   char *ptr=serialBuffer;  // start at the beginning of buffer
-  while(ptr>1 && *ptr && ptr<serialBuffer+sofar) {  // walk to the end
+  while( (int)ptr > 1 && (int)ptr<(int)serialBuffer+sofar && *ptr ) {  // walk to the end
     if(*ptr==code) {  // if you find code on your walk,
       return atof(ptr+1);  // convert the digits that follow into a float and return it
     }
