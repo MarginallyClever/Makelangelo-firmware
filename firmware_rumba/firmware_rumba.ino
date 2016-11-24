@@ -46,7 +46,7 @@ char m1i=1;
 char m2i=1;
 
 // calculate some numbers to help us find feed_rate
-float pulleyDiameter = 4.0f/PI;  // cm
+float pulleyDiameter = 4.0f/PI;  // cm; 20 teeth * 2mm per tooth / PI
 float threadPerStep=0;
 
 // plotter position.

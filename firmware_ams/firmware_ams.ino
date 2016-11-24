@@ -210,7 +210,7 @@ int M2_REEL_OUT = BACKWARD;
 
 // calculate some numbers to help us find feed_rate
 float pulleyDiameter = 4.0f/PI;  // cm
-float threadPerStep=0;  // thread per step
+float threadPerStep = 4.0f/STEPS_PER_TURN;  // pulleyDiameter*PI/STEPS_PER_TURN
 
 // plotter position.
 static float posx;
@@ -569,6 +569,9 @@ void teleport(float x,float y) {
   IK(posx,posy,L1,L2);
   laststep1=L1;
   laststep2=L2;
+  Serial.print(F("Teleport:"));
+  Serial.print(laststep1);  Serial.print("\t");
+  Serial.print(laststep2);  Serial.print("\n");
 }
 
 
@@ -799,6 +802,7 @@ void loadConfig() {
     // If not the current EEPROM_VERSION or the EEPROM_VERSION is sullied (i.e. unknown data)
     // Update the version number
     EEPROM.write(ADDR_VERSION,EEPROM_VERSION);
+    
   }
 
   // Retrieve stored configuration
@@ -1221,12 +1225,11 @@ void tools_setup() {
 
 //------------------------------------------------------------------------------
 void setup() {
-  loadConfig();
-
-  // initialize the read buffer
-  sofar=0;
   // start communications
   Serial.begin(BAUD);
+  
+  loadConfig();
+
   Serial.print(F("\n\nHELLO WORLD! I AM DRAWBOT #"));
   Serial.println(robot_uid);
 
@@ -1267,9 +1270,12 @@ void setup() {
   teleport(homeX,homeY);
   setPenAngle(PEN_UP_ANGLE);
 
+  // initialize the read buffer
+  sofar=0;
   // display the help at startup.
   help();
   ready();
+
   //testKinematics();
 }
 
