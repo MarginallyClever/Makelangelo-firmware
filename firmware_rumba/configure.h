@@ -127,12 +127,12 @@
 
 #define MOTOR_3_DIR_PIN           (22)
 #define MOTOR_3_STEP_PIN          (23)
-#define MOTOR_3_ENABLE_PIN        (27)
+#define MOTOR_3_ENABLE_PIN        (24)
 #define MOTOR_3_LIMIT_SWITCH_PIN  (34)
 
 #define MOTOR_4_DIR_PIN           (25)
 #define MOTOR_4_STEP_PIN          (26)
-#define MOTOR_4_ENABLE_PIN        (24)
+#define MOTOR_4_ENABLE_PIN        (27)
 #define MOTOR_4_LIMIT_SWITCH_PIN  (33)
 
 #define MOTOR_5_DIR_PIN           (28)
