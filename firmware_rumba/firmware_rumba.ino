@@ -34,8 +34,8 @@ static float homeX=0;
 static float homeY=0;
 
 // length of belt when weights hit limit switch
-float calibrateRight = 115;
-float calibrateLeft = 115;
+float calibrateRight = 101.1;
+float calibrateLeft = 101.1;
 
 // what are the motors called?
 char m1d='L';
@@ -46,13 +46,14 @@ char m1i=1;
 char m2i=1;
 
 // calculate some numbers to help us find feed_rate
-float pulleyDiameter = 4.0f/PI;  // cm
-float threadPerStep=0;
+float pulleyDiameter = 4.0f/PI;  // cm; 20 teeth * 2mm per tooth / PI
+float threadPerStep=4.0f/STEPS_PER_TURN;  // pulleyDiameter * PI / STEPS_PER_TURN
 
 // plotter position.
 float posx, posy, posz;  // pen state
 float feed_rate=DEFAULT_FEEDRATE;
 float acceleration=DEFAULT_ACCELERATION;
+float step_delay;
 
 char absolute_mode=1;  // absolute or incremental programming mode?
 
@@ -80,8 +81,10 @@ extern long global_steps_1;
 
 //------------------------------------------------------------------------------
 // calculate max velocity, threadperstep.
-void adjustPulleyDiameter(float diameter1) {
-  pulleyDiameter = diameter1;
+void adjustPulleyDiameter(float diameter) {
+  Serial.print(F("adjustPulleyDiameter "));
+  Serial.println(diameter);
+  pulleyDiameter = diameter;
   float circumference = pulleyDiameter*PI;  // circumference
   threadPerStep = circumference/STEPS_PER_TURN;  // thread per step
 }
@@ -119,6 +122,10 @@ void setFeedRate(float v1) {
     Serial.println(feed_rate);
 #endif
   }
+}
+
+void findStepDelay() {
+  step_delay = 1000000.0f/DEFAULT_FEEDRATE;
 }
 
 
@@ -257,7 +264,7 @@ void adjustInversions(int m1,int m2) {
 /**
  * Test that IK(FK(A))=A
  */
-void test_kinematics() {
+void testKinematics() {
   long A,B,i;
   float C,D,x=0,y=0;
 
@@ -441,11 +448,11 @@ void sayVersionNumber() {
   Serial.println(versionNumber,DEC);
 }
 
-
 /**
- * If limit switches are installed, move to touch each switch so that the pen holder can move to home position.
+ * Starting from the home position, bump the switches and measure the length of each belt.
+ * Does not save the values, only reports them to serial.
  */
-void findHome() {
+void calibrateBelts() {
 #ifdef USE_LIMIT_SWITCH
   wait_for_empty_segment_buffer();
   
@@ -465,6 +472,11 @@ void findHome() {
   digitalWrite(MOTOR_0_DIR_PIN,motors[0].reel_out);
   digitalWrite(MOTOR_1_DIR_PIN,motors[1].reel_out);
   int left=0, right=0;
+  long leftSteps, rightSteps;
+  
+  IK(homeX,homeY,leftSteps,rightSteps);
+  findStepDelay();
+
   do {
     if( digitalRead(LIMIT_SWITCH_PIN_LEFT )==LOW ) {
       left=1;
@@ -472,6 +484,7 @@ void findHome() {
     if(left==0) {
       digitalWrite(MOTOR_0_STEP_PIN,HIGH);
       digitalWrite(MOTOR_0_STEP_PIN,LOW);
+      leftSteps++;
     }
     if( digitalRead(LIMIT_SWITCH_PIN_RIGHT )==LOW ) {
       right=1;
@@ -479,8 +492,76 @@ void findHome() {
     if(right==0) {
       digitalWrite(MOTOR_1_STEP_PIN,HIGH);
       digitalWrite(MOTOR_1_STEP_PIN,LOW);
+      rightSteps++;
     }
-    pause(STEP_DELAY);
+    pause(step_delay);
+  } while(left+right<2);
+
+  // make sure there's no momentum to skip the belt on the pulley.
+  delay(500);
+  
+  Serial.println(F("Estimating position..."));
+  calibrateLeft = (float)leftSteps * threadPerStep;
+  calibrateRight = (float)rightSteps * threadPerStep;
+  Serial.print(F("D8 L"));  Serial.println(calibrateLeft);
+  Serial.print(F(" R"));  Serial.println(calibrateRight);
+  
+  // current position is...
+  float x,y;
+  FK(leftSteps,rightSteps,x,y);
+  teleport(x,y);
+  where();
+
+  // go home.
+  Serial.println(F("Homing..."));
+
+  Vector3 offset=get_end_plus_offset();
+  line_safe(homeX,homeY,offset.z,feed_rate);
+  Serial.println(F("Done."));
+#endif // USE_LIMIT_SWITCH
+}
+
+
+/**
+ * If limit switches are installed, move to touch each switch so that the pen holder can move to home position.
+ */
+void findHome() {
+#ifdef USE_LIMIT_SWITCH
+  wait_for_empty_segment_buffer();
+  
+  Serial.println(F("Find Home..."));
+
+  if(readSwitches()) {
+    Serial.println(F("** ERROR **"));
+    Serial.println(F("Problem: Plotter is already touching switches."));
+    Serial.println(F("Solution: Please unwind the strings a bit and try again."));
+    return;
+  }
+  
+  findStepDelay();
+
+  // reel in the left motor and the right motor out until contact is made.
+  digitalWrite(MOTOR_0_DIR_PIN,motors[0].reel_out);
+  digitalWrite(MOTOR_1_DIR_PIN,motors[1].reel_out);
+  int left=0, right=0;
+  do {
+    if(left==0) {
+      if( digitalRead(LIMIT_SWITCH_PIN_LEFT )==LOW ) {
+        left=1;
+        Serial.println(F("Left..."));
+      }
+      digitalWrite(MOTOR_0_STEP_PIN,HIGH);
+      digitalWrite(MOTOR_0_STEP_PIN,LOW);
+    }
+    if(right==0) {
+      if( digitalRead(LIMIT_SWITCH_PIN_RIGHT )==LOW ) {
+        right=1;
+        Serial.println(F("Right..."));
+      }
+      digitalWrite(MOTOR_1_STEP_PIN,HIGH);
+      digitalWrite(MOTOR_1_STEP_PIN,LOW);
+    }
+    pause(step_delay);
   } while(left+right<2);
 
   // make sure there's no momentum to skip the belt on the pulley.
@@ -489,6 +570,11 @@ void findHome() {
   Serial.println(F("Estimating position..."));
   float leftD = lround( calibrateLeft / threadPerStep );
   float rightD = lround( calibrateRight / threadPerStep );
+  Serial.print("cl=");   Serial.println(calibrateLeft);
+  Serial.print("cr=");   Serial.println(calibrateRight);
+  Serial.print("t=");    Serial.println(threadPerStep);
+  Serial.print("l=");    Serial.println(leftD);
+  Serial.print("r=");    Serial.println(rightD);
   
   // current position is...
   float x,y;
@@ -682,6 +768,7 @@ void processCommand() {
       break;
     }
   case 28:  findHome();  break;
+  case 29:  calibrateBelts();  break;
   case 54:
   case 55:
   case 56:
@@ -713,10 +800,11 @@ void processCommand() {
       int i,amount=parseNumber(m1d,0);
       digitalWrite(MOTOR_0_DIR_PIN,amount < 0 ? motors[0].reel_in : motors[0].reel_out);
       amount=abs(amount);
+      findStepDelay();
       for(i=0;i<amount;++i) {
         digitalWrite(MOTOR_0_STEP_PIN,HIGH);
         digitalWrite(MOTOR_0_STEP_PIN,LOW);
-        pause(STEP_DELAY);
+        pause(step_delay);
       }
 
       amount=parseNumber(m2d,0);
@@ -725,7 +813,7 @@ void processCommand() {
       for(i=0;i<amount;++i) {
         digitalWrite(MOTOR_1_STEP_PIN,HIGH);
         digitalWrite(MOTOR_1_STEP_PIN,LOW);
-        pause(STEP_DELAY);
+        pause(step_delay);
       }
     }
     break;

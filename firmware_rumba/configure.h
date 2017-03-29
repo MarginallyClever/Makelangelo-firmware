@@ -21,12 +21,10 @@
 //------------------------------------------------------------------------------
 // CONSTANTS
 //------------------------------------------------------------------------------
-#define MAKELANGELO_HARDWARE_VERSION 3
+//#define MAKELANGELO_HARDWARE_VERSION 3  // If you have a makelangelo 3+
+#define MAKELANGELO_HARDWARE_VERSION 5  // If you have a makelangelo 5+
 
 //#define VERBOSE           (1)  // add to get a lot more serial output.
-#define HAS_SD                   // comment this out if there is no SD card
-#define HAS_LCD                  // comment this out if there is no SMART LCD controller
-//#define USE_LIMIT_SWITCH    (1)  // Comment out this line to disable findHome and limit switches
 
 // machine style
 #define POLARGRAPH2  // uncomment this line if you use a polargraph like the Makelangelo
@@ -48,8 +46,9 @@
 
 #define MAX_FEEDRATE         (9000.0)  // depends on timer interrupt & hardware
 #define MIN_FEEDRATE         (100)
-#define DEFAULT_FEEDRATE     (6000.0)
-#define DEFAULT_ACCELERATION (250)
+#define MAX_JERK             (5.0)
+#define DEFAULT_FEEDRATE     (7000.0)
+#define DEFAULT_ACCELERATION (2500)
 
 #define STEP_DELAY           (50)  // delay between steps, in milliseconds, when doing fixed tasks like homing
 
@@ -92,12 +91,15 @@
 
 
 #if MAKELANGELO_HARDWARE_VERSION == 5
-#define USE_LIMIT_SWITCH    (1)  // Comment out this line to disable findHome and limit switches
 #define MOTHERBOARD BOARD_RUMBA
+#define USE_LIMIT_SWITCH    (1)  // Comment out this line to disable findHome and limit switches
+#define HAS_SD                   // comment this out if there is no SD card
+#define HAS_LCD                  // comment this out if there is no SMART LCD controller
 #endif
 #if MAKELANGELO_HARDWARE_VERSION == 3
-#undef USE_LIMIT_SWITCH
 #define MOTHERBOARD BOARD_RUMBA
+#define HAS_SD                   // comment this out if there is no SD card
+#define HAS_LCD                  // comment this out if there is no SMART LCD controller
 #endif
 
 
@@ -125,12 +127,12 @@
 
 #define MOTOR_3_DIR_PIN           (22)
 #define MOTOR_3_STEP_PIN          (23)
-#define MOTOR_3_ENABLE_PIN        (27)
+#define MOTOR_3_ENABLE_PIN        (24)
 #define MOTOR_3_LIMIT_SWITCH_PIN  (34)
 
 #define MOTOR_4_DIR_PIN           (25)
 #define MOTOR_4_STEP_PIN          (26)
-#define MOTOR_4_ENABLE_PIN        (24)
+#define MOTOR_4_ENABLE_PIN        (27)
 #define MOTOR_4_LIMIT_SWITCH_PIN  (33)
 
 #define MOTOR_5_DIR_PIN           (28)
