@@ -4,10 +4,14 @@
 // this code is public domain, enjoy!
 //------------------------------------------------------------------------------
 #if (ARDUINO >= 100)
- #include "Arduino.h"
+  #include "Arduino.h"
 #else
- #include "WProgram.h"
+  #if defined(__AVR__)
+    #include <avr/io.h>
+  #endif
+  #include "WProgram.h"
 #endif
+
 #include "AFMotorDrawbot.h"
 
 
@@ -20,6 +24,19 @@ static uint8_t latch_state;
 static AFMotorController MC;
 
 
+// Pause microseconds.
+// Every 70 minutes, micros() will overflow but will result in the same
+// delay due to the substraction and comparison.
+// This function is intended to be more precise than delay(...), but less
+// than delayMicroseconds(...). However, it will be more accurate than delayMicroseconds(...)
+// over longer durations since that is implemented with NOP counts rather than a clock
+// comparison. A typical duration to pause beween steps is 500-10000us.
+void pauseMicroseoconds(unsigned long us) {
+  unsigned long start = micros();
+  while (micros() - start < us) {
+    yield();
+  }
+}
 
 //------------------------------------------------------------------------------
 
@@ -51,17 +68,16 @@ void AFMotorController::enable() {
 
 
 void AFMotorController::latch_tx() {
-  uint8_t i;
-
   //LATCH_PORT &= ~_BV(LATCH);
   digitalWrite(MOTORLATCH, LOW);
 
   //SER_PORT &= ~_BV(SER);
   digitalWrite(MOTORDATA, LOW);
-/*
-  for (i=0; i<8; i++) {
+
+  for (uint8_t i=0; i<8; i++) {
     //CLK_PORT &= ~_BV(CLK);
     digitalWrite(MOTORCLK, LOW);
+
     if (latch_state & _BV(7-i)) {
       //SER_PORT |= _BV(SER);
       digitalWrite(MOTORDATA, HIGH);
@@ -72,15 +88,6 @@ void AFMotorController::latch_tx() {
     //CLK_PORT |= _BV(CLK);
     digitalWrite(MOTORCLK, HIGH);
   }
-*/
-    digitalWrite(MOTORCLK, LOW);    digitalWrite(MOTORDATA, HIGH * ( (latch_state & _BV(7)) >> (7) ) );    digitalWrite(MOTORCLK, HIGH);
-    digitalWrite(MOTORCLK, LOW);    digitalWrite(MOTORDATA, HIGH * ( (latch_state & _BV(6)) >> (6) ) );    digitalWrite(MOTORCLK, HIGH);
-    digitalWrite(MOTORCLK, LOW);    digitalWrite(MOTORDATA, HIGH * ( (latch_state & _BV(5)) >> (5) ) );    digitalWrite(MOTORCLK, HIGH);
-    digitalWrite(MOTORCLK, LOW);    digitalWrite(MOTORDATA, HIGH * ( (latch_state & _BV(4)) >> (4) ) );    digitalWrite(MOTORCLK, HIGH);
-    digitalWrite(MOTORCLK, LOW);    digitalWrite(MOTORDATA, HIGH * ( (latch_state & _BV(3)) >> (3) ) );    digitalWrite(MOTORCLK, HIGH);
-    digitalWrite(MOTORCLK, LOW);    digitalWrite(MOTORDATA, HIGH * ( (latch_state & _BV(2)) >> (2) ) );    digitalWrite(MOTORCLK, HIGH);
-    digitalWrite(MOTORCLK, LOW);    digitalWrite(MOTORDATA, HIGH * ( (latch_state & _BV(1)) >> (1) ) );    digitalWrite(MOTORCLK, HIGH);
-    digitalWrite(MOTORCLK, LOW);    digitalWrite(MOTORDATA, HIGH * ( (latch_state & _BV(0)) >> (0) ) );    digitalWrite(MOTORCLK, HIGH);
   //LATCH_PORT |= _BV(LATCH);
   digitalWrite(MOTORLATCH, HIGH);
 }
@@ -136,14 +143,19 @@ AF_Stepper::AF_Stepper(uint16_t steps, uint8_t num) {
 
 void AF_Stepper::setSpeed(uint16_t rpm) {
   usperstep = 60000000 / ((uint32_t)revsteps * (uint32_t)rpm);
-  steppingcounter = 0;
 }
 
 
 void AF_Stepper::release() {
-  // release all
-  latch_state &= ~a & ~b & ~c & ~d; // all motor pins to 0
-  MC.latch_tx();
+  if (steppernum == 1) {
+    latch_state &= ~_BV(MOTOR1_A) & ~_BV(MOTOR1_B) &
+      ~_BV(MOTOR2_A) & ~_BV(MOTOR2_B); // all motor pins to 0
+    MC.latch_tx();
+  } else if (steppernum == 2) {
+    latch_state &= ~_BV(MOTOR3_A) & ~_BV(MOTOR3_B) &
+      ~_BV(MOTOR4_A) & ~_BV(MOTOR4_B); // all motor pins to 0
+    MC.latch_tx();
+  }
 }
 
 
@@ -152,20 +164,13 @@ void AF_Stepper::step(uint16_t steps, uint8_t dir) {
 
   while (steps--) {
     onestep(dir);
-/*
-    delay(uspers/1000);  // in ms
-    steppingcounter += (uspers % 1000);
-    if (steppingcounter >= 1000) {
-      delay(1);
-      steppingcounter -= 1000;
-    }
-//*/
-    delayMicroseconds(uspers);
+    pauseMicroseoconds(uspers);
   }
 }
 
 
-void AF_Stepper::onestep(uint8_t dir) {
+uint8_t AF_Stepper::onestep(uint8_t dir) {
+
   if (dir == FORWARD) {
     currentstep++;
   } else {
@@ -180,10 +185,11 @@ void AF_Stepper::onestep(uint8_t dir) {
   Serial.print("current step: "); Serial.println(currentstep, DEC);
 #endif
 
-  // set all of this motor's pins to 0 (don't smash other motor)
-  latch_state &= ~a & ~b & ~c & ~d;
+  // release all
+  latch_state &= ~a & ~b & ~c & ~d; // all motor pins to 0
 
   // No wait!  Keep some energized.
+  // Half step drive pattern
   switch (currentstep/(MICROSTEPS/2)) {
   case 0:  latch_state |= a;      break;  // energize coil 1 only
   case 1:  latch_state |= a | b;  break;  // energize coil 1+2
@@ -197,5 +203,6 @@ void AF_Stepper::onestep(uint8_t dir) {
 
   // change the energized state now
   MC.latch_tx();
+  return currentstep;
 }
 
