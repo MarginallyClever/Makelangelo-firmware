@@ -21,8 +21,8 @@
 //------------------------------------------------------------------------------
 // CONSTANTS
 //------------------------------------------------------------------------------
-#define MAKELANGELO_HARDWARE_VERSION 3  // If you have a makelangelo 3+
-//#define MAKELANGELO_HARDWARE_VERSION 5  // If you have a makelangelo 5+
+//#define MAKELANGELO_HARDWARE_VERSION 3  // If you have a makelangelo 3+
+#define MAKELANGELO_HARDWARE_VERSION 5  // If you have a makelangelo 5+
 
 //#define VERBOSE           (1)  // add to get a lot more serial output.
 
@@ -42,7 +42,7 @@
 
 
 #define MICROSTEPS           (16.0)  // microstepping on this microcontroller
-#define STEPS_PER_TURN       (400 * MICROSTEPS)  // default number of steps per turn * microsteps
+#define STEPS_PER_TURN       (400.0 * MICROSTEPS)  // default number of steps per turn * microsteps
 
 #define MAX_FEEDRATE         (9000.0)  // depends on timer interrupt & hardware
 #define MIN_FEEDRATE         (100)

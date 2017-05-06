@@ -83,10 +83,13 @@ extern long global_steps_1;
 // calculate max velocity, threadperstep.
 void adjustPulleyDiameter(float diameter) {
   Serial.print(F("adjustPulleyDiameter "));
-  Serial.println(diameter);
   pulleyDiameter = diameter;
   float circumference = pulleyDiameter*PI;  // circumference
-  threadPerStep = circumference/STEPS_PER_TURN;  // thread per step
+  threadPerStep = circumference/(float)STEPS_PER_TURN;  // thread per step
+  Serial.print(F("dia="));  Serial.println(diameter);
+  Serial.print(F("cir="));  Serial.println(circumference);
+  Serial.print(F("SPT="));  Serial.println((float)STEPS_PER_TURN);
+  Serial.print(F("tps*1000="));  Serial.println(threadPerStep*1000.0f);
 }
 
 
@@ -914,7 +917,10 @@ void tools_setup() {
 void setup() {
   // start communications
   Serial.begin(BAUD);
-  
+
+  // if you accidentally upload m3 firmware to an m5 then upload it ONCE with this line uncommented.
+  //adjustDimensions(50,-50,-32.5,32.5);  adjustInversions(1,-1);  savePulleyDiameter();  saveCalibration();
+    
   loadConfig();
 
 
