@@ -280,10 +280,10 @@ void segment_update_trapezoid(Segment *s,float start_speed,float end_speed) {
   if(start_speed<MIN_FEEDRATE) start_speed=MIN_FEEDRATE;
   if(end_speed<MIN_FEEDRATE) end_speed=MIN_FEEDRATE;
 
-  //int steps_to_accel =  ceil( (s->feed_rate_max*s->feed_rate_max - start_speed*start_speed )/ (2.0*acceleration) );
-  //int steps_to_decel = floor( (end_speed*end_speed - s->feed_rate_max*s->feed_rate_max )/ -(2.0*acceleration) );
-  int steps_to_accel =  ceil( ( s->feed_rate_max - start_speed ) / acceleration );
-  int steps_to_decel = floor( ( end_speed - s->feed_rate_max ) / -acceleration );
+  int steps_to_accel =  ceil( (s->feed_rate_max*s->feed_rate_max - start_speed*start_speed )/ (2.0*acceleration) );
+  int steps_to_decel = floor( (end_speed*end_speed - s->feed_rate_max*s->feed_rate_max )/ -(2.0*acceleration) );
+  //int steps_to_accel =  ceil( ( s->feed_rate_max - start_speed ) / acceleration );
+  //int steps_to_decel = floor( ( end_speed - s->feed_rate_max ) / -acceleration );
 
   int steps_at_top_speed = s->steps_total - steps_to_accel - steps_to_decel;
   if(steps_at_top_speed<0) {
@@ -388,7 +388,7 @@ void motor_set_step_count(long a0,long a1,long a2) {
  **/
 void motor_onestep(int motor) {
 #ifdef VERBOSE
-  char *letter="XYZUVW";
+  const char *letter="XYZUVW";
   Serial.print(letter[motor]);
 #endif
 

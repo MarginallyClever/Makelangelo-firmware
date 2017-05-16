@@ -69,7 +69,7 @@
 #define SWITCH_HALF     (512)
 
 // servo angles for pen control
-#define PEN_UP_ANGLE    (180)
+#define PEN_UP_ANGLE    (90)
 #define PEN_DOWN_ANGLE  (10)  // Some servos don't like 0 degrees
 #define PEN_DELAY       (250)  // in ms
 
@@ -928,7 +928,7 @@ void motor_engage() {
  **/
 float parseNumber(char code,float val) {
   char *ptr=serialBuffer;  // start at the beginning of buffer
-  while(ptr && *ptr && ptr<serialBuffer+sofar) {  // walk to the end
+  while((long)ptr > 1 && (*ptr) && (long)ptr < (long)serialBuffer+sofar) {  // walk to the end
     if(*ptr==code) {  // if you find code on your walk,
       return atof(ptr+1);  // convert the digits that follow into a float and return it
     }
@@ -1250,7 +1250,7 @@ void setup() {
 #if MOTHERBOARD == 2
   // Change the i2c clock from 100KHz to 400KHz
   // https://learn.adafruit.com/adafruit-motor-shield-v2-for-arduino/faq
-  //TWBR = ((F_CPU /400000l) - 16) / 2;
+  TWBR = ((F_CPU / 400000l) - 16) / 2;
 #endif
 
   setFeedRate(MAX_FEEDRATE);  // *30 because i also /2
