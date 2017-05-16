@@ -83,10 +83,13 @@ extern long global_steps_1;
 // calculate max velocity, threadperstep.
 void adjustPulleyDiameter(float diameter) {
   Serial.print(F("adjustPulleyDiameter "));
-  Serial.println(diameter);
   pulleyDiameter = diameter;
   float circumference = pulleyDiameter*PI;  // circumference
-  threadPerStep = circumference/STEPS_PER_TURN;  // thread per step
+  threadPerStep = circumference/(float)STEPS_PER_TURN;  // thread per step
+  Serial.print(F("dia="));  Serial.println(diameter);
+  Serial.print(F("cir="));  Serial.println(circumference);
+  Serial.print(F("SPT="));  Serial.println((float)STEPS_PER_TURN);
+  Serial.print(F("tps*1000="));  Serial.println(threadPerStep*1000.0f);
 }
 
 
@@ -459,13 +462,12 @@ void calibrateBelts() {
   Serial.println(F("Searching for switches..."));
 
   if(readSwitches()) {
+    // this is to make sure that motors don't turn the wrong way.
     Serial.println(F("** ERROR **"));
     Serial.println(F("Problem: Plotter is already touching switches."));
     Serial.println(F("Solution: Please unwind the strings a bit and try again."));
     return;
   }
-
-  int safeOut=50;
 
   // reel in the left motor and the right motor out until contact is made.
   Serial.println(F("Find switches..."));
@@ -478,18 +480,22 @@ void calibrateBelts() {
   findStepDelay();
 
   do {
-    if( digitalRead(LIMIT_SWITCH_PIN_LEFT )==LOW ) {
-      left=1;
-    }
     if(left==0) {
+      if( digitalRead(LIMIT_SWITCH_PIN_LEFT )==LOW ) {
+        // switch hit
+        left=1;
+      }
+      // switch not hit yet, keep moving
       digitalWrite(MOTOR_0_STEP_PIN,HIGH);
       digitalWrite(MOTOR_0_STEP_PIN,LOW);
       leftSteps++;
     }
-    if( digitalRead(LIMIT_SWITCH_PIN_RIGHT )==LOW ) {
-      right=1;
-    }
     if(right==0) {
+      if( digitalRead(LIMIT_SWITCH_PIN_RIGHT )==LOW ) {
+        // switch hit
+        right=1;
+      }
+      // switch not hit yet, keep moving
       digitalWrite(MOTOR_1_STEP_PIN,HIGH);
       digitalWrite(MOTOR_1_STEP_PIN,LOW);
       rightSteps++;
@@ -546,7 +552,7 @@ void findHome() {
   int left=0, right=0;
   do {
     if(left==0) {
-      if( digitalRead(LIMIT_SWITCH_PIN_LEFT )==LOW ) {
+      if( digitalRead(LIMIT_SWITCH_PIN_LEFT)==LOW ) {
         left=1;
         Serial.println(F("Left..."));
       }
@@ -554,7 +560,7 @@ void findHome() {
       digitalWrite(MOTOR_0_STEP_PIN,LOW);
     }
     if(right==0) {
-      if( digitalRead(LIMIT_SWITCH_PIN_RIGHT )==LOW ) {
+      if( digitalRead(LIMIT_SWITCH_PIN_RIGHT)==LOW ) {
         right=1;
         Serial.println(F("Right..."));
       }
@@ -914,7 +920,10 @@ void tools_setup() {
 void setup() {
   // start communications
   Serial.begin(BAUD);
-  
+
+  // if you accidentally upload m3 firmware to an m5 then upload it ONCE with this line uncommented.
+  //adjustDimensions(50,-50,-32.5,32.5);  adjustInversions(1,-1);  savePulleyDiameter();  saveCalibration();
+    
   loadConfig();
 
 
