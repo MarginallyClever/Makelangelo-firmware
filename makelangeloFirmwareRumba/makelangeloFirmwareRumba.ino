@@ -46,8 +46,8 @@ char m1i=1;
 char m2i=1;
 
 // calculate some numbers to help us find feed_rate
-float pulleyDiameter = 4.0f/PI;  // cm; 20 teeth * 2mm per tooth / PI
-float threadPerStep=4.0f/STEPS_PER_TURN;  // pulleyDiameter * PI / STEPS_PER_TURN
+float pulleyDiameter = 4.0f / PI;  // cm; 20 teeth * 2mm per tooth / PI
+float threadPerStep  = 4.0f / STEPS_PER_TURN;  // pulleyDiameter * PI / STEPS_PER_TURN
 
 // plotter position.
 float posx, posy, posz;  // pen state
@@ -749,7 +749,7 @@ void processCommand() {
       acceleration = min(max(parseNumber('A',acceleration),1),2000);
       line_safe( parseNumber('X',(absolute_mode?offset.x:0)*10)*0.1 + (absolute_mode?0:offset.x),
                  parseNumber('Y',(absolute_mode?offset.y:0)*10)*0.1 + (absolute_mode?0:offset.y),
-                 parseNumber('Z',(absolute_mode?offset.z:0)) + (absolute_mode?0:offset.z),
+                 parseNumber('Z',(absolute_mode?offset.z:0)   )     + (absolute_mode?0:offset.z),
                  parseNumber('F',feed_rate) );
       break;
     }
@@ -813,7 +813,7 @@ void processCommand() {
         pause(step_delay);
       }
 
-      amount=parseNumber(m2d,0);
+      amount=parseNumber(m2d,0); 
       digitalWrite(MOTOR_1_DIR_PIN,amount < 0 ? motors[1].reel_in : motors[1].reel_out);
       amount = abs(amount);
       for(i=0;i<amount;++i) {
@@ -922,7 +922,7 @@ void setup() {
   Serial.begin(BAUD);
 
   // if you accidentally upload m3 firmware to an m5 then upload it ONCE with this line uncommented.
-  //adjustDimensions(50,-50,-32.5,32.5);  adjustInversions(1,-1);  savePulleyDiameter();  saveCalibration();
+  //adjustDimensions(50,-50,-32.5,32.5);  adjustInversions(1,-1);  adjustPulleyDiameter(4.0/PI);  saveCalibration();
     
   loadConfig();
 

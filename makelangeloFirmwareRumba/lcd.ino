@@ -157,7 +157,7 @@ void LCD_update() {
 }
 
 
-// display the current machine position and feedrate on the LCD.
+// display the current machine position and feed rate on the LCD.
 void LCD_status_menu() {
   MENU_START
     // on click go to the main menu
@@ -167,9 +167,10 @@ void LCD_status_menu() {
       speed_adjust += lcd_turn;
     }
     // update the current status
-    lcd.setCursor( 0, 0);  lcd.print('X');  LCD_print_float(posx);
-    lcd.setCursor(10, 0);  lcd.print('Y');  LCD_print_float(posy);
-    lcd.setCursor( 0, 1);  lcd.print('Z');  LCD_print_float(posz);
+      Vector3 offset=get_end_plus_offset();
+    lcd.setCursor( 0, 0);  lcd.print('X');  LCD_print_float(offset.x);
+    lcd.setCursor(10, 0);  lcd.print('Y');  LCD_print_float(offset.y);
+    lcd.setCursor( 0, 1);  lcd.print('Z');  LCD_print_float(offset.z);
     lcd.setCursor(10, 1);  lcd.print('F');  LCD_print_float(feed_rate);
     lcd.setCursor( 0, 2);  lcd.print(F("Makelangelo #"));  lcd.print(robot_uid);
     lcd.setCursor( 0, 3);  LCD_print_long(speed_adjust);  lcd.print(F("% "));
@@ -195,8 +196,9 @@ void LCD_main_menu() {
       MENU_ACTION("This is home",LCD_this_is_home);
       MENU_ACTION("Go home",LCD_go_home);
       if(sd_inserted) {
-        MENU_SUBMENU("Start from file...",LCD_start_menu);
+        MENU_SUBMENU("Draw *.NGC file...",LCD_start_menu);
       }
+      MENU_SUBMENU("Drive",LCD_drive_menu);
     } else {
       if(sd_printing_paused) {
         MENU_ACTION("Unpause",LCD_pause);
@@ -205,7 +207,6 @@ void LCD_main_menu() {
       }
       MENU_ACTION("Stop",LCD_stop);
     }
-    //MENU_SUBMENU("Drive",LCD_drive_menu);
   MENU_END
 }
 
@@ -247,6 +248,74 @@ void LCD_this_is_home() {
 void LCD_go_home() {
   polargraph_line( 0, 0, posz, DEFAULT_FEEDRATE );
   MENU_GOTO(LCD_main_menu);
+}
+
+
+void LCD_drive_menu() {
+  MENU_START
+    MENU_SUBMENU("X",LCD_driveX);
+    MENU_SUBMENU("Y",LCD_driveY);
+    MENU_SUBMENU("Z",LCD_driveZ);
+    MENU_SUBMENU("Feedrate",LCD_driveF);
+    MENU_SUBMENU("Back",LCD_main_menu);
+  MENU_END
+}
+
+
+void LCD_driveX() {
+  if(lcd_click_now) MENU_GOTO(LCD_drive_menu);
+
+  if(lcd_turn) {
+      Vector3 offset=get_end_plus_offset();
+    line_safe(offset.x+lcd_turn,offset.y,offset.z,feed_rate);
+  }
+  
+  lcd.setCursor( 0, 0);  lcd.print('X');  LCD_print_float(posx);
+}
+
+
+void LCD_driveY() {
+  if(lcd_click_now) MENU_GOTO(LCD_drive_menu);
+
+  if(lcd_turn) {
+      Vector3 offset=get_end_plus_offset();
+    line_safe(offset.x,offset.y+lcd_turn,offset.z,feed_rate);
+  }
+  
+  lcd.setCursor( 0, 0);  lcd.print('Y');  LCD_print_float(posy);
+}
+
+
+void LCD_driveZ() {
+  if(lcd_click_now) MENU_GOTO(LCD_drive_menu);
+
+  if(lcd_turn) {
+    // protect servo, don't drive beyond physical limits
+      Vector3 offset=get_end_plus_offset();
+    float newZ = offset.z + lcd_turn;
+    if(newZ<10) newZ=10;
+    if(newZ>170) newZ=170;
+    // move
+    line_safe(offset.x,offset.y,newZ,feed_rate);
+  }
+  
+  lcd.setCursor( 0, 0);  lcd.print('Z');  LCD_print_float(posz);
+}
+
+
+void LCD_driveF() {
+  if(lcd_click_now) MENU_GOTO(LCD_drive_menu);
+
+  if(lcd_turn) {
+    // protect servo, don't drive beyond physical limits
+    float newF = feed_rate + lcd_turn;
+    if(newF<MIN_FEEDRATE) newF=MIN_FEEDRATE;
+    if(newF>MAX_FEEDRATE) newF=MAX_FEEDRATE;
+    // move
+    feed_rate = newF;
+  }
+  
+  lcd.setCursor( 0, 0);  lcd.print('F');  LCD_print_float(feed_rate);
 }
 
 

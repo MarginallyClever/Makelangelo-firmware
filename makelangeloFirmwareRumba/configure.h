@@ -21,8 +21,8 @@
 //------------------------------------------------------------------------------
 // CONSTANTS
 //------------------------------------------------------------------------------
-#define MAKELANGELO_HARDWARE_VERSION 3  // If you have a makelangelo 3+
-//#define MAKELANGELO_HARDWARE_VERSION 5  // If you have a makelangelo 5+
+//#define MAKELANGELO_HARDWARE_VERSION 3  // If you have a makelangelo 3+
+#define MAKELANGELO_HARDWARE_VERSION 5  // If you have a makelangelo 5+
 
 //#define VERBOSE           (1)  // add to get a lot more serial output.
 
