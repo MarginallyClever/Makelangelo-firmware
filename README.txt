@@ -10,7 +10,7 @@ This project specifically deals with the firmware: the code in the brain of the 
 
 ## Version ##
 
-This is version 1.0.3.
+This is version 7.11.0
 Newer versions might be available at https://www.marginallyclever.com/product/makelangelo-firmware/
 
 ## Instructions ##

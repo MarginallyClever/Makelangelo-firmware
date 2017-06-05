@@ -34,7 +34,7 @@
 
 // servo angles for pen control
 #define PEN_UP_ANGLE         (90)
-#define PEN_DOWN_ANGLE       (10)  // Some steppers don't like 0 degrees
+#define PEN_DOWN_ANGLE       (50)  // Some steppers don't like 0 degrees
 
 // for serial comms
 #define BAUD                 (57600)  // How fast is the Arduino talking?
