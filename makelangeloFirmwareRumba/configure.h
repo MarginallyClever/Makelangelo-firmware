@@ -21,8 +21,8 @@
 //------------------------------------------------------------------------------
 // CONSTANTS
 //------------------------------------------------------------------------------
-//#define MAKELANGELO_HARDWARE_VERSION 3  // If you have a makelangelo 3+
-#define MAKELANGELO_HARDWARE_VERSION 5  // If you have a makelangelo 5+
+#define MAKELANGELO_HARDWARE_VERSION 3  // If you have a makelangelo 3+
+//#define MAKELANGELO_HARDWARE_VERSION 5  // If you have a makelangelo 5+
 
 //#define VERBOSE           (1)  // add to get a lot more serial output.
 
@@ -34,7 +34,7 @@
 
 // servo angles for pen control
 #define PEN_UP_ANGLE         (90)
-#define PEN_DOWN_ANGLE       (10)  // Some steppers don't like 0 degrees
+#define PEN_DOWN_ANGLE       (50)  // Some steppers don't like 0 degrees
 
 // for serial comms
 #define BAUD                 (57600)  // How fast is the Arduino talking?
