@@ -15,6 +15,7 @@
 #include <SPI.h>  // pkm fix for Arduino 1.5
 
 #include "Vector3.h"
+#include "sdcard.h"
 
 
 //------------------------------------------------------------------------------
@@ -661,6 +662,11 @@ void tool_change(int tool_id) {
   if(tool_id < 0) tool_id=0;
   if(tool_id >= NUM_TOOLS) tool_id=NUM_TOOLS-1;
   current_tool=tool_id;
+#ifdef HAS_SD
+  if(sd_printing_now) {
+    sd_printing_paused=true;
+  }
+#endif
 }
 
 

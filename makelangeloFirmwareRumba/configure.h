@@ -12,11 +12,11 @@
 //------------------------------------------------------------------------------
 // Sanity check
 //------------------------------------------------------------------------------
-#if defined(__AVR_ATmega328P__)
-// wrong board type set
-#error This code is not meant for Arduino UNO boards.
-#endif
 
+// wrong board type set
+#ifndef __AVR_ATmega2560__
+  #error "Oops!  Make sure you have 'Arduino Mega 2560' selected from the 'Tools -> Boards' menu."
+#endif
 
 //------------------------------------------------------------------------------
 // CONSTANTS
