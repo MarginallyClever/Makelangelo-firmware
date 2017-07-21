@@ -862,8 +862,16 @@ void processCommand() {
     saveCalibration();
     break;
   case 10:  // get hardware version
-    Serial.print("D10 V");
+    Serial.print(F("D10 V"));
     Serial.println(MAKELANGELO_HARDWARE_VERSION);
+    break;
+  case 11:
+    // if you accidentally upload m3 firmware to an m5 then upload it ONCE with this line uncommented.
+    adjustDimensions(50,-50,-32.5,32.5);
+    adjustInversions(1,-1);
+    adjustPulleyDiameter(4.0/PI);
+    savePulleyDiameter();
+    saveCalibration();
     break;
   default:  break;
   }
@@ -927,11 +935,7 @@ void setup() {
   // start communications
   Serial.begin(BAUD);
 
-  // if you accidentally upload m3 firmware to an m5 then upload it ONCE with this line uncommented.
-  //adjustDimensions(50,-50,-32.5,32.5);  adjustInversions(1,-1);  adjustPulleyDiameter(4.0/PI);  saveCalibration();
-    
   loadConfig();
-
 
   motor_setup();
   motor_engage();
