@@ -172,10 +172,11 @@ void IK(float x, float y, long &l1, long &l2) {
 }
 
 
-//------------------------------------------------------------------------------
-// Forward Kinematics - turns L1,L2 lengths into XY coordinates
-// use law of cosines: theta = acos((a*a+b*b-c*c)/(2*a*b));
-// to find angle between M1M2 and M1P where P is the plotter position.
+/** 
+ * Forward Kinematics - turns L1,L2 lengths into XY coordinates
+ * use law of cosines: theta = acos((a*a+b*b-c*c)/(2*a*b));
+ * to find angle between M1M2 and M1P where P is the plotter position.
+ */
 void FK(long l1, long l2,float &x,float &y) {
 #ifdef COREXY
   l1 *= threadPerStep;
@@ -529,6 +530,76 @@ void calibrateBelts() {
 }
 
 
+void recordHome() {
+#ifdef USE_LIMIT_SWITCH
+  wait_for_empty_segment_buffer();
+
+  Serial.println(F("Record home..."));
+
+  digitalWrite(MOTOR_0_DIR_PIN,motors[0].reel_out);
+  digitalWrite(MOTOR_1_DIR_PIN,motors[1].reel_out);
+  int left=0;
+  int right=0;
+  long leftCount=0;
+  long rightCount=0;
+  
+  // we start at home position, so we know (x,y)->(left,right) value here.
+  IK(homeX,homeY,leftCount,rightCount);
+  Serial.print(F("HX="));  Serial.println(homeX);
+  Serial.print(F("HY="));  Serial.println(homeY);
+  Serial.print(F("L1="));  Serial.println(leftCount);
+  Serial.print(F("R1="));  Serial.println(rightCount);
+  
+  do {
+    if(left==0) {
+      if( digitalRead(LIMIT_SWITCH_PIN_LEFT)==LOW ) {
+        left=1;
+        Serial.println(F("Left..."));
+      }
+      ++leftCount;
+      digitalWrite(MOTOR_0_STEP_PIN,HIGH);
+      digitalWrite(MOTOR_0_STEP_PIN,LOW);
+    }
+    if(right==0) {
+      if( digitalRead(LIMIT_SWITCH_PIN_RIGHT)==LOW ) {
+        right=1;
+        Serial.println(F("Right..."));
+      }
+      ++rightCount;
+      digitalWrite(MOTOR_1_STEP_PIN,HIGH);
+      digitalWrite(MOTOR_1_STEP_PIN,LOW);
+    }
+    pause(step_delay);
+  } while(left+right<2);
+
+  calibrateLeft=leftCount;
+  calibrateRight=rightCount;
+  
+  // now we have the count from home position to switches.  record that value.
+  Serial.print(F("L2="));  Serial.println(calibrateLeft);
+  Serial.print(F("R2="));  Serial.println(calibrateRight);
+  
+  Serial.print(F("L3="));  Serial.println(calibrateLeft*threadPerStep);
+  Serial.print(F("R3="));  Serial.println(calibrateRight*threadPerStep);
+
+  saveCalibration();
+  reportCalibration();
+  
+  // current position is...
+  float x,y;
+  FK(calibrateLeft,calibrateRight,x,y);
+  teleport(x,y);
+  where();
+
+  // go home.
+  Serial.println(F("Homing..."));
+
+  Vector3 offset=get_end_plus_offset();
+  line_safe(homeX,homeY,offset.z,feed_rate);
+  Serial.println(F("Done."));
+#endif
+}
+
 /**
  * If limit switches are installed, move to touch each switch so that the pen holder can move to home position.
  */
@@ -537,14 +608,14 @@ void findHome() {
   wait_for_empty_segment_buffer();
   
   Serial.println(F("Find Home..."));
-
+/*
   if(readSwitches()) {
     Serial.println(F("** ERROR **"));
     Serial.println(F("Problem: Plotter is already touching switches."));
     Serial.println(F("Solution: Please unwind the strings a bit and try again."));
     return;
   }
-  
+  */
   findStepDelay();
 
   // reel in the left motor and the right motor out until contact is made.
@@ -873,6 +944,7 @@ void processCommand() {
     savePulleyDiameter();
     saveCalibration();
     break;
+  case 12: recordHome();
   default:  break;
   }
 }
