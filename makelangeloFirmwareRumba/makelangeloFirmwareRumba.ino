@@ -547,8 +547,8 @@ void recordHome() {
   IK(homeX,homeY,leftCount,rightCount);
   Serial.print(F("HX="));  Serial.println(homeX);
   Serial.print(F("HY="));  Serial.println(homeY);
-  Serial.print(F("L1="));  Serial.println(leftCount);
-  Serial.print(F("R1="));  Serial.println(rightCount);
+  //Serial.print(F("L1="));  Serial.println(leftCount);
+  //Serial.print(F("R1="));  Serial.println(rightCount);
   
   do {
     if(left==0) {
@@ -569,16 +569,15 @@ void recordHome() {
       digitalWrite(MOTOR_1_STEP_PIN,HIGH);
       digitalWrite(MOTOR_1_STEP_PIN,LOW);
     }
-    pause(step_delay);
+    pause(step_delay*2);
   } while(left+right<2);
 
   calibrateLeft=leftCount;
   calibrateRight=rightCount;
   
   // now we have the count from home position to switches.  record that value.
-  Serial.print(F("L2="));  Serial.println(calibrateLeft);
-  Serial.print(F("R2="));  Serial.println(calibrateRight);
-  
+  //Serial.print(F("L2="));  Serial.println(calibrateLeft);
+  //Serial.print(F("R2="));  Serial.println(calibrateRight);
   Serial.print(F("L3="));  Serial.println(calibrateLeft*threadPerStep);
   Serial.print(F("R3="));  Serial.println(calibrateRight*threadPerStep);
 
@@ -677,12 +676,11 @@ void findHome() {
 void where() {
   wait_for_empty_segment_buffer();
 
-  Serial.print(F("X"));   Serial.print(posx);
-  Serial.print(F(" Y"));  Serial.print(posy);
-  Serial.print(F(" Z"));  Serial.print(posz);
-  Serial.print(' ');  printFeedRate();
-  Serial.print(F(" A"));  Serial.println(acceleration);
-  
+  Serial.print(F("X"   ));  Serial.print(posx);
+  Serial.print(F(" Y"  ));  Serial.print(posy);
+  Serial.print(F(" Z"  ));  Serial.print(posz);
+  Serial.print(' '      );  printFeedRate();
+  Serial.print(F(" A"  ));  Serial.println(acceleration);
   Serial.print(F(" HX="));  Serial.print(homeX);
   Serial.print(F(" HY="));  Serial.println(homeY);
   
@@ -695,10 +693,10 @@ void where() {
  * Print the machine limits to serial.
  */
 void printConfig() {
-  Serial.print(limit_left);       Serial.print(F(","));
-  Serial.print(limit_top);        Serial.print(F(" - "));
-  Serial.print(limit_right);     Serial.print(F(","));
-  Serial.print(limit_bottom);      Serial.print(F("\n"));
+  Serial.print(limit_left  );   Serial.print(F(","));
+  Serial.print(limit_top   );   Serial.print(F(" - "));
+  Serial.print(limit_right );   Serial.print(F(","));
+  Serial.print(limit_bottom);   Serial.print(F("\n"));
 }
 
 
@@ -926,8 +924,9 @@ void processCommand() {
   case 7:  // set calibration length
       calibrateLeft = parseNumber('L',calibrateLeft);
       calibrateRight = parseNumber('R',calibrateRight);
-      reportCalibration();
-    break;
+      // fall through to case 8, report calibration.
+      //reportCalibration();
+    //break;
   case 8:  reportCalibration();  break;
   case 9:  // save calibration length
     saveCalibration();
