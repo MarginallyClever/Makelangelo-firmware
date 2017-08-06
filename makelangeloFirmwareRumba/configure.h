@@ -12,17 +12,17 @@
 //------------------------------------------------------------------------------
 // Sanity check
 //------------------------------------------------------------------------------
-#if defined(__AVR_ATmega328P__)
-// wrong board type set
-#error This code is not meant for Arduino UNO boards.
-#endif
 
+// wrong board type set
+#ifndef __AVR_ATmega2560__
+  #error "Oops!  Make sure you have 'Arduino Mega 2560' selected from the 'Tools -> Boards' menu."
+#endif
 
 //------------------------------------------------------------------------------
 // CONSTANTS
 //------------------------------------------------------------------------------
-#define MAKELANGELO_HARDWARE_VERSION 3  // If you have a makelangelo 3+
-//#define MAKELANGELO_HARDWARE_VERSION 5  // If you have a makelangelo 5+
+//#define MAKELANGELO_HARDWARE_VERSION 3  // If you have a makelangelo 3+
+#define MAKELANGELO_HARDWARE_VERSION 5  // If you have a makelangelo 5+
 
 //#define VERBOSE           (1)  // add to get a lot more serial output.
 
@@ -42,7 +42,7 @@
 
 
 #define MICROSTEPS           (16.0)  // microstepping on this microcontroller
-#define STEPS_PER_TURN       (400 * MICROSTEPS)  // default number of steps per turn * microsteps
+#define STEPS_PER_TURN       (400.0 * MICROSTEPS)  // default number of steps per turn * microsteps
 
 #define MAX_FEEDRATE         (9000.0)  // depends on timer interrupt & hardware
 #define MIN_FEEDRATE         (100)
@@ -88,10 +88,10 @@
 #define BOARD_RUMBA 1
 #define BOARD_RAMPS 2
 #define BOARD_SANGUINOLULU 3
-
+#define BOARD_TEENSYLU 4
 
 #if MAKELANGELO_HARDWARE_VERSION == 5
-#define MOTHERBOARD BOARD_RUMBA
+#define MOTHERBOARD BOARD_RUMBA 
 #define USE_LIMIT_SWITCH    (1)  // Comment out this line to disable findHome and limit switches
 #define HAS_SD                   // comment this out if there is no SD card
 #define HAS_LCD                  // comment this out if there is no SMART LCD controller
@@ -227,6 +227,23 @@
 
 #define NUM_SERVOS         (1)
 #define SERVO0_PIN         (12)
+#endif
+
+#if MOTHERBOARD == BOARD_TEENSYLU
+
+#define MOTOR_0_DIR_PIN           (29)
+#define MOTOR_0_STEP_PIN          (28)
+#define MOTOR_0_ENABLE_PIN        (19)
+#define MOTOR_0_LIMIT_SWITCH_PIN  (26)
+
+#define MOTOR_1_DIR_PIN           (31)
+#define MOTOR_1_STEP_PIN          (30)
+#define MOTOR_1_ENABLE_PIN        (18)
+#define MOTOR_1_LIMIT_SWITCH_PIN  (27)
+
+#define NUM_SERVOS                (1)
+#define SERVO0_PIN                (24)
+
 #endif
 
 

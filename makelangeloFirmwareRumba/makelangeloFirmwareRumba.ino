@@ -15,6 +15,7 @@
 #include <SPI.h>  // pkm fix for Arduino 1.5
 
 #include "Vector3.h"
+#include "sdcard.h"
 
 
 //------------------------------------------------------------------------------
@@ -171,10 +172,11 @@ void IK(float x, float y, long &l1, long &l2) {
 }
 
 
-//------------------------------------------------------------------------------
-// Forward Kinematics - turns L1,L2 lengths into XY coordinates
-// use law of cosines: theta = acos((a*a+b*b-c*c)/(2*a*b));
-// to find angle between M1M2 and M1P where P is the plotter position.
+/** 
+ * Forward Kinematics - turns L1,L2 lengths into XY coordinates
+ * use law of cosines: theta = acos((a*a+b*b-c*c)/(2*a*b));
+ * to find angle between M1M2 and M1P where P is the plotter position.
+ */
 void FK(long l1, long l2,float &x,float &y) {
 #ifdef COREXY
   l1 *= threadPerStep;
@@ -528,6 +530,75 @@ void calibrateBelts() {
 }
 
 
+void recordHome() {
+#ifdef USE_LIMIT_SWITCH
+  wait_for_empty_segment_buffer();
+
+  Serial.println(F("Record home..."));
+
+  digitalWrite(MOTOR_0_DIR_PIN,motors[0].reel_out);
+  digitalWrite(MOTOR_1_DIR_PIN,motors[1].reel_out);
+  int left=0;
+  int right=0;
+  long leftCount=0;
+  long rightCount=0;
+  
+  // we start at home position, so we know (x,y)->(left,right) value here.
+  IK(homeX,homeY,leftCount,rightCount);
+  Serial.print(F("HX="));  Serial.println(homeX);
+  Serial.print(F("HY="));  Serial.println(homeY);
+  //Serial.print(F("L1="));  Serial.println(leftCount);
+  //Serial.print(F("R1="));  Serial.println(rightCount);
+  
+  do {
+    if(left==0) {
+      if( digitalRead(LIMIT_SWITCH_PIN_LEFT)==LOW ) {
+        left=1;
+        Serial.println(F("Left..."));
+      }
+      ++leftCount;
+      digitalWrite(MOTOR_0_STEP_PIN,HIGH);
+      digitalWrite(MOTOR_0_STEP_PIN,LOW);
+    }
+    if(right==0) {
+      if( digitalRead(LIMIT_SWITCH_PIN_RIGHT)==LOW ) {
+        right=1;
+        Serial.println(F("Right..."));
+      }
+      ++rightCount;
+      digitalWrite(MOTOR_1_STEP_PIN,HIGH);
+      digitalWrite(MOTOR_1_STEP_PIN,LOW);
+    }
+    pause(step_delay*2);
+  } while(left+right<2);
+
+  calibrateLeft=leftCount;
+  calibrateRight=rightCount;
+  
+  // now we have the count from home position to switches.  record that value.
+  //Serial.print(F("L2="));  Serial.println(calibrateLeft);
+  //Serial.print(F("R2="));  Serial.println(calibrateRight);
+  Serial.print(F("L3="));  Serial.println(calibrateLeft*threadPerStep);
+  Serial.print(F("R3="));  Serial.println(calibrateRight*threadPerStep);
+
+  saveCalibration();
+  reportCalibration();
+  
+  // current position is...
+  float x,y;
+  FK(calibrateLeft,calibrateRight,x,y);
+  teleport(x,y);
+  where();
+
+  // go home.
+  Serial.println(F("Homing..."));
+
+  Vector3 offset=get_end_plus_offset();
+  line_safe(homeX,homeY,offset.z,feed_rate);
+  Serial.println(F("Done."));
+#endif
+}
+
 /**
  * If limit switches are installed, move to touch each switch so that the pen holder can move to home position.
  */
@@ -536,14 +607,14 @@ void findHome() {
   wait_for_empty_segment_buffer();
   
   Serial.println(F("Find Home..."));
-
+/*
   if(readSwitches()) {
     Serial.println(F("** ERROR **"));
     Serial.println(F("Problem: Plotter is already touching switches."));
     Serial.println(F("Solution: Please unwind the strings a bit and try again."));
     return;
   }
-  
+  */
   findStepDelay();
 
   // reel in the left motor and the right motor out until contact is made.
@@ -605,12 +676,11 @@ void findHome() {
 void where() {
   wait_for_empty_segment_buffer();
 
-  Serial.print(F("X"));   Serial.print(posx);
-  Serial.print(F(" Y"));  Serial.print(posy);
-  Serial.print(F(" Z"));  Serial.print(posz);
-  Serial.print(' ');  printFeedRate();
-  Serial.print(F(" A"));  Serial.println(acceleration);
-  
+  Serial.print(F("X"   ));  Serial.print(posx);
+  Serial.print(F(" Y"  ));  Serial.print(posy);
+  Serial.print(F(" Z"  ));  Serial.print(posz);
+  Serial.print(' '      );  printFeedRate();
+  Serial.print(F(" A"  ));  Serial.println(acceleration);
   Serial.print(F(" HX="));  Serial.print(homeX);
   Serial.print(F(" HY="));  Serial.println(homeY);
   
@@ -623,10 +693,10 @@ void where() {
  * Print the machine limits to serial.
  */
 void printConfig() {
-  Serial.print(limit_left);       Serial.print(F(","));
-  Serial.print(limit_top);        Serial.print(F(" - "));
-  Serial.print(limit_right);     Serial.print(F(","));
-  Serial.print(limit_bottom);      Serial.print(F("\n"));
+  Serial.print(limit_left  );   Serial.print(F(","));
+  Serial.print(limit_top   );   Serial.print(F(" - "));
+  Serial.print(limit_right );   Serial.print(F(","));
+  Serial.print(limit_bottom);   Serial.print(F("\n"));
 }
 
 
@@ -661,6 +731,11 @@ void tool_change(int tool_id) {
   if(tool_id < 0) tool_id=0;
   if(tool_id >= NUM_TOOLS) tool_id=NUM_TOOLS-1;
   current_tool=tool_id;
+#ifdef HAS_SD
+  if(sd_printing_now) {
+    sd_printing_paused=true;
+  }
+#endif
 }
 
 
@@ -849,16 +924,26 @@ void processCommand() {
   case 7:  // set calibration length
       calibrateLeft = parseNumber('L',calibrateLeft);
       calibrateRight = parseNumber('R',calibrateRight);
-      reportCalibration();
-    break;
+      // fall through to case 8, report calibration.
+      //reportCalibration();
+    //break;
   case 8:  reportCalibration();  break;
   case 9:  // save calibration length
     saveCalibration();
     break;
   case 10:  // get hardware version
-    Serial.print("D10 V");
+    Serial.print(F("D10 V"));
     Serial.println(MAKELANGELO_HARDWARE_VERSION);
     break;
+  case 11:
+    // if you accidentally upload m3 firmware to an m5 then upload it ONCE with this line uncommented.
+    adjustDimensions(50,-50,-32.5,32.5);
+    adjustInversions(1,-1);
+    adjustPulleyDiameter(4.0/PI);
+    savePulleyDiameter();
+    saveCalibration();
+    break;
+  case 12: recordHome();
   default:  break;
   }
 }
@@ -921,11 +1006,7 @@ void setup() {
   // start communications
   Serial.begin(BAUD);
 
-  // if you accidentally upload m3 firmware to an m5 then upload it ONCE with this line uncommented.
-  //adjustDimensions(50,-50,-32.5,32.5);  adjustInversions(1,-1);  adjustPulleyDiameter(4.0/PI);  saveCalibration();
-    
   loadConfig();
-
 
   motor_setup();
   motor_engage();
