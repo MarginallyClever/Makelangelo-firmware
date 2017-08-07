@@ -30,8 +30,6 @@ unsigned short nominal_OCR1A;
 Servo servos[NUM_SERVOS];
 
 // used by timer1 to optimize interrupt inner loop
-int delta_x,delta_y;
-int over_x,over_y;
 int steps_total;
 int steps_taken;
 int accel_until,decel_after;
@@ -40,11 +38,30 @@ long old_feed_rate=0;
 long start_feed_rate,end_feed_rate;
 long time_accelerating,time_decelerating;
 float max_xy_jerk = MAX_JERK;
-long global_steps_0;
-long global_steps_1;
-int global_step_dir_0;
-int global_step_dir_1;
 
+int delta0;
+int over0;
+long global_steps_0;
+int global_step_dir_0;
+int delta1;
+int over1;
+long global_steps_1;
+int global_step_dir_1;
+#if NUM_AXIES>=4
+int delta3;
+int over3;
+long global_steps_3;
+int global_step_dir_3;
+#endif
+#if NUM_AXIES>=5
+int delta4;
+int over4;
+long global_steps_4;
+int global_step_dir_4;
+#endif
+
+
+const char *AxisLetters="XYZUVW";
 
 /*
 long prescalers[] = {CLOCK_FREQ /   1,
@@ -98,6 +115,18 @@ void motor_setup() {
   motors[1].dir_pin=MOTOR_1_DIR_PIN;
   motors[1].enable_pin=MOTOR_1_ENABLE_PIN;
   motors[1].limit_switch_pin=MOTOR_1_LIMIT_SWITCH_PIN;
+#if NUM_AXIES>=4
+  motors[3].step_pin        =MOTOR_3_STEP_PIN;
+  motors[3].dir_pin         =MOTOR_3_DIR_PIN;
+  motors[3].enable_pin      =MOTOR_3_ENABLE_PIN;
+  motors[3].limit_switch_pin=MOTOR_3_LIMIT_SWITCH_PIN;
+#endif
+#if NUM_AXIES>=5
+  motors[5].step_pin        =MOTOR_5_STEP_PIN;
+  motors[5].dir_pin         =MOTOR_5_DIR_PIN;
+  motors[5].enable_pin      =MOTOR_5_ENABLE_PIN;
+  motors[5].limit_switch_pin=MOTOR_5_LIMIT_SWITCH_PIN;
+#endif
 
   int i;
   for(i=0;i<NUM_AXIES;++i) {
@@ -112,7 +141,9 @@ void motor_setup() {
     digitalWrite(motors[i].limit_switch_pin,HIGH);
   }
 
-  motor_set_step_count(0,0,0);
+  long steps[NUM_AXIES];
+  memset(steps,0,NUM_AXIES*sizeof(long));
+  motor_set_step_count(steps);
 
   // setup servos
 #if NUM_SERVOS>0
@@ -137,6 +168,12 @@ void motor_setup() {
   old_seg.a[0].step_count=0;
   old_seg.a[1].step_count=0;
   old_seg.a[2].step_count=0;
+#if NUM_AXIES>=4
+  old_seg.a[3].step_count=0;
+#endif
+#if NUM_AXIES>=5
+  old_seg.a[4].step_count=0;
+#endif
   working_seg = NULL;
 
   // disable global interrupts
@@ -368,16 +405,27 @@ void recalculate_acceleration() {
 }
 
 
-void motor_set_step_count(long a0,long a1,long a2) {
+void motor_set_step_count(long *a) {
   wait_for_empty_segment_buffer();
 
   Segment &old_seg = line_segments[get_prev_segment(last_segment)];
-  old_seg.a[0].step_count=a0;
-  old_seg.a[1].step_count=a1;
-  old_seg.a[2].step_count=a2;
-
+  old_seg.a[0].step_count=a[0];
+  old_seg.a[1].step_count=a[1];
+  old_seg.a[2].step_count=a[2];
+#if NUM_AXIES>=4
+  old_seg.a[3].step_count=a[3];
+#endif
+#if NUM_AXIES>=5
+  old_seg.a[4].step_count=a[4];
+#endif
   global_steps_0=0;
   global_steps_1=0;
+#if NUM_AXIES>=4
+  global_steps_3=0;
+#endif
+#if NUM_AXIES>=5
+  global_steps_4=0;
+#endif
 }
 
 
@@ -388,8 +436,7 @@ void motor_set_step_count(long a0,long a1,long a2) {
  **/
 void motor_onestep(int motor) {
 #ifdef VERBOSE
-  const char *letter="XYZUVW";
-  Serial.print(letter[motor]);
+  Serial.print(AxisLetters[motor]);
 #endif
 
   digitalWrite(motors[motor].step_pin,HIGH);
@@ -444,8 +491,20 @@ ISR(TIMER1_COMPA_vect) {
       // set the direction pins
       digitalWrite( MOTOR_0_DIR_PIN, working_seg->a[0].dir );
       digitalWrite( MOTOR_1_DIR_PIN, working_seg->a[1].dir );
+      #if NUM_AXIES>=4
+      digitalWrite( MOTOR_3_DIR_PIN, working_seg->a[3].dir );
+      #endif
+      #if NUM_AXIES>=5
+      digitalWrite( MOTOR_4_DIR_PIN, working_seg->a[4].dir );
+      #endif
       global_step_dir_0 = (working_seg->a[0].dir==HIGH)?1:-1;
       global_step_dir_1 = (working_seg->a[1].dir==HIGH)?1:-1;
+      #if NUM_AXIES>=4
+      global_step_dir_3 = (working_seg->a[3].dir==HIGH)?1:-1;
+      #endif
+      #if NUM_AXIES>=5
+      global_step_dir_4 = (working_seg->a[4].dir==HIGH)?1:-1;
+      #endif
 
       //move the z axis
       servos[0].write(working_seg->a[2].step_count);
@@ -464,10 +523,22 @@ ISR(TIMER1_COMPA_vect) {
       // defererencing some data so the loop runs faster.
       steps_total=working_seg->steps_total;
       steps_taken=0;
-      delta_x = working_seg->a[0].absdelta;
-      delta_y = working_seg->a[1].absdelta;
-      over_x = -(steps_total>>1);
-      over_y = -(steps_total>>1);
+      delta0 = working_seg->a[0].absdelta;
+      delta1 = working_seg->a[1].absdelta;
+      #if NUM_AXIES>=4
+      delta3 = working_seg->a[3].absdelta;
+      #endif
+      #if NUM_AXIES>=5
+      delta4 = working_seg->a[4].absdelta;
+      #endif
+      over0 = -(steps_total>>1);
+      over1 = -(steps_total>>1);
+      #if NUM_AXIES>=4
+      over_3 = -(steps_total>>1);
+      #endif
+      #if NUM_AXIES>=5
+      over_4 = -(steps_total>>1);
+      #endif
       accel_until=working_seg->accel_until;
       decel_after=working_seg->decel_after;
       return;
@@ -481,28 +552,60 @@ ISR(TIMER1_COMPA_vect) {
     // move each axis
     for(uint8_t i=0;i<step_multiplier;++i) {
       // M0
-      over_x += delta_x;
-      if(over_x > 0) {
+      over0 += delta0;
+      if(over0 > 0) {
         digitalWrite(MOTOR_0_STEP_PIN,LOW);
       }
       // M1
-      over_y += delta_y;
-      if(over_y > 0) {
+      over1 += delta1;
+      if(over1 > 0) {
         digitalWrite(MOTOR_1_STEP_PIN,LOW);
       }
+      // M2 is the servo Z axis
+#if NUM_AXIES>=4
+      // M3
+      over3 += delta3;
+      if(over3 > 0) {
+        digitalWrite(MOTOR_3_STEP_PIN,LOW);
+      }
+#endif
+#if NUM_AXIES>=5
+      // M4
+      over4 += delta4;
+      if(over4 > 0) {
+        digitalWrite(MOTOR_4_STEP_PIN,LOW);
+      }
+#endif
       // now that the pins have had a moment to settle, do the second half of the steps.
       // M0
-      if(over_x > 0) {
-        over_x -= steps_total;
+      if(over0 > 0) {
+        over0 -= steps_total;
         global_steps_0+=global_step_dir_0;
         digitalWrite(MOTOR_0_STEP_PIN,HIGH);
       }
       // M1
-      if(over_y > 0) {
-        over_y -= steps_total;
+      if(over1 > 0) {
+        over1 -= steps_total;
         global_steps_1+=global_step_dir_1;
         digitalWrite(MOTOR_1_STEP_PIN,HIGH);
       }
+      // M2 is the servo Z axis
+#if NUM_AXIES>=4
+      // M3
+      if(over3 > 0) {
+        over3 -= steps_total;
+        global_steps_3+=global_step_dir_3;
+        digitalWrite(MOTOR_3_STEP_PIN,HIGH);
+      }
+#endif
+#if NUM_AXIES>=5
+      // M4
+      if(over4 > 0) {
+        over4 -= steps_total;
+        global_steps_4+=global_step_dir_4;
+        digitalWrite(MOTOR_4_STEP_PIN,HIGH);
+      }
+#endif
       
       // make a step
       steps_taken++;
@@ -557,8 +660,9 @@ char segment_buffer_full() {
 
 /**
  * Uses bresenham's line algorithm to move both motors
+ * @param n NUM_AXIES longs, one for each motor/servo
  **/
-void motor_line(long n0,long n1,long n2,float new_feed_rate) {
+void motor_line(long *n,float new_feed_rate) {
   // get the next available spot in the segment buffer
   int next_segment = get_next_segment(last_segment);
   while( next_segment == current_segment ) {
@@ -581,12 +685,20 @@ void motor_line(long n0,long n1,long n2,float new_feed_rate) {
   Serial.print(n1);  Serial.print('\t');
   Serial.print(n2);  Serial.print('\n');
 */
-  new_seg.a[0].step_count = n0;
-  new_seg.a[1].step_count = n1;
-  new_seg.a[2].step_count = n2;
-  new_seg.a[0].delta = n0 - old_seg.a[0].step_count;
-  new_seg.a[1].delta = n1 - old_seg.a[1].step_count;
-  new_seg.a[2].delta = n2 - old_seg.a[2].step_count;
+  new_seg.a[0].step_count = n[0];
+  new_seg.a[0].delta = n[0] - old_seg.a[0].step_count;
+  new_seg.a[1].step_count = n[1];
+  new_seg.a[1].delta = n[1] - old_seg.a[1].step_count;
+  new_seg.a[2].step_count = n[2];
+  new_seg.a[2].delta = n[2] - old_seg.a[2].step_count;
+  #if NUM_AXIES>=4
+  new_seg.a[3].step_count = n[3];
+  new_seg.a[3].delta = n[3] - old_seg.a[3].step_count;
+  #endif
+  #if NUM_AXIES>=5
+  new_seg.a[4].step_count = n[4];
+  new_seg.a[4].delta = n[4] - old_seg.a[4].step_count;
+  #endif
   new_seg.feed_rate_max = new_feed_rate;
   new_seg.busy=false;
 
@@ -620,10 +732,21 @@ void motor_line(long n0,long n1,long n2,float new_feed_rate) {
   // is the robot changing direction sharply?
   // aka is there a previous segment with a wildly different delta_normalized?
   if(last_segment != current_segment) {
+    float sum=0;
     float dsx = new_seg.a[0].delta_normalized - old_seg.a[0].delta_normalized;
     float dsy = new_seg.a[1].delta_normalized - old_seg.a[1].delta_normalized;
     float dsz = new_seg.a[2].delta_normalized - old_seg.a[2].delta_normalized;
-    float jerk = sqrt(dsx*dsx + dsy*dsy + dsz*dsz);
+    sum = dsx*dsx + dsy*dsy + dsz*dsz;
+    #if NUM_AXIES>=4
+    float dsu = new_seg.a[3].delta_normalized - old_seg.a[3].delta_normalized;
+    sum += dsu*dsu;
+    #endif
+    #if NUM_AXIES>=5
+    float dsv = new_seg.a[4].delta_normalized - old_seg.a[4].delta_normalized;
+    sum += dsv*dsv;
+    #endif
+    
+    float jerk = sqrt(sum);
     float vmax_junction_factor = 1.0;
     if(jerk> max_xy_jerk) {
       vmax_junction_factor = max_xy_jerk / jerk;

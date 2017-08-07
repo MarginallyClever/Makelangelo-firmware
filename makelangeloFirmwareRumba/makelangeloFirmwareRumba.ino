@@ -37,14 +37,20 @@ static float homeY=0;
 // length of belt when weights hit limit switch
 float calibrateRight = 101.1;
 float calibrateLeft = 101.1;
+float calibrateBRight = 101.1;
+float calibrateBLeft = 101.1;
 
 // what are the motors called?
 char m1d='L';
 char m2d='R';
+char m4d='U';
+char m5d='V';
 
 // motor inversions
 char m1i=1;
-char m2i=1;
+char m2i=-1;
+char m4i=1;
+char m5i=-1;
 
 // calculate some numbers to help us find feed_rate
 float pulleyDiameter = 4.0f / PI;  // cm; 20 teeth * 2mm per tooth / PI
@@ -133,15 +139,18 @@ void findStepDelay() {
 }
 
 
-//------------------------------------------------------------------------------
-// delay in microseconds
+/** 
+ * delay in microseconds 
+ */
 void pause(long us) {
   delay(us / 1000);
   delayMicroseconds(us % 1000);
 }
 
 
-//------------------------------------------------------------------------------
+/**
+ * print the current feed rate
+ */
 void printFeedRate() {
   Serial.print(F("F"));
   Serial.print(feed_rate);
@@ -149,50 +158,74 @@ void printFeedRate() {
 }
 
 
-//------------------------------------------------------------------------------
-// Inverse Kinematics - turns XY coordinates into lengths L1,L2
-void IK(float x, float y, long &l1, long &l2) {
+/**
+ * Inverse Kinematics turns XY coordinates into lengths L1,L2
+ * @param x cartesian coordinate
+ * @param y cartesian coordinate
+ * @param motorStepArray a measure of each belt to that plotter position
+ */
+void IK(float x, float y, long *motorStepArray) {
 #ifdef COREXY
-  l1 = lround((x+y) / threadPerStep);
-  l2 = lround((x-y) / threadPerStep);
+  motorStepArray[0] = lround((x+y) / threadPerStep);
+  motorStepArray[1] = lround((x-y) / threadPerStep);
 #endif
 #ifdef TRADITIONALXY
-  l1 = lround((x) / threadPerStep);
-  l2 = lround((y) / threadPerStep);
+  motorStepArray[0] = lround((x) / threadPerStep);
+  motorStepArray[1] = lround((y) / threadPerStep);
 #endif
 #ifdef POLARGRAPH2
+  float dy,dx;
   // find length to M1
-  float dy = y - limit_top;
-  float dx = x - limit_left;
-  l1 = lround( sqrt(dx*dx+dy*dy) / threadPerStep );
+  dy = y - limit_top;
+  dx = x - limit_left;
+  motorStepArray[0] = lround( sqrt(dx*dx+dy*dy) / threadPerStep );
   // find length to M2
   dx = limit_right - x;
-  l2 = lround( sqrt(dx*dx+dy*dy) / threadPerStep );
+  motorStepArray[1] = lround( sqrt(dx*dx+dy*dy) / threadPerStep );
+#endif
+#ifdef ZARPLOTTER
+  float dy,dx;
+  // find length to M1
+  dy = y - limit_top;
+  dx = x - limit_left;
+  motorStepArray[0] = lround( sqrt(dx*dx+dy*dy) / threadPerStep );
+  // find length to M2
+  dx = limit_right - x;
+  motorStepArray[1] = lround( sqrt(dx*dx+dy*dy) / threadPerStep );
+  // M3
+  dy = y - limit_bottom;
+  dx = x - limit_left;
+  motorStepArray[3] = lround( sqrt(dx*dx+dy*dy) / threadPerStep );
+  // M4
+  dx = limit_right - x;
+  motorStepArray[4] = lround( sqrt(dx*dx+dy*dy) / threadPerStep );
 #endif
 }
 
 
 /** 
  * Forward Kinematics - turns L1,L2 lengths into XY coordinates
- * use law of cosines: theta = acos((a*a+b*b-c*c)/(2*a*b));
- * to find angle between M1M2 and M1P where P is the plotter position.
+ * @param motorStepArray a measure of each belt to that plotter position
+ * @param x the resulting cartesian coordinate
+ * @param y the resulting cartesian coordinate
  */
-void FK(long l1, long l2,float &x,float &y) {
+void FK(long *motorStepArray,float &x,float &y) {
 #ifdef COREXY
-  l1 *= threadPerStep;
-  l2 *= threadPerStep;
+  float a = motorStepArray[0] * threadPerStep;
+  float b = motorStepArray[1] * threadPerStep;
 
-  x = (float)( l1 + l2 ) / 2.0;
-  y = x - (float)l2;
+  x = (float)( a + b ) / 2.0;
+  y = x - (float)b;
 #endif
 #ifdef TRADITIONALXY
-  x = l1 * threadPerStep;
-  y = l2 * threadPerStep;
+  x = motorStepArray[0] * threadPerStep;
+  y = motorStepArray[1] * threadPerStep;
 #endif
-#ifdef POLARGRAPH2
-  float a = (float)l1 * threadPerStep;
+#if defined(POLARGRAPH2) || defined(ZARPLOTTER)
+  // use law of cosines: theta = acos((a*a+b*b-c*c)/(2*a*b));
+  float a = (float)motorStepArray[0] * threadPerStep;
   float b = (limit_right-limit_left);
-  float c = (float)l2 * threadPerStep;
+  float c = (float)motorStepArray[1] * threadPerStep;
 
   // slow, uses trig
   // we know law of cosines:   cc = aa + bb -2ab * cos( theta )
@@ -210,35 +243,33 @@ void FK(long l1, long l2,float &x,float &y) {
 }
 
 
-//------------------------------------------------------------------------------
+/**
+ * 
+ */
 void processConfig() {
   float newT = parseNumber('T',limit_top);
   float newB = parseNumber('B',limit_bottom);
   float newR = parseNumber('R',limit_right);
   float newL = parseNumber('L',limit_left);
-
+  // @TODO: check t>b, r>l ?
   adjustDimensions(newT,newB,newR,newL);
-
-  // programmatically swap motors
-  char gg=parseNumber('G',m1d);
-  char hh=parseNumber('H',m2d);
 
   // invert motor direction
   char i=parseNumber('I',0);
   char j=parseNumber('J',0);
-  
-  adjustInversions(i,j);
-  
-  // @TODO: check t>b, r>l ?
+  char m=parseNumber('M',0);
+  char n=parseNumber('N',0);
+  adjustInversions(i,j,m,n);
   
   printConfig();
-
   teleport(posx,posy);
 }
 
 
-//------------------------------------------------------------------------------
-void adjustInversions(int m1,int m2) {
+/**
+ * @TODO: remove this bullshit and make users flip their motor cable themselves.
+ */
+void adjustInversions(int m1,int m2,int m4,int m5) {
   //Serial.print(F("Adjusting inversions to "));
 
   if(m1>0) {
@@ -257,10 +288,42 @@ void adjustInversions(int m1,int m2) {
     motors[1].reel_out = HIGH;
   }
 
-  if( m1!=m1i || m2 != m2i) {
+#if NUM_AXIES>=4
+  if(m4>0) {
+    motors[3].reel_in  = HIGH;
+    motors[3].reel_out = LOW;
+  } else if(m4<0) {
+    motors[3].reel_in  = LOW;
+    motors[3].reel_out = HIGH;
+  }
+#endif
+#if NUM_AXIES>=5
+  if(m5>0) {
+    motors[4].reel_in  = HIGH;
+    motors[4].reel_out = LOW;
+  } else if(m5<0) {
+    motors[4].reel_in  = LOW;
+    motors[4].reel_out = HIGH;
+  }
+#endif
+
+  if( m1!=m1i || m2 != m2i
+#if NUM_AXIES>=4
+|| m4 != m4i
+#endif
+#if NUM_AXIES>=5
+|| m5 != m5i
+#endif
+  ) {
     // loadInversions() should never reach this point in the code.
     m1i=m1;
     m2i=m2;
+#if NUM_AXIES>=4
+    m4i=m4;
+#endif
+#if NUM_AXIES>=5
+    m5i=m5;
+#endif
     saveInversions();
   }
 }
@@ -270,19 +333,22 @@ void adjustInversions(int m1,int m2) {
  * Test that IK(FK(A))=A
  */
 void testKinematics() {
-  long A,B,i;
+  long A[NUM_AXIES],B[NUM_AXIES],i,j;
   float C,D,x=0,y=0;
 
   for(i=0;i<3000;++i) {
     x = random(limit_right,limit_right)*0.1;
     y = random(limit_bottom,limit_top)*0.1;
 
-    IK(x,y,A,B);
-    FK(A,B,C,D);
+    IK(x,y,A);
+    FK(A,C,D);
     Serial.print(F("\tx="));  Serial.print(x);
     Serial.print(F("\ty="));  Serial.print(y);
-    Serial.print(F("\tL="));  Serial.print(A);
-    Serial.print(F("\tR="));  Serial.print(B);
+    for(int j=0;j<NUM_AXIES;++j) {
+      Serial.print('\t');
+      Serial.print(AxisLetters[j]);
+      Serial.print(A[j]);
+    }
     Serial.print(F("\tx'="));  Serial.print(C);
     Serial.print(F("\ty'="));  Serial.print(D);
     Serial.print(F("\tdx="));  Serial.print(C-x);
@@ -298,21 +364,16 @@ void testKinematics() {
  * @input new_feed_rate speed to travel along arc
  */
 void polargraph_line(float x,float y,float z,float new_feed_rate) {
-  long l1,l2;
-  IK(x,y,l1,l2);
+  long steps[NUM_AXIES];
+  IK(x,y,steps);
   posx=x;
   posy=y;
   posz=z;
-/*
-  Serial.print('~');
-  Serial.print(x);  Serial.print('\t');
-  Serial.print(y);  Serial.print('\t');
-  Serial.print(z);  Serial.print('\t');
-  Serial.print(l1);  Serial.print('\t');
-  Serial.print(l2);  Serial.print('\n');
-  */
+
+  steps[2]=NUM_AXIES;
+
   feed_rate = new_feed_rate;
-  motor_line(l1,l2,z,new_feed_rate);
+  motor_line(steps,new_feed_rate);
 }
 
 
@@ -348,12 +409,6 @@ void line_safe(float x,float y,float z,float new_feed_rate) {
   }
   // guarantee we stop exactly at the destination (no rounding errors).
   polargraph_line(x,y,z,new_feed_rate);
-  /*
-  long l1,l2;
-  IK(x,y,l1,l2);
-  Serial.print(F("H0="));  Serial.print(l1);
-  Serial.print(F("\tH1="));  Serial.println(l2);
-  */
 }
 
 
@@ -423,10 +478,10 @@ void teleport(float x,float y) {
   posy=y;
 
   // @TODO: posz?
-  long L1,L2;
-  IK(posx,posy,L1,L2);
+  long steps[NUM_AXIES];
+  IK(posx,posy,steps);
 
-  motor_set_step_count(L1,L2,0);
+  motor_set_step_count(steps);
 }
 
 
@@ -434,7 +489,11 @@ void teleport(float x,float y) {
  * Print a helpful message to serial.  The first line must never be changed to play nice with the JAVA software.
  */
 void help() {
+#ifdef ZARPLOTTER
+  Serial.print(F("\n\nHELLO WORLD! I AM DRAWBOT-ZAR #"));
+#else
   Serial.print(F("\n\nHELLO WORLD! I AM DRAWBOT #"));
+#endif
   Serial.println(robot_uid);
   sayVersionNumber();
   Serial.println(F("== http://www.makelangelo.com/ =="));
@@ -458,27 +517,24 @@ void sayVersionNumber() {
  * Does not save the values, only reports them to serial.
  */
 void calibrateBelts() {
+#ifndef ZARPLOTTER
 #ifdef USE_LIMIT_SWITCH
   wait_for_empty_segment_buffer();
-  
-  Serial.println(F("Searching for switches..."));
 
-  if(readSwitches()) {
-    // this is to make sure that motors don't turn the wrong way.
-    Serial.println(F("** ERROR **"));
-    Serial.println(F("Problem: Plotter is already touching switches."));
-    Serial.println(F("Solution: Please unwind the strings a bit and try again."));
-    return;
-  }
-
-  // reel in the left motor and the right motor out until contact is made.
   Serial.println(F("Find switches..."));
+  
+  // reel in the left motor and the right motor out until contact is made.
   digitalWrite(MOTOR_0_DIR_PIN,motors[0].reel_out);
   digitalWrite(MOTOR_1_DIR_PIN,motors[1].reel_out);
   int left=0, right=0;
-  long leftSteps, rightSteps;
-  
-  IK(homeX,homeY,leftSteps,rightSteps);
+  #ifdef ZARPLOTTER
+  digitalWrite(MOTOR_2_DIR_PIN,motors[2].reel_out);
+  digitalWrite(MOTOR_3_DIR_PIN,motors[3].reel_out);
+  int bLeft=0,bRight=0;
+  #endif
+  long steps[NUM_AXIES];
+
+  IK(homeX,homeY,steps);
   findStepDelay();
 
   do {
@@ -490,7 +546,7 @@ void calibrateBelts() {
       // switch not hit yet, keep moving
       digitalWrite(MOTOR_0_STEP_PIN,HIGH);
       digitalWrite(MOTOR_0_STEP_PIN,LOW);
-      leftSteps++;
+      steps[0]++;
     }
     if(right==0) {
       if( digitalRead(LIMIT_SWITCH_PIN_RIGHT )==LOW ) {
@@ -500,23 +556,49 @@ void calibrateBelts() {
       // switch not hit yet, keep moving
       digitalWrite(MOTOR_1_STEP_PIN,HIGH);
       digitalWrite(MOTOR_1_STEP_PIN,LOW);
-      rightSteps++;
+      steps[1]++;
     }
+    #ifdef ZARPLOTTER
+    if(bLeft==0) {
+      if( digitalRead(LIMIT_SWITCH_PIN_LEFT2 )==LOW ) {
+        // switch hit
+        bLeft=1;
+      }
+      // switch not hit yet, keep moving
+      digitalWrite(MOTOR_2_STEP_PIN,HIGH);
+      digitalWrite(MOTOR_2_STEP_PIN,LOW);
+      steps[2]++;
+    }
+    if(bRight==0) {
+      if( digitalRead(LIMIT_SWITCH_PIN_RIGHT2 )==LOW ) {
+        // switch hit
+        bRight=1;
+      }
+      // switch not hit yet, keep moving
+      digitalWrite(MOTOR_3_STEP_PIN,HIGH);
+      digitalWrite(MOTOR_3_STEP_PIN,LOW);
+      steps[3]++;
+    }
+    #endif
     pause(step_delay);
-  } while(left+right<2);
+  } while(left+right
+  #ifdef ZARPLOTTER
+  +bLeft+bRight
+  #endif
+  <NUM_AXIES);
 
   // make sure there's no momentum to skip the belt on the pulley.
   delay(500);
   
   Serial.println(F("Estimating position..."));
-  calibrateLeft = (float)leftSteps * threadPerStep;
-  calibrateRight = (float)rightSteps * threadPerStep;
-  Serial.print(F("D8 L"));  Serial.println(calibrateLeft);
-  Serial.print(F(" R"));  Serial.println(calibrateRight);
+  calibrateLeft  = (float)steps[0] * threadPerStep;
+  calibrateRight = (float)steps[1] * threadPerStep;
+  
+  reportCalibration();
   
   // current position is...
   float x,y;
-  FK(leftSteps,rightSteps,x,y);
+  FK(steps,x,y);
   teleport(x,y);
   where();
 
@@ -527,10 +609,12 @@ void calibrateBelts() {
   line_safe(homeX,homeY,offset.z,feed_rate);
   Serial.println(F("Done."));
 #endif // USE_LIMIT_SWITCH
+#endif // ZARPLOTTER
 }
 
 
 void recordHome() {
+#ifndef ZARPLOTTER
 #ifdef USE_LIMIT_SWITCH
   wait_for_empty_segment_buffer();
 
@@ -540,11 +624,10 @@ void recordHome() {
   digitalWrite(MOTOR_1_DIR_PIN,motors[1].reel_out);
   int left=0;
   int right=0;
-  long leftCount=0;
-  long rightCount=0;
+  long count[NUM_AXIES];
   
   // we start at home position, so we know (x,y)->(left,right) value here.
-  IK(homeX,homeY,leftCount,rightCount);
+  IK(homeX,homeY,count);
   Serial.print(F("HX="));  Serial.println(homeX);
   Serial.print(F("HY="));  Serial.println(homeY);
   //Serial.print(F("L1="));  Serial.println(leftCount);
@@ -556,7 +639,7 @@ void recordHome() {
         left=1;
         Serial.println(F("Left..."));
       }
-      ++leftCount;
+      ++count[0];
       digitalWrite(MOTOR_0_STEP_PIN,HIGH);
       digitalWrite(MOTOR_0_STEP_PIN,LOW);
     }
@@ -565,28 +648,23 @@ void recordHome() {
         right=1;
         Serial.println(F("Right..."));
       }
-      ++rightCount;
+      ++count[1];
       digitalWrite(MOTOR_1_STEP_PIN,HIGH);
       digitalWrite(MOTOR_1_STEP_PIN,LOW);
     }
     pause(step_delay*2);
   } while(left+right<2);
 
-  calibrateLeft=leftCount;
-  calibrateRight=rightCount;
+  calibrateLeft =count[0];
+  calibrateRight=count[1];
   
   // now we have the count from home position to switches.  record that value.
-  //Serial.print(F("L2="));  Serial.println(calibrateLeft);
-  //Serial.print(F("R2="));  Serial.println(calibrateRight);
-  Serial.print(F("L3="));  Serial.println(calibrateLeft*threadPerStep);
-  Serial.print(F("R3="));  Serial.println(calibrateRight*threadPerStep);
-
   saveCalibration();
   reportCalibration();
   
   // current position is...
   float x,y;
-  FK(calibrateLeft,calibrateRight,x,y);
+  FK(count,x,y);
   teleport(x,y);
   where();
 
@@ -596,25 +674,21 @@ void recordHome() {
   Vector3 offset=get_end_plus_offset();
   line_safe(homeX,homeY,offset.z,feed_rate);
   Serial.println(F("Done."));
-#endif
+#endif // USER_LIMIT_SWITCH
+#endif // ZARPLOTTER
 }
+
 
 /**
  * If limit switches are installed, move to touch each switch so that the pen holder can move to home position.
  */
 void findHome() {
+#ifndef ZARPLOTTER
 #ifdef USE_LIMIT_SWITCH
   wait_for_empty_segment_buffer();
   
   Serial.println(F("Find Home..."));
-/*
-  if(readSwitches()) {
-    Serial.println(F("** ERROR **"));
-    Serial.println(F("Problem: Plotter is already touching switches."));
-    Serial.println(F("Solution: Please unwind the strings a bit and try again."));
-    return;
-  }
-  */
+
   findStepDelay();
 
   // reel in the left motor and the right motor out until contact is made.
@@ -645,17 +719,18 @@ void findHome() {
   delay(500);
   
   Serial.println(F("Estimating position..."));
-  float leftD = lround( calibrateLeft / threadPerStep );
-  float rightD = lround( calibrateRight / threadPerStep );
+  long count[NUM_AXIES];
+  count[0] = lround( calibrateLeft  / threadPerStep );
+  count[1] = lround( calibrateRight / threadPerStep );
   Serial.print("cl=");   Serial.println(calibrateLeft);
   Serial.print("cr=");   Serial.println(calibrateRight);
   Serial.print("t=");    Serial.println(threadPerStep);
-  Serial.print("l=");    Serial.println(leftD);
-  Serial.print("r=");    Serial.println(rightD);
+  Serial.print("l=");    Serial.println(count[0]);
+  Serial.print("r=");    Serial.println(count[1]);
   
   // current position is...
   float x,y;
-  FK(leftD,rightD,x,y);
+  FK(count,x,y);
   teleport(x,y);
   where();
 
@@ -665,7 +740,8 @@ void findHome() {
   Vector3 offset=get_end_plus_offset();
   line_safe(homeX,homeY,offset.z,feed_rate);
   Serial.println(F("Done."));
-#endif // USE_LIMIT_SWITCH
+#endif // USER_LIMIT_SWITCH
+#endif // ZARPLOTTER
 }
 
 
@@ -683,9 +759,6 @@ void where() {
   Serial.print(F(" A"  ));  Serial.println(acceleration);
   Serial.print(F(" HX="));  Serial.print(homeX);
   Serial.print(F(" HY="));  Serial.println(homeY);
-  
-  //Serial.print(F(" G0="));  Serial.print(global_steps_0);
-  //Serial.print(F(" G1="));  Serial.print(global_steps_1);
 }
 
 
@@ -924,6 +997,10 @@ void processCommand() {
   case 7:  // set calibration length
       calibrateLeft = parseNumber('L',calibrateLeft);
       calibrateRight = parseNumber('R',calibrateRight);
+      #ifdef ZARPLOTTER
+      calibrateBLeft = parseNumber('U',calibrateBLeft);
+      calibrateBRight = parseNumber('V',calibrateBRight);
+      #endif
       // fall through to case 8, report calibration.
       //reportCalibration();
     //break;
@@ -938,7 +1015,7 @@ void processCommand() {
   case 11:
     // if you accidentally upload m3 firmware to an m5 then upload it ONCE with this line uncommented.
     adjustDimensions(50,-50,-32.5,32.5);
-    adjustInversions(1,-1);
+    adjustInversions(1,-1,1,-1);
     adjustPulleyDiameter(4.0/PI);
     savePulleyDiameter();
     saveCalibration();
@@ -954,7 +1031,14 @@ void reportCalibration() {
   Serial.print(calibrateLeft);
   Serial.print(F(" R"));
   Serial.println(calibrateRight);
+#ifdef ZARPLOTTER
+  Serial.print(F(" U"));
+  Serial.println(calibrateBLeft);
+  Serial.print(F(" V"));
+  Serial.println(calibrateBRight);
+#endif
 }
+
 
 // equal to three decimal places?
 boolean equalEpsilon(float a,float b) {
@@ -993,7 +1077,9 @@ void parser_ready() {
 }
 
 
-//------------------------------------------------------------------------------
+/**
+ * reset all tool offsets
+ */
 void tools_setup() {
   for(int i=0;i<NUM_TOOLS;++i) {
     set_tool_offset(i,0,0,0);
@@ -1001,7 +1087,9 @@ void tools_setup() {
 }
 
 
-//------------------------------------------------------------------------------
+/**
+ * runs once on machine start
+ */
 void setup() {
   // start communications
   Serial.begin(BAUD);
@@ -1028,8 +1116,9 @@ void setup() {
 }
 
 
-//------------------------------------------------------------------------------
-// See: http://www.marginallyclever.com/2011/10/controlling-your-arduino-through-the-serial-monitor/
+/**
+ * See: http://www.marginallyclever.com/2011/10/controlling-your-arduino-through-the-serial-monitor/
+ */
 void Serial_listen() {
   // listen for serial commands
   while(Serial.available() > 0) {
@@ -1050,7 +1139,9 @@ void Serial_listen() {
 }
 
 
-//------------------------------------------------------------------------------
+/**
+ * main loop
+ */
 void loop() {
   Serial_listen();
   SD_check();

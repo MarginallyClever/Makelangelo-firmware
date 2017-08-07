@@ -52,7 +52,11 @@
 
 #define STEP_DELAY           (50)  // delay between steps, in milliseconds, when doing fixed tasks like homing
 
+#ifdef ZARPLOTTER
+#define NUM_AXIES            (5)  // x,y,z
+#else
 #define NUM_AXIES            (3)  // x,y,z
+#endif
 #define NUM_TOOLS            (6)
 #define MAX_SEGMENTS         (32)  // number of line segments to buffer ahead. must be a power of two.
 #define SEGMOD(x)            ((x)&(MAX_SEGMENTS-1))
@@ -109,6 +113,8 @@
 //#define MOTHERBOARD BOARD_SANGUINOLULU
 
 #if MOTHERBOARD == BOARD_RUMBA 
+#define MAX_AXIES                 (6)
+
 #define MOTOR_0_DIR_PIN           (16)
 #define MOTOR_0_STEP_PIN          (17)
 #define MOTOR_0_ENABLE_PIN        (48)
@@ -163,6 +169,8 @@
 #endif
 
 #if MOTHERBOARD == BOARD_RAMPS 
+#define MAX_AXIES                 (5)
+
 #define MOTOR_0_DIR_PIN           (55)
 #define MOTOR_0_STEP_PIN          (54)
 #define MOTOR_0_ENABLE_PIN        (38)
@@ -213,6 +221,8 @@
 #endif
 
 #if MOTHERBOARD == BOARD_SANGUINOLULU 
+#define MAX_AXIES                 (2)
+
 #define MOTOR_0_DIR_PIN           (21)
 #define MOTOR_0_STEP_PIN          (15)
 #define MOTOR_0_ENABLE_PIN        (14)
@@ -230,6 +240,7 @@
 #endif
 
 #if MOTHERBOARD == BOARD_TEENSYLU
+#define MAX_AXIES                 (2)
 
 #define MOTOR_0_DIR_PIN           (29)
 #define MOTOR_0_STEP_PIN          (28)
@@ -247,6 +258,11 @@
 #endif
 
 
+#if NUM_AXIES > MAX_AXIES
+#error "The number of axies needed is more than this board supports."
+#endif
+
+
 //------------------------------------------------------------------------------
 // EEPROM MEMORY MAP
 //------------------------------------------------------------------------------
@@ -254,7 +270,7 @@
 #define ADDR_VERSION            0                          // 0..255 (1 byte)
 #define ADDR_UUID               (ADDR_VERSION+1)           // long - 4 bytes
 #define ADDR_PULLEY_DIA1        (ADDR_UUID+4)              // float - 4 bytes
-#define ADDR_PULLEY_DIA2        (ADDR_PULLEY_DIA1+4)       // float - 4 bytes
+#define ADDR_PULLEY_DIA2        (ADDR_PULLEY_DIA1+4)       // float - 4 bytes unused?
 #define ADDR_LEFT               (ADDR_PULLEY_DIA2+4)       // float - 4 bytes
 #define ADDR_RIGHT              (ADDR_LEFT+4)              // float - 4 bytes
 #define ADDR_TOP                (ADDR_RIGHT+4)             // float - 4 bytes
@@ -265,6 +281,10 @@
 #define ADDR_HOMEY              (ADDR_HOMEX+4)             // float - 4 bytes
 #define ADDR_CALIBRATION_LEFT   (ADDR_HOMEY+4)             // float - 4 bytes
 #define ADDR_CALIBRATION_RIGHT  (ADDR_CALIBRATION_LEFT+4)  // float - 4 bytes
+#define ADDR_INVU               (ADDR_CALIBRATION_RIGHT+4) // bool - 1 byte
+#define ADDR_INVV               (ADDR_INVU+1)              // bool - 1 byte
+#define ADDR_CALIBRATION_BLEFT  (ADDR_INVV+1)              // float - 4 bytes
+#define ADDR_CALIBRATION_BRIGHT (ADDR_CALIBRATION_BLEFT+4) // float - 4 bytes
 
 
 //------------------------------------------------------------------------------
@@ -326,7 +346,6 @@ typedef struct {
 } Segment;
 
 
-
 //------------------------------------------------------------------------------
 // GLOBALS
 //------------------------------------------------------------------------------
@@ -337,7 +356,7 @@ extern volatile int current_segment;
 extern volatile int last_segment;
 extern float acceleration;
 extern Motor motors[NUM_AXIES];
-
+extern const char *AxisLetters;
 
 #endif // CONFIGURE_H
 

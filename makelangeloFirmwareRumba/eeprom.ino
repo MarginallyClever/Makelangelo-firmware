@@ -50,7 +50,7 @@ void loadConfig() {
     EEPROM.write(ADDR_VERSION,EEPROM_VERSION);
 #if MAKELANGELO_HARDWARE_VERSION == 5
     adjustDimensions(50,-50,-32.5,32.5);
-    adjustInversions(1,-1);
+    adjustInversions(1,-1,1,-1);
     adjustPulleyDiameter(4.0/PI);
     savePulleyDiameter();
     saveCalibration();
@@ -84,18 +84,18 @@ void savePulleyDiameter() {
 //------------------------------------------------------------------------------
 void saveDimensions() {
   Serial.println(F("Saving dimensions."));
-  EEPROM_writeLong(ADDR_LEFT,limit_left*100);
-  EEPROM_writeLong(ADDR_RIGHT,limit_right*100);
-  EEPROM_writeLong(ADDR_TOP,limit_top*100);
+  EEPROM_writeLong(ADDR_LEFT  ,limit_left  *100);
+  EEPROM_writeLong(ADDR_RIGHT ,limit_right *100);
+  EEPROM_writeLong(ADDR_TOP   ,limit_top   *100);
   EEPROM_writeLong(ADDR_BOTTOM,limit_bottom*100);
 }
 
 
 //------------------------------------------------------------------------------
 void loadDimensions() {
-  limit_left   = (float)EEPROM_readLong(ADDR_LEFT)/100.0f;
-  limit_right  = (float)EEPROM_readLong(ADDR_RIGHT)/100.0f;
-  limit_top    = (float)EEPROM_readLong(ADDR_TOP)/100.0f;
+  limit_left   = (float)EEPROM_readLong(ADDR_LEFT  )/100.0f;
+  limit_right  = (float)EEPROM_readLong(ADDR_RIGHT )/100.0f;
+  limit_top    = (float)EEPROM_readLong(ADDR_TOP   )/100.0f;
   limit_bottom = (float)EEPROM_readLong(ADDR_BOTTOM)/100.0f;
 }
 
@@ -126,6 +126,8 @@ void saveInversions() {
   Serial.println(F("Saving inversions."));
   EEPROM.write(ADDR_INVL,m1i>0?1:0);
   EEPROM.write(ADDR_INVR,m2i>0?1:0);
+  EEPROM.write(ADDR_INVU,m4i>0?1:0);
+  EEPROM.write(ADDR_INVV,m5i>0?1:0);
 }
 
 
@@ -134,7 +136,9 @@ void loadInversions() {
   //Serial.println(F("Loading inversions."));
   m1i = EEPROM.read(ADDR_INVL)>0?1:-1;
   m2i = EEPROM.read(ADDR_INVR)>0?1:-1;
-  adjustInversions(m1i,m2i);
+  m4i = EEPROM.read(ADDR_INVU)>0?1:-1;
+  m5i = EEPROM.read(ADDR_INVV)>0?1:-1;
+  adjustInversions(m1i,m2i,m4i,m5i);
 }
 
 
@@ -156,15 +160,19 @@ void loadHome() {
 //------------------------------------------------------------------------------
 void saveCalibration() {
   Serial.println(F("Saving calibration."));
-  EEPROM_writeLong(ADDR_CALIBRATION_LEFT,calibrateLeft*100);
-  EEPROM_writeLong(ADDR_CALIBRATION_RIGHT,calibrateRight*100);
+  EEPROM_writeLong(ADDR_CALIBRATION_LEFT  ,calibrateLeft  *100);
+  EEPROM_writeLong(ADDR_CALIBRATION_RIGHT ,calibrateRight *100);
+  EEPROM_writeLong(ADDR_CALIBRATION_BLEFT ,calibrateBLeft *100);
+  EEPROM_writeLong(ADDR_CALIBRATION_BRIGHT,calibrateBRight*100);
 }
 
 
 //------------------------------------------------------------------------------
 void loadCalibration() {
-  calibrateLeft = (float)EEPROM_readLong(ADDR_CALIBRATION_LEFT)/100.0f;
-  calibrateRight = (float)EEPROM_readLong(ADDR_CALIBRATION_RIGHT)/100.0f;
+  calibrateLeft   = (float)EEPROM_readLong(ADDR_CALIBRATION_LEFT  )/100.0f;
+  calibrateRight  = (float)EEPROM_readLong(ADDR_CALIBRATION_RIGHT )/100.0f;
+  calibrateBLeft  = (float)EEPROM_readLong(ADDR_CALIBRATION_BLEFT )/100.0f;
+  calibrateBRight = (float)EEPROM_readLong(ADDR_CALIBRATION_BRIGHT)/100.0f;
 }
 
 /**
