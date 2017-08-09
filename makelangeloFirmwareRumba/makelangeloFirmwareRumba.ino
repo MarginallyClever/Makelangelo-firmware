@@ -333,7 +333,7 @@ void adjustInversions(int m1,int m2,int m4,int m5) {
  * Test that IK(FK(A))=A
  */
 void testKinematics() {
-  long A[NUM_AXIES],B[NUM_AXIES],i,j;
+  long A[NUM_AXIES],i,j;
   float C,D,x=0,y=0;
 
   for(i=0;i<3000;++i) {
@@ -370,7 +370,7 @@ void polargraph_line(float x,float y,float z,float new_feed_rate) {
   posy=y;
   posz=z;
 
-  steps[2]=NUM_AXIES;
+  steps[2]=z;
 
   feed_rate = new_feed_rate;
   motor_line(steps,new_feed_rate);
