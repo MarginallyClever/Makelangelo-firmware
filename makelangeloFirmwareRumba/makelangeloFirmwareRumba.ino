@@ -720,13 +720,11 @@ void findHome() {
   
   Serial.println(F("Estimating position..."));
   long count[NUM_AXIES];
-  count[0] = lround( calibrateLeft  / threadPerStep );
-  count[1] = lround( calibrateRight / threadPerStep );
+  count[0] = calibrateLeft;
+  count[1] = calibrateRight;
   Serial.print("cl=");   Serial.println(calibrateLeft);
   Serial.print("cr=");   Serial.println(calibrateRight);
   Serial.print("t=");    Serial.println(threadPerStep);
-  Serial.print("l=");    Serial.println(count[0]);
-  Serial.print("r=");    Serial.println(count[1]);
   
   // current position is...
   float x,y;

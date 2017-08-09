@@ -63,13 +63,6 @@ int global_step_dir_4;
 
 const char *AxisLetters="XYZUVW";
 
-/*
-long prescalers[] = {CLOCK_FREQ /   1,
-                     CLOCK_FREQ /   8,
-                     CLOCK_FREQ /  64,
-                     CLOCK_FREQ / 256,
-                     CLOCK_FREQ /1024};
-*/
 
 //------------------------------------------------------------------------------
 // METHODS
