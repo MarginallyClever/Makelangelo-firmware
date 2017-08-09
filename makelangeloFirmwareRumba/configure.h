@@ -27,10 +27,10 @@
 //#define VERBOSE           (1)  // add to get a lot more serial output.
 
 // machine style
-#define POLARGRAPH2  // uncomment this line if you use a polargraph like the Makelangelo
+//#define POLARGRAPH2  // uncomment this line if you use a polargraph like the Makelangelo
 //#define COREXY  // uncomment this line if you use a CoreXY setup.
 //#define TRADITIONALXY  // uncomment this line if you use a traditional XY setup.
-//#define ZARPLOTTER  // uncomment this line if you use a 4 motor ZAR plotter
+#define ZARPLOTTER  // uncomment this line if you use a 4 motor ZAR plotter
 
 // servo angles for pen control
 #define PEN_UP_ANGLE         (90)
@@ -53,7 +53,7 @@
 #define STEP_DELAY           (50)  // delay between steps, in milliseconds, when doing fixed tasks like homing
 
 #ifdef ZARPLOTTER
-#define NUM_AXIES            (5)  // x,y,z
+#define NUM_AXIES            (5)  // x,y,z, but four motors + z servo.
 #else
 #define NUM_AXIES            (3)  // x,y,z
 #endif

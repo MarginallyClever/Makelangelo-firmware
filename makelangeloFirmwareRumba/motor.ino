@@ -99,26 +99,26 @@ float max_speed_allowed(float acceleration, float target_velocity, float distanc
  * set up the pins for each motor
  */
 void motor_setup() {
-  motors[0].step_pin=MOTOR_0_STEP_PIN;
-  motors[0].dir_pin=MOTOR_0_DIR_PIN;
-  motors[0].enable_pin=MOTOR_0_ENABLE_PIN;
+  motors[0].step_pin        =MOTOR_0_STEP_PIN;
+  motors[0].dir_pin         =MOTOR_0_DIR_PIN;
+  motors[0].enable_pin      =MOTOR_0_ENABLE_PIN;
   motors[0].limit_switch_pin=MOTOR_0_LIMIT_SWITCH_PIN;
 
-  motors[1].step_pin=MOTOR_1_STEP_PIN;
-  motors[1].dir_pin=MOTOR_1_DIR_PIN;
-  motors[1].enable_pin=MOTOR_1_ENABLE_PIN;
+  motors[1].step_pin        =MOTOR_1_STEP_PIN;
+  motors[1].dir_pin         =MOTOR_1_DIR_PIN;
+  motors[1].enable_pin      =MOTOR_1_ENABLE_PIN;
   motors[1].limit_switch_pin=MOTOR_1_LIMIT_SWITCH_PIN;
 #if NUM_AXIES>=4
-  motors[3].step_pin        =MOTOR_3_STEP_PIN;
-  motors[3].dir_pin         =MOTOR_3_DIR_PIN;
-  motors[3].enable_pin      =MOTOR_3_ENABLE_PIN;
-  motors[3].limit_switch_pin=MOTOR_3_LIMIT_SWITCH_PIN;
+  motors[3].step_pin        =MOTOR_2_STEP_PIN;
+  motors[3].dir_pin         =MOTOR_2_DIR_PIN;
+  motors[3].enable_pin      =MOTOR_2_ENABLE_PIN;
+  motors[3].limit_switch_pin=MOTOR_2_LIMIT_SWITCH_PIN;
 #endif
 #if NUM_AXIES>=5
-  motors[5].step_pin        =MOTOR_5_STEP_PIN;
-  motors[5].dir_pin         =MOTOR_5_DIR_PIN;
-  motors[5].enable_pin      =MOTOR_5_ENABLE_PIN;
-  motors[5].limit_switch_pin=MOTOR_5_LIMIT_SWITCH_PIN;
+  motors[4].step_pin        =MOTOR_3_STEP_PIN;
+  motors[4].dir_pin         =MOTOR_3_DIR_PIN;
+  motors[4].enable_pin      =MOTOR_3_ENABLE_PIN;
+  motors[4].limit_switch_pin=MOTOR_3_LIMIT_SWITCH_PIN;
 #endif
 
   int i;
@@ -485,10 +485,10 @@ ISR(TIMER1_COMPA_vect) {
       digitalWrite( MOTOR_0_DIR_PIN, working_seg->a[0].dir );
       digitalWrite( MOTOR_1_DIR_PIN, working_seg->a[1].dir );
       #if NUM_AXIES>=4
-      digitalWrite( MOTOR_3_DIR_PIN, working_seg->a[3].dir );
+      digitalWrite( MOTOR_2_DIR_PIN, working_seg->a[3].dir );
       #endif
       #if NUM_AXIES>=5
-      digitalWrite( MOTOR_4_DIR_PIN, working_seg->a[4].dir );
+      digitalWrite( MOTOR_3_DIR_PIN, working_seg->a[4].dir );
       #endif
       global_step_dir_0 = (working_seg->a[0].dir==HIGH)?1:-1;
       global_step_dir_1 = (working_seg->a[1].dir==HIGH)?1:-1;
@@ -527,10 +527,10 @@ ISR(TIMER1_COMPA_vect) {
       over0 = -(steps_total>>1);
       over1 = -(steps_total>>1);
       #if NUM_AXIES>=4
-      over_3 = -(steps_total>>1);
+      over3 = -(steps_total>>1);
       #endif
       #if NUM_AXIES>=5
-      over_4 = -(steps_total>>1);
+      over4 = -(steps_total>>1);
       #endif
       accel_until=working_seg->accel_until;
       decel_after=working_seg->decel_after;
@@ -559,14 +559,14 @@ ISR(TIMER1_COMPA_vect) {
       // M3
       over3 += delta3;
       if(over3 > 0) {
-        digitalWrite(MOTOR_3_STEP_PIN,LOW);
+        digitalWrite(MOTOR_2_STEP_PIN,LOW);
       }
 #endif
 #if NUM_AXIES>=5
       // M4
       over4 += delta4;
       if(over4 > 0) {
-        digitalWrite(MOTOR_4_STEP_PIN,LOW);
+        digitalWrite(MOTOR_3_STEP_PIN,LOW);
       }
 #endif
       // now that the pins have had a moment to settle, do the second half of the steps.
@@ -588,7 +588,7 @@ ISR(TIMER1_COMPA_vect) {
       if(over3 > 0) {
         over3 -= steps_total;
         global_steps_3+=global_step_dir_3;
-        digitalWrite(MOTOR_3_STEP_PIN,HIGH);
+        digitalWrite(MOTOR_2_STEP_PIN,HIGH);
       }
 #endif
 #if NUM_AXIES>=5
@@ -596,7 +596,7 @@ ISR(TIMER1_COMPA_vect) {
       if(over4 > 0) {
         over4 -= steps_total;
         global_steps_4+=global_step_dir_4;
-        digitalWrite(MOTOR_4_STEP_PIN,HIGH);
+        digitalWrite(MOTOR_3_STEP_PIN,HIGH);
       }
 #endif
       
