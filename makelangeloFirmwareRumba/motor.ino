@@ -1,10 +1,9 @@
 //------------------------------------------------------------------------------
-// Makelangelo - supports raprapdiscount RUMBA controller
+// Makelangelo - a mural drawing robot
 // dan@marginallycelver.com 2013-12-26
-// RUMBA should be treated like a MEGA 2560 Arduino.
-//------------------------------------------------------------------------------
 // Copyright at end of file.  Please see
 // http://www.github.com/MarginallyClever/Makelangelo for more information.
+//------------------------------------------------------------------------------
 
 
 //------------------------------------------------------------------------------
@@ -16,9 +15,9 @@
 //------------------------------------------------------------------------------
 // GLOBALS
 //------------------------------------------------------------------------------
-Axis a[NUM_AXIES];  // for line()
+Axis a[NUM_MOTORS];  // for line()
 Axis atemp;  // for line()
-Motor motors[NUM_AXIES];
+Motor motors[NUM_MOTORS];
 
 Segment line_segments[MAX_SEGMENTS];
 Segment *working_seg = NULL;
@@ -47,13 +46,13 @@ int delta1;
 int over1;
 long global_steps_1;
 int global_step_dir_1;
-#if NUM_AXIES>=4
+#if NUM_MOTORS>=4
 int delta3;
 int over3;
 long global_steps_3;
 int global_step_dir_3;
 #endif
-#if NUM_AXIES>=5
+#if NUM_MOTORS>=5
 int delta4;
 int over4;
 long global_steps_4;
@@ -61,7 +60,7 @@ int global_step_dir_4;
 #endif
 
 
-const char *AxisLetters="XYZUVW";
+const char *motorNames="RLUV";
 
 
 //------------------------------------------------------------------------------
@@ -108,13 +107,13 @@ void motor_setup() {
   motors[1].dir_pin         =MOTOR_1_DIR_PIN;
   motors[1].enable_pin      =MOTOR_1_ENABLE_PIN;
   motors[1].limit_switch_pin=MOTOR_1_LIMIT_SWITCH_PIN;
-#if NUM_AXIES>=4
+#if NUM_MOTORS>=4
   motors[3].step_pin        =MOTOR_2_STEP_PIN;
   motors[3].dir_pin         =MOTOR_2_DIR_PIN;
   motors[3].enable_pin      =MOTOR_2_ENABLE_PIN;
   motors[3].limit_switch_pin=MOTOR_2_LIMIT_SWITCH_PIN;
 #endif
-#if NUM_AXIES>=5
+#if NUM_MOTORS>=5
   motors[4].step_pin        =MOTOR_3_STEP_PIN;
   motors[4].dir_pin         =MOTOR_3_DIR_PIN;
   motors[4].enable_pin      =MOTOR_3_ENABLE_PIN;
@@ -122,7 +121,7 @@ void motor_setup() {
 #endif
 
   int i;
-  for(i=0;i<NUM_AXIES;++i) {
+  for(i=0;i<NUM_MOTORS;++i) {
     // set the motor pin & scale
     pinMode(motors[i].step_pin,OUTPUT);
     pinMode(motors[i].dir_pin,OUTPUT);
@@ -134,8 +133,8 @@ void motor_setup() {
     digitalWrite(motors[i].limit_switch_pin,HIGH);
   }
 
-  long steps[NUM_AXIES];
-  memset(steps,0,NUM_AXIES*sizeof(long));
+  long steps[NUM_MOTORS];
+  memset(steps,0,NUM_MOTORS*sizeof(long));
   motor_set_step_count(steps);
 
   // setup servos
@@ -161,10 +160,10 @@ void motor_setup() {
   old_seg.a[0].step_count=0;
   old_seg.a[1].step_count=0;
   old_seg.a[2].step_count=0;
-#if NUM_AXIES>=4
+#if NUM_MOTORS>=4
   old_seg.a[3].step_count=0;
 #endif
-#if NUM_AXIES>=5
+#if NUM_MOTORS>=5
   old_seg.a[4].step_count=0;
 #endif
   working_seg = NULL;
@@ -191,7 +190,7 @@ void motor_setup() {
 // turn on power to the motors (make them immobile)
 void motor_engage() {
   int i;
-  for(i=0;i<NUM_AXIES;++i) {
+  for(i=0;i<NUM_MOTORS;++i) {
     digitalWrite(motors[i].enable_pin,LOW);
   }
 }
@@ -200,7 +199,7 @@ void motor_engage() {
 // turn off power to the motors (make them move freely)
 void motor_disengage() {
   int i;
-  for(i=0;i<NUM_AXIES;++i) {
+  for(i=0;i<NUM_MOTORS;++i) {
     digitalWrite(motors[i].enable_pin,HIGH);
   }
 }
@@ -405,18 +404,18 @@ void motor_set_step_count(long *a) {
   old_seg.a[0].step_count=a[0];
   old_seg.a[1].step_count=a[1];
   old_seg.a[2].step_count=a[2];
-#if NUM_AXIES>=4
+#if NUM_MOTORS>=4
   old_seg.a[3].step_count=a[3];
 #endif
-#if NUM_AXIES>=5
+#if NUM_MOTORS>=5
   old_seg.a[4].step_count=a[4];
 #endif
   global_steps_0=0;
   global_steps_1=0;
-#if NUM_AXIES>=4
+#if NUM_MOTORS>=4
   global_steps_3=0;
 #endif
-#if NUM_AXIES>=5
+#if NUM_MOTORS>=5
   global_steps_4=0;
 #endif
 }
@@ -429,7 +428,7 @@ void motor_set_step_count(long *a) {
  **/
 void motor_onestep(int motor) {
 #ifdef VERBOSE
-  Serial.print(AxisLetters[motor]);
+  Serial.print(motorNames[motor]);
 #endif
 
   digitalWrite(motors[motor].step_pin,HIGH);
@@ -484,18 +483,18 @@ ISR(TIMER1_COMPA_vect) {
       // set the direction pins
       digitalWrite( MOTOR_0_DIR_PIN, working_seg->a[0].dir );
       digitalWrite( MOTOR_1_DIR_PIN, working_seg->a[1].dir );
-      #if NUM_AXIES>=4
+      #if NUM_MOTORS>=4
       digitalWrite( MOTOR_2_DIR_PIN, working_seg->a[3].dir );
       #endif
-      #if NUM_AXIES>=5
+      #if NUM_MOTORS>=5
       digitalWrite( MOTOR_3_DIR_PIN, working_seg->a[4].dir );
       #endif
       global_step_dir_0 = (working_seg->a[0].dir==HIGH)?1:-1;
       global_step_dir_1 = (working_seg->a[1].dir==HIGH)?1:-1;
-      #if NUM_AXIES>=4
+      #if NUM_MOTORS>=4
       global_step_dir_3 = (working_seg->a[3].dir==HIGH)?1:-1;
       #endif
-      #if NUM_AXIES>=5
+      #if NUM_MOTORS>=5
       global_step_dir_4 = (working_seg->a[4].dir==HIGH)?1:-1;
       #endif
 
@@ -518,18 +517,18 @@ ISR(TIMER1_COMPA_vect) {
       steps_taken=0;
       delta0 = working_seg->a[0].absdelta;
       delta1 = working_seg->a[1].absdelta;
-      #if NUM_AXIES>=4
+      #if NUM_MOTORS>=4
       delta3 = working_seg->a[3].absdelta;
       #endif
-      #if NUM_AXIES>=5
+      #if NUM_MOTORS>=5
       delta4 = working_seg->a[4].absdelta;
       #endif
       over0 = -(steps_total>>1);
       over1 = -(steps_total>>1);
-      #if NUM_AXIES>=4
+      #if NUM_MOTORS>=4
       over3 = -(steps_total>>1);
       #endif
-      #if NUM_AXIES>=5
+      #if NUM_MOTORS>=5
       over4 = -(steps_total>>1);
       #endif
       accel_until=working_seg->accel_until;
@@ -555,14 +554,14 @@ ISR(TIMER1_COMPA_vect) {
         digitalWrite(MOTOR_1_STEP_PIN,LOW);
       }
       // M2 is the servo Z axis
-#if NUM_AXIES>=4
+#if NUM_MOTORS>=4
       // M3
       over3 += delta3;
       if(over3 > 0) {
         digitalWrite(MOTOR_2_STEP_PIN,LOW);
       }
 #endif
-#if NUM_AXIES>=5
+#if NUM_MOTORS>=5
       // M4
       over4 += delta4;
       if(over4 > 0) {
@@ -583,7 +582,7 @@ ISR(TIMER1_COMPA_vect) {
         digitalWrite(MOTOR_1_STEP_PIN,HIGH);
       }
       // M2 is the servo Z axis
-#if NUM_AXIES>=4
+#if NUM_MOTORS>=4
       // M3
       if(over3 > 0) {
         over3 -= steps_total;
@@ -591,7 +590,7 @@ ISR(TIMER1_COMPA_vect) {
         digitalWrite(MOTOR_2_STEP_PIN,HIGH);
       }
 #endif
-#if NUM_AXIES>=5
+#if NUM_MOTORS>=5
       // M4
       if(over4 > 0) {
         over4 -= steps_total;
@@ -653,7 +652,7 @@ char segment_buffer_full() {
 
 /**
  * Uses bresenham's line algorithm to move both motors
- * @param n NUM_AXIES longs, one for each motor/servo
+ * @param n NUM_MOTORS longs, one for each motor/servo
  **/
 void motor_line(long *n,float new_feed_rate) {
   // get the next available spot in the segment buffer
@@ -684,11 +683,11 @@ void motor_line(long *n,float new_feed_rate) {
   new_seg.a[1].delta = n[1] - old_seg.a[1].step_count;
   new_seg.a[2].step_count = n[2];
   new_seg.a[2].delta = n[2] - old_seg.a[2].step_count;
-  #if NUM_AXIES>=4
+  #if NUM_MOTORS>=4
   new_seg.a[3].step_count = n[3];
   new_seg.a[3].delta = n[3] - old_seg.a[3].step_count;
   #endif
-  #if NUM_AXIES>=5
+  #if NUM_MOTORS>=5
   new_seg.a[4].step_count = n[4];
   new_seg.a[4].delta = n[4] - old_seg.a[4].step_count;
   #endif
@@ -699,7 +698,7 @@ void motor_line(long *n,float new_feed_rate) {
   new_seg.steps_total = 0;
   float len=0;
   int i;
-  for(i=0;i<NUM_AXIES;++i) {
+  for(i=0;i<NUM_MOTORS;++i) {
     new_seg.a[i].dir = (new_seg.a[i].delta < 0 ? motors[i].reel_in:motors[i].reel_out);
     new_seg.a[i].absdelta = abs(new_seg.a[i].delta);
     len += square(new_seg.a[i].delta);
@@ -715,7 +714,7 @@ void motor_line(long *n,float new_feed_rate) {
   float ilen = 1.0f / len;
   float iSecond = new_feed_rate * ilen;
   
-  for(i=0;i<NUM_AXIES;++i) {
+  for(i=0;i<NUM_MOTORS;++i) {
     new_seg.a[i].delta_normalized = new_seg.a[i].delta * ilen;
   }
   new_seg.steps_taken = 0;
@@ -730,11 +729,11 @@ void motor_line(long *n,float new_feed_rate) {
     float dsy = new_seg.a[1].delta_normalized - old_seg.a[1].delta_normalized;
     float dsz = new_seg.a[2].delta_normalized - old_seg.a[2].delta_normalized;
     sum = dsx*dsx + dsy*dsy + dsz*dsz;
-    #if NUM_AXIES>=4
+    #if NUM_MOTORS>=4
     float dsu = new_seg.a[3].delta_normalized - old_seg.a[3].delta_normalized;
     sum += dsu*dsu;
     #endif
-    #if NUM_AXIES>=5
+    #if NUM_MOTORS>=5
     float dsv = new_seg.a[4].delta_normalized - old_seg.a[4].delta_normalized;
     sum += dsv*dsv;
     #endif

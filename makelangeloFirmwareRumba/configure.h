@@ -30,7 +30,7 @@
 #define POLARGRAPH2  // uncomment this line if you use a polargraph like the Makelangelo
 //#define COREXY  // uncomment this line if you use a CoreXY setup.
 //#define TRADITIONALXY  // uncomment this line if you use a traditional XY setup.
-//#define ZARPLOTTER  // uncomment this line if you use a 4 motor ZAR plotter
+//#define ZARPLOTTER  // uncomment this line if you use a 4 motor Zarplotter
 
 // servo angles for pen control
 #define PEN_UP_ANGLE         (90)
@@ -53,10 +53,11 @@
 #define STEP_DELAY           (50)  // delay between steps, in milliseconds, when doing fixed tasks like homing
 
 #ifdef ZARPLOTTER
-#define NUM_AXIES            (5)  // x,y,z, but four motors + z servo.
+#define NUM_MOTORS            (5)
 #else
-#define NUM_AXIES            (3)  // x,y,z
+#define NUM_MOTORS            (3)
 #endif
+
 #define NUM_TOOLS            (6)
 #define MAX_SEGMENTS         (32)  // number of line segments to buffer ahead. must be a power of two.
 #define SEGMOD(x)            ((x)&(MAX_SEGMENTS-1))
@@ -113,7 +114,7 @@
 //#define MOTHERBOARD BOARD_SANGUINOLULU
 
 #if MOTHERBOARD == BOARD_RUMBA 
-#define MAX_AXIES                 (6)
+#define MAX_MOTORS                 (6)
 
 #define MOTOR_0_DIR_PIN           (16)
 #define MOTOR_0_STEP_PIN          (17)
@@ -169,7 +170,7 @@
 #endif
 
 #if MOTHERBOARD == BOARD_RAMPS 
-#define MAX_AXIES                 (5)
+#define MAX_MOTORS                 (5)
 
 #define MOTOR_0_DIR_PIN           (55)
 #define MOTOR_0_STEP_PIN          (54)
@@ -221,7 +222,7 @@
 #endif
 
 #if MOTHERBOARD == BOARD_SANGUINOLULU 
-#define MAX_AXIES                 (2)
+#define MAX_MOTORS                 (2)
 
 #define MOTOR_0_DIR_PIN           (21)
 #define MOTOR_0_STEP_PIN          (15)
@@ -240,7 +241,7 @@
 #endif
 
 #if MOTHERBOARD == BOARD_TEENSYLU
-#define MAX_AXIES                 (2)
+#define MAX_MOTORS                 (2)
 
 #define MOTOR_0_DIR_PIN           (29)
 #define MOTOR_0_STEP_PIN          (28)
@@ -258,7 +259,7 @@
 #endif
 
 
-#if NUM_AXIES > MAX_AXIES
+#if NUM_MOTORS > MAX_MOTORS
 #error "The number of axies needed is more than this board supports."
 #endif
 
@@ -331,7 +332,7 @@ typedef struct {
 
 
 typedef struct {
-  Axis a[NUM_AXIES];
+  Axis a[NUM_MOTORS];
   int steps_total;
   int steps_taken;
   int accel_until;
@@ -355,7 +356,7 @@ extern Segment *working_seg;
 extern volatile int current_segment;
 extern volatile int last_segment;
 extern float acceleration;
-extern Motor motors[NUM_AXIES];
+extern Motor motors[NUM_MOTORS];
 extern const char *AxisLetters;
 
 #endif // CONFIGURE_H

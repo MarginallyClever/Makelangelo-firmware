@@ -1,10 +1,9 @@
 //------------------------------------------------------------------------------
-// Makelangelo - supports raprapdiscount RUMBA controller
+// Makelangelo - a mural drawing robot
 // dan@marginallycelver.com 2013-12-26
-// RUMBA should be treated like a MEGA 2560 Arduino.
-//------------------------------------------------------------------------------
 // Copyright at end of file.  Please see
 // http://www.github.com/MarginallyClever/Makelangelo for more information.
+//------------------------------------------------------------------------------
 
 
 //------------------------------------------------------------------------------
@@ -84,19 +83,19 @@ void savePulleyDiameter() {
 //------------------------------------------------------------------------------
 void saveDimensions() {
   Serial.println(F("Saving dimensions."));
-  EEPROM_writeLong(ADDR_LEFT  ,limit_left  *100);
-  EEPROM_writeLong(ADDR_RIGHT ,limit_right *100);
-  EEPROM_writeLong(ADDR_TOP   ,limit_top   *100);
-  EEPROM_writeLong(ADDR_BOTTOM,limit_bottom*100);
+  EEPROM_writeLong(ADDR_LEFT  ,limit_xmin  *100);
+  EEPROM_writeLong(ADDR_RIGHT ,limit_xmax *100);
+  EEPROM_writeLong(ADDR_TOP   ,limit_ymax   *100);
+  EEPROM_writeLong(ADDR_BOTTOM,limit_ymin*100);
 }
 
 
 //------------------------------------------------------------------------------
 void loadDimensions() {
-  limit_left   = (float)EEPROM_readLong(ADDR_LEFT  )/100.0f;
-  limit_right  = (float)EEPROM_readLong(ADDR_RIGHT )/100.0f;
-  limit_top    = (float)EEPROM_readLong(ADDR_TOP   )/100.0f;
-  limit_bottom = (float)EEPROM_readLong(ADDR_BOTTOM)/100.0f;
+  limit_xmin = (float)EEPROM_readLong(ADDR_LEFT  )/100.0f;
+  limit_xmax = (float)EEPROM_readLong(ADDR_RIGHT )/100.0f;
+  limit_ymax = (float)EEPROM_readLong(ADDR_TOP   )/100.0f;
+  limit_ymin = (float)EEPROM_readLong(ADDR_BOTTOM)/100.0f;
 }
 
 
@@ -108,14 +107,14 @@ void adjustDimensions(float newT,float newB,float newR,float newL) {
   newR = floor(newR*100)/100.0f;
   newL = floor(newL*100)/100.0f;
 
-  if( limit_top    != newT ||
-      limit_bottom != newB ||
-      limit_right  != newR ||
-      limit_left   != newL) {
-        limit_top=newT;
-        limit_bottom=newB;
-        limit_right=newR;
-        limit_left=newL;
+  if( limit_ymax != newT ||
+      limit_ymin != newB ||
+      limit_xmax != newR ||
+      limit_xmin != newL) {
+        limit_ymax=newT;
+        limit_ymin=newB;
+        limit_xmax=newR;
+        limit_xmin=newL;
         saveDimensions();
       }
 }

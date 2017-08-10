@@ -1,10 +1,9 @@
 //------------------------------------------------------------------------------
-// Makelangelo - supports raprapdiscount RUMBA controller
+// Makelangelo - a mural drawing robot
 // dan@marginallycelver.com 2013-12-26
-// RUMBA should be treated like a MEGA 2560 Arduino.
-//------------------------------------------------------------------------------
 // Copyright at end of file.  Please see
 // http://www.github.com/MarginallyClever/Makelangelo for more information.
+//------------------------------------------------------------------------------
 
 
 //------------------------------------------------------------------------------
@@ -26,30 +25,27 @@
 int robot_uid=0;
 
 // plotter limits, relative to the center of the plotter.
-float limit_top = 0;  // distance to top of drawing area.
-float limit_bottom = 0;  // Distance to bottom of drawing area.
-float limit_right = 0;  // Distance to right of drawing area.
-float limit_left = 0;  // Distance to left of drawing area.
+float limit_ymax = 0;  // distance to top of drawing area.
+float limit_ymin = 0;  // Distance to bottom of drawing area.
+float limit_xmax = 0;  // Distance to right of drawing area.
+float limit_xmin = 0;  // Distance to left of drawing area.
 
 static float homeX=0;
 static float homeY=0;
 
 // length of belt when weights hit limit switch
-float calibrateRight = 101.1;
-float calibrateLeft = 101.1;
+float calibrateRight  = 101.1;
+float calibrateLeft   = 101.1;
 float calibrateBRight = 101.1;
-float calibrateBLeft = 101.1;
+float calibrateBLeft  = 101.1;
 
 // what are the motors called?
-char m1d='L';
-char m2d='R';
-char m4d='U';
-char m5d='V';
+extern const char *motorNames;
 
 // motor inversions
-char m1i=1;
+char m1i= 1;
 char m2i=-1;
-char m4i=1;
+char m4i= 1;
 char m5i=-1;
 
 // calculate some numbers to help us find feed_rate
@@ -75,10 +71,6 @@ int current_tool=0;
 
 
 long line_number=0;
-
-
-extern long global_steps_0;
-extern long global_steps_1;
 
 
 //------------------------------------------------------------------------------
@@ -176,28 +168,28 @@ void IK(float x, float y, long *motorStepArray) {
 #ifdef POLARGRAPH2
   float dy,dx;
   // find length to M1
-  dy = y - limit_top;
-  dx = x - limit_left;
+  dy = y - limit_ymax;
+  dx = x - limit_xmin;
   motorStepArray[0] = lround( sqrt(dx*dx+dy*dy) / threadPerStep );
   // find length to M2
-  dx = limit_right - x;
+  dx = limit_xmax - x;
   motorStepArray[1] = lround( sqrt(dx*dx+dy*dy) / threadPerStep );
 #endif
 #ifdef ZARPLOTTER
   float dy,dx;
   // find length to M1
-  dy = y - limit_top;
-  dx = x - limit_left;
+  dy = y - limit_ymax;
+  dx = x - limit_xmin;
   motorStepArray[0] = lround( sqrt(dx*dx+dy*dy) / threadPerStep );
   // find length to M2
-  dx = limit_right - x;
+  dx = limit_xmax - x;
   motorStepArray[1] = lround( sqrt(dx*dx+dy*dy) / threadPerStep );
   // M3
-  dy = y - limit_bottom;
-  dx = x - limit_left;
+  dy = y - limit_ymin;
+  dx = x - limit_xmin;
   motorStepArray[3] = lround( sqrt(dx*dx+dy*dy) / threadPerStep );
   // M4
-  dx = limit_right - x;
+  dx = limit_xmax - x;
   motorStepArray[4] = lround( sqrt(dx*dx+dy*dy) / threadPerStep );
 #endif
 }
@@ -224,7 +216,7 @@ void FK(long *motorStepArray,float &x,float &y) {
 #if defined(POLARGRAPH2) || defined(ZARPLOTTER)
   // use law of cosines: theta = acos((a*a+b*b-c*c)/(2*a*b));
   float a = (float)motorStepArray[0] * threadPerStep;
-  float b = (limit_right-limit_left);
+  float b = (limit_xmax-limit_xmin);
   float c = (float)motorStepArray[1] * threadPerStep;
 
   // slow, uses trig
@@ -232,13 +224,13 @@ void FK(long *motorStepArray,float &x,float &y) {
   // or cc - aa - bb = -2ab * cos( theta )
   // or ( aa + bb - cc ) / ( 2ab ) = cos( theta );
   // or theta = acos((aa+bb-cc)/(2ab));
-  //x = cos(theta)*l1 + limit_left;
-  //y = sin(theta)*l1 + limit_top;
+  //x = cos(theta)*l1 + limit_xmin;
+  //y = sin(theta)*l1 + limit_ymax;
   // and we know that cos(acos(i)) = i
   // and we know that sin(acos(i)) = sqrt(1-i*i)
   float theta = ((a*a+b*b-c*c)/(2.0*a*b));
-  x = theta * a + limit_left;
-  y = limit_top - (sqrt( 1.0 - theta * theta ) * a);
+  x = theta * a + limit_xmin;
+  y = limit_ymax - (sqrt( 1.0 - theta * theta ) * a);
 #endif
 }
 
@@ -247,10 +239,10 @@ void FK(long *motorStepArray,float &x,float &y) {
  * 
  */
 void processConfig() {
-  float newT = parseNumber('T',limit_top);
-  float newB = parseNumber('B',limit_bottom);
-  float newR = parseNumber('R',limit_right);
-  float newL = parseNumber('L',limit_left);
+  float newT = parseNumber('T',limit_ymax);
+  float newB = parseNumber('B',limit_ymin);
+  float newR = parseNumber('R',limit_xmax);
+  float newL = parseNumber('L',limit_xmin);
   // @TODO: check t>b, r>l ?
   adjustDimensions(newT,newB,newR,newL);
 
@@ -288,7 +280,7 @@ void adjustInversions(int m1,int m2,int m4,int m5) {
     motors[1].reel_out = HIGH;
   }
 
-#if NUM_AXIES>=4
+#if NUM_MOTORS>=4
   if(m4>0) {
     motors[3].reel_in  = HIGH;
     motors[3].reel_out = LOW;
@@ -297,7 +289,7 @@ void adjustInversions(int m1,int m2,int m4,int m5) {
     motors[3].reel_out = HIGH;
   }
 #endif
-#if NUM_AXIES>=5
+#if NUM_MOTORS>=5
   if(m5>0) {
     motors[4].reel_in  = HIGH;
     motors[4].reel_out = LOW;
@@ -308,20 +300,20 @@ void adjustInversions(int m1,int m2,int m4,int m5) {
 #endif
 
   if( m1!=m1i || m2 != m2i
-#if NUM_AXIES>=4
+#if NUM_MOTORS>=4
 || m4 != m4i
 #endif
-#if NUM_AXIES>=5
+#if NUM_MOTORS>=5
 || m5 != m5i
 #endif
   ) {
     // loadInversions() should never reach this point in the code.
     m1i=m1;
     m2i=m2;
-#if NUM_AXIES>=4
+#if NUM_MOTORS>=4
     m4i=m4;
 #endif
-#if NUM_AXIES>=5
+#if NUM_MOTORS>=5
     m5i=m5;
 #endif
     saveInversions();
@@ -333,18 +325,18 @@ void adjustInversions(int m1,int m2,int m4,int m5) {
  * Test that IK(FK(A))=A
  */
 void testKinematics() {
-  long A[NUM_AXIES],i,j;
+  long A[NUM_MOTORS],i,j;
   float C,D,x=0,y=0;
 
   for(i=0;i<3000;++i) {
-    x = random(limit_right,limit_right)*0.1;
-    y = random(limit_bottom,limit_top)*0.1;
+    x = random(limit_xmax,limit_xmax)*0.1;
+    y = random(limit_ymin,limit_ymax)*0.1;
 
     IK(x,y,A);
     FK(A,C,D);
     Serial.print(F("\tx="));  Serial.print(x);
     Serial.print(F("\ty="));  Serial.print(y);
-    for(int j=0;j<NUM_AXIES;++j) {
+    for(int j=0;j<NUM_MOTORS;++j) {
       Serial.print('\t');
       Serial.print(AxisLetters[j]);
       Serial.print(A[j]);
@@ -364,7 +356,7 @@ void testKinematics() {
  * @input new_feed_rate speed to travel along arc
  */
 void polargraph_line(float x,float y,float z,float new_feed_rate) {
-  long steps[NUM_AXIES];
+  long steps[NUM_MOTORS];
   IK(x,y,steps);
   posx=x;
   posy=y;
@@ -478,7 +470,7 @@ void teleport(float x,float y) {
   posy=y;
 
   // @TODO: posz?
-  long steps[NUM_AXIES];
+  long steps[NUM_MOTORS];
   IK(posx,posy,steps);
 
   motor_set_step_count(steps);
@@ -532,7 +524,7 @@ void calibrateBelts() {
   digitalWrite(MOTOR_3_DIR_PIN,motors[3].reel_out);
   int bLeft=0,bRight=0;
   #endif
-  long steps[NUM_AXIES];
+  long steps[NUM_MOTORS];
 
   IK(homeX,homeY,steps);
   findStepDelay();
@@ -585,7 +577,7 @@ void calibrateBelts() {
   #ifdef ZARPLOTTER
   +bLeft+bRight
   #endif
-  <NUM_AXIES);
+  <NUM_MOTORS);
 
   // make sure there's no momentum to skip the belt on the pulley.
   delay(500);
@@ -624,7 +616,7 @@ void recordHome() {
   digitalWrite(MOTOR_1_DIR_PIN,motors[1].reel_out);
   int left=0;
   int right=0;
-  long count[NUM_AXIES];
+  long count[NUM_MOTORS];
   
   // we start at home position, so we know (x,y)->(left,right) value here.
   IK(homeX,homeY,count);
@@ -719,7 +711,7 @@ void findHome() {
   delay(500);
   
   Serial.println(F("Estimating position..."));
-  long count[NUM_AXIES];
+  long count[NUM_MOTORS];
   count[0] = calibrateLeft;
   count[1] = calibrateRight;
   Serial.print("cl=");   Serial.println(calibrateLeft);
@@ -764,10 +756,10 @@ void where() {
  * Print the machine limits to serial.
  */
 void printConfig() {
-  Serial.print(limit_left  );   Serial.print(F(","));
-  Serial.print(limit_top   );   Serial.print(F(" - "));
-  Serial.print(limit_right );   Serial.print(F(","));
-  Serial.print(limit_bottom);   Serial.print(F("\n"));
+  Serial.print(limit_xmin  );   Serial.print(F(","));
+  Serial.print(limit_ymax   );   Serial.print(F(" - "));
+  Serial.print(limit_xmax );   Serial.print(F(","));
+  Serial.print(limit_ymin);   Serial.print(F("\n"));
 }
 
 
@@ -949,7 +941,7 @@ void processCommand() {
   cmd=parseNumber('D',-1);
   switch(cmd) {
   case 0: {  // jog one motor
-      int i,amount=parseNumber(m1d,0);
+      int i,amount=parseNumber(motorNames[0],0);
       digitalWrite(MOTOR_0_DIR_PIN,amount < 0 ? motors[0].reel_in : motors[0].reel_out);
       amount=abs(amount);
       findStepDelay();
@@ -959,7 +951,7 @@ void processCommand() {
         pause(step_delay);
       }
 
-      amount=parseNumber(m2d,0); 
+      amount=parseNumber(motorNames[1],0); 
       digitalWrite(MOTOR_1_DIR_PIN,amount < 0 ? motors[1].reel_in : motors[1].reel_out);
       amount = abs(amount);
       for(i=0;i<amount;++i) {
@@ -967,6 +959,26 @@ void processCommand() {
         digitalWrite(MOTOR_1_STEP_PIN,LOW);
         pause(step_delay);
       }
+#if NUM_MOTORS>=3
+      amount=parseNumber(motorNames[2],0); 
+      digitalWrite(MOTOR_2_DIR_PIN,amount < 0 ? motors[1].reel_in : motors[1].reel_out);
+      amount = abs(amount);
+      for(i=0;i<amount;++i) {
+        digitalWrite(MOTOR_2_STEP_PIN,HIGH);
+        digitalWrite(MOTOR_2_STEP_PIN,LOW);
+        pause(step_delay);
+      }
+#endif
+#if NUM_MOTORS>=4
+      amount=parseNumber(motorNames[4],0); 
+      digitalWrite(MOTOR_4_DIR_PIN,amount < 0 ? motors[1].reel_in : motors[1].reel_out);
+      amount = abs(amount);
+      for(i=0;i<amount;++i) {
+        digitalWrite(MOTOR_4_STEP_PIN,HIGH);
+        digitalWrite(MOTOR_4_STEP_PIN,LOW);
+        pause(step_delay);
+      }
+#endif
     }
     break;
   case 1: {
