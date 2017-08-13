@@ -21,16 +21,22 @@
 //------------------------------------------------------------------------------
 // CONSTANTS
 //------------------------------------------------------------------------------
-//#define MAKELANGELO_HARDWARE_VERSION 3  // If you have a makelangelo 3+
-#define MAKELANGELO_HARDWARE_VERSION 5  // If you have a makelangelo 5+
-
 //#define VERBOSE           (1)  // add to get a lot more serial output.
 
-// machine style
-#define POLARGRAPH2  // uncomment this line if you use a polargraph like the Makelangelo
+
+// Boards supported
+#define BOARD_RUMBA        1
+#define BOARD_RAMPS        2
+#define BOARD_SANGUINOLULU 3
+#define BOARD_TEENSYLU     4
+
+
+// machine style - change this for your machine style.
+//#define POLARGRAPH2  // uncomment this line if you use a polargraph like the Makelangelo 3 or 5
 //#define COREXY  // uncomment this line if you use a CoreXY setup.
 //#define TRADITIONALXY  // uncomment this line if you use a traditional XY setup.
-//#define ZARPLOTTER  // uncomment this line if you use a 4 motor Zarplotter
+#define ZARPLOTTER  // uncomment this line if you use a 4 motor Zarplotter
+
 
 // servo angles for pen control
 #define PEN_UP_ANGLE         (90)
@@ -40,23 +46,50 @@
 #define BAUD                 (57600)  // How fast is the Arduino talking?
 #define MAX_BUF              (64)  // What is the longest message Arduino can store?
 
-
 #define MICROSTEPS           (16.0)  // microstepping on this microcontroller
 #define STEPS_PER_TURN       (400.0 * MICROSTEPS)  // default number of steps per turn * microsteps
 
+#define STEP_DELAY           (50)  // delay between steps, in milliseconds, when doing fixed tasks like homing
+
+#ifdef POLARGRAPH2
+//#define MAKELANGELO_HARDWARE_VERSION 3  // If you have a makelangelo 3+
+#define MAKELANGELO_HARDWARE_VERSION 5  // If you have a makelangelo 5+
+
+#define NUM_MOTORS           (3)  // Including servo
 #define MAX_FEEDRATE         (9000.0)  // depends on timer interrupt & hardware
 #define MIN_FEEDRATE         (100)
 #define MAX_JERK             (5.0)
 #define DEFAULT_FEEDRATE     (7000.0)
 #define DEFAULT_ACCELERATION (2500)
 
-#define STEP_DELAY           (50)  // delay between steps, in milliseconds, when doing fixed tasks like homing
+
+#if MAKELANGELO_HARDWARE_VERSION == 5
+#define MOTHERBOARD BOARD_RUMBA 
+#define USE_LIMIT_SWITCH    (1)  // Comment out this line to disable findHome and limit switches
+#define HAS_SD                   // comment this out if there is no SD card
+#define HAS_LCD                  // comment this out if there is no SMART LCD controller
+#endif
+#if MAKELANGELO_HARDWARE_VERSION == 3
+#define MOTHERBOARD BOARD_RUMBA
+#define HAS_SD                   // comment this out if there is no SD card
+#define HAS_LCD                  // comment this out if there is no SMART LCD controller
+#endif
+
+#endif
+
 
 #ifdef ZARPLOTTER
-#define NUM_MOTORS            (5)
-#else
-#define NUM_MOTORS            (3)
+#define MAKELANGELO_HARDWARE_VERSION 6
+#define MOTHERBOARD BOARD_RUMBA
+
+#define NUM_MOTORS           (5)  // Including servo
+#define MAX_FEEDRATE         (15000.0)  // depends on timer interrupt & hardware
+#define MIN_FEEDRATE         (100)
+#define MAX_JERK             (15.0)
+#define DEFAULT_FEEDRATE     (10000.0)
+#define DEFAULT_ACCELERATION (3500)
 #endif
+
 
 #define NUM_TOOLS            (6)
 #define MAX_SEGMENTS         (32)  // number of line segments to buffer ahead. must be a power of two.
@@ -89,29 +122,9 @@
 #define encrot2            3
 #define encrot3            1
 
-// Board types.  Don't change this!
-#define BOARD_RUMBA 1
-#define BOARD_RAMPS 2
-#define BOARD_SANGUINOLULU 3
-#define BOARD_TEENSYLU 4
 
-#if MAKELANGELO_HARDWARE_VERSION == 5
-#define MOTHERBOARD BOARD_RUMBA 
-#define USE_LIMIT_SWITCH    (1)  // Comment out this line to disable findHome and limit switches
-#define HAS_SD                   // comment this out if there is no SD card
-#define HAS_LCD                  // comment this out if there is no SMART LCD controller
-#endif
-#if MAKELANGELO_HARDWARE_VERSION == 3
-#define MOTHERBOARD BOARD_RUMBA
-#define HAS_SD                   // comment this out if there is no SD card
-#define HAS_LCD                  // comment this out if there is no SMART LCD controller
-#endif
+// Board pin layouts
 
-
-// Your choice of board
-//#define MOTHERBOARD BOARD_RUMBA
-//#define MOTHERBOARD BOARD_RAMPS
-//#define MOTHERBOARD BOARD_SANGUINOLULU
 
 #if MOTHERBOARD == BOARD_RUMBA 
 #define MAX_MOTORS                 (6)

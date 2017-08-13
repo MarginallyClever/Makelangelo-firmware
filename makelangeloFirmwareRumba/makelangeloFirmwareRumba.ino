@@ -175,22 +175,12 @@ void IK(float x, float y, long *motorStepArray) {
   dx = limit_xmax - x;
   motorStepArray[1] = lround( sqrt(dx*dx+dy*dy) / threadPerStep );
 #endif
-#ifdef ZARPLOTTER
-  float dy,dx;
-  // find length to M1
-  dy = y - limit_ymax;
-  dx = x - limit_xmin;
-  motorStepArray[0] = lround( sqrt(dx*dx+dy*dy) / threadPerStep );
-  // find length to M2
-  dx = limit_xmax - x;
-  motorStepArray[1] = lround( sqrt(dx*dx+dy*dy) / threadPerStep );
-  // M3
-  dy = y - limit_ymin;
-  dx = x - limit_xmin;
-  motorStepArray[3] = lround( sqrt(dx*dx+dy*dy) / threadPerStep );
-  // M4
-  dx = limit_xmax - x;
-  motorStepArray[4] = lround( sqrt(dx*dx+dy*dy) / threadPerStep );
+#ifdef ZARPLOTTER  
+  float L,R,U,V,dy,dx;
+  dy = y - limit_ymax;  dx = x - limit_xmin;  L = sqrt(dx*dx+dy*dy);  motorStepArray[0] = lround( L / threadPerStep );  // M1 (top left)
+  dy = y - limit_ymax;  dx = x - limit_xmax;  R = sqrt(dx*dx+dy*dy);  motorStepArray[1] = lround( R / threadPerStep );  // M2 (top right)
+  dy = y - limit_ymin;  dx = x - limit_xmin;  U = sqrt(dx*dx+dy*dy);  motorStepArray[3] = lround( U / threadPerStep );  // M3 (bottom left)
+  dy = y - limit_ymin;  dx = x - limit_xmax;  V = sqrt(dx*dx+dy*dy);  motorStepArray[4] = lround( V / threadPerStep );  // M4 (bottom right)
 #endif
 }
 
@@ -247,10 +237,10 @@ void processConfig() {
   adjustDimensions(newT,newB,newR,newL);
 
   // invert motor direction
-  char i=parseNumber('I',0);
-  char j=parseNumber('J',0);
-  char m=parseNumber('M',0);
-  char n=parseNumber('N',0);
+  char i=parseNumber('I',m1i);
+  char j=parseNumber('J',m2i);
+  char m=parseNumber('U',m4i);
+  char n=parseNumber('V',m5i);
   adjustInversions(i,j,m,n);
   
   printConfig();
@@ -481,11 +471,7 @@ void teleport(float x,float y) {
  * Print a helpful message to serial.  The first line must never be changed to play nice with the JAVA software.
  */
 void help() {
-#ifdef ZARPLOTTER
-  Serial.print(F("\n\nHELLO WORLD! I AM DRAWBOT-ZAR #"));
-#else
   Serial.print(F("\n\nHELLO WORLD! I AM DRAWBOT #"));
-#endif
   Serial.println(robot_uid);
   sayVersionNumber();
   Serial.println(F("== http://www.makelangelo.com/ =="));
@@ -756,10 +742,21 @@ void where() {
  * Print the machine limits to serial.
  */
 void printConfig() {
-  Serial.print(limit_xmin  );   Serial.print(F(","));
-  Serial.print(limit_ymax   );   Serial.print(F(" - "));
-  Serial.print(limit_xmax );   Serial.print(F(","));
-  Serial.print(limit_ymin);   Serial.print(F("\n"));
+  Serial.print(F("("));      Serial.print(limit_xmin);
+  Serial.print(F(","));      Serial.print(limit_ymax);
+  Serial.print(F(") - ("));  Serial.print(limit_xmax);
+  Serial.print(F(","));      Serial.print(limit_ymin);
+  Serial.print(F(")\n"));
+
+  Serial.print('I');  Serial.print(m1i,DEC);
+  Serial.print(" J");  Serial.print(m2i,DEC);
+#if NUM_MOTORS>=4
+  Serial.print(" U");  Serial.print(m4i,DEC);
+#endif
+#if NUM_MOTORS>=5
+  Serial.print(" V");  Serial.print(m5i,DEC);
+#endif
+  Serial.println();
 }
 
 
@@ -874,6 +871,7 @@ void processCommand() {
   case 18:  motor_disengage();  break;
   case 100:  help();  break;
   case 101:  processConfig();  break;
+  case 102:  printConfig();  break;
   case 110:  line_number = parseNumber('N',line_number);  break;
   case 114:  where();  break;
   default:  break;
@@ -940,47 +938,7 @@ void processCommand() {
 
   cmd=parseNumber('D',-1);
   switch(cmd) {
-  case 0: {  // jog one motor
-      int i,amount=parseNumber(motorNames[0],0);
-      digitalWrite(MOTOR_0_DIR_PIN,amount < 0 ? motors[0].reel_in : motors[0].reel_out);
-      amount=abs(amount);
-      findStepDelay();
-      for(i=0;i<amount;++i) {
-        digitalWrite(MOTOR_0_STEP_PIN,HIGH);
-        digitalWrite(MOTOR_0_STEP_PIN,LOW);
-        pause(step_delay);
-      }
-
-      amount=parseNumber(motorNames[1],0); 
-      digitalWrite(MOTOR_1_DIR_PIN,amount < 0 ? motors[1].reel_in : motors[1].reel_out);
-      amount = abs(amount);
-      for(i=0;i<amount;++i) {
-        digitalWrite(MOTOR_1_STEP_PIN,HIGH);
-        digitalWrite(MOTOR_1_STEP_PIN,LOW);
-        pause(step_delay);
-      }
-#if NUM_MOTORS>=3
-      amount=parseNumber(motorNames[2],0); 
-      digitalWrite(MOTOR_2_DIR_PIN,amount < 0 ? motors[1].reel_in : motors[1].reel_out);
-      amount = abs(amount);
-      for(i=0;i<amount;++i) {
-        digitalWrite(MOTOR_2_STEP_PIN,HIGH);
-        digitalWrite(MOTOR_2_STEP_PIN,LOW);
-        pause(step_delay);
-      }
-#endif
-#if NUM_MOTORS>=4
-      amount=parseNumber(motorNames[4],0); 
-      digitalWrite(MOTOR_4_DIR_PIN,amount < 0 ? motors[1].reel_in : motors[1].reel_out);
-      amount = abs(amount);
-      for(i=0;i<amount;++i) {
-        digitalWrite(MOTOR_4_STEP_PIN,HIGH);
-        digitalWrite(MOTOR_4_STEP_PIN,LOW);
-        pause(step_delay);
-      }
-#endif
-    }
-    break;
+  case 0:  jogMotors();  break;
   case 1: {
       // adjust spool diameters
       float amountL=parseNumber('L',pulleyDiameter);
@@ -994,8 +952,10 @@ void processCommand() {
     }
     break;
   case 2:
-    Serial.print('L');  Serial.print(pulleyDiameter);
-    Serial.print(F(" R"));   Serial.println(pulleyDiameter);
+    Serial.print(F("D2 D"));
+    Serial.print(pulleyDiameter);
+    Serial.print(F("TPS"));
+    Serial.println(threadPerStep*100.0f);
     break;
 //  case 3:  SD_ListFiles();  break;
   case 4:  SD_StartPrintingFile(strchr(serialBuffer,' ')+1);  break;  // read file
@@ -1032,6 +992,33 @@ void processCommand() {
     break;
   case 12: recordHome();
   default:  break;
+  }
+}
+
+
+void jogMotors() {
+  int i,j,amount;
+  
+  findStepDelay();
+  for(i=0;i<NUM_MOTORS;++i) {
+    if(motorNames[i]==0) continue;
+    amount = parseNumber(motorNames[i],0);
+    if(amount!=0) {
+      Serial.print(F("Moving "));
+      Serial.print(motorNames[i]);
+      Serial.print(F(" ("));
+      Serial.print(i);
+      Serial.print(F(") "));
+      Serial.print(amount);
+      Serial.println(F(" steps."));
+      digitalWrite(motors[i].dir_pin,amount < 0 ? motors[i].reel_in : motors[i].reel_out);
+      amount=abs(amount);
+      for(j=0;j<amount;++j) {
+        digitalWrite(motors[i].step_pin,HIGH);
+        digitalWrite(motors[i].step_pin,LOW);
+        pause(step_delay);
+      }
+    }
   }
 }
 
