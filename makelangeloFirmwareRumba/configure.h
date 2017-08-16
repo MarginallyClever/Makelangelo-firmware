@@ -51,6 +51,9 @@
 
 #define STEP_DELAY           (50)  // delay between steps, in milliseconds, when doing fixed tasks like homing
 
+#define MAX_ACCELERATION     (5000)
+#define MIN_ACCELERATION     (100)
+
 #ifdef POLARGRAPH2
 //#define MAKELANGELO_HARDWARE_VERSION 3  // If you have a makelangelo 3+
 #define MAKELANGELO_HARDWARE_VERSION 5  // If you have a makelangelo 5+

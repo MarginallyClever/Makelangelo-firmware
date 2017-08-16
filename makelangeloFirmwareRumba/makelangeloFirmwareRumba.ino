@@ -177,13 +177,18 @@ void IK(float x, float y, long *motorStepArray) {
 #endif
 #ifdef ZARPLOTTER  
   float L,R,U,V,dy,dx;
-
+  dy = abs(y - limit_ymax)-ZARPLOTTER_COMPENSATION;  dx = abs(x - limit_xmin)-ZARPLOTTER_COMPENSATION;  L = sqrt(dx*dx+dy*dy);  motorStepArray[0] = lround( L / threadPerStep );  // M1 (top left)
+  dy = abs(y - limit_ymax)-ZARPLOTTER_COMPENSATION;  dx = abs(x - limit_xmax)-ZARPLOTTER_COMPENSATION;  R = sqrt(dx*dx+dy*dy);  motorStepArray[1] = lround( R / threadPerStep );  // M2 (top right)
+  dy = abs(y - limit_ymin)-ZARPLOTTER_COMPENSATION;  dx = abs(x - limit_xmin)-ZARPLOTTER_COMPENSATION;  U = sqrt(dx*dx+dy*dy);  motorStepArray[3] = lround( U / threadPerStep );  // M3 (bottom left)
+  dy = abs(y - limit_ymin)-ZARPLOTTER_COMPENSATION;  dx = abs(x - limit_xmax)-ZARPLOTTER_COMPENSATION;  V = sqrt(dx*dx+dy*dy);  motorStepArray[4] = lround( V / threadPerStep );  // M4 (bottom right)
+/*
   Serial.print(x);  Serial.print(' ');
   Serial.print(y);  Serial.print(' ');
   Serial.print(L);  Serial.print(' ');
   Serial.print(R);  Serial.print(' ');
   Serial.print(U);  Serial.print(' ');
   Serial.print(V);  Serial.print('\n');
+*/
 #endif
 }
 
@@ -885,7 +890,7 @@ void processCommand() {
   case 0:
   case 1: {  // line
       Vector3 offset=get_end_plus_offset();
-      acceleration = min(max(parseNumber('A',acceleration),1),2000);
+      acceleration = min(max(parseNumber('A',acceleration),MIN_ACCELERATION),MAX_ACCELERATION);
       line_safe( parseNumber('X',(absolute_mode?offset.x:0)*10)*0.1 + (absolute_mode?0:offset.x),
                  parseNumber('Y',(absolute_mode?offset.y:0)*10)*0.1 + (absolute_mode?0:offset.y),
                  parseNumber('Z',(absolute_mode?offset.z:0)   )     + (absolute_mode?0:offset.z),
