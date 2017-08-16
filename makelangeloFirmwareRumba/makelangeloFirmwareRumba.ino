@@ -177,10 +177,13 @@ void IK(float x, float y, long *motorStepArray) {
 #endif
 #ifdef ZARPLOTTER  
   float L,R,U,V,dy,dx;
-  dy = y - limit_ymax;  dx = x - limit_xmin;  L = sqrt(dx*dx+dy*dy);  motorStepArray[0] = lround( L / threadPerStep );  // M1 (top left)
-  dy = y - limit_ymax;  dx = x - limit_xmax;  R = sqrt(dx*dx+dy*dy);  motorStepArray[1] = lround( R / threadPerStep );  // M2 (top right)
-  dy = y - limit_ymin;  dx = x - limit_xmin;  U = sqrt(dx*dx+dy*dy);  motorStepArray[3] = lround( U / threadPerStep );  // M3 (bottom left)
-  dy = y - limit_ymin;  dx = x - limit_xmax;  V = sqrt(dx*dx+dy*dy);  motorStepArray[4] = lround( V / threadPerStep );  // M4 (bottom right)
+
+  Serial.print(x);  Serial.print(' ');
+  Serial.print(y);  Serial.print(' ');
+  Serial.print(L);  Serial.print(' ');
+  Serial.print(R);  Serial.print(' ');
+  Serial.print(U);  Serial.print(' ');
+  Serial.print(V);  Serial.print('\n');
 #endif
 }
 

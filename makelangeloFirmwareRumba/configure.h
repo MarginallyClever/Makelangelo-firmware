@@ -32,10 +32,10 @@
 
 
 // machine style - change this for your machine style.
-#define POLARGRAPH2  // uncomment this line if you use a polargraph like the Makelangelo 3 or 5
+//#define POLARGRAPH2  // uncomment this line if you use a polargraph like the Makelangelo 3 or 5
 //#define COREXY  // uncomment this line if you use a CoreXY setup.
 //#define TRADITIONALXY  // uncomment this line if you use a traditional XY setup.
-//#define ZARPLOTTER  // uncomment this line if you use a 4 motor Zarplotter
+#define ZARPLOTTER  // uncomment this line if you use a 4 motor Zarplotter
 
 
 // servo angles for pen control
@@ -75,7 +75,7 @@
 #define HAS_LCD                  // comment this out if there is no SMART LCD controller
 #endif
 
-#endif
+#endif  // POLARGRAPH2
 
 
 #ifdef ZARPLOTTER
@@ -88,7 +88,11 @@
 #define MAX_JERK             (15.0)
 #define DEFAULT_FEEDRATE     (10000.0)
 #define DEFAULT_ACCELERATION (3500)
-#endif
+
+#define ZARPLOTTER_MOTOR_SIZE   (4.5f)
+#define ZARPLOTTER_PLOTTER_SIZE (6.0f)
+#define ZARPLOTTER_COMPENSATION (ZARPLOTTER_PLOTTER_SIZE/2.0f + ZARPLOTTER_MOTOR_SIZE)
+#endif  // ZARPLOTTER
 
 
 #define NUM_TOOLS            (6)
