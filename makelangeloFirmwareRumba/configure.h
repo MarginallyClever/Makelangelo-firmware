@@ -32,10 +32,10 @@
 
 
 // machine style - change this for your machine style.
-//#define POLARGRAPH2  // uncomment this line if you use a polargraph like the Makelangelo 3 or 5
+#define POLARGRAPH2  // uncomment this line if you use a polargraph like the Makelangelo 3 or 5
 //#define COREXY  // uncomment this line if you use a CoreXY setup.
 //#define TRADITIONALXY  // uncomment this line if you use a traditional XY setup.
-#define ZARPLOTTER  // uncomment this line if you use a 4 motor Zarplotter
+//#define ZARPLOTTER  // uncomment this line if you use a 4 motor Zarplotter
 
 
 // servo angles for pen control

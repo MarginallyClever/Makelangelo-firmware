@@ -506,6 +506,7 @@ void calibrateBelts() {
 #ifndef ZARPLOTTER
 #ifdef USE_LIMIT_SWITCH
   wait_for_empty_segment_buffer();
+  motor_engage();
 
   Serial.println(F("Find switches..."));
   
@@ -603,7 +604,9 @@ void recordHome() {
 #ifndef ZARPLOTTER
 #ifdef USE_LIMIT_SWITCH
   wait_for_empty_segment_buffer();
-
+  motor_engage();
+  findStepDelay();
+  
   Serial.println(F("Record home..."));
 
   digitalWrite(MOTOR_0_DIR_PIN,motors[0].reel_out);
@@ -619,6 +622,7 @@ void recordHome() {
   //Serial.print(F("L1="));  Serial.println(leftCount);
   //Serial.print(F("R1="));  Serial.println(rightCount);
   
+  Serial.println(F("A..."));
   do {
     if(left==0) {
       if( digitalRead(LIMIT_SWITCH_PIN_LEFT)==LOW ) {
@@ -639,6 +643,45 @@ void recordHome() {
       digitalWrite(MOTOR_1_STEP_PIN,LOW);
     }
     pause(step_delay*2);
+  } while(left+right<2);
+
+  Serial.println(F("B..."));
+  digitalWrite(MOTOR_0_DIR_PIN,motors[0].reel_in);
+  digitalWrite(MOTOR_1_DIR_PIN,motors[1].reel_in);
+  for(int i=0;i<STEPS_PER_TURN;++i) {
+    digitalWrite(MOTOR_0_STEP_PIN,HIGH);
+    digitalWrite(MOTOR_0_STEP_PIN,LOW);
+    digitalWrite(MOTOR_1_STEP_PIN,HIGH);
+    digitalWrite(MOTOR_1_STEP_PIN,LOW);
+    pause(step_delay*4);
+    --count[0];
+    --count[1];
+  }
+
+  left=right=0;
+  Serial.println(F("C..."));
+  digitalWrite(MOTOR_0_DIR_PIN,motors[0].reel_out);
+  digitalWrite(MOTOR_1_DIR_PIN,motors[1].reel_out);
+  do {
+    if(left==0) {
+      if( digitalRead(LIMIT_SWITCH_PIN_LEFT)==LOW ) {
+        left=1;
+        Serial.println(F("Left..."));
+      }
+      ++count[0];
+      digitalWrite(MOTOR_0_STEP_PIN,HIGH);
+      digitalWrite(MOTOR_0_STEP_PIN,LOW);
+    }
+    if(right==0) {
+      if( digitalRead(LIMIT_SWITCH_PIN_RIGHT)==LOW ) {
+        right=1;
+        Serial.println(F("Right..."));
+      }
+      ++count[1];
+      digitalWrite(MOTOR_1_STEP_PIN,HIGH);
+      digitalWrite(MOTOR_1_STEP_PIN,LOW);
+    }
+    pause(step_delay*4);
   } while(left+right<2);
 
   calibrateLeft =count[0];
@@ -672,6 +715,7 @@ void findHome() {
 #ifndef ZARPLOTTER
 #ifdef USE_LIMIT_SWITCH
   wait_for_empty_segment_buffer();
+  motor_engage();
   
   Serial.println(F("Find Home..."));
 
