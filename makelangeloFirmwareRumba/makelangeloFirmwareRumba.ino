@@ -260,7 +260,11 @@ void processConfig() {
  * @TODO: remove this bullshit and make users flip their motor cable themselves.
  */
 void adjustInversions(int m1,int m2,int m4,int m5) {
-  //Serial.print(F("Adjusting inversions to "));
+  Serial.print(F("Adjusting inversions to "));
+  Serial.print(m1);  Serial.print(F(" "));
+  Serial.print(m2);  Serial.print(F(" "));
+  Serial.print(m4);  Serial.print(F(" "));
+  Serial.print(m5);  Serial.println();
 
   if(m1>0) {
     motors[0].reel_in  = HIGH;
@@ -280,20 +284,20 @@ void adjustInversions(int m1,int m2,int m4,int m5) {
 
 #if NUM_MOTORS>=4
   if(m4>0) {
-    motors[3].reel_in  = HIGH;
-    motors[3].reel_out = LOW;
+    motors[2].reel_in  = HIGH;
+    motors[2].reel_out = LOW;
   } else if(m4<0) {
-    motors[3].reel_in  = LOW;
-    motors[3].reel_out = HIGH;
+    motors[2].reel_in  = LOW;
+    motors[2].reel_out = HIGH;
   }
 #endif
 #if NUM_MOTORS>=5
   if(m5>0) {
-    motors[4].reel_in  = HIGH;
-    motors[4].reel_out = LOW;
+    motors[3].reel_in  = HIGH;
+    motors[3].reel_out = LOW;
   } else if(m5<0) {
-    motors[4].reel_in  = LOW;
-    motors[4].reel_out = HIGH;
+    motors[3].reel_in  = LOW;
+    motors[3].reel_out = HIGH;
   }
 #endif
 
@@ -1063,7 +1067,10 @@ void jogMotors() {
       Serial.print(F(") "));
       Serial.print(amount);
       Serial.println(F(" steps."));
-      digitalWrite(motors[i].dir_pin,amount < 0 ? motors[i].reel_in : motors[i].reel_out);
+      
+      int x = amount < 0 ? motors[i].reel_in  : motors[i].reel_out;
+      digitalWrite(motors[i].dir_pin, x);
+      
       amount=abs(amount);
       for(j=0;j<amount;++j) {
         digitalWrite(motors[i].step_pin,HIGH);

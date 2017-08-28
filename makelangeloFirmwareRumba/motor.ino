@@ -60,7 +60,7 @@ int global_step_dir_4;
 #endif
 
 
-const char *motorNames="RLUV";
+const char *motorNames="LRUV";
 
 
 //------------------------------------------------------------------------------
@@ -535,14 +535,18 @@ ISR(TIMER1_COMPA_vect) {
   if( working_seg != NULL ) {
     // move each axis
     for(uint8_t i=0;i<step_multiplier;++i) {
-      over0 += delta0;      if(over0 > 0) digitalWrite(MOTOR_0_STEP_PIN,LOW);
-      over1 += delta1;      if(over1 > 0) digitalWrite(MOTOR_1_STEP_PIN,LOW);
+      over0 += delta0;
+      if(over0 > 0) digitalWrite(MOTOR_0_STEP_PIN,LOW);
+      over1 += delta1;
+      if(over1 > 0) digitalWrite(MOTOR_1_STEP_PIN,LOW);
       // M2 is the servo Z axis
 #if NUM_MOTORS>=4
-      over3 += delta3;      if(over3 > 0) digitalWrite(MOTOR_2_STEP_PIN,LOW);
+      over3 += delta3;
+      if(over3 > 0) digitalWrite(MOTOR_2_STEP_PIN,LOW);
 #endif
 #if NUM_MOTORS>=5
-      over4 += delta4;      if(over4 > 0) digitalWrite(MOTOR_3_STEP_PIN,LOW);
+      over4 += delta4;
+      if(over4 > 0) digitalWrite(MOTOR_3_STEP_PIN,LOW);
 #endif
       // now that the pins have had a moment to settle, do the second half of the steps.
       // M0
@@ -675,7 +679,7 @@ void motor_line(long *n,float new_feed_rate) {
   float len=0;
   int i;
   for(i=0;i<NUM_MOTORS;++i) {
-    new_seg.a[i].dir = (new_seg.a[i].delta < 0 ? motors[i].reel_in:motors[i].reel_out);
+    new_seg.a[i].dir = (new_seg.a[i].delta < 0 ? motors[i].reel_in : motors[i].reel_out);
     new_seg.a[i].absdelta = abs(new_seg.a[i].delta);
     len += square(new_seg.a[i].delta);
     if( new_seg.steps_total < new_seg.a[i].absdelta ) {
