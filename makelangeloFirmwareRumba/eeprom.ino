@@ -47,7 +47,7 @@ void loadConfig() {
     // If not the current EEPROM_VERSION or the EEPROM_VERSION is sullied (i.e. unknown data)
     // Update the version number
     EEPROM.write(ADDR_VERSION,EEPROM_VERSION);
-#if MAKELANGELO_HARDWARE_VERSION == 5
+#if MAKELANGELO_HARDWARE_VERSION == 5 || MAKELANGELO_HARDWARE_VERSION == 6
     adjustDimensions(50,-50,-32.5,32.5);
     adjustInversions(1,-1,1,-1);
     adjustPulleyDiameter(4.0/PI);
