@@ -20,7 +20,11 @@
 
 // machine styles supported
 #define POLARGRAPH       1  // uncomment this line if you use a polargraph like the Makelangelo 3 or 5
+#define TRADITIONALXY    3 // uncomment this line if you use a traditional XY setup.
+#define COREXY           2 // uncomment this line if you use a CoreXY setup.
+#define ZARPLOTTER       4 // uncomment this line if you use a 4 motor Zarplotter
 
+#define MACHINE_STYLE POLARGRAPH  // change this
 
 #include "robot_polargraph.h"
 #include "robot_traditionalxy.h"
