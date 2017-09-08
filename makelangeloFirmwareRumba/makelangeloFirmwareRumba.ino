@@ -42,11 +42,6 @@ float calibrateBLeft  = 101.1;
 // what are the motors called?
 extern const char *motorNames;
 
-// motor inversions
-char m1i= 1;
-char m2i=-1;
-char m4i= 1;
-char m5i=-1;
 
 // calculate some numbers to help us find feed_rate
 float pulleyDiameter = 4.0f / PI;  // cm; 20 teeth * 2mm per tooth / PI
@@ -177,10 +172,10 @@ void IK(float x, float y, long *motorStepArray) {
 #endif
 #ifdef ZARPLOTTER  
   float L,R,U,V,dy,dx;
-  dy = abs(y - limit_ymax)-ZARPLOTTER_COMPENSATION;  dx = abs(x - limit_xmin)-ZARPLOTTER_COMPENSATION;  L = sqrt(dx*dx+dy*dy);  motorStepArray[0] = lround( L / threadPerStep );  // M1 (top left)
-  dy = abs(y - limit_ymax)-ZARPLOTTER_COMPENSATION;  dx = abs(x - limit_xmax)-ZARPLOTTER_COMPENSATION;  R = sqrt(dx*dx+dy*dy);  motorStepArray[1] = lround( R / threadPerStep );  // M2 (top right)
-  dy = abs(y - limit_ymin)-ZARPLOTTER_COMPENSATION;  dx = abs(x - limit_xmin)-ZARPLOTTER_COMPENSATION;  U = sqrt(dx*dx+dy*dy);  motorStepArray[3] = lround( U / threadPerStep );  // M3 (bottom left)
-  dy = abs(y - limit_ymin)-ZARPLOTTER_COMPENSATION;  dx = abs(x - limit_xmax)-ZARPLOTTER_COMPENSATION;  V = sqrt(dx*dx+dy*dy);  motorStepArray[4] = lround( V / threadPerStep );  // M4 (bottom right)
+  dy = abs(y - limit_ymax)-ZARPLOTTER_COMPENSATION;  dx = abs(x - limit_xmin)-ZARPLOTTER_COMPENSATION;  L = sqrt(dx*dx+dy*dy);  motorStepArray[0] = lround( L / threadPerStep );  // M0 (top left)
+  dy = abs(y - limit_ymax)-ZARPLOTTER_COMPENSATION;  dx = abs(x - limit_xmax)-ZARPLOTTER_COMPENSATION;  R = sqrt(dx*dx+dy*dy);  motorStepArray[1] = lround( R / threadPerStep );  // M1 (top right)
+  dy = abs(y - limit_ymin)-ZARPLOTTER_COMPENSATION;  dx = abs(x - limit_xmin)-ZARPLOTTER_COMPENSATION;  U = sqrt(dx*dx+dy*dy);  motorStepArray[2] = lround( U / threadPerStep );  // M2 (bottom left)
+  dy = abs(y - limit_ymin)-ZARPLOTTER_COMPENSATION;  dx = abs(x - limit_xmax)-ZARPLOTTER_COMPENSATION;  V = sqrt(dx*dx+dy*dy);  motorStepArray[3] = lround( V / threadPerStep );  // M3 (bottom right)
 /*
   Serial.print(x);  Serial.print(' ');
   Serial.print(y);  Serial.print(' ');
@@ -244,82 +239,8 @@ void processConfig() {
   // @TODO: check t>b, r>l ?
   adjustDimensions(newT,newB,newR,newL);
 
-  // invert motor direction
-  char i=parseNumber('I',m1i);
-  char j=parseNumber('J',m2i);
-  char m=parseNumber('U',m4i);
-  char n=parseNumber('V',m5i);
-  adjustInversions(i,j,m,n);
-  
   printConfig();
   teleport(posx,posy);
-}
-
-
-/**
- * @TODO: remove this bullshit and make users flip their motor cable themselves.
- */
-void adjustInversions(int m1,int m2,int m4,int m5) {
-  Serial.print(F("Adjusting inversions to "));
-  Serial.print(m1);  Serial.print(F(" "));
-  Serial.print(m2);  Serial.print(F(" "));
-  Serial.print(m4);  Serial.print(F(" "));
-  Serial.print(m5);  Serial.println();
-
-  if(m1>0) {
-    motors[0].reel_in  = HIGH;
-    motors[0].reel_out = LOW;
-  } else if(m1<0) {
-    motors[0].reel_in  = LOW;
-    motors[0].reel_out = HIGH;
-  }
-
-  if(m2>0) {
-    motors[1].reel_in  = HIGH;
-    motors[1].reel_out = LOW;
-  } else if(m2<0) {
-    motors[1].reel_in  = LOW;
-    motors[1].reel_out = HIGH;
-  }
-
-#if NUM_MOTORS>=4
-  if(m4>0) {
-    motors[2].reel_in  = HIGH;
-    motors[2].reel_out = LOW;
-  } else if(m4<0) {
-    motors[2].reel_in  = LOW;
-    motors[2].reel_out = HIGH;
-  }
-#endif
-#if NUM_MOTORS>=5
-  if(m5>0) {
-    motors[3].reel_in  = HIGH;
-    motors[3].reel_out = LOW;
-  } else if(m5<0) {
-    motors[3].reel_in  = LOW;
-    motors[3].reel_out = HIGH;
-  }
-#endif
-
-  if( m1!=m1i || m2 != m2i
-#if NUM_MOTORS>=4
-|| m4 != m4i
-#endif
-#if NUM_MOTORS>=5
-|| m5 != m5i
-#endif
-  ) {
-    // loadInversions() should never reach this point in the code.
-    m1i=m1;
-    m2i=m2;
-#if NUM_MOTORS>=4
-    m4i=m4;
-#endif
-#if NUM_MOTORS>=5
-    m5i=m5;
-#endif
-    saveInversions();
-  }
 }
 
 
@@ -358,13 +279,13 @@ void testKinematics() {
  * @input new_feed_rate speed to travel along arc
  */
 void polargraph_line(float x,float y,float z,float new_feed_rate) {
-  long steps[NUM_MOTORS];
+  long steps[NUM_MOTORS+NUM_SERVOS];
   IK(x,y,steps);
   posx=x;
   posy=y;
   posz=z;
 
-  steps[2]=z;
+  steps[NUM_MOTORS]=z;
 
   feed_rate = new_feed_rate;
   motor_line(steps,new_feed_rate);
@@ -650,8 +571,8 @@ void recordHome() {
   } while(left+right<2);
 
   Serial.println(F("B..."));
-  digitalWrite(MOTOR_0_DIR_PIN,motors[0].reel_in);
-  digitalWrite(MOTOR_1_DIR_PIN,motors[1].reel_in);
+  digitalWrite(MOTOR_0_DIR_PIN,motors[0].HIGH);
+  digitalWrite(MOTOR_1_DIR_PIN,motors[1].HIGH);
   for(int i=0;i<STEPS_PER_TURN;++i) {
     digitalWrite(MOTOR_0_STEP_PIN,HIGH);
     digitalWrite(MOTOR_0_STEP_PIN,LOW);
@@ -664,8 +585,8 @@ void recordHome() {
 
   left=right=0;
   Serial.println(F("C..."));
-  digitalWrite(MOTOR_0_DIR_PIN,motors[0].reel_out);
-  digitalWrite(MOTOR_1_DIR_PIN,motors[1].reel_out);
+  digitalWrite(MOTOR_0_DIR_PIN,motors[0].LOW);
+  digitalWrite(MOTOR_1_DIR_PIN,motors[1].LOW);
   do {
     if(left==0) {
       if( digitalRead(LIMIT_SWITCH_PIN_LEFT)==LOW ) {
@@ -803,16 +724,6 @@ void printConfig() {
   Serial.print(F(") - ("));  Serial.print(limit_xmax);
   Serial.print(F(","));      Serial.print(limit_ymin);
   Serial.print(F(")\n"));
-
-  Serial.print('I');  Serial.print(m1i,DEC);
-  Serial.print(" J");  Serial.print(m2i,DEC);
-#if NUM_MOTORS>=4
-  Serial.print(" U");  Serial.print(m4i,DEC);
-#endif
-#if NUM_MOTORS>=5
-  Serial.print(" V");  Serial.print(m5i,DEC);
-#endif
-  Serial.println();
 }
 
 
@@ -1041,7 +952,6 @@ void processCommand() {
   case 11:
     // if you accidentally upload m3 firmware to an m5 then upload it ONCE with this line uncommented.
     adjustDimensions(50,-50,-32.5,32.5);
-    adjustInversions(1,-1,1,-1);
     adjustPulleyDiameter(4.0/PI);
     savePulleyDiameter();
     saveCalibration();
@@ -1066,9 +976,13 @@ void jogMotors() {
       Serial.print(i);
       Serial.print(F(") "));
       Serial.print(amount);
-      Serial.println(F(" steps."));
+      Serial.print(F(" steps. Dir="));
+      Serial.print(motors[i].dir_pin);
+      Serial.print(F(" Step="));
+      Serial.print(motors[i].step_pin);
+      Serial.print('\n');
       
-      int x = amount < 0 ? motors[i].reel_in  : motors[i].reel_out;
+      int x = amount < 0 ? HIGH  : LOW;
       digitalWrite(motors[i].dir_pin, x);
       
       amount=abs(amount);

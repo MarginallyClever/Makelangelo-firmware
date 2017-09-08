@@ -58,7 +58,7 @@
 //#define MAKELANGELO_HARDWARE_VERSION 3  // If you have a makelangelo 3+
 #define MAKELANGELO_HARDWARE_VERSION 5  // If you have a makelangelo 5+
 
-#define NUM_MOTORS           (3)  // Including servo
+#define NUM_MOTORS           (2)
 #define MAX_FEEDRATE         (9000.0)  // depends on timer interrupt & hardware
 #define MIN_FEEDRATE         (100)
 #define MAX_JERK             (5.0)
@@ -83,9 +83,11 @@
 
 #ifdef ZARPLOTTER
 #define MAKELANGELO_HARDWARE_VERSION 6
-#define MOTHERBOARD BOARD_RUMBA
+//#define MOTHERBOARD BOARD_RUMBA
+#define MOTHERBOARD BOARD_RAMPS
 
-#define NUM_MOTORS           (5)  // Including servo
+#define NUM_MOTORS           (4)
+#define NUM_SERVOS           (1)
 #define MAX_FEEDRATE         (15000.0)  // depends on timer interrupt & hardware
 #define MIN_FEEDRATE         (100)
 #define MAX_JERK             (15.0)
@@ -146,7 +148,6 @@
 #define MOTOR_1_ENABLE_PIN        (55)
 #define MOTOR_1_LIMIT_SWITCH_PIN  (36)
 
-// alternate pins in case you want to do something interesting
 #define MOTOR_2_DIR_PIN           (56)
 #define MOTOR_2_STEP_PIN          (57)
 #define MOTOR_2_ENABLE_PIN        (62)
@@ -167,7 +168,7 @@
 #define MOTOR_5_ENABLE_PIN        (39)
 #define MOTOR_5_LIMIT_SWITCH_PIN  (32)
 
-#define NUM_SERVOS                (1)
+#define MAX_BOARD_SERVOS          (1)
 #define SERVO0_PIN                (5)
 
 #define LIMIT_SWITCH_PIN_LEFT     (MOTOR_0_LIMIT_SWITCH_PIN)
@@ -202,7 +203,6 @@
 #define MOTOR_1_ENABLE_PIN        (56)
 #define MOTOR_1_LIMIT_SWITCH_PIN  (14)  /* Y min */
 
-// alternate pins in case you want to do something interesting
 #define MOTOR_2_DIR_PIN           (48)
 #define MOTOR_2_STEP_PIN          (46)
 #define MOTOR_2_ENABLE_PIN        (62)
@@ -218,7 +218,7 @@
 #define MOTOR_4_ENABLE_PIN        (30)
 #define MOTOR_4_LIMIT_SWITCH_PIN  (15)  /* Y Max */
 
-#define NUM_SERVOS         (4)
+#define MAX_BOARD_SERVOS          (4)
 #define SERVO0_PIN         (11)   /* Servo 1 */
 #define SERVO1_PIN         (6)
 #define SERVO2_PIN         (5)
@@ -280,7 +280,10 @@
 
 
 #if NUM_MOTORS > MAX_MOTORS
-#error "The number of axies needed is more than this board supports."
+#error "The number of motors needed is more than this board supports."
+#endif
+#if NUM_SERVOS > MAX_BOARD_SERVOS
+#error "The number of servos needed is more than this board supports."
 #endif
 
 
@@ -346,13 +349,11 @@ typedef struct {
   int enable_pin;
   int limit_switch_pin;
   int limit_switch_state;
-  int reel_in;
-  int reel_out;
 } Motor;
 
 
 typedef struct {
-  Axis a[NUM_MOTORS];
+  Axis a[NUM_MOTORS+NUM_SERVOS];
   int steps_total;
   int steps_taken;
   int accel_until;
