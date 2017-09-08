@@ -436,12 +436,12 @@ void calibrateBelts() {
   Serial.println(F("Find switches..."));
   
   // reel in the left motor and the right motor out until contact is made.
-  digitalWrite(MOTOR_0_DIR_PIN,motors[0].reel_out);
-  digitalWrite(MOTOR_1_DIR_PIN,motors[1].reel_out);
+  digitalWrite(LOW);
+  digitalWrite(LOW);
   int left=0, right=0;
   #ifdef ZARPLOTTER
-  digitalWrite(MOTOR_2_DIR_PIN,motors[2].reel_out);
-  digitalWrite(MOTOR_3_DIR_PIN,motors[3].reel_out);
+  digitalWrite(LOW);
+  digitalWrite(LOW);
   int bLeft=0,bRight=0;
   #endif
   long steps[NUM_MOTORS];
@@ -534,8 +534,8 @@ void recordHome() {
   
   Serial.println(F("Record home..."));
 
-  digitalWrite(MOTOR_0_DIR_PIN,motors[0].reel_out);
-  digitalWrite(MOTOR_1_DIR_PIN,motors[1].reel_out);
+  digitalWrite(LOW);
+  digitalWrite(LOW);
   int left=0;
   int right=0;
   long count[NUM_MOTORS];
@@ -571,8 +571,8 @@ void recordHome() {
   } while(left+right<2);
 
   Serial.println(F("B..."));
-  digitalWrite(MOTOR_0_DIR_PIN,motors[0].HIGH);
-  digitalWrite(MOTOR_1_DIR_PIN,motors[1].HIGH);
+  digitalWrite(MOTOR_0_DIR_PIN,HIGH);
+  digitalWrite(MOTOR_1_DIR_PIN,HIGH);
   for(int i=0;i<STEPS_PER_TURN;++i) {
     digitalWrite(MOTOR_0_STEP_PIN,HIGH);
     digitalWrite(MOTOR_0_STEP_PIN,LOW);
@@ -585,8 +585,8 @@ void recordHome() {
 
   left=right=0;
   Serial.println(F("C..."));
-  digitalWrite(MOTOR_0_DIR_PIN,motors[0].LOW);
-  digitalWrite(MOTOR_1_DIR_PIN,motors[1].LOW);
+  digitalWrite(MOTOR_0_DIR_PIN,LOW);
+  digitalWrite(MOTOR_1_DIR_PIN,LOW);
   do {
     if(left==0) {
       if( digitalRead(LIMIT_SWITCH_PIN_LEFT)==LOW ) {
@@ -647,8 +647,8 @@ void findHome() {
   findStepDelay();
 
   // reel in the left motor and the right motor out until contact is made.
-  digitalWrite(MOTOR_0_DIR_PIN,motors[0].reel_out);
-  digitalWrite(MOTOR_1_DIR_PIN,motors[1].reel_out);
+  digitalWrite(LOW);
+  digitalWrite(LOW);
   int left=0, right=0;
   do {
     if(left==0) {
