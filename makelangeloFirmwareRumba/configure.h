@@ -59,6 +59,7 @@
 #define MAKELANGELO_HARDWARE_VERSION 5  // If you have a makelangelo 5+
 
 #define NUM_MOTORS           (2)
+#define NUM_SERVOS           (1)
 #define MAX_FEEDRATE         (9000.0)  // depends on timer interrupt & hardware
 #define MIN_FEEDRATE         (100)
 #define MAX_JERK             (5.0)
