@@ -5,7 +5,7 @@
 // http://www.github.com/MarginallyClever/Makelangelo for more information.
 //------------------------------------------------------------------------------
 
-#ifdef ZARPLOTTER
+#if MACHINE_STYLE == ZARPLOTTER
 
 
 

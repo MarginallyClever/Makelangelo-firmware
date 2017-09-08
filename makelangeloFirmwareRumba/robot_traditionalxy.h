@@ -1,5 +1,5 @@
-#ifndef ROBOT_MAKELANGELO_H
-#define ROBOT_MAKELANGELO_H
+#ifndef ROBOT_TRADITIONALXY_H
+#define ROBOT_TRADITIONALXY_H
 //------------------------------------------------------------------------------
 // Makelangelo - a mural drawing robot
 // dan@marginallycelver.com 2013-12-26
@@ -7,7 +7,7 @@
 // http://www.github.com/MarginallyClever/Makelangelo for more information.
 //------------------------------------------------------------------------------
 
-#ifdef POLARGRAPH2
+#if MACHINE_STYLE == TRADITIONALXY
 
 //#define MAKELANGELO_HARDWARE_VERSION 3  // If you have a makelangelo 3+
 #define MAKELANGELO_HARDWARE_VERSION 5  // If you have a makelangelo 5+
@@ -53,5 +53,5 @@
 #endif  // #ifdef POLARGRAPH2
 
 
-#endif  // #ifndef ROBOT_MAKELANGELO_H
+#endif  // #ifndef ROBOT_TRADITIONALXY_H
 

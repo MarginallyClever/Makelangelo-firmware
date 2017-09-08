@@ -1,5 +1,5 @@
-#ifndef ROBOT_MAKELANGELO_H
-#define ROBOT_MAKELANGELO_H
+#ifndef ROBOT_ZARPLOTTER_H
+#define ROBOT_ZARPLOTTER_H
 //------------------------------------------------------------------------------
 // Makelangelo - a mural drawing robot
 // dan@marginallycelver.com 2013-12-26
@@ -8,7 +8,7 @@
 //------------------------------------------------------------------------------
 
 
-#ifdef ZARPLOTTER
+#if MACHINE_STYLE == ZARPLOTTER
 
 
 #define MAKELANGELO_HARDWARE_VERSION 6

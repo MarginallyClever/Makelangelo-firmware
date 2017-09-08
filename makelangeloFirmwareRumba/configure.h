@@ -10,50 +10,22 @@
 
 
 //------------------------------------------------------------------------------
-// Sanity check
-//------------------------------------------------------------------------------
-
-
-//------------------------------------------------------------------------------
 // CONSTANTS
 //------------------------------------------------------------------------------
+
 //#define VERBOSE           (1)  // add to get a lot more serial output.
 
 
 
 
-
-// for serial comms
-#define BAUD                 (57600)  // How fast is the Arduino talking?
-#define MAX_BUF              (64)  // What is the longest message Arduino can store?
-
-#define MICROSTEPS           (16.0)  // microstepping on this microcontroller
-#define STEPS_PER_TURN       (400.0 * MICROSTEPS)  // default number of steps per turn * microsteps
-#define STEP_DELAY           (50)  // delay between steps, in milliseconds, when doing fixed tasks like homing
-
-#define MAX_ACCELERATION     (5000)
-#define MIN_ACCELERATION     (100)
-
-// machine style - change this for your machine style.
+// machine styles supported
 #define POLARGRAPH       1  // uncomment this line if you use a polargraph like the Makelangelo 3 or 5
-//#define TRADITIONALXY 3 // uncomment this line if you use a traditional XY setup.
-//#define COREXY        2 // uncomment this line if you use a CoreXY setup.
-//#define ZARPLOTTER    4 // uncomment this line if you use a 4 motor Zarplotter
+
 
 #include "robot_polargraph.h"
 #include "robot_traditionalxy.h"
 #include "robot_corexy.h"
 #include "robot_zarplotter.h"
-
-// buffering commands
-#define MAX_SEGMENTS         (32)  // number of line segments to buffer ahead. must be a power of two.
-#define SEGMOD(x)            ((x)&(MAX_SEGMENTS-1))
-
-// for arc directions
-#define ARC_CW               (1)
-#define ARC_CCW              (-1)
-#define SEGMENT_PER_CM_LINE  (2)  // lines are split into segments.  How long are the segments?
-#define SEGMENT_PER_CM_ARC   (3)  // Arcs are split into segments.  How long are the segments?
 
 
 // Boards supported
@@ -61,6 +33,8 @@
 #define BOARD_RAMPS        2
 #define BOARD_SANGUINOLULU 3
 #define BOARD_TEENSYLU     4
+
+#define MOTHERBOARD BOARD_RUMBA  // change this
 
 // Board descriptions
 #include "board_rumba.h"
@@ -75,6 +49,29 @@
 #if NUM_SERVOS > MAX_BOARD_SERVOS
 #error "The number of servos needed is more than this board supports."
 #endif
+
+
+
+// for serial comms
+#define BAUD                 (57600)  // How fast is the Arduino talking?
+#define MAX_BUF              (64)  // What is the longest message Arduino can store?
+
+#define MICROSTEPS           (16.0)  // microstepping on this microcontroller
+#define STEPS_PER_TURN       (400.0 * MICROSTEPS)  // default number of steps per turn * microsteps
+#define STEP_DELAY           (50)  // delay between steps, in milliseconds, when doing fixed tasks like homing
+
+#define MAX_ACCELERATION     (5000)
+#define MIN_ACCELERATION     (100)
+
+// buffering commands
+#define MAX_SEGMENTS         (32)  // number of line segments to buffer ahead. must be a power of two.
+#define SEGMOD(x)            ((x)&(MAX_SEGMENTS-1))
+
+// for arc directions
+#define ARC_CW               (1)
+#define ARC_CCW              (-1)
+#define SEGMENT_PER_CM_LINE  (2)  // lines are split into segments.  How long are the segments?
+#define SEGMENT_PER_CM_ARC   (3)  // Arcs are split into segments.  How long are the segments?
 
 
 //------------------------------------------------------------------------------

@@ -5,7 +5,7 @@
 // http://www.github.com/MarginallyClever/Makelangelo for more information.
 //------------------------------------------------------------------------------
 
-#ifdef POLARGRAPH
+#if MACHINE_STYLE == POLARGRAPH
 
 
 /**
