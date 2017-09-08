@@ -145,87 +145,6 @@ void printFeedRate() {
 }
 
 
-/**
- * Inverse Kinematics turns XY coordinates into lengths L1,L2
- * @param x cartesian coordinate
- * @param y cartesian coordinate
- * @param motorStepArray a measure of each belt to that plotter position
- */
-void IK(float x, float y, long *motorStepArray) {
-#ifdef COREXY
-  motorStepArray[0] = lround((x+y) / threadPerStep);
-  motorStepArray[1] = lround((x-y) / threadPerStep);
-#endif
-#ifdef TRADITIONALXY
-  motorStepArray[0] = lround((x) / threadPerStep);
-  motorStepArray[1] = lround((y) / threadPerStep);
-#endif
-#ifdef POLARGRAPH2
-  float dy,dx;
-  // find length to M1
-  dy = y - limit_ymax;
-  dx = x - limit_xmin;
-  motorStepArray[0] = lround( sqrt(dx*dx+dy*dy) / threadPerStep );
-  // find length to M2
-  dx = limit_xmax - x;
-  motorStepArray[1] = lround( sqrt(dx*dx+dy*dy) / threadPerStep );
-#endif
-#ifdef ZARPLOTTER  
-  float L,R,U,V,dy,dx;
-  dy = abs(y - limit_ymax)-ZARPLOTTER_COMPENSATION;  dx = abs(x - limit_xmin)-ZARPLOTTER_COMPENSATION;  L = sqrt(dx*dx+dy*dy);  motorStepArray[0] = lround( L / threadPerStep );  // M0 (top left)
-  dy = abs(y - limit_ymax)-ZARPLOTTER_COMPENSATION;  dx = abs(x - limit_xmax)-ZARPLOTTER_COMPENSATION;  R = sqrt(dx*dx+dy*dy);  motorStepArray[1] = lround( R / threadPerStep );  // M1 (top right)
-  dy = abs(y - limit_ymin)-ZARPLOTTER_COMPENSATION;  dx = abs(x - limit_xmin)-ZARPLOTTER_COMPENSATION;  U = sqrt(dx*dx+dy*dy);  motorStepArray[2] = lround( U / threadPerStep );  // M2 (bottom left)
-  dy = abs(y - limit_ymin)-ZARPLOTTER_COMPENSATION;  dx = abs(x - limit_xmax)-ZARPLOTTER_COMPENSATION;  V = sqrt(dx*dx+dy*dy);  motorStepArray[3] = lround( V / threadPerStep );  // M3 (bottom right)
-/*
-  Serial.print(x);  Serial.print(' ');
-  Serial.print(y);  Serial.print(' ');
-  Serial.print(L);  Serial.print(' ');
-  Serial.print(R);  Serial.print(' ');
-  Serial.print(U);  Serial.print(' ');
-  Serial.print(V);  Serial.print('\n');
-*/
-#endif
-}
-
-
-/** 
- * Forward Kinematics - turns L1,L2 lengths into XY coordinates
- * @param motorStepArray a measure of each belt to that plotter position
- * @param x the resulting cartesian coordinate
- * @param y the resulting cartesian coordinate
- */
-void FK(long *motorStepArray,float &x,float &y) {
-#ifdef COREXY
-  float a = motorStepArray[0] * threadPerStep;
-  float b = motorStepArray[1] * threadPerStep;
-
-  x = (float)( a + b ) / 2.0;
-  y = x - (float)b;
-#endif
-#ifdef TRADITIONALXY
-  x = motorStepArray[0] * threadPerStep;
-  y = motorStepArray[1] * threadPerStep;
-#endif
-#if defined(POLARGRAPH2) || defined(ZARPLOTTER)
-  // use law of cosines: theta = acos((a*a+b*b-c*c)/(2*a*b));
-  float a = (float)motorStepArray[0] * threadPerStep;
-  float b = (limit_xmax-limit_xmin);
-  float c = (float)motorStepArray[1] * threadPerStep;
-
-  // slow, uses trig
-  // we know law of cosines:   cc = aa + bb -2ab * cos( theta )
-  // or cc - aa - bb = -2ab * cos( theta )
-  // or ( aa + bb - cc ) / ( 2ab ) = cos( theta );
-  // or theta = acos((aa+bb-cc)/(2ab));
-  //x = cos(theta)*l1 + limit_xmin;
-  //y = sin(theta)*l1 + limit_ymax;
-  // and we know that cos(acos(i)) = i
-  // and we know that sin(acos(i)) = sqrt(1-i*i)
-  float theta = ((a*a+b*b-c*c)/(2.0*a*b));
-  x = theta * a + limit_xmin;
-  y = limit_ymax - (sqrt( 1.0 - theta * theta ) * a);
-#endif
-}
 
 
 /**
@@ -428,7 +347,7 @@ void sayVersionNumber() {
  * Does not save the values, only reports them to serial.
  */
 void calibrateBelts() {
-#ifndef ZARPLOTTER
+#ifdef POLARGRAPH
 #ifdef USE_LIMIT_SWITCH
   wait_for_empty_segment_buffer();
   motor_engage();
@@ -436,14 +355,9 @@ void calibrateBelts() {
   Serial.println(F("Find switches..."));
   
   // reel in the left motor and the right motor out until contact is made.
-  digitalWrite(LOW);
-  digitalWrite(LOW);
+  digitalWrite(MOTOR_0_DIR_PIN,LOW);
+  digitalWrite(MOTOR_1_DIR_PIN,LOW);
   int left=0, right=0;
-  #ifdef ZARPLOTTER
-  digitalWrite(LOW);
-  digitalWrite(LOW);
-  int bLeft=0,bRight=0;
-  #endif
   long steps[NUM_MOTORS];
 
   IK(homeX,homeY,steps);
@@ -470,34 +384,8 @@ void calibrateBelts() {
       digitalWrite(MOTOR_1_STEP_PIN,LOW);
       steps[1]++;
     }
-    #ifdef ZARPLOTTER
-    if(bLeft==0) {
-      if( digitalRead(LIMIT_SWITCH_PIN_LEFT2 )==LOW ) {
-        // switch hit
-        bLeft=1;
-      }
-      // switch not hit yet, keep moving
-      digitalWrite(MOTOR_2_STEP_PIN,HIGH);
-      digitalWrite(MOTOR_2_STEP_PIN,LOW);
-      steps[2]++;
-    }
-    if(bRight==0) {
-      if( digitalRead(LIMIT_SWITCH_PIN_RIGHT2 )==LOW ) {
-        // switch hit
-        bRight=1;
-      }
-      // switch not hit yet, keep moving
-      digitalWrite(MOTOR_3_STEP_PIN,HIGH);
-      digitalWrite(MOTOR_3_STEP_PIN,LOW);
-      steps[3]++;
-    }
-    #endif
     pause(step_delay);
-  } while(left+right
-  #ifdef ZARPLOTTER
-  +bLeft+bRight
-  #endif
-  <NUM_MOTORS);
+  } while(left+right<NUM_MOTORS);
 
   // make sure there's no momentum to skip the belt on the pulley.
   delay(500);
@@ -521,12 +409,12 @@ void calibrateBelts() {
   line_safe(homeX,homeY,offset.z,feed_rate);
   Serial.println(F("Done."));
 #endif // USE_LIMIT_SWITCH
-#endif // ZARPLOTTER
+#endif // POLARGRAPH
 }
 
 
 void recordHome() {
-#ifndef ZARPLOTTER
+#ifdef POLARGRAPH2
 #ifdef USE_LIMIT_SWITCH
   wait_for_empty_segment_buffer();
   motor_engage();
@@ -534,8 +422,8 @@ void recordHome() {
   
   Serial.println(F("Record home..."));
 
-  digitalWrite(LOW);
-  digitalWrite(LOW);
+  digitalWrite(MOTOR_0_DIR_PIN,LOW);
+  digitalWrite(MOTOR_1_DIR_PIN,LOW);
   int left=0;
   int right=0;
   long count[NUM_MOTORS];
@@ -629,7 +517,7 @@ void recordHome() {
   line_safe(homeX,homeY,offset.z,feed_rate);
   Serial.println(F("Done."));
 #endif // USER_LIMIT_SWITCH
-#endif // ZARPLOTTER
+#endif // POLARGRAPH2
 }
 
 
@@ -647,8 +535,8 @@ void findHome() {
   findStepDelay();
 
   // reel in the left motor and the right motor out until contact is made.
-  digitalWrite(LOW);
-  digitalWrite(LOW);
+  digitalWrite(MOTOR_0_DIR_PIN,LOW);
+  digitalWrite(MOTOR_1_DIR_PIN,LOW);
   int left=0, right=0;
   do {
     if(left==0) {
