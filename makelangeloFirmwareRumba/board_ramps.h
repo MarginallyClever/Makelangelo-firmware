@@ -42,10 +42,10 @@
 #define MOTOR_4_LIMIT_SWITCH_PIN  (15)  /* Y Max */
 
 #define MAX_BOARD_SERVOS          (4)
-#define SERVO0_PIN         (11)   /* Servo 1 */
-#define SERVO1_PIN         (6)
-#define SERVO2_PIN         (5)
-#define SERVO3_PIN         (4)
+#define SERVO0_PIN                (11)   /* Servo 1 */
+#define SERVO1_PIN                (6)
+#define SERVO2_PIN                (5)
+#define SERVO3_PIN                (4)
 
 // Smart controller settings
 #define BEEPER             37   /* Pin on SMART Adapter */

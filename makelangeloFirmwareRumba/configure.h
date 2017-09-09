@@ -63,7 +63,7 @@
 #define MICROSTEPS           (16.0)  // microstepping on this microcontroller
 #define STEPS_PER_TURN       (400.0 * MICROSTEPS)  // default number of steps per turn * microsteps
 #define STEP_DELAY           (50)  // delay between steps, in milliseconds, when doing fixed tasks like homing
-#define PULLEY_PITCH         (2.0*20.0) // 2mm per tooth, 20 teeth.
+#define PULLEY_PITCH         (0.2*20.0) // 2mm per tooth, 20 teeth.
 #define THREAD_PER_STEP      (PULLEY_PITCH/STEPS_PER_TURN)
 
 #define MAX_ACCELERATION     (5000)

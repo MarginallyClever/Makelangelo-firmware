@@ -295,7 +295,7 @@ void teleport(float x, float y) {
   posy = y;
 
   // @TODO: posz?
-  long steps[NUM_MOTORS];
+  long steps[NUM_MOTORS+NUM_SERVOS];
   IK(posx, posy, posz, steps);
 
   motor_set_step_count(steps);
@@ -568,7 +568,7 @@ void findHome() {
 #endif // MACHINE_STYLE == POLARGRAPH
 }
 
-
+extern long testValue;
 /**
    Print the X,Y,Z, feedrate, and acceleration to serial.
    Equivalent to gcode M114
@@ -803,7 +803,8 @@ void processCommand() {
       adjustDimensions(50, -50, -32.5, 32.5);
       saveCalibration();
       break;
-    case 12: recordHome();
+    case 12:  recordHome();
+    case 13:  setPenAngle(parseNumber('Z',posz));  break;
     default:  break;
   }
 }

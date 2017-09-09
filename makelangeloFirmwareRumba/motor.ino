@@ -148,12 +148,14 @@ void motor_setup() {
     digitalWrite(motors[i].limit_switch_pin,HIGH);
   }
 
-  long steps[NUM_MOTORS];
-  memset(steps,0,NUM_MOTORS*sizeof(long));
+  long steps[NUM_MOTORS+NUM_SERVOS];
+  memset(steps,0,(NUM_MOTORS+NUM_SERVOS)*sizeof(long));
   motor_set_step_count(steps);
 
   // setup servos
 #if NUM_SERVOS>0
+  Serial.print("Attaching servo 0 to ");
+  Serial.println(SERVO0_PIN);
   servos[0].attach(SERVO0_PIN);
 #endif
 #if NUM_SERVOS>1
@@ -234,14 +236,15 @@ void motor_disengage() {
 
 // Change pen state.
 void setPenAngle(int pen_angle) {
-  if(posz!=pen_angle) {
-    posz=pen_angle;
+  posz=pen_angle;
 
-    if(posz<PEN_DOWN_ANGLE) posz=PEN_DOWN_ANGLE;
-    if(posz>PEN_UP_ANGLE  ) posz=PEN_UP_ANGLE;
-
-    servos[0].write(posz);
-  }
+  if(posz<PEN_DOWN_ANGLE) posz=PEN_DOWN_ANGLE;
+  if(posz>PEN_UP_ANGLE  ) posz=PEN_UP_ANGLE;
+#if NUM_SERVOS>0
+  servos[0].write(posz);
+#endif
+  Serial.print("Moving servo 0 to ");
+  Serial.println(posz);
 }
 
 
@@ -442,7 +445,10 @@ void motor_set_step_count(long *a) {
   old_seg.a[4].step_count=a[4];
 #endif
 #if NUM_MOTORS>5
-  old_seg.a[4].step_count=a[4];
+  old_seg.a[5].step_count=a[5];
+#endif
+#if NUM_SERVOS>0
+  old_seg.a[NUM_MOTORS].step_count=a[NUM_MOTORS];
 #endif
 
   global_steps_0=0;
@@ -732,11 +738,11 @@ void motor_line(long *n,float new_feed_rate) {
   Segment &new_seg = line_segments[last_segment];
   Segment &old_seg = line_segments[prev_segment];
 
-//*
+/*
   int k;
   for(k=0;k<NUM_MOTORS+NUM_SERVOS;++k) {
     Serial.print(n[k]);
-    Serial.print('\t');
+    Serial.print(",\t");
   }
   Serial.print('\n');//*/
   
@@ -780,7 +786,7 @@ void motor_line(long *n,float new_feed_rate) {
   new_seg.steps_total = 0;
   float len=0;
   int i;
-  for(i=0;i<NUM_MOTORS;++i) {
+  for(i=0;i<NUM_MOTORS+NUM_SERVOS;++i) {
     new_seg.a[i].dir = ( new_seg.a[i].delta < 0 ? HIGH : LOW );
     new_seg.a[i].absdelta = abs(new_seg.a[i].delta);
     len += square(new_seg.a[i].delta);
