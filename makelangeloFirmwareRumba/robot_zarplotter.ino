@@ -15,7 +15,7 @@
  * @param y cartesian coordinate
  * @param motorStepArray a measure of each belt to that plotter position
  */
-void IK(float x, float y, long *motorStepArray) {
+void IK(float x, float y, float z, long *motorStepArray) {
   float L,R,U,V,dy,dx;
   dy = abs(y - limit_ymax)-ZARPLOTTER_COMPENSATION;  dx = abs(x - limit_xmin)-ZARPLOTTER_COMPENSATION;  L = sqrt(dx*dx+dy*dy);  motorStepArray[0] = lround( L / threadPerStep );  // M0 (top left)
   dy = abs(y - limit_ymax)-ZARPLOTTER_COMPENSATION;  dx = abs(x - limit_xmax)-ZARPLOTTER_COMPENSATION;  R = sqrt(dx*dx+dy*dy);  motorStepArray[1] = lround( R / threadPerStep );  // M1 (top right)
@@ -29,6 +29,8 @@ void IK(float x, float y, long *motorStepArray) {
   Serial.print(U);  Serial.print(' ');
   Serial.print(V);  Serial.print('\n');
 */
+
+  motorStepArray[NUM_MOTORS] = z;
 }
 
 

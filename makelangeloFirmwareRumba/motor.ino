@@ -732,24 +732,19 @@ void motor_line(long *n,float new_feed_rate) {
   Segment &new_seg = line_segments[last_segment];
   Segment &old_seg = line_segments[prev_segment];
 
-
+//*
   int k;
-  for(k=0;k<NUM_MOTORS;++k) {
+  for(k=0;k<NUM_MOTORS+NUM_SERVOS;++k) {
     Serial.print(n[k]);
     Serial.print('\t');
   }
-  Serial.print('\n');
+  Serial.print('\n');//*/
   
   // use LCD to adjust speed while drawing
 #ifdef HAS_LCD
   new_feed_rate *= (float)speed_adjust * 0.01f;
 #endif
-/*
-  Serial.print('^');
-  Serial.print(n0);  Serial.print('\t');
-  Serial.print(n1);  Serial.print('\t');
-  Serial.print(n2);  Serial.print('\n');
-*/
+
   new_seg.a[0].step_count = n[0];
   new_seg.a[0].delta = n[0] - old_seg.a[0].step_count;
 #if NUM_MOTORS>1

@@ -49,15 +49,12 @@ void loadConfig() {
     EEPROM.write(ADDR_VERSION,EEPROM_VERSION);
 #if MAKELANGELO_HARDWARE_VERSION == 5 || MAKELANGELO_HARDWARE_VERSION == 6
     adjustDimensions(50,-50,-32.5,32.5);
-    adjustPulleyDiameter(4.0/PI);
-    savePulleyDiameter();
     saveCalibration();
 #endif
   }
   
   // Retrieve stored configuration
   robot_uid=EEPROM_readLong(ADDR_UUID);
-  adjustPulleyDiameter((float)EEPROM_readLong(ADDR_PULLEY_DIA1)/10000.0f);   //4 decimal places of percision is enough
   loadDimensions();
   loadHome();
   loadCalibration();
@@ -68,13 +65,6 @@ void loadConfig() {
 void saveUID() {
   Serial.println(F("Saving UID."));
   EEPROM_writeLong(ADDR_UUID,(long)robot_uid);
-}
-
-
-//------------------------------------------------------------------------------
-void savePulleyDiameter() {
-  EEPROM_writeLong(ADDR_PULLEY_DIA1,pulleyDiameter*10000);
-  //EEPROM_writeLong(ADDR_PULLEY_DIA2,pulleyDiameter*10000);
 }
 
 
@@ -109,12 +99,12 @@ void adjustDimensions(float newT,float newB,float newR,float newL) {
       limit_ymin != newB ||
       limit_xmax != newR ||
       limit_xmin != newL) {
-        limit_ymax=newT;
-        limit_ymin=newB;
-        limit_xmax=newR;
-        limit_xmin=newL;
-        saveDimensions();
-      }
+    limit_ymax=newT;
+    limit_ymin=newB;
+    limit_xmax=newR;
+    limit_xmin=newL;
+    saveDimensions();
+  }
 }
 
 

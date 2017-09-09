@@ -14,15 +14,17 @@
  * @param y cartesian coordinate
  * @param motorStepArray a measure of each belt to that plotter position
  */
-void IK(float x, float y, long *motorStepArray) {
+void IK(float x, float y, float z, long *motorStepArray) {
   float dy,dx;
   // find length to M1
   dy = y - limit_ymax;
   dx = x - limit_xmin;
-  motorStepArray[0] = lround( sqrt(dx*dx+dy*dy) / threadPerStep );
+  motorStepArray[0] = lround( sqrt(dx*dx+dy*dy) / THREAD_PER_STEP );
   // find length to M2
   dx = limit_xmax - x;
-  motorStepArray[1] = lround( sqrt(dx*dx+dy*dy) / threadPerStep );
+  motorStepArray[1] = lround( sqrt(dx*dx+dy*dy) / THREAD_PER_STEP );
+
+  motorStepArray[NUM_MOTORS] = z;
 }
 
 
@@ -34,9 +36,9 @@ void IK(float x, float y, long *motorStepArray) {
  */
 void FK(long *motorStepArray,float &x,float &y) {
   // use law of cosines: theta = acos((a*a+b*b-c*c)/(2*a*b));
-  float a = (float)motorStepArray[0] * threadPerStep;
+  float a = (float)motorStepArray[0] * THREAD_PER_STEP;
   float b = (limit_xmax-limit_xmin);
-  float c = (float)motorStepArray[1] * threadPerStep;
+  float c = (float)motorStepArray[1] * THREAD_PER_STEP;
 
   // slow, uses trig
   // we know law of cosines:   cc = aa + bb -2ab * cos( theta )
