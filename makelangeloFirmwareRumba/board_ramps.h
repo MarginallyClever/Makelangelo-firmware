@@ -47,6 +47,9 @@
 #define SERVO2_PIN                (5)
 #define SERVO3_PIN                (4)
 
+#define LIMIT_SWITCH_PIN_LEFT     (MOTOR_0_LIMIT_SWITCH_PIN)
+#define LIMIT_SWITCH_PIN_RIGHT    (MOTOR_1_LIMIT_SWITCH_PIN)
+
 // Smart controller settings
 #define BEEPER             37   /* Pin on SMART Adapter */
 #define LCD_PINS_RS        16   /* Pin on SMART Adapter */

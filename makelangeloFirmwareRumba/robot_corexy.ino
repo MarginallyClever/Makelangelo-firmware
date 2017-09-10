@@ -15,8 +15,8 @@
  * @param motorStepArray a measure of each belt to that plotter position
  */
 void IK(float x, float y, float z, long *motorStepArray) {
-  motorStepArray[0] = lround((x+y) / threadPerStep);
-  motorStepArray[1] = lround((x-y) / threadPerStep);
+  motorStepArray[0] = lround((x+y) / THREAD_PER_STEP);
+  motorStepArray[1] = lround((x-y) / THREAD_PER_STEP);
 
   motorStepArray[NUM_MOTORS] = z;
 }
@@ -29,8 +29,8 @@ void IK(float x, float y, float z, long *motorStepArray) {
  * @param y the resulting cartesian coordinate
  */
 void FK(long *motorStepArray,float &x,float &y) {
-  float a = motorStepArray[0] * threadPerStep;
-  float b = motorStepArray[1] * threadPerStep;
+  float a = motorStepArray[0] * THREAD_PER_STEP;
+  float b = motorStepArray[1] * THREAD_PER_STEP;
 
   x = (float)( a + b ) / 2.0;
   y = x - (float)b;

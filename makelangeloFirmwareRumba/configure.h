@@ -19,12 +19,12 @@
 
 
 // machine styles supported
-#define POLARGRAPH       1  // uncomment this line if you use a polargraph like the Makelangelo 3 or 5
-#define TRADITIONALXY    3 // uncomment this line if you use a traditional XY setup.
-#define COREXY           2 // uncomment this line if you use a CoreXY setup.
-#define ZARPLOTTER       4 // uncomment this line if you use a 4 motor Zarplotter
+#define POLARGRAPH       1  // polargraph like the Makelangelo 3 or 5
+#define TRADITIONALXY    3  // traditional 2+ axis setup.
+#define COREXY           2  // CoreXY setup.
+#define ZARPLOTTER       4  // 4 motor Zarplotter
 
-#define MACHINE_STYLE POLARGRAPH  // change this
+#define MACHINE_STYLE ZARPLOTTER  // change this
 
 #include "robot_polargraph.h"
 #include "robot_traditionalxy.h"
@@ -38,7 +38,7 @@
 #define BOARD_SANGUINOLULU 3
 #define BOARD_TEENSYLU     4
 
-#define MOTHERBOARD BOARD_RUMBA  // change this
+#define MOTHERBOARD BOARD_RAMPS  // change this
 
 // Board descriptions
 #include "board_rumba.h"
@@ -61,7 +61,9 @@
 #define MAX_BUF              (64)  // What is the longest message Arduino can store?
 
 #define MICROSTEPS           (16.0)  // microstepping on this microcontroller
-#define STEPS_PER_TURN       (400.0 * MICROSTEPS)  // default number of steps per turn * microsteps
+#define DEGREES_PER_STEP     (0.9)  // as advertised by the stepper motor maker
+#define NORMAL_MOTOR_STEPS   (360.0/DEGREES_PER_STEP)  // 360/0.9=400.  360/1.8=200.
+#define STEPS_PER_TURN       (NORMAL_MOTOR_STEPS * MICROSTEPS)  // default number of steps per turn * microsteps
 #define STEP_DELAY           (50)  // delay between steps, in milliseconds, when doing fixed tasks like homing
 #define PULLEY_PITCH         (0.2*20.0) // 2mm per tooth, 20 teeth.
 #define THREAD_PER_STEP      (PULLEY_PITCH/STEPS_PER_TURN)
