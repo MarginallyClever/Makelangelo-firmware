@@ -239,7 +239,7 @@ void LCD_find_home() {
 
 
 void LCD_this_is_home() {
-  teleport(0,0);
+  teleport(0,0,0);
   MENU_GOTO(LCD_main_menu);
 }
 

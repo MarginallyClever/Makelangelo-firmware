@@ -11,11 +11,14 @@
 
 /**
  * Inverse Kinematics turns XY coordinates into lengths of belt from each motor
- * @param x cartesian coordinate
- * @param y cartesian coordinate
+ * @param axies the cartesian coordinates
  * @param motorStepArray a measure of each belt to that plotter position
  */
-void IK(float x, float y, float z, long *motorStepArray) {
+void IK(float *axies, long *motorStepArray) {
+  float x = axies[0];
+  float y = axies[1];
+  float z = axies[2];
+  
   float L,R,U,V,dy,dx;
   dy = abs(y - limit_ymax)-ZARPLOTTER_COMPENSATION;  dx = abs(x - limit_xmin)-ZARPLOTTER_COMPENSATION;  L = sqrt(dx*dx+dy*dy);  motorStepArray[0] = lround( L / THREAD_PER_STEP );  // M0 (top left)
   dy = abs(y - limit_ymax)-ZARPLOTTER_COMPENSATION;  dx = abs(x - limit_xmax)-ZARPLOTTER_COMPENSATION;  R = sqrt(dx*dx+dy*dy);  motorStepArray[1] = lround( R / THREAD_PER_STEP );  // M1 (top right)
@@ -37,10 +40,10 @@ void IK(float x, float y, float z, long *motorStepArray) {
 /** 
  * Forward Kinematics - turns L1,L2 lengths into XY coordinates
  * @param motorStepArray a measure of each belt to that plotter position
- * @param x the resulting cartesian coordinate
- * @param y the resulting cartesian coordinate
+ * @param axies the resulting cartesian coordinate
+ * @return 0 if no problem, 1 on failure.
  */
-void FK(long *motorStepArray,float &x,float &y) {
+int FK(long *motorStepArray,float *axies) {
   // use law of cosines: theta = acos((a*a+b*b-c*c)/(2*a*b));
   float a = (float)motorStepArray[0] * THREAD_PER_STEP;
   float b = (limit_xmax-limit_xmin);
@@ -56,10 +59,10 @@ void FK(long *motorStepArray,float &x,float &y) {
   // and we know that cos(acos(i)) = i
   // and we know that sin(acos(i)) = sqrt(1-i*i)
   float theta = ((a*a+b*b-c*c)/(2.0*a*b));
-  x = theta * a + limit_xmin;
-  y = limit_ymax - (sqrt( 1.0 - theta * theta ) * a);
-
-  // TODO this FK probably isn't done right.
+  
+  axies[0] = theta * a + limit_xmin;
+  axies[1] = limit_ymax - (sqrt( 1.0 - theta * theta ) * a);
+  axies[2] = motorStepArray[NUM_MOTORS];
 }
 
 

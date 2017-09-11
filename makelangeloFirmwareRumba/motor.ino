@@ -74,7 +74,8 @@ int global_step_dir_5;
 #endif
 
 
-const char *motorNames="LRUVW";
+const char *MotorNames="LRUVWT";
+const char *AxisNames="XYZUVW";
 
 
 //------------------------------------------------------------------------------

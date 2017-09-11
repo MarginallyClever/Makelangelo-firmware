@@ -9,9 +9,6 @@
 
 #if MACHINE_STYLE == TRADITIONALXY
 
-//#define MAKELANGELO_HARDWARE_VERSION 3  // If you have a makelangelo 3+
-#define MAKELANGELO_HARDWARE_VERSION 5  // If you have a makelangelo 5+
-
 
 #define STEP_DELAY           (50)  // delay between steps, in milliseconds, when doing fixed tasks like homing
 
@@ -22,6 +19,7 @@
 #define PEN_DOWN_ANGLE       (50)  // Some steppers don't like 0 degrees
 
 
+#define NUM_AXIES            (3)  // could be more?
 #define NUM_MOTORS           (2)
 #define NUM_SERVOS           (1)
 #define NUM_TOOLS            (1)

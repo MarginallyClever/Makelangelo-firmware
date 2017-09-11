@@ -23,13 +23,18 @@
 #define TRADITIONALXY    3  // traditional 2+ axis setup.
 #define COREXY           2  // CoreXY setup.
 #define ZARPLOTTER       4  // 4 motor Zarplotter
+#define DELTA            5  // 3 arm delta robot, rotary action
+//#define KOSSEL           6  // 4 arm delta robot, linear action.  not supported yet.
+//#define STEWART          7  // 6 arm stewart platform, rotary action.  not supported yet.
+//#define OSGOODE          8  // 6 arm stewart platform, linear action.  not supported yet.
 
-#define MACHINE_STYLE ZARPLOTTER  // change this
+#define MACHINE_STYLE DELTA  // change this
 
 #include "robot_polargraph.h"
 #include "robot_traditionalxy.h"
 #include "robot_corexy.h"
 #include "robot_zarplotter.h"
+#include "robot_delta.h"
 
 
 // Boards supported
@@ -38,7 +43,7 @@
 #define BOARD_SANGUINOLULU 3
 #define BOARD_TEENSYLU     4
 
-#define MOTHERBOARD BOARD_RAMPS  // change this
+#define MOTHERBOARD BOARD_RUMBA  // change this
 
 // Board descriptions
 #include "board_rumba.h"
@@ -173,7 +178,8 @@ extern volatile int current_segment;
 extern volatile int last_segment;
 extern float acceleration;
 extern Motor motors[NUM_MOTORS];
-extern const char *AxisLetters;
+extern const char *AxisNames;
+extern const char *MotorNames;
 
 #endif // CONFIGURE_H
 

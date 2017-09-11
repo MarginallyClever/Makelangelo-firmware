@@ -14,7 +14,11 @@
  * @param y cartesian coordinate
  * @param motorStepArray a measure of each belt to that plotter position
  */
-void IK(float x, float y, float z, long *motorStepArray) {
+void IK(float *axies, long *motorStepArray) {
+  float x = axies[0];
+  float y = axies[1];
+  float z = axies[2];
+  
   motorStepArray[0] = lround((x) / THREAD_PER_STEP);
   motorStepArray[1] = lround((y) / THREAD_PER_STEP);
 
@@ -25,12 +29,13 @@ void IK(float x, float y, float z, long *motorStepArray) {
 /** 
  * Forward Kinematics - turns step counts into XY coordinates
  * @param motorStepArray a measure of each belt to that plotter position
- * @param x the resulting cartesian coordinate
- * @param y the resulting cartesian coordinate
+ * @param axies the resulting cartesian coordinate
+ * @return 0 if no problem, 1 on failure.
  */
-void FK(long *motorStepArray,float &x,float &y) {
-  x = motorStepArray[0] * THREAD_PER_STEP;
-  y = motorStepArray[1] * THREAD_PER_STEP;
+int FK(long *motorStepArray,float *axies) {
+  axies[0] = motorStepArray[0] * THREAD_PER_STEP;
+  axies[1] = motorStepArray[1] * THREAD_PER_STEP;
+  axies[2] = motorStepArray[NUM_MOTORS];
 }
 
 

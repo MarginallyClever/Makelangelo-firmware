@@ -10,11 +10,14 @@
 
 /**
  * Inverse Kinematics turns XY coordinates into lengths L1,L2
- * @param x cartesian coordinate
- * @param y cartesian coordinate
+ * @param axies the cartesian coordinate
  * @param motorStepArray a measure of each belt to that plotter position
  */
-void IK(float x, float y, float z, long *motorStepArray) {
+void IK(float *axies, long *motorStepArray) {
+  float x = axies[0];
+  float y = axies[1];
+  float z = axies[2];
+  
   motorStepArray[0] = lround((x+y) / THREAD_PER_STEP);
   motorStepArray[1] = lround((x-y) / THREAD_PER_STEP);
 
@@ -25,15 +28,20 @@ void IK(float x, float y, float z, long *motorStepArray) {
 /** 
  * Forward Kinematics - turns L1,L2 lengths into XY coordinates
  * @param motorStepArray a measure of each belt to that plotter position
- * @param x the resulting cartesian coordinate
- * @param y the resulting cartesian coordinate
+ * @param axies the resulting cartesian coordinate
+ * @return 0 if no problem, 1 on failure.
  */
-void FK(long *motorStepArray,float &x,float &y) {
+int FK(long *motorStepArray,float *axies) {
   float a = motorStepArray[0] * THREAD_PER_STEP;
   float b = motorStepArray[1] * THREAD_PER_STEP;
 
-  x = (float)( a + b ) / 2.0;
-  y = x - (float)b;
+  float x = (float)( a + b ) / 2.0;
+  float y = x - (float)b;
+  
+  axies[0]=x;
+  axies[1]=y;
+  axies[2]=motorStepArray[NUM_MOTORS];
+  return 0;
 }
 
 

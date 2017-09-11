@@ -48,7 +48,7 @@ public:
   }
 
 
-  Vector3 &Set( float xx, float yy, float zz ) {
+  Vector3 &set( float xx, float yy, float zz ) {
     x = xx;
     y = yy;
     z = zz;

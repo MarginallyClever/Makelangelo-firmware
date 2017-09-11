@@ -39,10 +39,6 @@ float calibrateLeft   = 101.1;
 float calibrateBRight = 101.1;
 float calibrateBLeft  = 101.1;
 
-// what are the motors called?
-extern const char *motorNames;
-
-
 // plotter position.
 float posx, posy, posz;  // pen state
 float feed_rate = DEFAULT_FEEDRATE;
@@ -140,36 +136,49 @@ void processConfig() {
   adjustDimensions(newT, newB, newR, newL);
 
   printConfig();
-  teleport(posx, posy);
+  teleport(posx, posy, posz);
 }
 
 
 /**
-   Test that IK(FK(A))=A
-*/
+ * Test that IK(FK(A))=A
+ */
 void testKinematics() {
   long A[NUM_MOTORS], i, j;
-  float C, D, x, y, z;
+  float axies[NUM_AXIES];
+  float axies2[NUM_AXIES];
 
   for (i = 0; i < 3000; ++i) {
-    x = random(limit_xmax, limit_xmax) * 0.1;
-    y = random(limit_ymin, limit_ymax) * 0.1;
-    z = 0;//random(limit_zmin,limit_zmax)*0.1;
+    for (j = 0; j < NUM_AXIES; ++j) {
+      axies[j] = random(limit_xmax, limit_xmax) * 0.1;
+    }
 
-    IK(x, y, z, A);
-    FK(A, C, D);
-    Serial.print(F("\tx="));  Serial.print(x);
-    Serial.print(F("\ty="));  Serial.print(y);
-    //Serial.print(F("\tz="));  Serial.print(z);
-    for (int j = 0; j < NUM_MOTORS; ++j) {
+    IK(axies, A);
+    FK(A, axies2);
+    
+    for (j = 0; j < NUM_AXIES; ++j) {
       Serial.print('\t');
-      Serial.print(AxisLetters[j]);
+      Serial.print(AxisNames[j]);
+      Serial.print(axies[j]);
+    }
+    for (j = 0; j < NUM_MOTORS; ++j) {
+      Serial.print('\t');
+      Serial.print(MotorNames[j]);
       Serial.print(A[j]);
     }
-    Serial.print(F("\tx'="));  Serial.print(C);
-    Serial.print(F("\ty'="));  Serial.print(D);
-    Serial.print(F("\tdx="));  Serial.print(C - x);
-    Serial.print(F("\tdy="));  Serial.println(D - y);
+    for (j = 0; j < NUM_AXIES; ++j) {
+      Serial.print('\t');
+      Serial.print(AxisNames[j]);
+      Serial.print('\'');
+      Serial.print(axies2[j]);
+    }
+    for (j = 0; j < NUM_AXIES; ++j) {
+      Serial.print(F("\td"));
+      Serial.print(AxisNames[j]);
+      Serial.print('=');
+      Serial.print(axies2[j]-axies[j]);
+    }
+    Serial.println();
   }
 }
 
@@ -182,7 +191,11 @@ void testKinematics() {
 */
 void polargraph_line(float x, float y, float z, float new_feed_rate) {
   long steps[NUM_MOTORS + NUM_SERVOS];
-  IK(x, y, z, steps);
+  float pos[NUM_AXIES];
+  pos[0]=x;
+  pos[1]=y;
+  pos[2]=z;
+  IK(pos, steps);
   posx = x;
   posy = y;
   posz = z;
@@ -288,16 +301,20 @@ void arc(float cx, float cy, float x, float y, float z, char clockwise, float ne
 /**
    Instantly move the virtual plotter position.  Does not check if the move is valid.
 */
-void teleport(float x, float y) {
+void teleport(float x, float y,float z) {
   wait_for_empty_segment_buffer();
 
   posx = x;
   posy = y;
-
+  posz = z;
+  
   // @TODO: posz?
   long steps[NUM_MOTORS+NUM_SERVOS];
-  IK(posx, posy, posz, steps);
-
+  float pos[NUM_AXIES];
+  pos[0]=posx;
+  pos[1]=posy;
+  pos[2]=posz;
+  IK(pos, steps);
   motor_set_step_count(steps);
 }
 
@@ -342,8 +359,11 @@ void calibrateBelts() {
   digitalWrite(MOTOR_1_DIR_PIN, LOW);
   int left = 0, right = 0;
   long steps[NUM_MOTORS];
-
-  IK(homeX, homeY, posz, steps);
+  float homePos[NUM_AXIES];
+  homePos[0]=homeX;
+  homePos[1]=homeY;
+  homePos[2]=posz;
+  IK(homePos, steps);
   findStepDelay();
 
   do {
@@ -380,9 +400,9 @@ void calibrateBelts() {
   reportCalibration();
 
   // current position is...
-  float x, y;
-  FK(steps, x, y);
-  teleport(x, y);
+  float axies[NUM_AXIES];
+  FK(steps, axies);
+  teleport(axies[0],axies[1],axies[2]);
   where();
 
   // go home.
@@ -488,9 +508,9 @@ void recordHome() {
   reportCalibration();
 
   // current position is...
-  float x, y;
-  FK(count, x, y);
-  teleport(x, y);
+  float axies[NUM_AXIES];
+  FK(count, axies);
+  teleport(axies[0],axies[1],axies[2]);
   where();
 
   // go home.
@@ -553,9 +573,9 @@ void findHome() {
   Serial.print("t=");    Serial.println(THREAD_PER_STEP);
 
   // current position is...
-  float x, y;
-  FK(count, x, y);
-  teleport(x, y);
+  float axies[NUM_AXIES];
+  FK(count, axies);
+  teleport(axies[0],axies[1],axies[2]);
   where();
 
   // go home.
@@ -766,8 +786,8 @@ void processCommand() {
     case 92: {  // set position (teleport)
         Vector3 offset = get_end_plus_offset();
         teleport( parseNumber('X', (absolute_mode ? offset.x : 0) * 10) * 0.1 + (absolute_mode ? 0 : offset.x),
-                  parseNumber('Y', (absolute_mode ? offset.y : 0) * 10) * 0.1 + (absolute_mode ? 0 : offset.y)
-                  //parseNumber('Z',(absolute_mode?offset.z:0)) + (absolute_mode?0:offset.z)
+                  parseNumber('Y', (absolute_mode ? offset.y : 0) * 10) * 0.1 + (absolute_mode ? 0 : offset.y),
+                  parseNumber('Z', (absolute_mode ? offset.z : 0)     ) +       (absolute_mode ? 0 : offset.z)
                 );
         break;
       }
@@ -815,11 +835,11 @@ void jogMotors() {
 
   findStepDelay();
   for (i = 0; i < NUM_MOTORS; ++i) {
-    if (motorNames[i] == 0) continue;
-    amount = parseNumber(motorNames[i], 0);
+    if (MotorNames[i] == 0) continue;
+    amount = parseNumber(MotorNames[i], 0);
     if (amount != 0) {
       Serial.print(F("Moving "));
-      Serial.print(motorNames[i]);
+      Serial.print(MotorNames[i]);
       Serial.print(F(" ("));
       Serial.print(i);
       Serial.print(F(") "));
@@ -917,7 +937,7 @@ void setup() {
   LCD_init();
 
   // initialize the plotter position.
-  teleport(0, 0);
+  teleport(0, 0, posz);
   setPenAngle(PEN_UP_ANGLE);
   setFeedRate(DEFAULT_FEEDRATE);
 

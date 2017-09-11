@@ -10,31 +10,30 @@
 
 /**
  * Inverse Kinematics turns XY coordinates into step counts from each motor
- * @param x cartesian coordinate
- * @param y cartesian coordinate
+ * @param axies the cartesian coordinate
  * @param motorStepArray a measure of each belt to that plotter position
  */
-void IK(float x, float y, float z, long *motorStepArray) {
+void IK(float *axies, long *motorStepArray) {
   float dy,dx;
   // find length to M1
-  dy = y - limit_ymax;
-  dx = x - limit_xmin;
+  dy = axies[1] - limit_ymax;
+  dx = axies[0] - limit_xmin;
   motorStepArray[0] = lround( sqrt(dx*dx+dy*dy) / THREAD_PER_STEP );
   // find length to M2
-  dx = limit_xmax - x;
+  dx = limit_xmax - axies[0];
   motorStepArray[1] = lround( sqrt(dx*dx+dy*dy) / THREAD_PER_STEP );
 
-  motorStepArray[NUM_MOTORS] = z;
+  motorStepArray[NUM_MOTORS] = axies[2];
 }
 
 
 /** 
  * Forward Kinematics - turns step counts into XY coordinates
  * @param motorStepArray a measure of each belt to that plotter position
- * @param x the resulting cartesian coordinate
- * @param y the resulting cartesian coordinate
+ * @param axies the resulting cartesian coordinate
+ * @return 0 if no problem, 1 on failure.
  */
-void FK(long *motorStepArray,float &x,float &y) {
+int FK(long *motorStepArray,float *axies) {
   // use law of cosines: theta = acos((a*a+b*b-c*c)/(2*a*b));
   float a = (float)motorStepArray[0] * THREAD_PER_STEP;
   float b = (limit_xmax-limit_xmin);
@@ -50,8 +49,10 @@ void FK(long *motorStepArray,float &x,float &y) {
   // and we know that cos(acos(i)) = i
   // and we know that sin(acos(i)) = sqrt(1-i*i)
   float theta = ((a*a+b*b-c*c)/(2.0*a*b));
-  x = theta * a + limit_xmin;
-  y = limit_ymax - (sqrt( 1.0 - theta * theta ) * a);
+  
+  axies[0] = theta * a + limit_xmin;
+  axies[1] = limit_ymax - (sqrt( 1.0 - theta * theta ) * a);
+  axies[2] = motorStepArray[NUM_MOTORS];
 }
 
 
