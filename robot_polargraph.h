@@ -9,15 +9,17 @@
 
 #if MACHINE_STYLE == POLARGRAPH
 
-#define MACHINE_STYLE_NAME           "POLARGRAPH"
+#define MACHINE_STYLE_NAME       "POLARGRAPH"
 //#define MACHINE_HARDWARE_VERSION 3  // If you have a makelangelo 3+
 #define MACHINE_HARDWARE_VERSION 5  // If you have a makelangelo 5+
 
-
-#define STEP_DELAY           (50)  // delay between steps, in milliseconds, when doing fixed tasks like homing
-
 #define MAX_ACCELERATION     (5000)
 #define MIN_ACCELERATION     (100)
+
+#define SUBDIVIDE_LINES
+#define SEGMENT_PER_CM_LINE  (2)  // lines are subdivided.  How long are the divisions?
+#define SEGMENT_PER_CM_ARC   (3)  // Arcs are subdivided.  How long are the divisions?
+
 // servo angles for pen control
 #define PEN_UP_ANGLE         (90)
 #define PEN_DOWN_ANGLE       (50)  // Some steppers don't like 0 degrees
@@ -50,5 +52,4 @@
 #endif  // #ifdef POLARGRAPH
 
 
-#endif  // #ifndef ROBOT_MAKELANGELO_H
-
+#endif  // #ifndef ROBOT_POLARGRAPH_H

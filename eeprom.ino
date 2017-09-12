@@ -5,17 +5,17 @@
 // http://www.github.com/MarginallyClever/Makelangelo for more information.
 //------------------------------------------------------------------------------
 
-
 //------------------------------------------------------------------------------
 // INCLUDES
 //------------------------------------------------------------------------------
-// Saving config
+#include "configure.h"
 #include <EEPROM.h>
 #include <Arduino.h>  // for type definitions
 
 
-//------------------------------------------------------------------------------
-// from http://www.arduino.cc/cgi-bin/yabb2/YaBB.pl?num=1234477290/3
+/** 
+ * from http://www.arduino.cc/cgi-bin/yabb2/YaBB.pl?num=1234477290/3
+ */
 void EEPROM_writeLong(int ee, long value) {
   byte* p = (byte*)(void*)&value;
   for (int i = 0; i < sizeof(value); i++)
@@ -23,8 +23,9 @@ void EEPROM_writeLong(int ee, long value) {
 }
 
 
-//------------------------------------------------------------------------------
-// from http://www.arduino.cc/cgi-bin/yabb2/YaBB.pl?num=1234477290/3
+/** 
+ * from http://www.arduino.cc/cgi-bin/yabb2/YaBB.pl?num=1234477290/3
+ */
 float EEPROM_readLong(int ee) {
   long value = 0;
   byte* p = (byte*)(void*)&value;
@@ -34,41 +35,26 @@ float EEPROM_readLong(int ee) {
 }
 
 
-//------------------------------------------------------------------------------
+/**
+ * 
+ */
 char loadVersion() {
   return EEPROM.read(ADDR_VERSION);
 }
 
 
-//------------------------------------------------------------------------------
-void loadConfig() {
-  char versionNumber = loadVersion();
-  if( versionNumber != EEPROM_VERSION ) {
-    // If not the current EEPROM_VERSION or the EEPROM_VERSION is sullied (i.e. unknown data)
-    // Update the version number
-    EEPROM.write(ADDR_VERSION,EEPROM_VERSION);
-#if MAKELANGELO_HARDWARE_VERSION == 5 || MAKELANGELO_HARDWARE_VERSION == 6
-    adjustDimensions(50,-50,-32.5,32.5);
-    saveCalibration();
-#endif
-  }
-  
-  // Retrieve stored configuration
-  robot_uid=EEPROM_readLong(ADDR_UUID);
-  loadDimensions();
-  loadHome();
-  loadCalibration();
-}
-
-
-//------------------------------------------------------------------------------
+/**
+ * 
+ */
 void saveUID() {
   Serial.println(F("Saving UID."));
   EEPROM_writeLong(ADDR_UUID,(long)robot_uid);
 }
 
 
-//------------------------------------------------------------------------------
+/**
+ * 
+ */
 void saveDimensions() {
   Serial.println(F("Saving dimensions."));
   EEPROM_writeLong(ADDR_LEFT  ,limit_xmin  *100);
@@ -78,7 +64,9 @@ void saveDimensions() {
 }
 
 
-//------------------------------------------------------------------------------
+/**
+ * 
+ */
 void loadDimensions() {
   limit_xmin = (float)EEPROM_readLong(ADDR_LEFT  )/100.0f;
   limit_xmax = (float)EEPROM_readLong(ADDR_RIGHT )/100.0f;
@@ -87,7 +75,9 @@ void loadDimensions() {
 }
 
 
-//------------------------------------------------------------------------------
+/**
+ * 
+ */
 void adjustDimensions(float newT,float newB,float newR,float newL) {
   // round off
   newT = floor(newT*100)/100.0f;
@@ -108,7 +98,9 @@ void adjustDimensions(float newT,float newB,float newR,float newL) {
 }
 
 
-//------------------------------------------------------------------------------
+/**
+ * 
+ */
 void saveHome() {
   Serial.println(F("Saving home."));
   EEPROM_writeLong(ADDR_HOMEX,homeX*100);
@@ -116,29 +108,54 @@ void saveHome() {
 }
 
 
-//------------------------------------------------------------------------------
+/**
+ * 
+ */
 void loadHome() {
   homeX = (float)EEPROM_readLong(ADDR_HOMEX)/100.0f;
   homeY = (float)EEPROM_readLong(ADDR_HOMEY)/100.0f;
 }
 
 
-//------------------------------------------------------------------------------
+/**
+ *
+ */
 void saveCalibration() {
   Serial.println(F("Saving calibration."));
   EEPROM_writeLong(ADDR_CALIBRATION_LEFT  ,calibrateLeft  *100);
   EEPROM_writeLong(ADDR_CALIBRATION_RIGHT ,calibrateRight *100);
-  EEPROM_writeLong(ADDR_CALIBRATION_BLEFT ,calibrateBLeft *100);
-  EEPROM_writeLong(ADDR_CALIBRATION_BRIGHT,calibrateBRight*100);
 }
 
 
-//------------------------------------------------------------------------------
+/**
+ * 
+ */
 void loadCalibration() {
   calibrateLeft   = (float)EEPROM_readLong(ADDR_CALIBRATION_LEFT  )/100.0f;
   calibrateRight  = (float)EEPROM_readLong(ADDR_CALIBRATION_RIGHT )/100.0f;
-  calibrateBLeft  = (float)EEPROM_readLong(ADDR_CALIBRATION_BLEFT )/100.0f;
-  calibrateBRight = (float)EEPROM_readLong(ADDR_CALIBRATION_BRIGHT)/100.0f;
+}
+
+
+/**
+ * 
+ */
+void loadConfig() {
+  char versionNumber = loadVersion();
+  if( versionNumber != EEPROM_VERSION ) {
+    // If not the current EEPROM_VERSION or the EEPROM_VERSION is sullied (i.e. unknown data)
+    // Update the version number
+    EEPROM.write(ADDR_VERSION,EEPROM_VERSION);
+#if MAKELANGELO_HARDWARE_VERSION == 5 || MAKELANGELO_HARDWARE_VERSION == 6
+    adjustDimensions(50,-50,-32.5,32.5);
+    saveCalibration();
+#endif
+  }
+  
+  // Retrieve stored configuration
+  robot_uid=EEPROM_readLong(ADDR_UUID);
+  loadDimensions();
+  loadHome();
+  loadCalibration();
 }
 
 /**

@@ -16,10 +16,10 @@
 
 #define MAX_ACCELERATION     (5000)
 #define MIN_ACCELERATION     (100)
+
 // servo angles for pen control
 #define PEN_UP_ANGLE         (90)
 #define PEN_DOWN_ANGLE       (50)  // Some steppers don't like 0 degrees
-
 
 #define NUM_AXIES            (3)  // could be more?
 #define NUM_MOTORS           (2)

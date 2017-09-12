@@ -11,6 +11,7 @@
 #ifdef HAS_LCD
 #include <LiquidCrystal.h>
 #include "sdcard.h"
+#include "Vector3.h"
 
 
 #define LCD_DRAW_DELAY    (150)
@@ -71,25 +72,15 @@ uint8_t speed_adjust = 100;
 
 int menu_position_sum=0, menu_position=0, screen_position=0, num_menu_items=0, ty, screen_end;
 
+
 void (*current_menu)();
+void LCD_status_menu();
+void LCD_main_menu();
 
 
 //------------------------------------------------------------------------------
 // METHODS
 //------------------------------------------------------------------------------
-
-// initialize the Smart controller LCD panel
-void LCD_init() {
-  lcd.begin(LCD_WIDTH,LCD_HEIGHT);
-  pinMode(BTN_EN1,INPUT);
-  pinMode(BTN_EN2,INPUT);
-  pinMode(BTN_ENC,INPUT);
-  digitalWrite(BTN_EN1,HIGH);
-  digitalWrite(BTN_EN2,HIGH);
-  digitalWrite(BTN_ENC,HIGH);
-  current_menu=LCD_status_menu;
-  menu_position_sum=1;    /* 20160313-NM-Added so the clicking without any movement will display a menu */
-}
 
 
 void LCD_read() {
@@ -178,33 +169,6 @@ void LCD_status_menu() {
       lcd.print('%');
     } else {
       lcd.print(F("          "));
-    }
-  MENU_END
-}
-
-
-void LCD_main_menu() {
-  MENU_START
-    MENU_SUBMENU("Back",LCD_status_menu);
-    if(!sd_printing_now) {
-      MENU_ACTION("Disable motors",LCD_disable_motors);
-      MENU_ACTION("Enable motors",LCD_enable_motors);
-#if MAKELANGELO_HARDWARE_VERSION  == 5
-      MENU_ACTION("Find home",LCD_find_home);
-#endif
-      MENU_ACTION("This is home",LCD_this_is_home);
-      MENU_ACTION("Go home",LCD_go_home);
-      if(sd_inserted) {
-        MENU_SUBMENU("Draw *.NGC file...",LCD_start_menu);
-      }
-      MENU_SUBMENU("Drive",LCD_drive_menu);
-    } else {
-      if(sd_printing_paused) {
-        MENU_ACTION("Unpause",LCD_pause);
-      } else {
-        MENU_ACTION("Pause",LCD_pause);
-      }
-      MENU_ACTION("Stop",LCD_stop);
     }
   MENU_END
 }
@@ -404,6 +368,47 @@ void LCD_print_float(float v) {
   lcd.print('.');
   if(right<10) lcd.print('0');
   lcd.print(right);
+}
+
+
+void LCD_main_menu() {
+  MENU_START
+    MENU_SUBMENU("Back",LCD_status_menu);
+    if(!sd_printing_now) {
+      MENU_ACTION("Disable motors",LCD_disable_motors);
+      MENU_ACTION("Enable motors",LCD_enable_motors);
+#if MAKELANGELO_HARDWARE_VERSION  == 5
+      MENU_ACTION("Find home",LCD_find_home);
+#endif
+      MENU_ACTION("This is home",LCD_this_is_home);
+      MENU_ACTION("Go home",LCD_go_home);
+      if(sd_inserted) {
+        MENU_SUBMENU("Draw *.NGC file...",LCD_start_menu);
+      }
+      MENU_SUBMENU("Drive",LCD_drive_menu);
+    } else {
+      if(sd_printing_paused) {
+        MENU_ACTION("Unpause",LCD_pause);
+      } else {
+        MENU_ACTION("Pause",LCD_pause);
+      }
+      MENU_ACTION("Stop",LCD_stop);
+    }
+  MENU_END
+}
+
+
+// initialize the Smart controller LCD panel
+void LCD_init() {
+  lcd.begin(LCD_WIDTH,LCD_HEIGHT);
+  pinMode(BTN_EN1,INPUT);
+  pinMode(BTN_EN2,INPUT);
+  pinMode(BTN_ENC,INPUT);
+  digitalWrite(BTN_EN1,HIGH);
+  digitalWrite(BTN_EN2,HIGH);
+  digitalWrite(BTN_ENC,HIGH);
+  current_menu=LCD_status_menu;
+  menu_position_sum=1;    /* 20160313-NM-Added so the clicking without any movement will display a menu */
 }
 
 

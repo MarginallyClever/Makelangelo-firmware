@@ -28,6 +28,13 @@
 #define ZARPLOTTER_PLOTTER_SIZE (6.0f)
 #define ZARPLOTTER_COMPENSATION (ZARPLOTTER_PLOTTER_SIZE/2.0f + ZARPLOTTER_MOTOR_SIZE)
 
+#define MAX_ACCELERATION     (5000)
+#define MIN_ACCELERATION     (100)
+
+#define SUBDIVIDE_LINES
+#define SEGMENT_PER_CM_LINE  (2)  // lines are split into segments.  How long are the segments?
+#define SEGMENT_PER_CM_ARC   (3)  // Arcs are split into segments.  How long are the segments?
+
 // servo angles for pen control
 #define PEN_UP_ANGLE         (50)
 #define PEN_DOWN_ANGLE       (90)  // Some steppers don't like 0 degrees

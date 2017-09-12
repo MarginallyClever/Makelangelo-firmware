@@ -17,7 +17,6 @@
 
 
 
-
 // machine styles supported
 #define POLARGRAPH       1  // polargraph like the Makelangelo 3 or 5
 #define TRADITIONALXY    3  // traditional 2+ axis setup.
@@ -65,18 +64,16 @@
 #define BAUD                 (57600)  // How fast is the Arduino talking?
 #define MAX_BUF              (64)  // What is the longest message Arduino can store?
 
-#define MICROSTEPS           (16.0)  // microstepping on this microcontroller
-#define DEGREES_PER_STEP     (0.9)  // as advertised by the stepper motor maker
+// motor details
+#define MICROSTEPS           (16.0)  // change this.  microstepping on this microcontroller
+#define DEGREES_PER_STEP     ( 0.9)  // change this.  as advertised by the stepper motor maker
+#define STEP_DELAY           (50  )  // delay between steps, in milliseconds, when doing fixed tasks like homing
+
 #define NORMAL_MOTOR_STEPS   (360.0/DEGREES_PER_STEP)  // 360/0.9=400.  360/1.8=200.
 #define STEPS_PER_TURN       (NORMAL_MOTOR_STEPS * MICROSTEPS)  // default number of steps per turn * microsteps
-#define STEP_DELAY           (50)  // delay between steps, in milliseconds, when doing fixed tasks like homing
 #define PULLEY_PITCH         (0.2*20.0) // 2mm per tooth, 20 teeth.
 #define THREAD_PER_STEP      (PULLEY_PITCH/STEPS_PER_TURN)
-
 #define MICROSTEP_PER_DEGREE (STEPS_PER_TURN/360.0)
-
-#define MAX_ACCELERATION     (5000)
-#define MIN_ACCELERATION     (100)
 
 // buffering commands
 #define MAX_SEGMENTS         (32)  // number of line segments to buffer ahead. must be a power of two.
@@ -85,14 +82,12 @@
 // for arc directions
 #define ARC_CW               (1)
 #define ARC_CCW              (-1)
-#define SEGMENT_PER_CM_LINE  (2)  // lines are split into segments.  How long are the segments?
-#define SEGMENT_PER_CM_ARC   (3)  // Arcs are split into segments.  How long are the segments?
 
 
 //------------------------------------------------------------------------------
 // EEPROM MEMORY MAP
 //------------------------------------------------------------------------------
-#define EEPROM_VERSION          7  // Increment EEPROM_VERSION when adding new variables
+#define EEPROM_VERSION          8    // Increment when adding new variables
 #define ADDR_VERSION            0                          // 0..255 (1 byte)
 #define ADDR_UUID               (ADDR_VERSION+1)           // long - 4 bytes
 #define ADDR_PULLEY_DIA1        (ADDR_UUID+4)              // float - 4 bytes
@@ -101,16 +96,10 @@
 #define ADDR_RIGHT              (ADDR_LEFT+4)              // float - 4 bytes
 #define ADDR_TOP                (ADDR_RIGHT+4)             // float - 4 bytes
 #define ADDR_BOTTOM             (ADDR_TOP+4)               // float - 4 bytes
-#define ADDR_INVL               (ADDR_BOTTOM+4)            // bool - 1 byte
-#define ADDR_INVR               (ADDR_INVL+1)              // bool - 1 byte
-#define ADDR_HOMEX              (ADDR_INVR+1)              // float - 4 bytes
+#define ADDR_HOMEX              (ADDR_BOTTOM+1)            // float - 4 bytes
 #define ADDR_HOMEY              (ADDR_HOMEX+4)             // float - 4 bytes
 #define ADDR_CALIBRATION_LEFT   (ADDR_HOMEY+4)             // float - 4 bytes
 #define ADDR_CALIBRATION_RIGHT  (ADDR_CALIBRATION_LEFT+4)  // float - 4 bytes
-#define ADDR_INVU               (ADDR_CALIBRATION_RIGHT+4) // bool - 1 byte
-#define ADDR_INVV               (ADDR_INVU+1)              // bool - 1 byte
-#define ADDR_CALIBRATION_BLEFT  (ADDR_INVV+1)              // float - 4 bytes
-#define ADDR_CALIBRATION_BRIGHT (ADDR_CALIBRATION_BLEFT+4) // float - 4 bytes
 
 
 //------------------------------------------------------------------------------
@@ -182,6 +171,17 @@ extern float acceleration;
 extern Motor motors[NUM_MOTORS];
 extern const char *AxisNames;
 extern const char *MotorNames;
+
+extern long robot_uid;
+extern float limit_ymax;
+extern float limit_ymin;
+extern float limit_xmax;
+extern float limit_xmin;
+extern float homeX;
+extern float homeY;
+extern long calibrateLeft;
+extern long calibrateRight;
+
 
 #endif // CONFIGURE_H
 

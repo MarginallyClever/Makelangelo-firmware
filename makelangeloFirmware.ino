@@ -217,7 +217,7 @@ void line_safe(float x, float y, float z, float new_feed_rate) {
   y -= tool_offset[current_tool].y;
   z -= tool_offset[current_tool].z;
 
-#if MACHINE_STYLE != TRADITIONALXY && MACHINE_STYLE != COREXY
+#ifdef SUBDIVIDE_LINES
   // split up long lines to make them straighter?
   Vector3 destination(x, y, z);
   Vector3 startPoint(posx, posy, posz);
