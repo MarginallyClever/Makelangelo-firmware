@@ -9,8 +9,8 @@
 
 #if MACHINE_STYLE == COREXY
 
+#define MACHINE_STYLE_NAME           "COREXY"
 #define MAKELANGELO_HARDWARE_VERSION 5  // If you have a makelangelo 5+
-
 
 #define STEP_DELAY           (50)  // delay between steps, in milliseconds, when doing fixed tasks like homing
 

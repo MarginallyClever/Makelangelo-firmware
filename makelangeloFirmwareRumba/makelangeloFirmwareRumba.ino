@@ -323,10 +323,10 @@ void teleport(float x, float y,float z) {
    Print a helpful message to serial.  The first line must never be changed to play nice with the JAVA software.
 */
 void help() {
-  Serial.print(F("\n\nHELLO WORLD! I AM DRAWBOT #"));
-  Serial.println(robot_uid);
-  sayVersionNumber();
-  Serial.println(F("== http://www.makelangelo.com/ =="));
+  Serial.print(F("\n\nHELLO WORLD!"));
+  sayModelAndUID();
+  sayFirmwareVersionNumber();
+  Serial.println(F("== http://www.marginallyclever.com/ =="));
   Serial.println(F("M100 - display this message"));
   Serial.println(F("M101 [Tx.xx] [Bx.xx] [Rx.xx] [Lx.xx]"));
   Serial.println(F("       - display/update board dimensions."));
@@ -335,7 +335,14 @@ void help() {
 }
 
 
-void sayVersionNumber() {
+void sayModelAndUID() {
+  Serial.print(F("I AM "));
+  Serial.println(MACHINE_STYLE_NAME);
+  Serial.println(F(" #"));
+  Serial.println(robot_uid);
+}
+
+void sayFirmwareVersionNumber() {
   char versionNumber = loadVersion();
 
   Serial.print(F("Firmware v"));
@@ -674,18 +681,53 @@ float parseNumber(char code, float val) {
   return val;  // end reached, nothing found, return default val.
 }
 
+void parseDwell() {
+  wait_for_empty_segment_buffer();
+  float delayTime = parseNumber('S', 0) + parseNumber('P', 0) * 1000.0f;
+  pause(delayTime);
+}
 
-/**
-   process commands in the serial receive buffer
-*/
-void processCommand() {
-  // blank lines
-  if (serialBuffer[0] == ';') return;
 
-  long cmd;
+void parseLine() {
+  Vector3 offset = get_end_plus_offset();
+  acceleration = min(max(parseNumber('A', acceleration), MIN_ACCELERATION), MAX_ACCELERATION);
+  line_safe( parseNumber('X', (absolute_mode ? offset.x : 0) * 10) * 0.1 + (absolute_mode ? 0 : offset.x),
+             parseNumber('Y', (absolute_mode ? offset.y : 0) * 10) * 0.1 + (absolute_mode ? 0 : offset.y),
+             parseNumber('Z', (absolute_mode ? offset.z : 0)   )     + (absolute_mode ? 0 : offset.z),
+             parseNumber('F', feed_rate) );
+}
 
+void parseArc(int clockwise) {
+  Vector3 offset = get_end_plus_offset();
+  acceleration = min(max(parseNumber('A', acceleration), 1), 2000);
+  setFeedRate(parseNumber('F', feed_rate));
+  arc(parseNumber('I', (absolute_mode ? offset.x : 0) * 10) * 0.1 + (absolute_mode ? 0 : offset.x),
+      parseNumber('J', (absolute_mode ? offset.y : 0) * 10) * 0.1 + (absolute_mode ? 0 : offset.y),
+      parseNumber('X', (absolute_mode ? offset.x : 0) * 10) * 0.1 + (absolute_mode ? 0 : offset.x),
+      parseNumber('Y', (absolute_mode ? offset.y : 0) * 10) * 0.1 + (absolute_mode ? 0 : offset.y),
+      parseNumber('Z', (absolute_mode ? offset.z : 0)) + (absolute_mode ? 0 : offset.z),
+      clockwise,
+      parseNumber('F', feed_rate) );
+}
+
+void parseTeleport() {
+  Vector3 offset = get_end_plus_offset();
+  teleport( parseNumber('X', (absolute_mode ? offset.x : 0) * 10) * 0.1 + (absolute_mode ? 0 : offset.x),
+            parseNumber('Y', (absolute_mode ? offset.y : 0) * 10) * 0.1 + (absolute_mode ? 0 : offset.y),
+            parseNumber('Z', (absolute_mode ? offset.z : 0)     ) +       (absolute_mode ? 0 : offset.z)
+          );
+}
+
+void parseToolOffset(int toolID) {
+  set_tool_offset(toolID,
+                  parseNumber('X', tool_offset[toolID].x),
+                  parseNumber('Y', tool_offset[toolID].y),
+                  parseNumber('Z', tool_offset[toolID].z));
+}
+
+char checkCRCisOK() {
   // is there a line number?
-  cmd = parseNumber('N', -1);
+  long cmd = parseNumber('N', -1);
   if (cmd != -1 && serialBuffer[0] == 'N') { // line number must appear first on the line
     if ( cmd != line_number ) {
       // wrong line number error
@@ -715,58 +757,44 @@ void processCommand() {
 
     line_number++;
   }
+}
+
+/**
+ * process commands in the serial receive buffer
+ */
+void processCommand() {
+  if (serialBuffer[0] == ';') return;  // blank lines
+  if(!checkCRCisOK()) return;  // message garbled
 
   if (!strncmp(serialBuffer, "UID", 3)) {
     robot_uid = atoi(strchr(serialBuffer, ' ') + 1);
     saveUID();
   }
 
+  long cmd;
 
+  // M codes
   cmd = parseNumber('M', -1);
   switch (cmd) {
-    case 6:  tool_change(parseNumber('T', current_tool));  break;
-    case 17:  motor_engage();  break;
-    case 18:  motor_disengage();  break;
+    case   6:  tool_change(parseNumber('T', current_tool));  break;
+    case  17:  motor_engage();  break;
+    case  18:  motor_disengage();  break;
     case 100:  help();  break;
     case 101:  processConfig();  break;
     case 102:  printConfig();  break;
     case 110:  line_number = parseNumber('N', line_number);  break;
     case 114:  where();  break;
-    default:  break;
+    default:   break;
   }
 
+  // G codes
   cmd = parseNumber('G', -1);
   switch (cmd) {
-    case 0:
-    case 1: {  // line
-        Vector3 offset = get_end_plus_offset();
-        acceleration = min(max(parseNumber('A', acceleration), MIN_ACCELERATION), MAX_ACCELERATION);
-        line_safe( parseNumber('X', (absolute_mode ? offset.x : 0) * 10) * 0.1 + (absolute_mode ? 0 : offset.x),
-                   parseNumber('Y', (absolute_mode ? offset.y : 0) * 10) * 0.1 + (absolute_mode ? 0 : offset.y),
-                   parseNumber('Z', (absolute_mode ? offset.z : 0)   )     + (absolute_mode ? 0 : offset.z),
-                   parseNumber('F', feed_rate) );
-        break;
-      }
-    case 2:
-    case 3: {  // arc
-        Vector3 offset = get_end_plus_offset();
-        acceleration = min(max(parseNumber('A', acceleration), 1), 2000);
-        setFeedRate(parseNumber('F', feed_rate));
-        arc(parseNumber('I', (absolute_mode ? offset.x : 0) * 10) * 0.1 + (absolute_mode ? 0 : offset.x),
-            parseNumber('J', (absolute_mode ? offset.y : 0) * 10) * 0.1 + (absolute_mode ? 0 : offset.y),
-            parseNumber('X', (absolute_mode ? offset.x : 0) * 10) * 0.1 + (absolute_mode ? 0 : offset.x),
-            parseNumber('Y', (absolute_mode ? offset.y : 0) * 10) * 0.1 + (absolute_mode ? 0 : offset.y),
-            parseNumber('Z', (absolute_mode ? offset.z : 0)) + (absolute_mode ? 0 : offset.z),
-            (cmd == 2) ? 1 : 0,
-            parseNumber('F', feed_rate) );
-        break;
-      }
-    case 4:  {  // dwell
-        wait_for_empty_segment_buffer();
-        float delayTime = parseNumber('S', 0) + parseNumber('P', 0) * 1000.0f;
-        pause(delayTime);
-        break;
-      }
+    case  0:
+    case  1:  parseLine();  break;
+    case  2:  parseArc(1);  break;
+    case  3:  parseArc(0);  break;
+    case  4:  parseDwell();  break;
     case 28:  findHome();  break;
     case 29:  calibrateBelts();  break;
     case 54:
@@ -774,55 +802,37 @@ void processCommand() {
     case 56:
     case 57:
     case 58:
-    case 59: {  // 54-59 tool offsets
-        int tool_id = cmd - 54;
-        set_tool_offset(tool_id, parseNumber('X', tool_offset[tool_id].x),
-                        parseNumber('Y', tool_offset[tool_id].y),
-                        parseNumber('Z', tool_offset[tool_id].z));
-        break;
-      }
+    case 59:  parseToolOffset(cmd-54);  break;
     case 90:  absolute_mode = 1;  break; // absolute mode
     case 91:  absolute_mode = 0;  break; // relative mode
-    case 92: {  // set position (teleport)
-        Vector3 offset = get_end_plus_offset();
-        teleport( parseNumber('X', (absolute_mode ? offset.x : 0) * 10) * 0.1 + (absolute_mode ? 0 : offset.x),
-                  parseNumber('Y', (absolute_mode ? offset.y : 0) * 10) * 0.1 + (absolute_mode ? 0 : offset.y),
-                  parseNumber('Z', (absolute_mode ? offset.z : 0)     ) +       (absolute_mode ? 0 : offset.z)
-                );
-        break;
-      }
+    case 92:  parseTeleport();  break;
     default:  break;
   }
 
+  // machine style-specific codes
   cmd = parseNumber('D', -1);
   switch (cmd) {
-    case 0:  jogMotors();  break;
-    //  case 3:  SD_ListFiles();  break;
-    case 4:  SD_StartPrintingFile(strchr(serialBuffer, ' ') + 1);  break; // read file
-    case 5:
-      sayVersionNumber();
-    case 6:  // set home
-      setHome(parseNumber('X', (absolute_mode ? homeX : 0) * 10) * 0.1 + (absolute_mode ? 0 : homeX),
-              parseNumber('Y', (absolute_mode ? homeY : 0) * 10) * 0.1 + (absolute_mode ? 0 : homeY));
-    case 7:  // set calibration length
-      calibrateLeft = parseNumber('L', calibrateLeft);
-      calibrateRight = parseNumber('R', calibrateRight);
-    // fall through to case 8, report calibration.
-    //reportCalibration();
-    //break;
-    case 8:  reportCalibration();  break;
-    case 9:  // save calibration length
-      saveCalibration();
-      break;
+    case  0:  jogMotors();  break;
+//    case  3:  SD_ListFiles();  break;
+    case  4:  SD_StartPrintingFile(strchr(serialBuffer, ' ') + 1);  break; // read file
+    case  5:  sayFirmwareVersionNumber();  break;
+    case  6:  setHome(parseNumber('X', (absolute_mode ? homeX : 0) * 10) * 0.1 + (absolute_mode ? 0 : homeX),
+                      parseNumber('Y', (absolute_mode ? homeY : 0) * 10) * 0.1 + (absolute_mode ? 0 : homeY));
+              break;
+    case  7:  // set calibration length
+              calibrateLeft = parseNumber('L', calibrateLeft);
+              calibrateRight = parseNumber('R', calibrateRight);
+              // fall through to case 8, report calibration.
+    case  8:  reportCalibration();  break;
+    case  9:  saveCalibration();  break;
     case 10:  // get hardware version
-      Serial.print(F("D10 V"));
-      Serial.println(MAKELANGELO_HARDWARE_VERSION);
-      break;
-    case 11:
-      // if you accidentally upload m3 firmware to an m5 then upload it ONCE with this line uncommented.
-      adjustDimensions(50, -50, -32.5, 32.5);
-      saveCalibration();
-      break;
+              Serial.print(F("D10 V"));
+              Serial.println(MACHINE_HARDWARE_VERSION);
+              break;
+    case 11:  // if you accidentally upload m3 firmware to an m5 then upload it ONCE with this line uncommented.
+              adjustDimensions(50, -50, -32.5, 32.5);
+              saveCalibration();
+              break;
     case 12:  recordHome();
     case 13:  setPenAngle(parseNumber('Z',posz));  break;
     default:  break;

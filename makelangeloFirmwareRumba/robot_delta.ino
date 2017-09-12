@@ -7,45 +7,12 @@
 
 #if MACHINE_STYLE == DELTA
 
-
-struct Joint {
-  Vector3 pos;
-  Vector3 relative;
-};
-
-
-struct Arm {
-  Vector3 shoulder;
-  Joint elbow;
-  Joint wrist;
-  Joint wop;
-  
-  float angle;
-
-  // for motors
-  int new_step;
-  
-  int delta;
-  int absdelta;
-  int dir;
-  int over;
-
-  Vector3 plane_ortho;
-  Vector3 plane_normal;
-};
-
-
-struct DeltaRobot {
-  Arm arms[NUM_AXIES];
-  Vector3 ee;  // current position of the end effector
-  float e;  // rotation of the 4th axis
-  Joint base;
-  float default_height;
-  int reverse;
-};
-
-
-DeltaRobot robot;
+#define SQRT3   (sqrt(3.0))
+#define SIN120  (SQRT3/2.0)
+#define COS120  (-0.5)
+#define TAN60   (SQRT3)
+#define SIN30   (0.5)
+#define TAN30   (1.0/SQRT3)
 
 /**
  * Inverse Kinematics turns XY coordinates into step counts from each motor
@@ -56,116 +23,17 @@ void IK(float *axies, long *motorStepArray) {
   float x = axies[0];
   float y = axies[1];
   float z = axies[2];
-  
-  int i;
 
-  // update wrist positions
-  for(i=0;i<NUM_AXIES;++i) {
-    Arm &arm=robot.arms[i];
-
-    arm.wrist.pos = robot.ee + arm.wrist.relative;
+  motorStepArray[0]=0;
+  motorStepArray[1]=0;
+  motorStepArray[2]=0;
+  int state = delta_calcAngleYZ(x, y, z, motorStepArray[0]);
+  if(state == 0) {
+    state = delta_calcAngleYZ(x*COS120 + y*SIN120, y*COS120-x*SIN120, z, motorStepArray[1]);  // rotate coords to +120 deg
   }
-
-  // update elbows
-  float a,b,c,r1,r0,d,h;
-  Vector3 r,p1,mid,wop,w,n;
-  for(i=0;i<NUM_AXIES;++i) {
-    Arm &arm=robot.arms[i];
-
-    // get wrist position on plane of bicep
-    w = arm.wrist.pos - arm.shoulder;
-    
-    a = w | arm.plane_normal;  // ee' distance
-    wop = w - arm.plane_normal * a;
-    arm.wop.pos = wop + arm.shoulder;
-    
-    // use intersection of circles to find two possible elbow points.
-    // the two circles are the bicep (shoulder-elbow) and the forearm (elbow-arm.wop.pos)
-    // the distance between circle centers is wop.Length()
-    //a = (r0r0 - r1r1 + d*d ) / (2 d) 
-    r1=sqrt(ELBOW_TO_WRIST*ELBOW_TO_WRIST-a*a);  // circle 1 centers on wop
-    r0=SHOULDER_TO_ELBOW;  // circle 0 centers on shoulder
-    d=wop.Length();
-    c = ( r0 * r0 - r1 * r1 + d*d ) / ( 2*d );
-    // find the midpoint
-    n=wop;
-    n/=d;
-    mid = arm.shoulder+(n*c);
-    // with c and r0 we can find h, the distance from midpoint to the intersections.
-    h=sqrt(r0*r0-c*c);
-    // the distance h on a line orthogonal to n and plane_normal gives us the two intersections.
-    r = arm.plane_normal ^ n;
-    p1 = mid - r * h;
-    //p2 = mid + r * h;
-    
-    arm.elbow.pos.set(p1.x,p1.y,p1.z);
+  if(state == 0) {
+    state = delta_calcAngleYZ(x*COS120 - y*SIN120, y*COS120+x*SIN120, z, motorStepArray[2]);  // rotate coords to -120 deg
   }
-
-  // update shoulder angles
-  Vector3 temp;
-  float x2,y2,new_angle,nx;
-  
-  for(i=0;i<NUM_AXIES;++i) {
-    Arm &arm=robot.arms[i];
-    
-    // get the angle of each shoulder
-    // use atan2 to find theta
-    temp = arm.elbow.pos - arm.shoulder;
-
-    y2 = temp.z;
-    temp.z = 0;
-    x2 = temp.Length();
-        
-    if( ( arm.elbow.relative | temp ) < 0 ) x2=-x2;
-
-    new_angle = degrees( atan2(-y2,x2) );
-    // cap the angle
-    //if(new_angle>90) new_angle=90;
-    //if(new_angle<-90) new_angle=-90;
-
-    // we don't care about elbow angle, but we could find it here if we needed it.
-
-    //Serial.print(i==0?"\tAng=":",");
-    //Serial.print(new_angle,2); 
-    //if(i==2) Serial.print("\n"); 
-
-    // update servo to match the new IK data
-    // 2013-05-17 http://www.marginallyclever.com/forum/viewtopic.php?f=12&t=4707&p=5103#p5091
-    nx = ( (robot.reverse==1) ? new_angle : -new_angle );
-  /*
-    if(nx>MAX_ANGLE) {
-      Serial.println("over max");
-      nx=MAX_ANGLE;
-    }
-    if(nx<MIN_ANGLE) {
-      Serial.println("under min");
-      nx=MIN_ANGLE;
-    }
-  */
-    //arm.angle=nx;
-    motorStepArray[i] = nx;
-  }
-
-#if VERBOSE > 0
-  Serial.print(i);
-  Serial.print('=');
-  Serial.print(robot.ee.x);
-  Serial.print(',');
-  Serial.print(robot.ee.y);
-  Serial.print(',');
-  Serial.print(robot.ee.z);
-  Serial.print(',');
-  Serial.print(robot.arms[0].angle);
-  Serial.print(',');
-  Serial.print(robot.arms[1].angle);
-  Serial.print(',');
-  Serial.print(robot.arms[2].angle);
-  #if NUM_AXIES >=4
-  Serial.print(',');
-  Serial.print(robot.arms[3].angle);
-  #endif
-  Serial.println();
-#endif
 }
 
 
@@ -176,29 +44,20 @@ void IK(float *axies, long *motorStepArray) {
  * @return 0 if no problem, 1 on failure.
  */
 int FK(long *motorStepArray,float *axies) {
-  float sqrt3 = sqrt(3.0);
-  float sin120 = sqrt3/2.0;
-  float cos120 = -0.5;
-  float tan60 = sqrt3;
-  float sin30 = 0.5;
-  float tan30 = 1.0/sqrt3;
-
-  float t = (CENTER_TO_SHOULDER-EFFECTOR_TO_WRIST)*tan30/2.0;
-  float dtr = PI/180.0;
-
-  float theta1 = radians(motorStepArray[0]);
-  float theta2 = radians(motorStepArray[1]);
-  float theta3 = radians(motorStepArray[2]);
+  float t = (CENTER_TO_SHOULDER-EFFECTOR_TO_WRIST)*TAN30/2.0;
+  float theta1 = radians((float)motorStepArray[0]/MICROSTEP_PER_DEGREE);
+  float theta2 = radians((float)motorStepArray[1]/MICROSTEP_PER_DEGREE);
+  float theta3 = radians((float)motorStepArray[2]/MICROSTEP_PER_DEGREE);
 
   float y1 = -(t + SHOULDER_TO_ELBOW*cos(theta1));
   float z1 = -SHOULDER_TO_ELBOW*sin(theta1);
 
-  float y2 = (t + SHOULDER_TO_ELBOW*cos(theta2))*sin30;
-  float x2 = y2*tan60;
+  float y2 = (t + SHOULDER_TO_ELBOW*cos(theta2))*SIN30;
+  float x2 = y2*TAN60;
   float z2 = -SHOULDER_TO_ELBOW*sin(theta2);
 
-  float y3 = (t + SHOULDER_TO_ELBOW*cos(theta3))*sin30;
-  float x3 = -y3*tan60;
+  float y3 = (t + SHOULDER_TO_ELBOW*cos(theta3))*SIN30;
+  float x3 = -y3*TAN60;
   float z3 = -SHOULDER_TO_ELBOW*sin(theta3);
 
   float dnm = (y2-y1)*x3-(y3-y1)*x2;
@@ -233,5 +92,35 @@ int FK(long *motorStepArray,float *axies) {
   axies[2]=z0;
   return 0;
 }
+
+
+/** 
+ * inverse kinematics helper function.  calculates angle theta1 (for YZ-pane) 
+ * @param x0 
+ * @param y0 
+ * @param z0 
+ * @param theta to be filled with newly calculated angle
+ * @return 1 on failure, 0 on success
+ */
+int delta_calcAngleYZ(float x0, float y0, float z0, long &theta) {
+  float y1 = -0.5 * 0.57735 * CENTER_TO_SHOULDER;  // f/2 * tg 30
+  
+  y0 -= 0.5 * 0.57735 * EFFECTOR_TO_WRIST;  // shift center to edge
+  // z = a + b*y
+  float a = (x0*x0 + y0*y0 + z0*z0 +SHOULDER_TO_ELBOW*SHOULDER_TO_ELBOW - ELBOW_TO_WRIST*ELBOW_TO_WRIST - y1*y1)/(2.0*z0);
+  float b = (y1-y0)/z0;
+
+  // discriminant
+  float d = -(a+b*y1)*(a+b*y1)+SHOULDER_TO_ELBOW*(b*b*SHOULDER_TO_ELBOW+SHOULDER_TO_ELBOW); 
+  if (d < 0) return 1; // non-existing povar.  return error, theta
+
+  float yj = (y1 - a*b - sqrt(d))/(b*b + 1); // choosing outer povar
+  float zj = a + b*yj;
+  theta = atan(-zj/(y1 - yj)) * 180.0/PI + ((yj>y1)?180.0:0.0);
+  theta *= MICROSTEP_PER_DEGREE;
+  
+  return 0;  // return error, theta
+}
+
 
 #endif

@@ -9,7 +9,8 @@
 
 #if MACHINE_STYLE == DELTA
 
-#define MAKELANGELO_HARDWARE_VERSION 5  // If you have a makelangelo 5+
+#define MACHINE_STYLE_NAME           "DELTA"
+#define MACHINE_HARDWARE_VERSION 5  // If you have a makelangelo 5+
 
 // known machine configurations
 #define DELTA_STYLE_MARGINALLYCLEVER_V8  1
@@ -42,12 +43,12 @@
 
 #if DELTA_STYLE  == DELTA_STYLE_MARGINALLYCLEVER_V8
 // physical measurements of the machine
-#define CENTER_TO_SHOULDER       (3.77f)  // cm
-#define SHOULDER_TO_ELBOW        (5.0f)  // cm
-#define ELBOW_TO_WRIST           (16.5f)  // cm
-#define EFFECTOR_TO_WRIST        (1.724f)  // cm
-#define CENTER_TO_FLOOR          (18.9)  // cm
-#define DEGREES_ABOVE_HORIZONTAL (24.0f)
+#define CENTER_TO_SHOULDER       ( 3.770f)  // cm (f)
+#define SHOULDER_TO_ELBOW        ( 5.000f)  // cm (Rf)
+#define ELBOW_TO_WRIST           (16.500f)  // cm (Re)
+#define EFFECTOR_TO_WRIST        ( 1.724f)  // cm (e)
+#define CENTER_TO_FLOOR          (18.900f)  // cm
+#define DEGREES_ABOVE_HORIZONTAL (24.000f)
 #endif
 
 

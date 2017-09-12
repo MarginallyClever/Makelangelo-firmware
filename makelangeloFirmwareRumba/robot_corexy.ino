@@ -17,7 +17,7 @@ void IK(float *axies, long *motorStepArray) {
   float x = axies[0];
   float y = axies[1];
   float z = axies[2];
-  
+
   motorStepArray[0] = lround((x+y) / THREAD_PER_STEP);
   motorStepArray[1] = lround((x-y) / THREAD_PER_STEP);
 

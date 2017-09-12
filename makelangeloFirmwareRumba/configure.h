@@ -28,7 +28,7 @@
 //#define STEWART          7  // 6 arm stewart platform, rotary action.  not supported yet.
 //#define OSGOODE          8  // 6 arm stewart platform, linear action.  not supported yet.
 
-#define MACHINE_STYLE DELTA  // change this
+#define MACHINE_STYLE TRADITIONALXY  // change this
 
 #include "robot_polargraph.h"
 #include "robot_traditionalxy.h"
@@ -72,6 +72,8 @@
 #define STEP_DELAY           (50)  // delay between steps, in milliseconds, when doing fixed tasks like homing
 #define PULLEY_PITCH         (0.2*20.0) // 2mm per tooth, 20 teeth.
 #define THREAD_PER_STEP      (PULLEY_PITCH/STEPS_PER_TURN)
+
+#define MICROSTEP_PER_DEGREE (STEPS_PER_TURN/360.0)
 
 #define MAX_ACCELERATION     (5000)
 #define MIN_ACCELERATION     (100)

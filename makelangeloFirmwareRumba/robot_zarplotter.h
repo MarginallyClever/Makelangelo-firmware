@@ -10,7 +10,8 @@
 
 #if MACHINE_STYLE == ZARPLOTTER
 
-#define MAKELANGELO_HARDWARE_VERSION 6
+#define MACHINE_STYLE_NAME       "ZARPLOTTER"
+#define MACHINE_HARDWARE_VERSION 6
 
 #define NUM_AXIES            (3)  // more motors than axies. Unusual!
 #define NUM_MOTORS           (4)

@@ -9,8 +9,9 @@
 
 #if MACHINE_STYLE == POLARGRAPH
 
-//#define MAKELANGELO_HARDWARE_VERSION 3  // If you have a makelangelo 3+
-#define MAKELANGELO_HARDWARE_VERSION 5  // If you have a makelangelo 5+
+#define MACHINE_STYLE_NAME           "POLARGRAPH"
+//#define MACHINE_HARDWARE_VERSION 3  // If you have a makelangelo 3+
+#define MACHINE_HARDWARE_VERSION 5  // If you have a makelangelo 5+
 
 
 #define STEP_DELAY           (50)  // delay between steps, in milliseconds, when doing fixed tasks like homing
@@ -34,12 +35,12 @@
 #define DEFAULT_ACCELERATION (2500)
 
 
-#if MAKELANGELO_HARDWARE_VERSION == 5
+#if MACHINE_HARDWARE_VERSION == 5
 #define USE_LIMIT_SWITCH    (1)  // Comment out this line to disable findHome and limit switches
 #define HAS_SD                   // comment this out if there is no SD card
 #define HAS_LCD                  // comment this out if there is no SMART LCD controller
 #endif
-#if MAKELANGELO_HARDWARE_VERSION == 3
+#if MACHINE_HARDWARE_VERSION == 3
 #define HAS_SD                   // comment this out if there is no SD card
 #define HAS_LCD                  // comment this out if there is no SMART LCD controller
 #endif
