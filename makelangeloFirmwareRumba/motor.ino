@@ -155,8 +155,6 @@ void motor_setup() {
 
   // setup servos
 #if NUM_SERVOS>0
-  Serial.print("Attaching servo 0 to ");
-  Serial.println(SERVO0_PIN);
   servos[0].attach(SERVO0_PIN);
 #endif
 #if NUM_SERVOS>1
@@ -244,8 +242,6 @@ void setPenAngle(int pen_angle) {
 #if NUM_SERVOS>0
   servos[0].write(posz);
 #endif
-  Serial.print("Moving servo 0 to ");
-  Serial.println(posz);
 }
 
 

@@ -337,8 +337,8 @@ void help() {
 
 void sayModelAndUID() {
   Serial.print(F("I AM "));
-  Serial.println(MACHINE_STYLE_NAME);
-  Serial.println(F(" #"));
+  Serial.print(MACHINE_STYLE_NAME);
+  Serial.print(F(" #"));
   Serial.println(robot_uid);
 }
 
@@ -725,6 +725,9 @@ void parseToolOffset(int toolID) {
                   parseNumber('Z', tool_offset[toolID].z));
 }
 
+/**
+ * @return 1 if CRC ok or not present, 0 if CRC check fails.
+ */
 char checkCRCisOK() {
   // is there a line number?
   long cmd = parseNumber('N', -1);
@@ -733,7 +736,7 @@ char checkCRCisOK() {
       // wrong line number error
       Serial.print(F("BADLINENUM "));
       Serial.println(line_number);
-      return;
+      return 0;
     }
 
     // is there a checksum?
@@ -747,16 +750,18 @@ char checkCRCisOK() {
       if ( checksum != against ) {
         Serial.print(F("BADCHECKSUM "));
         Serial.println(line_number);
-        return;
+        return 0;
       }
     } else {
       Serial.print(F("NOCHECKSUM "));
       Serial.println(line_number);
-      return;
+      return 0;
     }
 
     line_number++;
   }
+  
+  return 1;  // ok!
 }
 
 /**
@@ -792,8 +797,8 @@ void processCommand() {
   switch (cmd) {
     case  0:
     case  1:  parseLine();  break;
-    case  2:  parseArc(1);  break;
-    case  3:  parseArc(0);  break;
+    case  2:  parseArc(1);  break;  // clockwise
+    case  3:  parseArc(0);  break;  // counter-clockwise
     case  4:  parseDwell();  break;
     case 28:  findHome();  break;
     case 29:  calibrateBelts();  break;

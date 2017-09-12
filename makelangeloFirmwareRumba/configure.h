@@ -28,7 +28,7 @@
 //#define STEWART          7  // 6 arm stewart platform, rotary action.  not supported yet.
 //#define OSGOODE          8  // 6 arm stewart platform, linear action.  not supported yet.
 
-#define MACHINE_STYLE TRADITIONALXY  // change this
+#define MACHINE_STYLE POLARGRAPH  // change this
 
 #include "robot_polargraph.h"
 #include "robot_traditionalxy.h"
