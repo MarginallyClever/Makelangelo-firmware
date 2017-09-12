@@ -323,7 +323,7 @@ void teleport(float x, float y,float z) {
    Print a helpful message to serial.  The first line must never be changed to play nice with the JAVA software.
 */
 void help() {
-  Serial.print(F("\n\nHELLO WORLD!"));
+  Serial.print(F("\n\nHELLO WORLD! "));
   sayModelAndUID();
   sayFirmwareVersionNumber();
   Serial.println(F("== http://www.marginallyclever.com/ =="));
@@ -341,6 +341,7 @@ void sayModelAndUID() {
   Serial.print(F(" #"));
   Serial.println(robot_uid);
 }
+
 
 void sayFirmwareVersionNumber() {
   char versionNumber = loadVersion();
