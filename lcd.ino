@@ -11,7 +11,6 @@
 #ifdef HAS_LCD
 #include <LiquidCrystal.h>
 #include "sdcard.h"
-#include "Vector3.h"
 
 
 #define LCD_DRAW_DELAY    (150)
@@ -74,8 +73,6 @@ int menu_position_sum=0, menu_position=0, screen_position=0, num_menu_items=0, t
 
 
 void (*current_menu)();
-void LCD_status_menu();
-void LCD_main_menu();
 
 
 //------------------------------------------------------------------------------

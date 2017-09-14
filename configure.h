@@ -17,23 +17,29 @@
 
 
 
-// machine styles supported
+// robot styles supported
 #define POLARGRAPH       1  // polargraph like the Makelangelo 3 or 5
-#define TRADITIONALXY    3  // traditional 2+ axis setup.
-#define COREXY           2  // CoreXY setup.
-#define ZARPLOTTER       4  // 4 motor Zarplotter
-#define DELTA            5  // 3 arm delta robot, rotary action
-//#define KOSSEL           6  // 4 arm delta robot, linear action.  not supported yet.
-//#define STEWART          7  // 6 arm stewart platform, rotary action.  not supported yet.
-//#define OSGOODE          8  // 6 arm stewart platform, linear action.  not supported yet.
+#define TRADITIONALXY    3  // gantry 2 axis setup.
+#define COREXY           2  // gantry CoreXY setup.
+#define ZARPLOTTER       4  // 4 motor, x-shaped 2D motion
+#define SKYCAM           5  // 4 motor, x-shaped 3D motion
+#define DELTA            6  // 3 arm delta robot, rotary action
+//#define KOSSEL           7  // 3 arm delta robot, linear action.  not supported yet.
+//#define STEWART          8  // 6 arm stewart platform, rotary action.  not supported yet.
+//#define OSGOODE          9  // 6 arm stewart platform, linear action.  not supported yet.
 
 #define MACHINE_STYLE POLARGRAPH  // change this
 
+// robot style descriptions
 #include "robot_polargraph.h"
 #include "robot_traditionalxy.h"
 #include "robot_corexy.h"
 #include "robot_zarplotter.h"
+#include "robot_skycam.h"
 #include "robot_delta.h"
+//#include "robot_kossel.h"
+//#include "robot_stewart.h"
+//#include "robot_osgoode.h"
 
 
 // Boards supported
@@ -67,7 +73,6 @@
 // motor details
 #define MICROSTEPS           (16.0)  // change this.  microstepping on this microcontroller
 #define DEGREES_PER_STEP     ( 0.9)  // change this.  as advertised by the stepper motor maker
-#define STEP_DELAY           (50  )  // delay between steps, in milliseconds, when doing fixed tasks like homing
 
 #define NORMAL_MOTOR_STEPS   (360.0/DEGREES_PER_STEP)  // 360/0.9=400.  360/1.8=200.
 #define STEPS_PER_TURN       (NORMAL_MOTOR_STEPS * MICROSTEPS)  // default number of steps per turn * microsteps
@@ -171,16 +176,6 @@ extern float acceleration;
 extern Motor motors[NUM_MOTORS];
 extern const char *AxisNames;
 extern const char *MotorNames;
-
-extern long robot_uid;
-extern float limit_ymax;
-extern float limit_ymin;
-extern float limit_xmax;
-extern float limit_xmin;
-extern float homeX;
-extern float homeY;
-extern long calibrateLeft;
-extern long calibrateRight;
 
 
 #endif // CONFIGURE_H

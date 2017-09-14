@@ -36,11 +36,9 @@ static float homeY = 0;
 // length of belt when weights hit limit switch
 float calibrateRight  = 101.1;
 float calibrateLeft   = 101.1;
-float calibrateBRight = 101.1;
-float calibrateBLeft  = 101.1;
 
 // plotter position.
-float posx, posy, posz;  // pen state
+float posx, posy, posz;
 float feed_rate = DEFAULT_FEEDRATE;
 float acceleration = DEFAULT_ACCELERATION;
 float step_delay;
@@ -49,15 +47,14 @@ char absolute_mode = 1; // absolute or incremental programming mode?
 
 // Serial comm reception
 char serialBuffer[MAX_BUF + 1]; // Serial buffer
-int sofar;               // Serial buffer progress
-static long last_cmd_time;    // prevent timeouts
-
+int sofar;                      // Serial buffer progress
+long last_cmd_time;             // prevent timeouts
+long line_number = 0;           // make sure commands arrive in order
 
 Vector3 tool_offset[NUM_TOOLS];
 int current_tool = 0;
 
 
-long line_number = 0;
 
 
 //------------------------------------------------------------------------------
@@ -122,8 +119,6 @@ void printFeedRate() {
 }
 
 
-
-
 /**
 
 */
@@ -150,7 +145,7 @@ void testKinematics() {
 
   for (i = 0; i < 3000; ++i) {
     for (j = 0; j < NUM_AXIES; ++j) {
-      axies[j] = random(limit_xmax, limit_xmax) * 0.1;
+      axies[j] = random(limit_xmin, limit_xmax) * 0.1;
     }
 
     IK(axies, A);
@@ -956,7 +951,7 @@ void setup() {
   teleport(0, 0, posz);
   setPenAngle(PEN_UP_ANGLE);
   setFeedRate(DEFAULT_FEEDRATE);
-
+  
   // display the help at startup.
   help();
 
