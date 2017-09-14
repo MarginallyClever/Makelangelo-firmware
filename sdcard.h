@@ -1,5 +1,11 @@
 #ifndef SDCARD_H
 #define SDCARD_H
+//------------------------------------------------------------------------------
+// Makelangelo - firmware for various robot kinematic models
+// dan@marginallycelver.com 2013-12-26
+// Copyright at end of file.  Please see
+// http://www.github.com/MarginallyClever/makelangeloFirmware for more information.
+//------------------------------------------------------------------------------
 
 
 #include <SPI.h>

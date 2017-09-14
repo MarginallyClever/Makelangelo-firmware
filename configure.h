@@ -1,13 +1,11 @@
 #ifndef CONFIGURE_H
 #define CONFIGURE_H
 //------------------------------------------------------------------------------
-// Makelangelo - supports raprapdiscount RUMBA controller
+// Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
-// RUMBA should be treated like a MEGA 2560 Arduino.
-//------------------------------------------------------------------------------
 // Copyright at end of file.  Please see
-// http://www.github.com/MarginallyClever/Makelangelo for more information.
-
+// http://www.github.com/MarginallyClever/makelangeloFirmware for more information.
+//------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------
 // CONSTANTS
@@ -18,7 +16,7 @@
 
 
 // robot styles supported
-#define POLARGRAPH       1  // polargraph like the Makelangelo 3 or 5
+#define POLARGRAPH       1  // polargraph like Makelangelo
 #define TRADITIONALXY    3  // gantry 2 axis setup.
 #define COREXY           2  // gantry CoreXY setup.
 #define ZARPLOTTER       4  // 4 motor, x-shaped 2D motion

@@ -1,17 +1,17 @@
 #ifndef ROBOT_POLARGRAPH_H
 #define ROBOT_POLARGRAPH_H
 //------------------------------------------------------------------------------
-// Makelangelo - a mural drawing robot
+// Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
 // Copyright at end of file.  Please see
-// http://www.github.com/MarginallyClever/Makelangelo for more information.
+// http://www.github.com/MarginallyClever/makelangeloFirmware for more information.
 //------------------------------------------------------------------------------
 
 #if MACHINE_STYLE == POLARGRAPH
 
 #define MACHINE_STYLE_NAME       "POLARGRAPH"
-//#define MACHINE_HARDWARE_VERSION 3  // If you have a makelangelo 3+
-#define MACHINE_HARDWARE_VERSION 5  // If you have a makelangelo 5+
+#define MACHINE_HARDWARE_VERSION 3  // If you have a makelangelo 3+
+//#define MACHINE_HARDWARE_VERSION 5  // If you have a makelangelo 5+
 
 #define MAX_ACCELERATION     (5000)
 #define MIN_ACCELERATION     (100)

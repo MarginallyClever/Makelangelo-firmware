@@ -1,11 +1,12 @@
 #ifndef BOARD_RAMPS_H
 #define BOARD_RAMPS_H
 //------------------------------------------------------------------------------
-// Makelangelo - a mural drawing robot
+// Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
 // Copyright at end of file.  Please see
-// http://www.github.com/MarginallyClever/Makelangelo for more information.
+// http://www.github.com/MarginallyClever/makelangeloFirmware for more information.
 //------------------------------------------------------------------------------
+
 
 
 #if MOTHERBOARD == BOARD_RAMPS 
