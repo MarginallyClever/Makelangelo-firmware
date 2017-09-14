@@ -911,8 +911,8 @@ void setHome(float x, float y) {
 
 
 /**
-   prepares the input buffer to receive a new message and tells the serial connected device it is ready for more.
-*/
+ * prepares the input buffer to receive a new message and tells the serial connected device it is ready for more.
+ */
 void parser_ready() {
   sofar = 0; // clear input buffer
   Serial.print(F("\n> "));  // signal ready to receive input
@@ -921,8 +921,8 @@ void parser_ready() {
 
 
 /**
-   reset all tool offsets
-*/
+ * reset all tool offsets
+ */
 void tools_setup() {
   for (int i = 0; i < NUM_TOOLS; ++i) {
     set_tool_offset(i, 0, 0, 0);
@@ -931,8 +931,8 @@ void tools_setup() {
 
 
 /**
-   runs once on machine start
-*/
+ * runs once on machine start
+ */
 void setup() {
   // start communications
   Serial.begin(BAUD);
@@ -960,8 +960,8 @@ void setup() {
 
 
 /**
-   See: http://www.marginallyclever.com/2011/10/controlling-your-arduino-through-the-serial-monitor/
-*/
+ * See: http://www.marginallyclever.com/2011/10/controlling-your-arduino-through-the-serial-monitor/
+ */
 void Serial_listen() {
   // listen for serial commands
   while (Serial.available() > 0) {
@@ -983,8 +983,8 @@ void Serial_listen() {
 
 
 /**
-   main loop
-*/
+ * main loop
+ */
 void loop() {
   Serial_listen();
   SD_check();
