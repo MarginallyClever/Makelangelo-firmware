@@ -123,4 +123,8 @@ int delta_calcAngleYZ(float x0, float y0, float z0, long &theta) {
 }
 
 
+void robot_findHome() {
+
+}
+
 #endif

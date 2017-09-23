@@ -8,7 +8,6 @@
 //------------------------------------------------------------------------------
 
 
-
 #if MOTHERBOARD == BOARD_RAMPS 
 // wrong board type set
 #ifndef __AVR_ATmega2560__

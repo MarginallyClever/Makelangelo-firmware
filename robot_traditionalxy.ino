@@ -39,4 +39,8 @@ int FK(long *motorStepArray,float *axies) {
 }
 
 
+
+void robot_findHome() {
+
+}
 #endif

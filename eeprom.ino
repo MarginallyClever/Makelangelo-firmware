@@ -56,10 +56,13 @@ void saveUID() {
  */
 void saveDimensions() {
   Serial.println(F("Saving dimensions."));
-  EEPROM_writeLong(ADDR_LEFT  ,limit_xmin  *100);
-  EEPROM_writeLong(ADDR_RIGHT ,limit_xmax *100);
-  EEPROM_writeLong(ADDR_TOP   ,limit_ymax   *100);
-  EEPROM_writeLong(ADDR_BOTTOM,limit_ymin*100);
+  int i,j=ADDR_LIMITS;
+  for(i=0;i<NUM_AXIES;++i) {
+    EEPROM_writeLong(j,axies[i].limitMax*100);
+    j+=4;
+    EEPROM_writeLong(j,axies[i].limitMin*100);
+    j+=4;
+  }
 }
 
 
@@ -67,31 +70,40 @@ void saveDimensions() {
  * 
  */
 void loadDimensions() {
-  limit_xmin = (float)EEPROM_readLong(ADDR_LEFT  )/100.0f;
-  limit_xmax = (float)EEPROM_readLong(ADDR_RIGHT )/100.0f;
-  limit_ymax = (float)EEPROM_readLong(ADDR_TOP   )/100.0f;
-  limit_ymin = (float)EEPROM_readLong(ADDR_BOTTOM)/100.0f;
+  int i,j=ADDR_LIMITS;
+  for(i=0;i<NUM_AXIES;++i) {
+    axies[i].limitMax = (float)EEPROM_readLong(j)/100.0f;
+    j+=4;
+    axies[i].limitMin = (float)EEPROM_readLong(j)/100.0f;
+    j+=4;
+  }
 }
 
 
 /**
- * 
+ * @param limits NUM_AXIES pairs of floats.  each pair is one float for max limit and one for min limit.
  */
-void adjustDimensions(float newT,float newB,float newR,float newL) {
-  // round off
-  newT = floor(newT*100)/100.0f;
-  newB = floor(newB*100)/100.0f;
-  newR = floor(newR*100)/100.0f;
-  newL = floor(newL*100)/100.0f;
+void adjustDimensions(float *limits) {
+  int i,j;
+  int changed=0;
+  float v;
+  for(i=0;i<NUM_AXIES;++i) {
+    // max test
+    v = floor(limits[i]*100.0f)/100.0f;
+    if(v != axies[i].limitMax) {
+      axies[i].limitMax = v;
+      changed=1;
+    }
+    j++;
+    // min test
+    v = floor(limits[i]*100.0f)/100.0f;
+    if(v != axies[i].limitMin) {
+      changed=1;
+    }
+    j++;
+  }
 
-  if( limit_ymax != newT ||
-      limit_ymin != newB ||
-      limit_xmax != newR ||
-      limit_xmin != newL) {
-    limit_ymax=newT;
-    limit_ymin=newB;
-    limit_xmax=newR;
-    limit_xmin=newL;
+  if( changed != 0 ) {
     saveDimensions();
   }
 }
@@ -102,8 +114,11 @@ void adjustDimensions(float newT,float newB,float newR,float newL) {
  */
 void saveHome() {
   Serial.println(F("Saving home."));
-  EEPROM_writeLong(ADDR_HOMEX,homeX*100);
-  EEPROM_writeLong(ADDR_HOMEY,homeY*100);
+  int i,j=ADDR_HOME;
+  for(i=0;i<NUM_AXIES;++i) {
+    EEPROM_writeLong(j,axies[i].home*100);
+    j+=4;
+  }
 }
 
 
@@ -111,8 +126,11 @@ void saveHome() {
  * 
  */
 void loadHome() {
-  homeX = (float)EEPROM_readLong(ADDR_HOMEX)/100.0f;
-  homeY = (float)EEPROM_readLong(ADDR_HOMEY)/100.0f;
+  int i,j=ADDR_HOME;
+  for(i=0;i<NUM_AXIES;++i) {
+    axies[i].home = (float)EEPROM_readLong(j)/100.0f;
+    j+=4;
+  }
 }
 
 

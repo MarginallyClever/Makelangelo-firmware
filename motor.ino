@@ -15,8 +15,6 @@
 //------------------------------------------------------------------------------
 // GLOBALS
 //------------------------------------------------------------------------------
-Axis a[NUM_MOTORS];  // for line()
-Axis atemp;  // for line()
 Motor motors[NUM_MOTORS];
 
 Segment line_segments[MAX_SEGMENTS];
@@ -234,13 +232,16 @@ void motor_disengage() {
 
 
 // Change pen state.
-void setPenAngle(int pen_angle) {
-  posz=pen_angle;
-
-  if(posz<PEN_DOWN_ANGLE) posz=PEN_DOWN_ANGLE;
-  if(posz>PEN_UP_ANGLE  ) posz=PEN_UP_ANGLE;
+void setPenAngle(int arg0) {
+#if NUM_AXIES>=3
+  if(arg0 < axies[2].limitMin) arg0=axies[2].limitMin;
+  if(arg0 > axies[2].limitMax) arg0=axies[2].limitMax;
+  
+  axies[2].pos = arg0;
+  
 #if NUM_SERVOS>0
-  servos[0].write(posz);
+  servos[0].write(arg0);
+#endif
 #endif
 }
 

@@ -24,21 +24,14 @@
 // robot UID
 int robot_uid = 0;
 
-// plotter limits, relative to the center of the plotter.
-float limit_ymax = 0;  // distance to top of drawing area.
-float limit_ymin = 0;  // Distance to bottom of drawing area.
-float limit_xmax = 0;  // Distance to right of drawing area.
-float limit_xmin = 0;  // Distance to left of drawing area.
-
-static float homeX = 0;
-static float homeY = 0;
+// description of the machine's position
+Axis axies[NUM_AXIES];
 
 // length of belt when weights hit limit switch
 float calibrateRight  = 101.1;
 float calibrateLeft   = 101.1;
 
 // plotter position.
-float posx, posy, posz;
 float feed_rate = DEFAULT_FEEDRATE;
 float acceleration = DEFAULT_ACCELERATION;
 float step_delay;
@@ -51,7 +44,7 @@ int sofar;                      // Serial buffer progress
 long last_cmd_time;             // prevent timeouts
 long line_number = 0;           // make sure commands arrive in order
 
-Vector3 tool_offset[NUM_TOOLS];
+float tool_offset[NUM_TOOLS][NUM_AXIES];
 int current_tool = 0;
 
 
@@ -70,7 +63,9 @@ float atan3(float dy, float dx) {
 }
 
 
-//------------------------------------------------------------------------------
+/**
+ * @return switch state
+ */
 char readSwitches() {
 #ifdef USE_LIMIT_SWITCH
   // get the current switch state
@@ -81,8 +76,9 @@ char readSwitches() {
 }
 
 
-//------------------------------------------------------------------------------
-// feed rate is given in units/min and converted to cm/s
+/** 
+ * feed rate is given in units/min and converted to cm/s
+ */
 void setFeedRate(float v1) {
   if ( feed_rate != v1 ) {
     feed_rate = v1;
@@ -95,14 +91,15 @@ void setFeedRate(float v1) {
   }
 }
 
+
 void findStepDelay() {
   step_delay = 1000000.0f / DEFAULT_FEEDRATE;
 }
 
 
 /**
-   delay in microseconds
-*/
+ * @param delay in microseconds
+ */
 void pause(long us) {
   delay(us / 1000);
   delayMicroseconds(us % 1000);
@@ -110,8 +107,8 @@ void pause(long us) {
 
 
 /**
-   print the current feed rate
-*/
+ * print the current feed rate
+ */
 void printFeedRate() {
   Serial.print(F("F"));
   Serial.print(feed_rate);
@@ -120,18 +117,26 @@ void printFeedRate() {
 
 
 /**
+ * look for change to dimensions in command, apply and save changes.
+ */
+void parseLimits() {
+  int axisNumber = parseNumber('A',-1);
+  if(axisNumber==-1) return;
+  if(axisNumber>=NUM_AXIES) return;
+  
+  float newT = parseNumber('T', axies[axisNumber].limitMax);
+  float newB = parseNumber('B', axies[axisNumber].limitMin);
 
-*/
-void processConfig() {
-  float newT = parseNumber('T', limit_ymax);
-  float newB = parseNumber('B', limit_ymin);
-  float newR = parseNumber('R', limit_xmax);
-  float newL = parseNumber('L', limit_xmin);
-  // @TODO: check t>b, r>l ?
-  adjustDimensions(newT, newB, newR, newL);
+  //adjustDimensions(newT, newB, newR, newL);
 
-  printConfig();
-  teleport(posx, posy, posz);
+  /*printConfig();
+  
+  float pos[NUM_AXIES];
+  int i;
+  for(i=0;i<NUM_AXIES;++i) {
+    pos[i]=axies[i].pos;
+  }
+  teleport(pos);*/
 }
 
 
@@ -140,21 +145,21 @@ void processConfig() {
  */
 void testKinematics() {
   long A[NUM_MOTORS], i, j;
-  float axies[NUM_AXIES];
+  float axies1[NUM_AXIES];
   float axies2[NUM_AXIES];
 
   for (i = 0; i < 3000; ++i) {
     for (j = 0; j < NUM_AXIES; ++j) {
-      axies[j] = random(limit_xmin, limit_xmax) * 0.1;
+      axies1[j] = random(axies[j].limitMin, axies[j].limitMax);
     }
 
-    IK(axies, A);
+    IK(axies1, A);
     FK(A, axies2);
     
     for (j = 0; j < NUM_AXIES; ++j) {
       Serial.print('\t');
       Serial.print(AxisNames[j]);
-      Serial.print(axies[j]);
+      Serial.print(axies1[j]);
     }
     for (j = 0; j < NUM_MOTORS; ++j) {
       Serial.print('\t');
@@ -171,7 +176,7 @@ void testKinematics() {
       Serial.print(F("\td"));
       Serial.print(AxisNames[j]);
       Serial.print('=');
-      Serial.print(axies2[j]-axies[j]);
+      Serial.print(axies2[j]-axies1[j]);
     }
     Serial.println();
   }
@@ -179,22 +184,18 @@ void testKinematics() {
 
 /**
    Translate the XYZ through the IK to get the number of motor steps and move the motors.
-   @input x destination x value
-   @input y destination y value
-   @input z destination z value
+   @input pos NUM_AXIES floats describing destination coordinates
    @input new_feed_rate speed to travel along arc
 */
-void polargraph_line(float x, float y, float z, float new_feed_rate) {
+void polargraph_line(float *pos, float new_feed_rate) {
   long steps[NUM_MOTORS + NUM_SERVOS];
-  float pos[NUM_AXIES];
-  pos[0]=x;
-  pos[1]=y;
-  pos[2]=z;
   IK(pos, steps);
-  posx = x;
-  posy = y;
-  posz = z;
 
+  int i;
+  for(i=0;i<NUM_AXIES;++i) {
+    axies[i].pos = pos[i];
+  }
+  
   feed_rate = new_feed_rate;
   motor_line(steps, new_feed_rate);
 }
@@ -202,38 +203,46 @@ void polargraph_line(float x, float y, float z, float new_feed_rate) {
 
 /**
    Move the pen holder in a straight line using bresenham's algorithm
-   @input x destination x value
-   @input y destination y value
-   @input z destination z value
+   @input pos NUM_AXIES floats describing destination coordinates
    @input new_feed_rate speed to travel along arc
 */
-void line_safe(float x, float y, float z, float new_feed_rate) {
-  x -= tool_offset[current_tool].x;
-  y -= tool_offset[current_tool].y;
-  z -= tool_offset[current_tool].z;
+void line_safe(float *pos, float new_feed_rate) {
+  float destination[NUM_AXIES];
+  int i;
+  for(i=0;i<NUM_AXIES;++i) {
+    destination[i] = pos[i] - tool_offset[current_tool][i];
+  }
 
 #ifdef SUBDIVIDE_LINES
-  // split up long lines to make them straighter?
-  Vector3 destination(x, y, z);
-  Vector3 startPoint(posx, posy, posz);
-  Vector3 dp = destination - startPoint;
-  Vector3 temp;
+  // split up long lines to make them straighter
+  float delta[NUM_AXIES];
+  float start[NUM_AXIES];
+  float temp[NUM_AXIES];
+  float len=0;  
+  for(i=0;i<NUM_AXIES;++i) {
+    start[i] = axies[i].pos;
+    delta[i] = destination[i] - start[i];
+    len += delta[i] * delta[i];
+  }
 
-  float len = dp.Length();
-  int pieces = ceil(dp.Length() * (float)SEGMENT_PER_CM_LINE );
+  len = sqrt(len);
+  // @TODO what if some axies don't need subdividing?  like z axis on polargraph.
+  int pieces = ceil(len * (float)SEGMENT_PER_CM_LINE );
   float a;
   long j;
 
   // draw everything up to (but not including) the destination.
   for (j = 1; j < pieces; ++j) {
     a = (float)j / (float)pieces;
-    temp = dp * a + startPoint;
-    polargraph_line(temp.x, temp.y, temp.z, new_feed_rate);
+    for(i=0;i<NUM_AXIES;++i) {
+      temp[i] = delta[i] * a + start[i];
+    }
+    polargraph_line(temp, new_feed_rate);
   }
 #endif
 
   // guarantee we stop exactly at the destination (no rounding errors).
-  polargraph_line(x, y, z, new_feed_rate);
+  polargraph_line(destination, new_feed_rate);
 }
 
 
@@ -243,25 +252,23 @@ void line_safe(float x, float y, float z, float new_feed_rate) {
    This method assumes arcs are not >180 degrees (PI radians)
    @input cx center of circle x value
    @input cy center of circle y value
-   @input x destination x value
-   @input y destination y value
-   @input z destination z value
+   @input destination point where movement ends
    @input dir - ARC_CW or ARC_CCW to control direction of arc
    @input new_feed_rate speed to travel along arc
 */
-void arc(float cx, float cy, float x, float y, float z, char clockwise, float new_feed_rate) {
+void arc(float cx, float cy, float *destination, char clockwise, float new_feed_rate) {
   // get radius
-  float dx = posx - cx;
-  float dy = posy - cy;
+  float dx = axies[0].pos - cx;
+  float dy = axies[1].pos - cy;
   float sr = sqrt(dx * dx + dy * dy);
 
   // find angle of arc (sweep)
   float sa = atan3(dy, dx);
-  float ea = atan3(y - cy, x - cx);
+  float ea = atan3(destination[1] - cy, destination[0] - cx);
   float er = sqrt(dx * dx + dy * dy);
 
   float da = ea - sa;
-  if (clockwise != 0 && da < 0) ea += 2 * PI;
+       if (clockwise != 0 && da < 0) ea += 2 * PI;
   else if (clockwise == 0 && da > 0) sa += 2 * PI;
   da = ea - sa;
   float dr = er - sr;
@@ -275,8 +282,13 @@ void arc(float cx, float cy, float x, float y, float z, char clockwise, float ne
 
   int i, segments = ceil( len * SEGMENT_PER_CM_ARC );
 
-  float nx, ny, nz, angle3, scale;
+  float n[NUM_AXIES], angle3, scale;
   float a, r;
+  #if NUM_AXIES>2
+  float sz = axies[2].pos;
+  float z = destination[2];
+  #endif
+  
   for (i = 0; i <= segments; ++i) {
     // interpolate around the arc
     scale = ((float)i) / ((float)segments);
@@ -284,31 +296,29 @@ void arc(float cx, float cy, float x, float y, float z, char clockwise, float ne
     a = ( da * scale ) + sa;
     r = ( dr * scale ) + sr;
 
-    nx = cx + cos(a) * r;
-    ny = cy + sin(a) * r;
-    nz = ( z - posz ) * scale + posz;
+    n[0] = cx + cos(a) * r;
+    n[1] = cy + sin(a) * r;
+    #if NUM_AXIES>2
+    n[2] = ( z - sz ) * scale + sz;
+    #endif
     // send it to the planner
-    line_safe(nx, ny, nz, new_feed_rate);
+    line_safe(n, new_feed_rate);
   }
 }
 
 
 /**
-   Instantly move the virtual plotter position.  Does not check if the move is valid.
-*/
-void teleport(float x, float y,float z) {
+ * Instantly move the virtual plotter position.  Does not check if the move is valid.
+ */
+void teleport(float *pos) {
   wait_for_empty_segment_buffer();
 
-  posx = x;
-  posy = y;
-  posz = z;
+  int i;
+  for(i=0;i<NUM_AXIES;++i) {
+    axies[i].pos = pos[i];
+  }
   
-  // @TODO: posz?
   long steps[NUM_MOTORS+NUM_SERVOS];
-  float pos[NUM_AXIES];
-  pos[0]=posx;
-  pos[1]=posy;
-  pos[2]=posz;
   IK(pos, steps);
   motor_set_step_count(steps);
 }
@@ -345,253 +355,7 @@ void sayFirmwareVersionNumber() {
   Serial.println(versionNumber, DEC);
 }
 
-/**
-   Starting from the home position, bump the switches and measure the length of each belt.
-   Does not save the values, only reports them to serial.
-*/
-void calibrateBelts() {
-#ifdef POLARGRAPH
-#ifdef USE_LIMIT_SWITCH
-  wait_for_empty_segment_buffer();
-  motor_engage();
 
-  Serial.println(F("Find switches..."));
-
-  // reel in the left motor and the right motor out until contact is made.
-  digitalWrite(MOTOR_0_DIR_PIN, LOW);
-  digitalWrite(MOTOR_1_DIR_PIN, LOW);
-  int left = 0, right = 0;
-  long steps[NUM_MOTORS];
-  float homePos[NUM_AXIES];
-  homePos[0]=homeX;
-  homePos[1]=homeY;
-  homePos[2]=posz;
-  IK(homePos, steps);
-  findStepDelay();
-
-  do {
-    if (left == 0) {
-      if ( digitalRead(LIMIT_SWITCH_PIN_LEFT ) == LOW ) {
-        // switch hit
-        left = 1;
-      }
-      // switch not hit yet, keep moving
-      digitalWrite(MOTOR_0_STEP_PIN, HIGH);
-      digitalWrite(MOTOR_0_STEP_PIN, LOW);
-      steps[0]++;
-    }
-    if (right == 0) {
-      if ( digitalRead(LIMIT_SWITCH_PIN_RIGHT ) == LOW ) {
-        // switch hit
-        right = 1;
-      }
-      // switch not hit yet, keep moving
-      digitalWrite(MOTOR_1_STEP_PIN, HIGH);
-      digitalWrite(MOTOR_1_STEP_PIN, LOW);
-      steps[1]++;
-    }
-    pause(step_delay);
-  } while (left + right < NUM_MOTORS);
-
-  // make sure there's no momentum to skip the belt on the pulley.
-  delay(500);
-
-  Serial.println(F("Estimating position..."));
-  calibrateLeft  = (float)steps[0] * THREAD_PER_STEP;
-  calibrateRight = (float)steps[1] * THREAD_PER_STEP;
-
-  reportCalibration();
-
-  // current position is...
-  float axies[NUM_AXIES];
-  FK(steps, axies);
-  teleport(axies[0],axies[1],axies[2]);
-  where();
-
-  // go home.
-  Serial.println(F("Homing..."));
-
-  Vector3 offset = get_end_plus_offset();
-  line_safe(homeX, homeY, offset.z, feed_rate);
-  Serial.println(F("Done."));
-#endif // USE_LIMIT_SWITCH
-#endif // POLARGRAPH
-}
-
-
-void recordHome() {
-#ifdef POLARGRAPH2
-#ifdef USE_LIMIT_SWITCH
-  wait_for_empty_segment_buffer();
-  motor_engage();
-  findStepDelay();
-
-  Serial.println(F("Record home..."));
-
-  digitalWrite(MOTOR_0_DIR_PIN, LOW);
-  digitalWrite(MOTOR_1_DIR_PIN, LOW);
-  int left = 0;
-  int right = 0;
-  long count[NUM_MOTORS];
-
-  // we start at home position, so we know (x,y)->(left,right) value here.
-  IK(homeX, homeY, count);
-  Serial.print(F("HX="));  Serial.println(homeX);
-  Serial.print(F("HY="));  Serial.println(homeY);
-  //Serial.print(F("L1="));  Serial.println(leftCount);
-  //Serial.print(F("R1="));  Serial.println(rightCount);
-
-  Serial.println(F("A..."));
-  do {
-    if (left == 0) {
-      if ( digitalRead(LIMIT_SWITCH_PIN_LEFT) == LOW ) {
-        left = 1;
-        Serial.println(F("Left..."));
-      }
-      ++count[0];
-      digitalWrite(MOTOR_0_STEP_PIN, HIGH);
-      digitalWrite(MOTOR_0_STEP_PIN, LOW);
-    }
-    if (right == 0) {
-      if ( digitalRead(LIMIT_SWITCH_PIN_RIGHT) == LOW ) {
-        right = 1;
-        Serial.println(F("Right..."));
-      }
-      ++count[1];
-      digitalWrite(MOTOR_1_STEP_PIN, HIGH);
-      digitalWrite(MOTOR_1_STEP_PIN, LOW);
-    }
-    pause(step_delay * 2);
-  } while (left + right < 2);
-
-  Serial.println(F("B..."));
-  digitalWrite(MOTOR_0_DIR_PIN, HIGH);
-  digitalWrite(MOTOR_1_DIR_PIN, HIGH);
-  for (int i = 0; i < STEPS_PER_TURN; ++i) {
-    digitalWrite(MOTOR_0_STEP_PIN, HIGH);
-    digitalWrite(MOTOR_0_STEP_PIN, LOW);
-    digitalWrite(MOTOR_1_STEP_PIN, HIGH);
-    digitalWrite(MOTOR_1_STEP_PIN, LOW);
-    pause(step_delay * 4);
-    --count[0];
-    --count[1];
-  }
-
-  left = right = 0;
-  Serial.println(F("C..."));
-  digitalWrite(MOTOR_0_DIR_PIN, LOW);
-  digitalWrite(MOTOR_1_DIR_PIN, LOW);
-  do {
-    if (left == 0) {
-      if ( digitalRead(LIMIT_SWITCH_PIN_LEFT) == LOW ) {
-        left = 1;
-        Serial.println(F("Left..."));
-      }
-      ++count[0];
-      digitalWrite(MOTOR_0_STEP_PIN, HIGH);
-      digitalWrite(MOTOR_0_STEP_PIN, LOW);
-    }
-    if (right == 0) {
-      if ( digitalRead(LIMIT_SWITCH_PIN_RIGHT) == LOW ) {
-        right = 1;
-        Serial.println(F("Right..."));
-      }
-      ++count[1];
-      digitalWrite(MOTOR_1_STEP_PIN, HIGH);
-      digitalWrite(MOTOR_1_STEP_PIN, LOW);
-    }
-    pause(step_delay * 4);
-  } while (left + right < 2);
-
-  calibrateLeft = count[0];
-  calibrateRight = count[1];
-
-  // now we have the count from home position to switches.  record that value.
-  saveCalibration();
-  reportCalibration();
-
-  // current position is...
-  float axies[NUM_AXIES];
-  FK(count, axies);
-  teleport(axies[0],axies[1],axies[2]);
-  where();
-
-  // go home.
-  Serial.println(F("Homing..."));
-
-  Vector3 offset = get_end_plus_offset();
-  line_safe(homeX, homeY, offset.z, feed_rate);
-  Serial.println(F("Done."));
-#endif // USER_LIMIT_SWITCH
-#endif // POLARGRAPH2
-}
-
-
-/**
-   If limit switches are installed, move to touch each switch so that the pen holder can move to home position.
-*/
-void findHome() {
-#if MACHINE_STYLE == POLARGRAPH
-#ifdef USE_LIMIT_SWITCH
-  wait_for_empty_segment_buffer();
-  motor_engage();
-
-  Serial.println(F("Find Home..."));
-
-  findStepDelay();
-
-  // reel in the left motor and the right motor out until contact is made.
-  digitalWrite(MOTOR_0_DIR_PIN, LOW);
-  digitalWrite(MOTOR_1_DIR_PIN, LOW);
-  int left = 0, right = 0;
-  do {
-    if (left == 0) {
-      if ( digitalRead(LIMIT_SWITCH_PIN_LEFT) == LOW ) {
-        left = 1;
-        Serial.println(F("Left..."));
-      }
-      digitalWrite(MOTOR_0_STEP_PIN, HIGH);
-      digitalWrite(MOTOR_0_STEP_PIN, LOW);
-    }
-    if (right == 0) {
-      if ( digitalRead(LIMIT_SWITCH_PIN_RIGHT) == LOW ) {
-        right = 1;
-        Serial.println(F("Right..."));
-      }
-      digitalWrite(MOTOR_1_STEP_PIN, HIGH);
-      digitalWrite(MOTOR_1_STEP_PIN, LOW);
-    }
-    pause(step_delay);
-  } while (left + right < 2);
-
-  // make sure there's no momentum to skip the belt on the pulley.
-  delay(500);
-
-  Serial.println(F("Estimating position..."));
-  long count[NUM_MOTORS];
-  count[0] = calibrateLeft;
-  count[1] = calibrateRight;
-  Serial.print("cl=");   Serial.println(calibrateLeft);
-  Serial.print("cr=");   Serial.println(calibrateRight);
-  Serial.print("t=");    Serial.println(THREAD_PER_STEP);
-
-  // current position is...
-  float axies[NUM_AXIES];
-  FK(count, axies);
-  teleport(axies[0],axies[1],axies[2]);
-  where();
-
-  // go home.
-  Serial.println(F("Homing..."));
-
-  Vector3 offset = get_end_plus_offset();
-  line_safe(homeX, homeY, offset.z, feed_rate);
-  Serial.println(F("Done."));
-#endif // USER_LIMIT_SWITCH
-#endif // MACHINE_STYLE == POLARGRAPH
-}
-
-extern long testValue;
 /**
    Print the X,Y,Z, feedrate, and acceleration to serial.
    Equivalent to gcode M114
@@ -599,13 +363,25 @@ extern long testValue;
 void where() {
   wait_for_empty_segment_buffer();
 
-  Serial.print(F("X"   ));  Serial.print(posx);
-  Serial.print(F(" Y"  ));  Serial.print(posy);
-  Serial.print(F(" Z"  ));  Serial.print(posz);
-  Serial.print(' '      );  printFeedRate();
-  Serial.print(F(" A"  ));  Serial.println(acceleration);
-  Serial.print(F(" HX="));  Serial.print(homeX);
-  Serial.print(F(" HY="));  Serial.println(homeY);
+  int i;
+  for(i=0;i<NUM_AXIES;++i) {
+    Serial.print(AxisNames[i]);
+    Serial.print(axies[i].pos);
+    Serial.print(' ');
+  }
+
+  printFeedRate();
+  
+  Serial.print(F(" A"  ));
+  Serial.println(acceleration);
+  
+  for(i=0;i<NUM_AXIES;++i) {
+    Serial.print('H');
+    Serial.print(AxisNames[i]);
+    Serial.print(axies[i].home);
+    Serial.print(' ');
+  }
+  Serial.println();
 }
 
 
@@ -613,35 +389,48 @@ void where() {
    Print the machine limits to serial.
 */
 void printConfig() {
-  Serial.print(F("("));      Serial.print(limit_xmin);
-  Serial.print(F(","));      Serial.print(limit_ymax);
-  Serial.print(F(") - ("));  Serial.print(limit_xmax);
-  Serial.print(F(","));      Serial.print(limit_ymin);
+  int i;
+
+  Serial.print(F("("));
+  
+  for(i=0;i<NUM_AXIES;++i) {
+    Serial.print(axies[i].limitMin);
+    if(i<NUM_AXIES-1)  Serial.print(',');
+  }
+
+  Serial.print(F(") - ("));
+  
+  for(i=0;i<NUM_AXIES;++i) {
+    Serial.print(axies[i].limitMax);
+    if(i<NUM_AXIES-1)  Serial.print(',');
+  }
+
   Serial.print(F(")\n"));
 }
 
 
 /**
    Set the relative tool offset
-   @input axis the active tool id
-   @input x the x offset
-   @input y the y offset
-   @input z the z offset
+   @input toolID the active tool id
+   @input pos the offsets
 */
-void set_tool_offset(int axis, float x, float y, float z) {
-  tool_offset[axis].x = x;
-  tool_offset[axis].y = y;
-  tool_offset[axis].z = z;
+void set_tool_offset(int toolID, float *pos) {
+  int i;
+
+  for(i=0;i<NUM_AXIES;++i) {
+    tool_offset[toolID][i] = pos[i];
+  }
 }
 
 
 /**
    @return the position + active tool offset
 */
-Vector3 get_end_plus_offset() {
-  return Vector3(tool_offset[current_tool].x + posx,
-                 tool_offset[current_tool].y + posy,
-                 tool_offset[current_tool].z + posz);
+void get_end_plus_offset(float *results) {
+  int i;
+  for(i=0;i<NUM_AXIES;++i) {
+    results[i] = tool_offset[current_tool][i] + axies[i].pos;
+  }
 }
 
 
@@ -685,40 +474,65 @@ void parseDwell() {
 
 
 void parseLine() {
-  Vector3 offset = get_end_plus_offset();
+  float offset[NUM_AXIES];
+  get_end_plus_offset(offset);
   acceleration = min(max(parseNumber('A', acceleration), MIN_ACCELERATION), MAX_ACCELERATION);
-  line_safe( parseNumber('X', (absolute_mode ? offset.x : 0) * 10) * 0.1 + (absolute_mode ? 0 : offset.x),
-             parseNumber('Y', (absolute_mode ? offset.y : 0) * 10) * 0.1 + (absolute_mode ? 0 : offset.y),
-             parseNumber('Z', (absolute_mode ? offset.z : 0)   )     + (absolute_mode ? 0 : offset.z),
-             parseNumber('F', feed_rate) );
+  float f = parseNumber('F', feed_rate);
+  
+  int i;
+  float pos[NUM_AXIES];
+  for(i=0;i<NUM_AXIES;++i) {
+    pos[i] = parseNumber(AxisNames[i], (absolute_mode ? offset[i] : 0)) + (absolute_mode ? 0 : offset[i]);
+  }
+  
+  line_safe( pos, f );
 }
 
+
+/** 
+ * arcs in the XY plane
+ * @param clockwise 1 for cw, 0 for ccw
+ */
 void parseArc(int clockwise) {
-  Vector3 offset = get_end_plus_offset();
-  acceleration = min(max(parseNumber('A', acceleration), 1), 2000);
-  setFeedRate(parseNumber('F', feed_rate));
-  arc(parseNumber('I', (absolute_mode ? offset.x : 0) * 10) * 0.1 + (absolute_mode ? 0 : offset.x),
-      parseNumber('J', (absolute_mode ? offset.y : 0) * 10) * 0.1 + (absolute_mode ? 0 : offset.y),
-      parseNumber('X', (absolute_mode ? offset.x : 0) * 10) * 0.1 + (absolute_mode ? 0 : offset.x),
-      parseNumber('Y', (absolute_mode ? offset.y : 0) * 10) * 0.1 + (absolute_mode ? 0 : offset.y),
-      parseNumber('Z', (absolute_mode ? offset.z : 0)) + (absolute_mode ? 0 : offset.z),
+  float offset[NUM_AXIES];
+  get_end_plus_offset(offset);
+  acceleration = min(max(parseNumber('A', acceleration), MIN_ACCELERATION), MAX_ACCELERATION);
+  float f = parseNumber('F', feed_rate);
+  
+  int i;
+  float pos[NUM_AXIES];
+  for(i=0;i<NUM_AXIES;++i) {
+    pos[i] = parseNumber(AxisNames[i], (absolute_mode ? offset[i] : 0)) + (absolute_mode ? 0 : offset[i]);
+  }
+  
+  arc(parseNumber('I', (absolute_mode ? offset[0] : 0)) + (absolute_mode ? 0 : offset[0]),
+      parseNumber('J', (absolute_mode ? offset[1] : 0)) + (absolute_mode ? 0 : offset[1]),
+      pos,
       clockwise,
-      parseNumber('F', feed_rate) );
+      f );
 }
+
 
 void parseTeleport() {
-  Vector3 offset = get_end_plus_offset();
-  teleport( parseNumber('X', (absolute_mode ? offset.x : 0) * 10) * 0.1 + (absolute_mode ? 0 : offset.x),
-            parseNumber('Y', (absolute_mode ? offset.y : 0) * 10) * 0.1 + (absolute_mode ? 0 : offset.y),
-            parseNumber('Z', (absolute_mode ? offset.z : 0)     ) +       (absolute_mode ? 0 : offset.z)
-          );
+  float offset[NUM_AXIES];
+  get_end_plus_offset(offset);
+  
+  int i;
+  float pos[NUM_AXIES];
+  for(i=0;i<NUM_AXIES;++i) {
+    pos[i] = parseNumber(AxisNames[i], (absolute_mode ? offset[i] : 0)) + (absolute_mode ? 0 : offset[i]);
+  }
+  teleport(pos);
 }
 
+
 void parseToolOffset(int toolID) {
-  set_tool_offset(toolID,
-                  parseNumber('X', tool_offset[toolID].x),
-                  parseNumber('Y', tool_offset[toolID].y),
-                  parseNumber('Z', tool_offset[toolID].z));
+  int i;
+  float offset[NUM_AXIES];
+  for(i=0;i<NUM_AXIES;++i) {
+    offset[i] = parseNumber(AxisNames[i], tool_offset[toolID][i]);
+  }
+  set_tool_offset(toolID,offset);
 }
 
 /**
@@ -781,7 +595,7 @@ void processCommand() {
     case  17:  motor_engage();  break;
     case  18:  motor_disengage();  break;
     case 100:  help();  break;
-    case 101:  processConfig();  break;
+    case 101:  parseLimits();  break;
     case 102:  printConfig();  break;
     case 110:  line_number = parseNumber('N', line_number);  break;
     case 114:  where();  break;
@@ -796,8 +610,10 @@ void processCommand() {
     case  2:  parseArc(1);  break;  // clockwise
     case  3:  parseArc(0);  break;  // counter-clockwise
     case  4:  parseDwell();  break;
-    case 28:  findHome();  break;
+    case 28:  robot_findHome();  break;
+    #if MACHINE_STYLE == POLARGRAPH
     case 29:  calibrateBelts();  break;
+    #endif
     case 54:
     case 55:
     case 56:
@@ -817,9 +633,7 @@ void processCommand() {
 //    case  3:  SD_ListFiles();  break;
     case  4:  SD_StartPrintingFile(strchr(serialBuffer, ' ') + 1);  break; // read file
     case  5:  sayFirmwareVersionNumber();  break;
-    case  6:  setHome(parseNumber('X', (absolute_mode ? homeX : 0) * 10) * 0.1 + (absolute_mode ? 0 : homeX),
-                      parseNumber('Y', (absolute_mode ? homeY : 0) * 10) * 0.1 + (absolute_mode ? 0 : homeY));
-              break;
+    case  6:  parseSetHome();  break;
     case  7:  // set calibration length
               calibrateLeft = parseNumber('L', calibrateLeft);
               calibrateRight = parseNumber('R', calibrateRight);
@@ -830,14 +644,41 @@ void processCommand() {
               Serial.print(F("D10 V"));
               Serial.println(MACHINE_HARDWARE_VERSION);
               break;
-    case 11:  // if you accidentally upload m3 firmware to an m5 then upload it ONCE with this line uncommented.
-              adjustDimensions(50, -50, -32.5, 32.5);
-              saveCalibration();
-              break;
+#if MACHINE_STYLE == POLARGRAPH
+    case 11:  makelangelo5Setup();  break;
     case 12:  recordHome();
-    case 13:  setPenAngle(parseNumber('Z',posz));  break;
+#endif
+#if NUM_AXIES>2
+    case 13:  setPenAngle(parseNumber('Z',axies[2].pos));  break;
+#endif
     default:  break;
   }
+}
+
+
+#if MACHINE_STYLE == POLARGRAPH
+void makelangelo5Setup() {
+  // if you accidentally upload m3 firmware to an m5 then upload it ONCE with this line uncommented.
+  float limits[NUM_AXIES*2];
+  limits[0] = 32.5;
+  limits[1] = -32.5;
+  limits[2] = 50;
+  limits[3] = -50;
+  limits[4] = PEN_UP_ANGLE;
+  limits[5] = PEN_DOWN_ANGLE;
+  adjustDimensions(limits);
+  saveCalibration();
+}
+#endif
+
+
+void parseSetHome() {
+  int i;
+  float offset[NUM_AXIES];
+  for(i=0;i<NUM_AXIES;++i) {
+    offset[i] = parseNumber(AxisNames[i], axies[i].home);
+  }
+  setHome(offset);
 }
 
 
@@ -883,10 +724,13 @@ void reportCalibration() {
 }
 
 
-// equal to three decimal places?
+/**
+ * equal to three decimal places?
+ * return true when abs(a-b)<1
+ */
 boolean equalEpsilon(float a, float b) {
-  int aa = a * 10;
-  int bb = b * 10;
+  int aa = floor(a * 10);
+  int bb = floor(b * 10);
   //Serial.print("aa=");        Serial.print(aa);
   //Serial.print("\tbb=");      Serial.print(bb);
   //Serial.print("\taa==bb ");  Serial.println(aa==bb?"yes":"no");
@@ -895,16 +739,17 @@ boolean equalEpsilon(float a, float b) {
 }
 
 
-void setHome(float x, float y) {
-  boolean dx = equalEpsilon(x, homeX);
-  boolean dy = equalEpsilon(y, homeY);
-  if ( dx == false || dy == false ) {
-    //Serial.print(F("Was    "));    Serial.print(homeX);    Serial.print(',');    Serial.println(homeY);
-    //Serial.print(F("Is now "));    Serial.print(    x);    Serial.print(',');    Serial.println(    y);
-    //Serial.print(F("DX="));    Serial.println(dx?"true":"false");
-    //Serial.print(F("DY="));    Serial.println(dy?"true":"false");
-    homeX = x;
-    homeY = y;
+void setHome(float *pos) {
+  boolean changed=false;
+  
+  int i;
+  for(i=0;i<NUM_AXIES;++i) {
+    if(equalEpsilon(axies[i].home,pos[i])) changed=true;
+  }
+  if(changed==true) {
+    for(i=0;i<NUM_AXIES;++i) {
+      axies[i].home = pos[i];
+    }
     saveHome();
   }
 }
@@ -925,7 +770,9 @@ void parser_ready() {
  */
 void tools_setup() {
   for (int i = 0; i < NUM_TOOLS; ++i) {
-    set_tool_offset(i, 0, 0, 0);
+    for (int j = 0; j < NUM_AXIES; ++j) {
+      tool_offset[i][j]=0;
+    }
   }
 }
 
@@ -948,8 +795,14 @@ void setup() {
   LCD_init();
 
   // initialize the plotter position.
-  teleport(0, 0, posz);
+  float pos[NUM_AXIES];
+  for(int i=0;i<NUM_AXIES;++i) {
+    pos[i]=0;
+  }
+  if(NUM_AXIES>=3) pos[2]=PEN_UP_ANGLE;
+  teleport(pos);
   setPenAngle(PEN_UP_ANGLE);
+
   setFeedRate(DEFAULT_FEEDRATE);
   
   // display the help at startup.
