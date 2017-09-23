@@ -14,6 +14,7 @@
 #define SIN30   (0.5)
 #define TAN30   (1.0/SQRT3)
 
+
 /**
  * Inverse Kinematics turns XY coordinates into step counts from each motor
  * @param axies the cartesian coordinate
@@ -34,6 +35,15 @@ void IK(float *axies, long *motorStepArray) {
   if(state == 0) {
     state = delta_calcAngleYZ(x*COS120 - y*SIN120, y*COS120+x*SIN120, z, motorStepArray[2]);  // rotate coords to -120 deg
   }
+  
+  Serial.print("IK ");
+  Serial.print('\t');  Serial.print(axies[0]);
+  Serial.print('\t');  Serial.print(axies[1]);
+  Serial.print('\t');  Serial.print(axies[2]);
+  Serial.print('\t');  Serial.print(motorStepArray[0]);
+  Serial.print('\t');  Serial.print(motorStepArray[1]);
+  Serial.print('\t');  Serial.print(motorStepArray[2]);
+  Serial.print('\n');
 }
 
 
@@ -103,28 +113,107 @@ int FK(long *motorStepArray,float *axies) {
  * @return 1 on failure, 0 on success
  */
 int delta_calcAngleYZ(float x0, float y0, float z0, long &theta) {
-  float y1 = -0.5 * 0.57735 * CENTER_TO_SHOULDER;  // f/2 * tg 30
+  float y1 = -0.5 * TAN30 * CENTER_TO_SHOULDER;  // f/2 * tg 30
   
-  y0 -= 0.5 * 0.57735 * EFFECTOR_TO_WRIST;  // shift center to edge
+  y0 -= 0.5 * TAN30 * EFFECTOR_TO_WRIST;  // shift center to edge
   // z = a + b*y
   float a = (x0*x0 + y0*y0 + z0*z0 +SHOULDER_TO_ELBOW*SHOULDER_TO_ELBOW - ELBOW_TO_WRIST*ELBOW_TO_WRIST - y1*y1)/(2.0*z0);
   float b = (y1-y0)/z0;
 
+  Serial.print("a=");  Serial.println(a);
+  Serial.print("b=");  Serial.println(b);
+
   // discriminant
   float d = -(a+b*y1)*(a+b*y1)+SHOULDER_TO_ELBOW*(b*b*SHOULDER_TO_ELBOW+SHOULDER_TO_ELBOW); 
+  Serial.print("d=");  Serial.println(d);
   if (d < 0) return 1; // non-existing povar.  return error, theta
+
 
   float yj = (y1 - a*b - sqrt(d))/(b*b + 1); // choosing outer povar
   float zj = a + b*yj;
   theta = atan(-zj/(y1 - yj)) * 180.0/PI + ((yj>y1)?180.0:0.0);
   theta *= MICROSTEP_PER_DEGREE;
   
+  Serial.print("yj=");  Serial.println(yj);
+  Serial.print("zj=");  Serial.println(zj);
+  Serial.print("theta=");  Serial.println(theta);
+
   return 0;  // return error, theta
 }
 
 
 void robot_findHome() {
+  char i;
+/*
+  motor_disengage();
 
+  // back up until the arms hit the limit switches
+  float horizontal = DEGREES_ABOVE_HORIZONTAL;
+  long j, steps_to_zero = horizontal * MICROSTEP_PER_DEGREE;
+
+  for(i=0;i<NUM_MOTORS;++i) {
+    // enable one motor at a time
+    digitalWrite(motors[i].enable_pin,LOW);
+    digitalWrite(motors[i].dir_pin, LOW);
+    
+    // drive until you hit the switch
+    deltarobot_read_switches();
+    while(motors[i].limit_switch_pin == HIGH) {
+      digitalWrite(motors[i].step_pin, HIGH);
+      digitalWrite(motors[i].step_pin, LOW);
+      deltarobot_read_switches();
+      pause(step_delay);
+    }
+    
+    // move to home position
+    digitalWrite(motors[i].dir_pin, HIGH);
+    for(j=0;j<steps_to_zero;++j) {
+      digitalWrite(motors[i].step_pin, HIGH);
+      digitalWrite(motors[i].step_pin, LOW);
+      pause(step_delay);
+    }
+  }*/
+  
+  float aa = CENTER_TO_SHOULDER + SHOULDER_TO_ELBOW - EFFECTOR_TO_WRIST;
+  float cc = ELBOW_TO_WRIST;
+  float bb = sqrt(cc*cc - aa*aa);
+  Serial.print("aa=");  Serial.println(aa);
+  Serial.print("bb=");  Serial.println(bb);
+  Serial.print("cc=");  Serial.println(cc);
+  axies[0].pos=0;
+  axies[1].pos=0;
+  axies[2].pos = CENTER_TO_FLOOR - bb;
 }
+
+
+/**
+ * read the limit switch states
+ * @return 1 if a switch is being hit
+ */
+char deltarobot_read_switches() {
+  char i, hit=0;
+  int state;
+  
+  for(i=0;i<NUM_MOTORS;++i) {
+    state=digitalRead(motors[i].limit_switch_pin);
+#if DEBUG_SWITCHES > 0
+    Serial.print(state);
+    Serial.print('\t');
+#endif
+    if(motors[i].limit_switch_state != state) {
+      motors[i].limit_switch_state = state;
+#if DEBUG_SWITCHES > 0
+      Serial.print(F("Switch "));
+      Serial.println(i,DEC);
+#endif
+    }
+    if(state == LOW) ++hit;
+  }
+#if DEBUG_SWITCHES > 0
+  Serial.print('\n');
+#endif
+  return hit;
+}
+
 
 #endif

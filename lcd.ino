@@ -154,10 +154,12 @@ void LCD_status_menu() {
       speed_adjust += lcd_turn;
     }
     // update the current status
-      Vector3 offset=get_end_plus_offset();
+    /*
+    float offset[NUM_AXIES];
+    get_end_plus_offset(offset);
     lcd.setCursor( 0, 0);  lcd.print('X');  LCD_print_float(offset.x);
     lcd.setCursor(10, 0);  lcd.print('Y');  LCD_print_float(offset.y);
-    lcd.setCursor( 0, 1);  lcd.print('Z');  LCD_print_float(offset.z);
+    lcd.setCursor( 0, 1);  lcd.print('Z');  LCD_print_float(offset.z);*/
     lcd.setCursor(10, 1);  lcd.print('F');  LCD_print_float(feed_rate);
     lcd.setCursor( 0, 2);  lcd.print(F("Makelangelo #"));  lcd.print(robot_uid);
     lcd.setCursor( 0, 3);  LCD_print_long(speed_adjust);  lcd.print(F("% "));
@@ -194,19 +196,23 @@ void LCD_enable_motors() {
 
 
 void LCD_find_home() {
-  findHome();
+  robot_findHome();
   MENU_GOTO(LCD_main_menu);
 }
 
 
 void LCD_this_is_home() {
-  teleport(0,0,0);
+  float offset[NUM_AXIES];
+  for(int i=0;i<NUM_AXIES;++i) offset[i]=0;
+  teleport(offset);
   MENU_GOTO(LCD_main_menu);
 }
 
 
 void LCD_go_home() {
-  polargraph_line( 0, 0, posz, DEFAULT_FEEDRATE );
+  float homes[NUM_AXIES];
+  for(int i=0;i<NUM_AXIES;++i) homes[i]=axies[i].home;
+  polargraph_line( homes, DEFAULT_FEEDRATE );
   MENU_GOTO(LCD_main_menu);
 }
 
@@ -225,41 +231,46 @@ void LCD_drive_menu() {
 void LCD_driveX() {
   if(lcd_click_now) MENU_GOTO(LCD_drive_menu);
 
+  float offset[NUM_AXIES];
+  get_end_plus_offset(offset);
+    
   if(lcd_turn) {
-      Vector3 offset=get_end_plus_offset();
-    line_safe(offset.x+lcd_turn,offset.y,offset.z,feed_rate);
+    offset[0]+=lcd_turn;
+    line_safe(offset,feed_rate);
   }
   
-  lcd.setCursor( 0, 0);  lcd.print('X');  LCD_print_float(posx);
+  lcd.setCursor( 0, 0);  lcd.print('X');  LCD_print_float(offset[0]);
 }
 
 
 void LCD_driveY() {
   if(lcd_click_now) MENU_GOTO(LCD_drive_menu);
 
+  float offset[NUM_AXIES];
+  get_end_plus_offset(offset);
+    
   if(lcd_turn) {
-      Vector3 offset=get_end_plus_offset();
-    line_safe(offset.x,offset.y+lcd_turn,offset.z,feed_rate);
+    offset[1]+=lcd_turn;
+    line_safe(offset,feed_rate);
   }
   
-  lcd.setCursor( 0, 0);  lcd.print('Y');  LCD_print_float(posy);
+  lcd.setCursor( 0, 0);  lcd.print('Y');  LCD_print_float(offset[1]);
 }
 
 
 void LCD_driveZ() {
   if(lcd_click_now) MENU_GOTO(LCD_drive_menu);
 
+  float offset[NUM_AXIES];
+  get_end_plus_offset(offset);
+  
   if(lcd_turn) {
     // protect servo, don't drive beyond physical limits
-      Vector3 offset=get_end_plus_offset();
-    float newZ = offset.z + lcd_turn;
-    if(newZ<10) newZ=10;
-    if(newZ>170) newZ=170;
-    // move
-    line_safe(offset.x,offset.y,newZ,feed_rate);
+    offset[2]+=lcd_turn;
+    line_safe(offset,feed_rate);
   }
   
-  lcd.setCursor( 0, 0);  lcd.print('Z');  LCD_print_float(posz);
+  lcd.setCursor( 0, 0);  lcd.print('Z');  LCD_print_float(offset[2]);
 }
 
 

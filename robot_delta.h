@@ -16,7 +16,7 @@
 #define DELTA_STYLE_MARGINALLYCLEVER_V8  1
 #define DELTA_STYLE_JUDAH                2
 
-#define DELTA_STYLE DELTA_STYLE_MARGINALLYCLEVER_V8  // change this
+#define DELTA_STYLE DELTA_STYLE_JUDAH  // change this
 
 
 #define STEP_DELAY           (50)  // delay between steps, in milliseconds, when doing fixed tasks like homing

@@ -133,6 +133,18 @@ void motor_setup() {
   motors[3].enable_pin      =MOTOR_3_ENABLE_PIN;
   motors[3].limit_switch_pin=MOTOR_3_LIMIT_SWITCH_PIN;
 #endif
+#if NUM_MOTORS>4
+  motors[4].step_pin        =MOTOR_4_STEP_PIN;
+  motors[4].dir_pin         =MOTOR_4_DIR_PIN;
+  motors[4].enable_pin      =MOTOR_4_ENABLE_PIN;
+  motors[4].limit_switch_pin=MOTOR_4_LIMIT_SWITCH_PIN;
+#endif
+#if NUM_MOTORS>5
+  motors[5].step_pin        =MOTOR_5_STEP_PIN;
+  motors[5].dir_pin         =MOTOR_5_DIR_PIN;
+  motors[5].enable_pin      =MOTOR_5_ENABLE_PIN;
+  motors[5].limit_switch_pin=MOTOR_5_LIMIT_SWITCH_PIN;
+#endif
 
   int i;
   for(i=0;i<NUM_MOTORS;++i) {
@@ -791,10 +803,20 @@ void motor_line(long *n,float new_feed_rate) {
     if( new_seg.steps_total < new_seg.a[i].absdelta ) {
       new_seg.steps_total = new_seg.a[i].absdelta;
     }
+    //Serial.print(i);
+    //Serial.print('\t');    Serial.print(n[i]);
+    //Serial.print('\t');    Serial.print(old_seg.a[i].step_count);
+    //Serial.print('\t');    Serial.print(new_seg.a[i].step_count);
+    //Serial.print('\t');    Serial.print(new_seg.a[i].dir);
+    //Serial.print('\t');    Serial.print(new_seg.a[i].dir);
+    //Serial.print('\t');    Serial.print(new_seg.a[i].absdelta);
+    //Serial.println();
   }
 
   // No steps?  No work!  Stop now.
   if( new_seg.steps_total == 0 ) return;
+
+  //Serial.println(new_seg.steps_total);
 
   len = sqrt( len );
   float ilen = 1.0f / len;
