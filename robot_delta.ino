@@ -7,6 +7,7 @@
 
 #if MACHINE_STYLE == DELTA
 
+
 #define SQRT3   (sqrt(3.0))
 #define SIN120  (SQRT3/2.0)
 #define COS120  (-0.5)
@@ -28,6 +29,7 @@ void IK(float *axies, long *motorStepArray) {
   motorStepArray[0]=0;
   motorStepArray[1]=0;
   motorStepArray[2]=0;
+  
   int state = delta_calcAngleYZ(x, y, z, motorStepArray[0]);
   if(state == 0) {
     state = delta_calcAngleYZ(x*COS120 + y*SIN120, y*COS120-x*SIN120, z, motorStepArray[1]);  // rotate coords to +120 deg
@@ -35,15 +37,20 @@ void IK(float *axies, long *motorStepArray) {
   if(state == 0) {
     state = delta_calcAngleYZ(x*COS120 - y*SIN120, y*COS120+x*SIN120, z, motorStepArray[2]);  // rotate coords to -120 deg
   }
+
+#if NUM_AXIES>3
+  // if there is a fourth axis rotation on the head of the delta, transfer it here.
+  motorStepArray[3] = axies[3];
+#endif
   
-  Serial.print("IK ");
-  Serial.print('\t');  Serial.print(axies[0]);
-  Serial.print('\t');  Serial.print(axies[1]);
-  Serial.print('\t');  Serial.print(axies[2]);
-  Serial.print('\t');  Serial.print(motorStepArray[0]);
-  Serial.print('\t');  Serial.print(motorStepArray[1]);
-  Serial.print('\t');  Serial.print(motorStepArray[2]);
-  Serial.print('\n');
+  //Serial.print("IK ");
+  //Serial.print('\t');  Serial.print(axies[0]);
+  //Serial.print('\t');  Serial.print(axies[1]);
+  //Serial.print('\t');  Serial.print(axies[2]);
+  //Serial.print('\t');  Serial.print(motorStepArray[0]);
+  //Serial.print('\t');  Serial.print(motorStepArray[1]);
+  //Serial.print('\t');  Serial.print(motorStepArray[2]);
+  //Serial.print('\n');
 }
 
 
@@ -115,17 +122,19 @@ int FK(long *motorStepArray,float *axies) {
 int delta_calcAngleYZ(float x0, float y0, float z0, long &theta) {
   float y1 = -0.5 * TAN30 * CENTER_TO_SHOULDER;  // f/2 * tg 30
   
+  z0-= CENTER_TO_FLOOR;
+   
   y0 -= 0.5 * TAN30 * EFFECTOR_TO_WRIST;  // shift center to edge
   // z = a + b*y
   float a = (x0*x0 + y0*y0 + z0*z0 +SHOULDER_TO_ELBOW*SHOULDER_TO_ELBOW - ELBOW_TO_WRIST*ELBOW_TO_WRIST - y1*y1)/(2.0*z0);
   float b = (y1-y0)/z0;
 
-  Serial.print("a=");  Serial.println(a);
-  Serial.print("b=");  Serial.println(b);
+  //Serial.print("a=");  Serial.println(a);
+  //Serial.print("b=");  Serial.println(b);
 
   // discriminant
   float d = -(a+b*y1)*(a+b*y1)+SHOULDER_TO_ELBOW*(b*b*SHOULDER_TO_ELBOW+SHOULDER_TO_ELBOW); 
-  Serial.print("d=");  Serial.println(d);
+  //Serial.print("d=");  Serial.println(d);
   if (d < 0) return 1; // non-existing povar.  return error, theta
 
 
@@ -134,9 +143,9 @@ int delta_calcAngleYZ(float x0, float y0, float z0, long &theta) {
   theta = atan(-zj/(y1 - yj)) * 180.0/PI + ((yj>y1)?180.0:0.0);
   theta *= MICROSTEP_PER_DEGREE;
   
-  Serial.print("yj=");  Serial.println(yj);
-  Serial.print("zj=");  Serial.println(zj);
-  Serial.print("theta=");  Serial.println(theta);
+  //Serial.print("yj=");  Serial.println(yj);
+  //Serial.print("zj=");  Serial.println(zj);
+  //Serial.print("theta=");  Serial.println(theta);
 
   return 0;  // return error, theta
 }
