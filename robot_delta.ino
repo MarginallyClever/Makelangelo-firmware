@@ -40,7 +40,7 @@ void IK(float *axies, long *motorStepArray) {
 
 #if NUM_AXIES>3
   // if there is a fourth axis rotation on the head of the delta, transfer it here.
-  motorStepArray[3] = axies[3];
+  motorStepArray[3] = axies[3] * MICROSTEP_PER_DEGREE;
 #endif
   
   //Serial.print("IK ");
