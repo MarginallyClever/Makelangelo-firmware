@@ -33,9 +33,6 @@
 #define PEN_DOWN_ANGLE       (50)  // Some steppers don't like 0 degrees
 
 
-#define NUM_AXIES            (4)
-#define NUM_MOTORS           (3)
-#define NUM_SERVOS           (1)
 #define NUM_TOOLS            (1)
 
 #define MAX_FEEDRATE         (9000.0)  // depends on timer interrupt & hardware
@@ -54,6 +51,9 @@
 #define EFFECTOR_TO_WRIST        ( 1.724f)  // cm (e)
 #define CENTER_TO_FLOOR          (18.900f)  // cm
 #define DEGREES_ABOVE_HORIZONTAL (24.000f)
+#define NUM_AXIES            (3)
+#define NUM_MOTORS           (3)
+#define NUM_SERVOS           (0)
 #endif
 
 
@@ -65,6 +65,9 @@
 #define EFFECTOR_TO_WRIST        ( 1.724f)  // cm (E)
 #define CENTER_TO_FLOOR          (60.000f)  // cm
 #define DEGREES_ABOVE_HORIZONTAL (24.000f)
+#define NUM_AXIES            (4)
+#define NUM_MOTORS           (4)
+#define NUM_SERVOS           (0)
 #endif
 
 

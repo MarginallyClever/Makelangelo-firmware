@@ -182,6 +182,7 @@ void testKinematics() {
   }
 }
 
+
 /**
    Translate the XYZ through the IK to get the number of motor steps and move the motors.
    @input pos NUM_AXIES floats describing destination coordinates
@@ -211,6 +212,7 @@ void lineSafe(float *pos, float new_feed_rate) {
   int i;
   for(i=0;i<NUM_AXIES;++i) {
     destination[i] = pos[i] - tool_offset[current_tool][i];
+    // @TODO confirm destination is within max/min limits.
   }
 
 #ifdef SUBDIVIDE_LINES
