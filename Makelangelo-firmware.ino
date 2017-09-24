@@ -187,7 +187,7 @@ void testKinematics() {
    @input pos NUM_AXIES floats describing destination coordinates
    @input new_feed_rate speed to travel along arc
 */
-void polargraph_line(float *pos, float new_feed_rate) {
+void lineSafeInternal(float *pos, float new_feed_rate) {
   long steps[NUM_MOTORS + NUM_SERVOS];
   IK(pos, steps);
 
@@ -206,7 +206,7 @@ void polargraph_line(float *pos, float new_feed_rate) {
    @input pos NUM_AXIES floats describing destination coordinates
    @input new_feed_rate speed to travel along arc
 */
-void line_safe(float *pos, float new_feed_rate) {
+void lineSafe(float *pos, float new_feed_rate) {
   float destination[NUM_AXIES];
   int i;
   for(i=0;i<NUM_AXIES;++i) {
@@ -237,12 +237,12 @@ void line_safe(float *pos, float new_feed_rate) {
     for(i=0;i<NUM_AXIES;++i) {
       temp[i] = delta[i] * a + start[i];
     }
-    polargraph_line(temp, new_feed_rate);
+    lineSafeInternal(temp, new_feed_rate);
   }
 #endif
 
   // guarantee we stop exactly at the destination (no rounding errors).
-  polargraph_line(destination, new_feed_rate);
+  lineSafeInternal(destination, new_feed_rate);
 }
 
 
@@ -302,7 +302,7 @@ void arc(float cx, float cy, float *destination, char clockwise, float new_feed_
     n[2] = ( z - sz ) * scale + sz;
     #endif
     // send it to the planner
-    line_safe(n, new_feed_rate);
+    lineSafe(n, new_feed_rate);
   }
 }
 
@@ -485,7 +485,7 @@ void parseLine() {
     pos[i] = parseNumber(AxisNames[i], (absolute_mode ? offset[i] : 0)) + (absolute_mode ? 0 : offset[i]);
   }
   
-  line_safe( pos, f );
+  lineSafe( pos, f );
 }
 
 
