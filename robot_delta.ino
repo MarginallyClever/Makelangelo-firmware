@@ -153,7 +153,7 @@ int delta_calcAngleYZ(float x0, float y0, float z0, long &theta) {
 
 void robot_findHome() {
   char i;
-/*
+
   motor_disengage();
 
   // back up until the arms hit the limit switches
@@ -181,14 +181,14 @@ void robot_findHome() {
       digitalWrite(motors[i].step_pin, LOW);
       pause(step_delay);
     }
-  }*/
+  }
   
   float aa = CENTER_TO_SHOULDER + SHOULDER_TO_ELBOW - EFFECTOR_TO_WRIST;
   float cc = ELBOW_TO_WRIST;
   float bb = sqrt(cc*cc - aa*aa);
-  Serial.print("aa=");  Serial.println(aa);
-  Serial.print("bb=");  Serial.println(bb);
-  Serial.print("cc=");  Serial.println(cc);
+  //Serial.print("aa=");  Serial.println(aa);
+  //Serial.print("bb=");  Serial.println(bb);
+  //Serial.print("cc=");  Serial.println(cc);
   axies[0].pos=0;
   axies[1].pos=0;
   axies[2].pos = CENTER_TO_FLOOR - bb;

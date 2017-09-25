@@ -10,7 +10,7 @@
 #if MACHINE_STYLE == DELTA
 
 #define MACHINE_STYLE_NAME           "DELTA"
-#define MACHINE_HARDWARE_VERSION 5  // If you have a makelangelo 5+
+#define MACHINE_HARDWARE_VERSION 5
 
 // known machine configurations
 #define DELTA_STYLE_MARGINALLYCLEVER_V8  1
@@ -74,5 +74,5 @@
 #endif  // #ifdef DELTA
 
 
-#endif  // #ifndef ROBOT_TRADITIONALXY_H
+#endif  // #ifndef ROBOT_DELTA_H
 

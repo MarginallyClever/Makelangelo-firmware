@@ -23,13 +23,13 @@
 #define SKYCAM           5  // 4 motor, x-shaped 3D motion
 #define DELTA            6  // 3 arm delta robot, rotary action
 //#define KOSSEL           7  // 3 arm delta robot, linear action.  not supported yet.
-//#define STEWART          8  // 6 arm stewart platform, rotary action.  not supported yet.
+#define STEWART          8  // 6 arm stewart platform, rotary action.  not supported yet.
 //#define OSGOODE          9  // 6 arm stewart platform, linear action.  not supported yet.
 //#define ARM4            10
 //#define ARM5            11
 //#define ARM6            12
 
-#define MACHINE_STYLE POLARGRAPH  // change this
+#define MACHINE_STYLE STEWART  // change this
 
 // robot style descriptions
 #include "robot_polargraph.h"
@@ -39,7 +39,7 @@
 #include "robot_skycam.h"
 #include "robot_delta.h"
 //#include "robot_kossel.h"
-//#include "robot_stewart.h"
+#include "robot_stewart.h"
 //#include "robot_osgoode.h"
 //#include "robot_osgoode.h"
 //#include "robot_arm4.h"
