@@ -21,15 +21,16 @@
 #define COREXY           2  // gantry CoreXY setup.
 #define ZARPLOTTER       4  // 4 motor, x-shaped 2D motion
 #define SKYCAM           5  // 4 motor, x-shaped 3D motion
-#define DELTA            6  // 3 arm delta robot, rotary action
+#define DELTA            6  // 3 arm delta robot, rotary action.  untested.
 //#define KOSSEL           7  // 3 arm delta robot, linear action.  not supported yet.
-#define STEWART          8  // 6 arm stewart platform, rotary action.  not supported yet.
+#define STEWART          8  // 6 arm stewart platform, rotary action.  untested.
 //#define OSGOODE          9  // 6 arm stewart platform, linear action.  not supported yet.
-//#define ARM4            10
-//#define ARM5            11
-//#define ARM6            12
+#define ARM3            10
+//#define ARM4            11
+//#define ARM5            12
+//#define ARM6            13
 
-#define MACHINE_STYLE STEWART  // change this
+#define MACHINE_STYLE ARM3  // change this
 
 // robot style descriptions
 #include "robot_polargraph.h"
@@ -41,7 +42,7 @@
 //#include "robot_kossel.h"
 #include "robot_stewart.h"
 //#include "robot_osgoode.h"
-//#include "robot_osgoode.h"
+#include "robot_arm3.h"
 //#include "robot_arm4.h"
 //#include "robot_arm5.h"
 //#include "robot_arm6.h"
