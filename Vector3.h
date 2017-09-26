@@ -262,8 +262,8 @@ public:
     return Vector3( x * s, y * s, z * s );
   }
 
-/*
-  void Rotate( Vector3 &axis, float angle ) {
+
+  void rotate( Vector3 &axis, float angle ) {
     float sa = (float)sin( angle );
     float ca = (float)cos( angle );
     Vector3 axis2( axis );
@@ -286,7 +286,7 @@ public:
     x = m[0] * src.x + m[1] * src.y + m[2] * src.z;
     y = m[3] * src.x + m[4] * src.y + m[5] * src.z;
     z = m[6] * src.x + m[7] * src.y + m[8] * src.z;
-  }*/
+  }
 };
 
 

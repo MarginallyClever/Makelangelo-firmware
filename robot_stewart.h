@@ -39,6 +39,7 @@
 
 #define BICEP_LENGTH         ( 5.000)
 #define FOREARM_LENGTH       (16.750)
+#define SWITCH_ANGLE         (18.690)
 // top center to wrist hole (relative): X7.635 Y+/-0.553 Z0.87
 #define T2W_X                ( 7.635)
 #define T2W_Y                ( 0.553)
