@@ -211,8 +211,8 @@ void LCD_this_is_home() {
 
 void LCD_go_home() {
   float homes[NUM_AXIES];
-  for(int i=0;i<NUM_AXIES;++i) homes[i]=axies[i].home;
-  polargraph_line( homes, DEFAULT_FEEDRATE );
+  for(int i=0;i<NUM_AXIES;++i) homes[i]=axies[i].homePos;
+  lineSafe( homes, DEFAULT_FEEDRATE );
   MENU_GOTO(LCD_main_menu);
 }
 
@@ -236,7 +236,7 @@ void LCD_driveX() {
     
   if(lcd_turn) {
     offset[0]+=lcd_turn;
-    line_safe(offset,feed_rate);
+    lineSafe(offset,feed_rate);
   }
   
   lcd.setCursor( 0, 0);  lcd.print('X');  LCD_print_float(offset[0]);
@@ -251,7 +251,7 @@ void LCD_driveY() {
     
   if(lcd_turn) {
     offset[1]+=lcd_turn;
-    line_safe(offset,feed_rate);
+    lineSafe(offset,feed_rate);
   }
   
   lcd.setCursor( 0, 0);  lcd.print('Y');  LCD_print_float(offset[1]);
@@ -267,7 +267,7 @@ void LCD_driveZ() {
   if(lcd_turn) {
     // protect servo, don't drive beyond physical limits
     offset[2]+=lcd_turn;
-    line_safe(offset,feed_rate);
+    lineSafe(offset,feed_rate);
   }
   
   lcd.setCursor( 0, 0);  lcd.print('Z');  LCD_print_float(offset[2]);
