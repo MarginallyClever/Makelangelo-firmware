@@ -126,11 +126,22 @@ void parseLimits() {
   
   float newT = parseNumber('T', axies[axisNumber].limitMax);
   float newB = parseNumber('B', axies[axisNumber].limitMin);
-
-  //adjustDimensions(newT, newB, newR, newL);
-
-  /*printConfig();
+  boolean changed=false;
   
+  if(!equalEpsilon(axies[axisNumber].limitMax,newT)) {
+    axies[axisNumber].limitMax=newT;
+    changed=true;
+  }
+  if(!equalEpsilon(axies[axisNumber].limitMin,newB)) {
+    axies[axisNumber].limitMin=newB;
+    changed=true;
+  }
+  if(changed==true) {
+    saveLimits();
+  }
+
+  printConfig();
+  /*
   float pos[NUM_AXIES];
   int i;
   for(i=0;i<NUM_AXIES;++i) {
@@ -380,7 +391,7 @@ void where() {
   for(i=0;i<NUM_AXIES;++i) {
     Serial.print('H');
     Serial.print(AxisNames[i]);
-    Serial.print(axies[i].home);
+    Serial.print(axies[i].homePos);
     Serial.print(' ');
   }
   Serial.println();
@@ -678,7 +689,7 @@ void parseSetHome() {
   int i;
   float offset[NUM_AXIES];
   for(i=0;i<NUM_AXIES;++i) {
-    offset[i] = parseNumber(AxisNames[i], axies[i].home);
+    offset[i] = parseNumber(AxisNames[i], axies[i].homePos);
   }
   setHome(offset);
 }
@@ -727,8 +738,8 @@ void reportCalibration() {
 
 
 /**
- * equal to three decimal places?
- * return true when abs(a-b)<1
+ * equal to some decimal places?
+ * return true when abs(a-b)<0.1
  */
 boolean equalEpsilon(float a, float b) {
   int aa = floor(a * 10);
@@ -746,11 +757,11 @@ void setHome(float *pos) {
   
   int i;
   for(i=0;i<NUM_AXIES;++i) {
-    if(equalEpsilon(axies[i].home,pos[i])) changed=true;
+    if(!equalEpsilon(axies[i].homePos,pos[i])) changed=true;
   }
   if(changed==true) {
     for(i=0;i<NUM_AXIES;++i) {
-      axies[i].home = pos[i];
+      axies[i].homePos = pos[i];
     }
     saveHome();
   }
