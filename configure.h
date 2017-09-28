@@ -30,7 +30,7 @@
 //#define ARM5            12
 //#define ARM6            13
 
-#define MACHINE_STYLE ARM3  // change this
+#define MACHINE_STYLE POLARGRAPH  // change this
 
 // robot style descriptions
 #include "robot_polargraph.h"
@@ -135,7 +135,7 @@ typedef struct {
   float limitMax;
   float limitMin;
   float pos;
-  float home;
+  float homePos;
 } Axis;
 
 
