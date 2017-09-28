@@ -80,9 +80,13 @@ void recordHome() {
   long count[NUM_MOTORS];
 
   // we start at home position, so we know (x,y)->(left,right) value here.
-  IK(homeX, homeY, count);
-  Serial.print(F("HX="));  Serial.println(homeX);
-  Serial.print(F("HY="));  Serial.println(homeY);
+  float homes[NUM_AXIES];
+  homes[0]=axies[0].homePos;
+  homes[1]=axies[1].homePos;
+  homes[2]=axies[2].pos;
+  IK(homes, count);
+  Serial.print(F("HX="));  Serial.println(homes[0]);
+  Serial.print(F("HY="));  Serial.println(homes[1]);
   //Serial.print(F("L1="));  Serial.println(leftCount);
   //Serial.print(F("R1="));  Serial.println(rightCount);
 
@@ -156,16 +160,19 @@ void recordHome() {
   reportCalibration();
 
   // current position is...
-  float axies[NUM_AXIES];
-  FK(count, axies);
-  teleport(axies[0],axies[1],axies[2]);
+  float axies2[NUM_AXIES];
+  FK(count, axies2);
+  teleport(axies2);
   where();
 
   // go home.
   Serial.println(F("Homing..."));
 
-  Vector3 offset = get_end_plus_offset();
-  line_safe(homeX, homeY, offset.z, feed_rate);
+  float offset[NUM_AXIES];
+  get_end_plus_offset(offset);
+  offset[0]=axies[0].homePos;
+  offset[1]=axies[1].homePos;
+  lineSafe(offset, feed_rate);
   Serial.println(F("Done."));
 #endif // USER_LIMIT_SWITCH
 }
@@ -212,23 +219,30 @@ void robot_findHome() {
 
   Serial.println(F("Estimating position..."));
   long count[NUM_MOTORS];
-  count[0] = calibrateLeft;
-  count[1] = calibrateRight;
+  count[0] = calibrateLeft/THREAD_PER_STEP;
+  count[1] = calibrateRight/THREAD_PER_STEP;
+  count[2] = axies[2].pos;
   Serial.print("cl=");   Serial.println(calibrateLeft);
   Serial.print("cr=");   Serial.println(calibrateRight);
-  Serial.print("t=");    Serial.println(THREAD_PER_STEP);
+  Serial.print("t*1000=");    Serial.println(THREAD_PER_STEP*1000);
 
   // current position is...
-  float axies[NUM_AXIES];
-  FK(count, axies);
-  teleport(axies[0],axies[1],axies[2]);
+  float axies2[NUM_AXIES];
+  FK(count, axies2);
+  teleport(axies2);
+  
   where();
 
   // go home.
-  Serial.println(F("Homing..."));
 
-  Vector3 offset = get_end_plus_offset();
-  line_safe(homeX, homeY, offset.z, feed_rate);
+  float offset[NUM_AXIES];
+  get_end_plus_offset(offset);
+  offset[0]=axies[0].homePos;
+  offset[1]=axies[1].homePos;
+  offset[2]=axies[2].pos;
+  Serial.print(F("Homing to "));  Serial.print(axies[0].homePos);
+  Serial.print(",");              Serial.println(axies[1].homePos);
+  lineSafe(offset, feed_rate);
   Serial.println(F("Done."));
 #endif // USER_LIMIT_SWITCH
 }
@@ -251,9 +265,9 @@ void calibrateBelts() {
   int left = 0, right = 0;
   long steps[NUM_MOTORS];
   float homePos[NUM_AXIES];
-  homePos[0]=homeX;
-  homePos[1]=homeY;
-  homePos[2]=posz;
+  homePos[0]=axies[0].homePos;
+  homePos[1]=axies[1].homePos;
+  homePos[2]=axies[2].pos;
   IK(homePos, steps);
   findStepDelay();
 
@@ -291,16 +305,19 @@ void calibrateBelts() {
   reportCalibration();
 
   // current position is...
-  float axies[NUM_AXIES];
-  FK(steps, axies);
-  teleport(axies[0],axies[1],axies[2]);
+  float axies2[NUM_AXIES];
+  FK(steps, axies2);
+  teleport(axies2);
   where();
 
   // go home.
   Serial.println(F("Homing..."));
 
-  Vector3 offset = get_end_plus_offset();
-  line_safe(homeX, homeY, offset.z, feed_rate);
+  float offset[NUM_AXIES];
+  get_end_plus_offset(offset);
+  offset[0]=axies[0].homePos;
+  offset[1]=axies[1].homePos;
+  lineSafe(offset, feed_rate);
   Serial.println(F("Done."));
 #endif // USE_LIMIT_SWITCH
 }
