@@ -81,7 +81,7 @@
 
 #define NORMAL_MOTOR_STEPS   (360.0/DEGREES_PER_STEP)  // 360/0.9=400.  360/1.8=200.
 #define STEPS_PER_TURN       (NORMAL_MOTOR_STEPS * MICROSTEPS)  // default number of steps per turn * microsteps
-#define PULLEY_PITCH         (0.2*20.0) // 2mm per tooth, 20 teeth.
+#define PULLEY_PITCH         (2*20.0) // 2mm per tooth, 20 teeth.
 #define THREAD_PER_STEP      (PULLEY_PITCH/STEPS_PER_TURN)
 #define MICROSTEP_PER_DEGREE (STEPS_PER_TURN/360.0)
 
