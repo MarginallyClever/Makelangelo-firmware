@@ -54,7 +54,7 @@ void saveUID() {
 /**
  * 
  */
-void saveDimensions() {
+void saveLimits() {
   Serial.println(F("Saving dimensions."));
   int i,j=ADDR_LIMITS;
   for(i=0;i<NUM_AXIES;++i) {
@@ -69,7 +69,7 @@ void saveDimensions() {
 /**
  * 
  */
-void loadDimensions() {
+void loadLimits() {
   int i,j=ADDR_LIMITS;
   for(i=0;i<NUM_AXIES;++i) {
     axies[i].limitMax = (float)EEPROM_readLong(j)/100.0f;
@@ -104,7 +104,7 @@ void adjustDimensions(float *limits) {
   }
 
   if( changed != 0 ) {
-    saveDimensions();
+    saveLimits();
   }
 }
 
@@ -116,7 +116,7 @@ void saveHome() {
   Serial.println(F("Saving home."));
   int i,j=ADDR_HOME;
   for(i=0;i<NUM_AXIES;++i) {
-    EEPROM_writeLong(j,axies[i].home*100);
+    EEPROM_writeLong(j,axies[i].homePos*100);
     j+=4;
   }
 }
@@ -128,7 +128,7 @@ void saveHome() {
 void loadHome() {
   int i,j=ADDR_HOME;
   for(i=0;i<NUM_AXIES;++i) {
-    axies[i].home = (float)EEPROM_readLong(j)/100.0f;
+    axies[i].homePos = (float)EEPROM_readLong(j)/100.0f;
     j+=4;
   }
 }
@@ -170,7 +170,7 @@ void loadConfig() {
   
   // Retrieve stored configuration
   robot_uid=EEPROM_readLong(ADDR_UUID);
-  loadDimensions();
+  loadLimits();
   loadHome();
   loadCalibration();
 }
