@@ -273,7 +273,7 @@ void calibrateBelts() {
 
   do {
     if (left == 0) {
-      if ( digitalRead(LIMIT_SWITCH_PIN_LEFT ) == LOW ) {
+      if ( digitalRead(LIMIT_SWITCH_PIN_LEFT) == LOW ) {
         // switch hit
         left = 1;
       }
@@ -283,7 +283,7 @@ void calibrateBelts() {
       steps[0]++;
     }
     if (right == 0) {
-      if ( digitalRead(LIMIT_SWITCH_PIN_RIGHT ) == LOW ) {
+      if ( digitalRead(LIMIT_SWITCH_PIN_RIGHT) == LOW ) {
         // switch hit
         right = 1;
       }

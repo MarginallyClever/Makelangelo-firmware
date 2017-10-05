@@ -159,6 +159,7 @@ void robot_findHome() {
   // back up until the arms hit the limit switches
   float horizontal = DEGREES_ABOVE_HORIZONTAL;
   long j, steps_to_zero = horizontal * MICROSTEP_PER_DEGREE;
+  Serial.println(steps_to_zero,DEC);
 
   for(i=0;i<NUM_MOTORS;++i) {
     // enable one motor at a time
@@ -166,23 +167,23 @@ void robot_findHome() {
     digitalWrite(motors[i].dir_pin, LOW);
     
     // drive until you hit the switch
-    deltarobot_read_switches();
-    while(motors[i].limit_switch_pin == HIGH) {
+    while(digitalRead(motors[i].limit_switch_pin) == HIGH) {
       digitalWrite(motors[i].step_pin, HIGH);
       digitalWrite(motors[i].step_pin, LOW);
-      deltarobot_read_switches();
       pause(step_delay);
     }
     
     // move to home position
     digitalWrite(motors[i].dir_pin, HIGH);
     for(j=0;j<steps_to_zero;++j) {
+      Serial.println(i,DEC);
       digitalWrite(motors[i].step_pin, HIGH);
       digitalWrite(motors[i].step_pin, LOW);
       pause(step_delay);
     }
   }
-  
+
+  Serial.println("Done.");
   float aa = CENTER_TO_SHOULDER + SHOULDER_TO_ELBOW - EFFECTOR_TO_WRIST;
   float cc = ELBOW_TO_WRIST;
   float bb = sqrt(cc*cc - aa*aa);
@@ -192,36 +193,6 @@ void robot_findHome() {
   axies[0].pos=0;
   axies[1].pos=0;
   axies[2].pos = CENTER_TO_FLOOR - bb;
-}
-
-
-/**
- * read the limit switch states
- * @return 1 if a switch is being hit
- */
-char deltarobot_read_switches() {
-  char i, hit=0;
-  int state;
-  
-  for(i=0;i<NUM_MOTORS;++i) {
-    state=digitalRead(motors[i].limit_switch_pin);
-#if DEBUG_SWITCHES > 0
-    Serial.print(state);
-    Serial.print('\t');
-#endif
-    if(motors[i].limit_switch_state != state) {
-      motors[i].limit_switch_state = state;
-#if DEBUG_SWITCHES > 0
-      Serial.print(F("Switch "));
-      Serial.println(i,DEC);
-#endif
-    }
-    if(state == LOW) ++hit;
-  }
-#if DEBUG_SWITCHES > 0
-  Serial.print('\n');
-#endif
-  return hit;
 }
 
 
