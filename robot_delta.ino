@@ -159,12 +159,11 @@ void robot_findHome() {
   // back up until the arms hit the limit switches
   float horizontal = DEGREES_ABOVE_HORIZONTAL;
   long j, steps_to_zero = horizontal * MICROSTEP_PER_DEGREE;
-  Serial.println(steps_to_zero,DEC);
 
   for(i=0;i<NUM_MOTORS;++i) {
     // enable one motor at a time
     digitalWrite(motors[i].enable_pin,LOW);
-    digitalWrite(motors[i].dir_pin, LOW);
+    digitalWrite(motors[i].dir_pin, DELTA_HOME_DIRECTION);
     
     // drive until you hit the switch
     while(digitalRead(motors[i].limit_switch_pin) == HIGH) {
@@ -174,7 +173,7 @@ void robot_findHome() {
     }
     
     // move to home position
-    digitalWrite(motors[i].dir_pin, HIGH);
+    digitalWrite(motors[i].dir_pin, DELTA_HOME_DIRECTION==LOW?HIGH:LOW);
     for(j=0;j<steps_to_zero;++j) {
       Serial.println(i,DEC);
       digitalWrite(motors[i].step_pin, HIGH);
