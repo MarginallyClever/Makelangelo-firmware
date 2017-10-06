@@ -51,9 +51,10 @@
 #define EFFECTOR_TO_WRIST        ( 1.724f)  // cm (e)
 #define CENTER_TO_FLOOR          (18.900f)  // cm
 #define DEGREES_ABOVE_HORIZONTAL (24.000f)
-#define NUM_AXIES            (3)
-#define NUM_MOTORS           (3)
-#define NUM_SERVOS           (0)
+#define NUM_AXIES                (3)
+#define NUM_MOTORS               (3)
+#define NUM_SERVOS               (0)
+#define DELTA_HOME_DIRECTION     LOW  // LOW or HIGH
 #endif
 
 
@@ -65,9 +66,10 @@
 #define EFFECTOR_TO_WRIST        ( 1.724f)  // cm (E)
 #define CENTER_TO_FLOOR          (60.000f)  // cm
 #define DEGREES_ABOVE_HORIZONTAL (24.000f)
-#define NUM_AXIES            (4)
-#define NUM_MOTORS           (4)
-#define NUM_SERVOS           (0)
+#define NUM_AXIES                (4)
+#define NUM_MOTORS               (4)
+#define NUM_SERVOS               (0)
+#define DELTA_HOME_DIRECTION     LOW  // LOW or HIGH
 #endif
 
 
