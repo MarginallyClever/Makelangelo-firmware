@@ -28,9 +28,9 @@
 #define ARM3            10
 //#define ARM4            11
 //#define ARM5            12
-//#define ARM6            13
+#define ARM6            13
 
-#define MACHINE_STYLE POLARGRAPH  // change this
+#define MACHINE_STYLE ARM6  // change this
 
 // robot style descriptions
 #include "robot_polargraph.h"
@@ -45,7 +45,7 @@
 #include "robot_arm3.h"
 //#include "robot_arm4.h"
 //#include "robot_arm5.h"
-//#include "robot_arm6.h"
+#include "robot_arm6.h"
 
 
 // Boards supported
