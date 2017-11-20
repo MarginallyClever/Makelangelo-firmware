@@ -52,15 +52,28 @@ int FK(long *motorStepArray,float *cartesian) {
   // or cc - aa - bb = -2ab * cos( theta )
   // or ( aa + bb - cc ) / ( 2ab ) = cos( theta );
   // or theta = acos((aa+bb-cc)/(2ab));
-  //x = cos(theta)*l1 + limit_xmin;
-  //y = sin(theta)*l1 + limit_ymax;
+  // so  x = cos(theta)*l1 + limit_xmin;
+  // and y = sin(theta)*l1 + limit_ymax;
   // and we know that cos(acos(i)) = i
   // and we know that sin(acos(i)) = sqrt(1-i*i)
+  // so y = sin(  acos((aa+bb-cc)/(2ab))  )*l1 + limit_ymax;
   float theta = ((a*a+b*b-c*c)/(2.0*a*b));
   
   cartesian[0] = theta * a + limit_xmin;
-  cartesian[1] = limit_ymax - (sqrt( 1.0 - theta * theta ) * a);
+  Serial.print("ymax=");   Serial.println(limit_ymax);
+  Serial.print("theta=");  Serial.println(theta);
+  Serial.print("a=");      Serial.println(a);
+  Serial.print("b=");      Serial.println(b);
+  Serial.print("c=");      Serial.println(c);
+  Serial.print("S0=");     Serial.println(motorStepArray[0]);
+  Serial.print("S1=");     Serial.println(motorStepArray[1]);
+  
+  cartesian[1] = limit_ymax - sqrt( 1.0 - theta * theta ) * a;
   cartesian[2] = motorStepArray[NUM_MOTORS];
+  
+  Serial.print("C0=");      Serial.println(cartesian[0]);
+  Serial.print("C1=");      Serial.println(cartesian[1]);
+  Serial.print("C2=");      Serial.println(cartesian[2]);
 }
 
 

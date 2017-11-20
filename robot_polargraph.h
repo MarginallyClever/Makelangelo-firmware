@@ -10,8 +10,8 @@
 #if MACHINE_STYLE == POLARGRAPH
 
 #define MACHINE_STYLE_NAME       "POLARGRAPH"
-#define MACHINE_HARDWARE_VERSION 3  // If you have a makelangelo 3+
-//#define MACHINE_HARDWARE_VERSION 5  // If you have a makelangelo 5+
+//#define MACHINE_HARDWARE_VERSION 3  // If you have a makelangelo 3+
+#define MACHINE_HARDWARE_VERSION 5  // If you have a makelangelo 5+
 
 #define MAX_ACCELERATION     (5000)
 #define MIN_ACCELERATION     (100)
