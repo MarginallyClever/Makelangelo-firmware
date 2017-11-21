@@ -30,7 +30,7 @@
 //#define ARM5            12
 #define ARM6            13
 
-#define MACHINE_STYLE ARM6  // change this
+#define MACHINE_STYLE POLARGRAPH  // change this
 
 // robot style descriptions
 #include "robot_polargraph.h"

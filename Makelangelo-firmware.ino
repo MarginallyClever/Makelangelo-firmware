@@ -673,14 +673,24 @@ void processCommand() {
 void makelangelo5Setup() {
   // if you accidentally upload m3 firmware to an m5 then upload it ONCE with this line uncommented.
   float limits[NUM_AXIES*2];
-  limits[0] = 32.5;
-  limits[1] = -32.5;
-  limits[2] = 50;
-  limits[3] = -50;
+  limits[0] = 320.5;
+  limits[1] = -320.5;
+  limits[2] = 500;
+  limits[3] = -500;
   limits[4] = PEN_UP_ANGLE;
   limits[5] = PEN_DOWN_ANGLE;
   adjustDimensions(limits);
+  
+  calibrateLeft=1011;
+  calibrateRight=1011;
   saveCalibration();
+
+  float homePos[NUM_AXIES];
+  homePos[0] = 0;
+  homePos[1] = limits[2]-210.7;
+  homePos[2] = 50;
+  setHome(homePos);
+
 }
 #endif
 
