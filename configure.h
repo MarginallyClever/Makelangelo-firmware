@@ -154,7 +154,6 @@ typedef struct {
   int dir_pin;
   int enable_pin;
   int limit_switch_pin;
-  int limit_switch_state;
 } Motor;
 
 

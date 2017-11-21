@@ -368,4 +368,9 @@ char stewart_read_switches() {
 }
 
 
+void robot_setup() {
+}
+
+
+
 #endif

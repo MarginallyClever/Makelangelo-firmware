@@ -661,7 +661,7 @@ void processCommand() {
     case 11:  makelangelo5Setup();  break;
     case 12:  recordHome();
 #endif
-#if NUM_AXIES>2
+#ifdef MACHINE_HAS_LIFTABLE_PEN
     case 13:  setPenAngle(parseNumber('Z',axies[2].pos));  break;
 #endif
     default:  break;
@@ -698,7 +698,6 @@ void parseSetHome() {
 void jogMotors() {
   int i, j, amount;
 
-  findStepDelay();
   for (i = 0; i < NUM_MOTORS; ++i) {
     if (MotorNames[i] == 0) continue;
     amount = parseNumber(MotorNames[i], 0);
@@ -802,6 +801,7 @@ void setup() {
   motor_setup();
   motor_engage();
   tools_setup();
+  findStepDelay();
 
   //easyPWM_init();
   SD_init();
@@ -814,9 +814,12 @@ void setup() {
   }
   if(NUM_AXIES>=3) pos[2]=PEN_UP_ANGLE;
   teleport(pos);
+#ifdef MACHINE_HAS_LIFTABLE_PEN
   setPenAngle(PEN_UP_ANGLE);
-
+#endif
   setFeedRate(DEFAULT_FEEDRATE);
+
+  robot_setup();
   
   // display the help at startup.
   help();
@@ -864,6 +867,25 @@ void loop() {
   if ( !segment_buffer_full() && (millis() - last_cmd_time) > TIMEOUT_OK ) {
     parser_ready();
   }
+
+#if MACHINE_STYLE == ARM6
+/*
+  static int switchState=LOW;
+  if(digitalRead(MOTOR_5_LIMIT_SWITCH_PIN)!=switchState) {
+    switchState = !switchState;
+    Serial.println(switchState?"ON":"OFF");
+  }
+  */
+  /*
+  Serial.print( digitalRead(MOTOR_0_LIMIT_SWITCH_PIN)==HIGH ? "1 " : "0 ");
+  Serial.print( digitalRead(MOTOR_1_LIMIT_SWITCH_PIN)==HIGH ? "1 " : "0 ");
+  Serial.print( digitalRead(MOTOR_2_LIMIT_SWITCH_PIN)==HIGH ? "1 " : "0 ");
+  Serial.print( digitalRead(MOTOR_3_LIMIT_SWITCH_PIN)==HIGH ? "1 " : "0 ");
+  Serial.print( digitalRead(MOTOR_4_LIMIT_SWITCH_PIN)==HIGH ? "1 " : "0 ");
+  Serial.print( digitalRead(MOTOR_5_LIMIT_SWITCH_PIN)==HIGH ? "1 " : "0 ");
+  Serial.println();*/
+  
+#endif
 }
 
 

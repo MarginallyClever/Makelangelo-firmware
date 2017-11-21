@@ -322,4 +322,9 @@ void calibrateBelts() {
 #endif // USE_LIMIT_SWITCH
 }
 
+
+void robot_setup() {
+}
+
+
 #endif  // POLARGRAPH

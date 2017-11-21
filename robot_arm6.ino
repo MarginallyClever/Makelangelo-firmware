@@ -30,7 +30,7 @@ void IK(float *axies, long *motorStepArray) {
 }
 
 
-/** 
+/**
  * Forward Kinematics - turns step counts into XY coordinates
  * @param motorStepArray a measure of each belt to that plotter position
  * @param axies the resulting cartesian coordinate
@@ -51,7 +51,7 @@ void robot_findHome() {
     // for each stepper,
     for(i=0;i<NUM_MOTORS;++i) {
       // if this switch hasn't been hit yet
-      if(motors[i].limit_switch_state == HIGH) {
+      if( digitalRead(motors[i].limit_switch_pin) == HIGH ) {
         // move "down"
         digitalWrite(motors[i].dir_pin,LOW);
         digitalWrite(motors[i].step_pin,HIGH);
@@ -64,6 +64,23 @@ void robot_findHome() {
   // set robot to home position
   float zeros[6] = {0,0,0,0,0,0};
   teleport(zeros);
+}
+
+
+void robot_setup() {
+  pinMode(MOTOR_0_LIMIT_SWITCH_PIN,INPUT);
+  pinMode(MOTOR_1_LIMIT_SWITCH_PIN,INPUT);
+  pinMode(MOTOR_2_LIMIT_SWITCH_PIN,INPUT);
+  pinMode(MOTOR_3_LIMIT_SWITCH_PIN,INPUT);
+  pinMode(MOTOR_4_LIMIT_SWITCH_PIN,INPUT);
+  pinMode(MOTOR_5_LIMIT_SWITCH_PIN,INPUT);
+
+  digitalWrite(MOTOR_0_LIMIT_SWITCH_PIN,HIGH);
+  digitalWrite(MOTOR_1_LIMIT_SWITCH_PIN,HIGH);
+  digitalWrite(MOTOR_2_LIMIT_SWITCH_PIN,HIGH);
+  digitalWrite(MOTOR_3_LIMIT_SWITCH_PIN,HIGH);
+  digitalWrite(MOTOR_4_LIMIT_SWITCH_PIN,HIGH);
+  digitalWrite(MOTOR_5_LIMIT_SWITCH_PIN,HIGH);
 }
 
 

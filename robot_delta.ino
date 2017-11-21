@@ -195,4 +195,9 @@ void robot_findHome() {
 }
 
 
+void robot_setup() {
+}
+
+
+
 #endif
