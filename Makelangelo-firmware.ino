@@ -708,6 +708,8 @@ void parseSetHome() {
 void jogMotors() {
   int i, j, amount;
 
+  motor_engage();
+  
   for (i = 0; i < NUM_MOTORS; ++i) {
     if (MotorNames[i] == 0) continue;
     amount = parseNumber(MotorNames[i], 0);
