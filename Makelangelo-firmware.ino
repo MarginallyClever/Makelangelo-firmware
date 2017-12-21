@@ -591,7 +591,7 @@ char checkCRCisOK() {
  * parse M117 [string] and display string on the LCD panel.
  */
 void parseMessage() {
-#if HAS_LCD
+#ifdef HAS_LCD
   int i;
   for(i=0;i<LCD_MESSAGE_LENGTH;++i) {
     lcd_message[i] = serialBuffer[i+5];

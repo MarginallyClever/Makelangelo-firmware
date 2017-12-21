@@ -13,11 +13,6 @@
 #include "sdcard.h"
 
 
-#define LCD_DRAW_DELAY    (150)
-#define LCD_TURN_PER_MENU (5)
-#define LCD_MESSAGE_LENGTH (40)
-
-
 // Convenience macros that make it easier to generate menus
 
 #define MENU_START \

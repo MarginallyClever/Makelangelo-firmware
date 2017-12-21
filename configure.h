@@ -15,6 +15,7 @@
 
 
 
+
 // robot styles supported
 #define POLARGRAPH       1  // polargraph like Makelangelo
 #define TRADITIONALXY    3  // gantry 2 axis setup.
@@ -92,6 +93,16 @@
 // for arc directions
 #define ARC_CW               (1)
 #define ARC_CCW              (-1)
+
+
+//------------------------------------------------------------------------------
+// LCD options
+//------------------------------------------------------------------------------
+
+#define LCD_MESSAGE_LENGTH (40)  // we have two lines of 20 characters avialable in 7.16
+#define LCD_DRAW_DELAY     (150)
+#define LCD_TURN_PER_MENU  (5)
+
 
 
 //------------------------------------------------------------------------------
@@ -185,6 +196,8 @@ extern float acceleration;
 extern Motor motors[NUM_MOTORS];
 extern const char *AxisNames;
 extern const char *MotorNames;
+
+extern char lcd_message[LCD_MESSAGE_LENGTH];
 
 
 #endif // CONFIGURE_H
