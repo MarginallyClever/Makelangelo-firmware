@@ -588,7 +588,8 @@ char checkCRCisOK() {
 }
 
 /**
- * parse M117 [string] and display string on the LCD panel.
+ * M117 [string] 
+ * Display string on the LCD panel.  Command is ignored if there is no LCD panel.
  */
 void parseMessage() {
 #ifdef HAS_LCD
@@ -596,6 +597,25 @@ void parseMessage() {
   for(i=0;i<LCD_MESSAGE_LENGTH;++i) {
     lcd_message[i] = serialBuffer[i+5];
     if(lcd_message[i]==0) break;
+  }
+#endif
+}
+
+
+/**
+ * M226 P[a] S[b] 
+ * Wait for pin a to be in state b (1 or 0).  if P or S are missing, wait for user to press click wheel on LCD
+ * Command is ignored if there is no LCD panel (and no button to press)
+ */
+void pauseForUserInput() {
+#ifdef HAS_LCD
+  int pin = parseNumber('P', BTN_ENC);
+  int newState = parseNumber('S', 1);
+  newState = (newState==1)?HIGH:LOW;
+  
+  while(digitalRead(pin)!=newState) {
+    SD_check();
+    LCD_update();
   }
 #endif
 }
@@ -627,6 +647,7 @@ void processCommand() {
     case 110:  line_number = parseNumber('N', line_number);  break;
     case 114:  where();  break;
     case 117:  parseMessage();
+    case 226:  pauseForUserInput();
     default:   break;
   }
 
