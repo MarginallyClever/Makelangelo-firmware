@@ -588,6 +588,20 @@ char checkCRCisOK() {
 }
 
 /**
+ * parse M117 [string] and display string on the LCD panel.
+ */
+void parseMessage() {
+#if HAS_LCD
+  int i;
+  for(i=0;i<LCD_MESSAGE_LENGTH;++i) {
+    lcd_message[i] = serialBuffer[i+5];
+    if(lcd_message[i]==0) break;
+  }
+#endif
+}
+
+
+/**
  * process commands in the serial receive buffer
  */
 void processCommand() {
@@ -612,6 +626,7 @@ void processCommand() {
     case 102:  printConfig();  break;
     case 110:  line_number = parseNumber('N', line_number);  break;
     case 114:  where();  break;
+    case 117:  parseMessage();
     default:   break;
   }
 
