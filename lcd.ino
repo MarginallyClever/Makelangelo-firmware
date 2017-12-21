@@ -15,6 +15,7 @@
 
 #define LCD_DRAW_DELAY    (150)
 #define LCD_TURN_PER_MENU (5)
+#define LCD_MESSAGE_LENGTH (40)
 
 
 // Convenience macros that make it easier to generate menus
@@ -68,6 +69,7 @@ int lcd_turn     = 0;
 char lcd_click_old = HIGH;
 char lcd_click_now = false;
 uint8_t speed_adjust = 100;
+char lcd_message[LCD_MESSAGE_LENGTH];
 
 int menu_position_sum=0, menu_position=0, screen_position=0, num_menu_items=0, ty, screen_end;
 
@@ -159,10 +161,11 @@ void LCD_status_menu() {
     get_end_plus_offset(offset);
     lcd.setCursor( 0, 0);  lcd.print('X');  LCD_print_float(offset.x);
     lcd.setCursor(10, 0);  lcd.print('Y');  LCD_print_float(offset.y);
-    lcd.setCursor( 0, 1);  lcd.print('Z');  LCD_print_float(offset.z);*/
-    lcd.setCursor(10, 1);  lcd.print('F');  LCD_print_float(feed_rate);
-    lcd.setCursor( 0, 2);  lcd.print(F("Makelangelo #"));  lcd.print(robot_uid);
-    lcd.setCursor( 0, 3);  LCD_print_long(speed_adjust);  lcd.print(F("% "));
+    lcd.setCursor( 0, 1);  lcd.print('Z');  LCD_print_float(offset.z);
+    lcd.setCursor(10, 1);  lcd.print('F');  LCD_print_float(feed_rate);*/
+    lcd.setCursor( 0, 0);  lcd.print(F("Makelangelo #"));  lcd.print(robot_uid);
+    lcd.setCursor( 0, 1);  LCD_print_long(speed_adjust);  lcd.print(F("% "));
+    LCD_print_message();
     if(sd_printing_now==true/* && sd_printing_paused==false*/) {
       LCD_print_float(sd_percent_complete);
       lcd.print('%');
@@ -170,6 +173,12 @@ void LCD_status_menu() {
       lcd.print(F("          "));
     }
   MENU_END
+}
+
+
+void LCD_print_message() {
+  lcd.setCursor( 0, 2);  lcd.print(lcd_message);
+  lcd.setCursor( 0, 3);  lcd.print(lcd_message+20);
 }
 
 
@@ -417,6 +426,7 @@ void LCD_init() {
   digitalWrite(BTN_ENC,HIGH);
   current_menu=LCD_status_menu;
   menu_position_sum=1;    /* 20160313-NM-Added so the clicking without any movement will display a menu */
+  lcd_message[0]=0;
 }
 
 
