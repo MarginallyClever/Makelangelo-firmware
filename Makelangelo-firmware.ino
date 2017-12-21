@@ -594,6 +594,16 @@ char checkCRCisOK() {
 void parseMessage() {
 #ifdef HAS_LCD
   int i;
+  // "M117 " is 5 characters long
+  for(i=0;i<5;++i) {
+    if(serialBuffer[i]==0) {
+      // no message
+      lcd_message[0]=0;
+      return;  
+    }
+  }
+
+  // preserve message for display
   for(i=0;i<LCD_MESSAGE_LENGTH;++i) {
     lcd_message[i] = serialBuffer[i+5];
     if(lcd_message[i]==0) break;
