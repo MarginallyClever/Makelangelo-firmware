@@ -35,6 +35,7 @@
   lcd_click_now=false;  \
   lcd.clear();  \
   num_menu_items=screen_position=menu_position=menu_position_sum=0;  \
+  screen_end = screen_position + LCD_HEIGHT;  \
   current_menu=new_menu; return;  }
 
 #define MENU_SUBMENU(menu_label,menu_method) \
