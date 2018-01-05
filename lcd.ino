@@ -253,7 +253,7 @@ void LCD_find_home() {
 
 void LCD_this_is_home() {
   float offset[NUM_AXIES];
-  for (int i = 0; i < NUM_AXIES; ++i) offset[i] = 0;
+  for (int i = 0; i < NUM_AXIES; ++i) offset[i] = axies[i].homePos;
   teleport(offset);
   MENU_GOTO(LCD_main_menu);
 }
