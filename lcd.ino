@@ -121,13 +121,13 @@ void LCD_update() {
   if (millis() >= lcd_draw_delay ) {
     lcd_draw_delay = millis() + LCD_DRAW_DELAY;
 
-  Serial.print(lcd_turn,DEC);
-  Serial.print('\t');  Serial.print(menu_position,DEC);
-  Serial.print('\t');  Serial.print(menu_position_sum,DEC);
-  Serial.print('\t');  Serial.print(screen_position,DEC);
-  Serial.print('\t');  Serial.print(screen_end,DEC);
-  Serial.print('\t');  Serial.print(num_menu_items,DEC);
-  Serial.print('\n');
+    //Serial.print(lcd_turn,DEC);
+    //Serial.print('\t');  Serial.print(menu_position,DEC);
+    //Serial.print('\t');  Serial.print(menu_position_sum,DEC);
+    //Serial.print('\t');  Serial.print(screen_position,DEC);
+    //Serial.print('\t');  Serial.print(screen_end,DEC);
+    //Serial.print('\t');  Serial.print(num_menu_items,DEC);
+    //Serial.print('\n');
 
     (*current_menu)();
 
