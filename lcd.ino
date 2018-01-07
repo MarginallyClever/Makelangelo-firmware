@@ -229,8 +229,10 @@ void LCD_print_message() {
 
 
 void LCD_beep(int freq,int ms) {
-  if(freq<=0||freq>1000) freq=60;
+#ifdef LCD_BUZZER_PASSIVE
+  // can do frequencies
   
+  if(freq<=0||freq>1000) freq=60;
   int stepSize = 1000.0f/(float)freq;
   for(int i=0;i<ms;i+=stepSize*2) {
     digitalWrite(BEEPER,HIGH);
@@ -238,6 +240,12 @@ void LCD_beep(int freq,int ms) {
     digitalWrite(BEEPER,LOW);
     delay(stepSize);
   }
+#else
+  // only one frequency
+  digitalWrite(BEEPER,HIGH);
+  delay(ms);
+  digitalWrite(BEEPER,LOW);
+#endif
 }
 
 

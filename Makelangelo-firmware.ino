@@ -548,6 +548,7 @@ void parseToolOffset(int toolID) {
   set_tool_offset(toolID,offset);
 }
 
+
 /**
  * @return 1 if CRC ok or not present, 0 if CRC check fails.
  */
@@ -587,6 +588,7 @@ char checkCRCisOK() {
   return 1;  // ok!
 }
 
+
 /**
  * M117 [string] 
  * Display string on the LCD panel.  Command is ignored if there is no LCD panel.
@@ -597,7 +599,7 @@ void parseMessage() {
 
   if(serialBuffer[0]=='N') {
     // line number
-    Serial.println("Found N");
+    //Serial.println("Found N");
 
     for(i;i<strlen(serialBuffer);++i) {
       if(serialBuffer[i]==0) {
@@ -606,28 +608,30 @@ void parseMessage() {
       }
       if(serialBuffer[i]==' ') {
         ++i;
-        Serial.print("ate ");
-        Serial.print(i);
-        Serial.println(" chars.");
+        //Serial.print("ate ");
+        //Serial.print(i);
+        //Serial.println(" chars.");
         break;
       }
     }
   }
 
-  Serial.print("serialBuffer=");
-  Serial.println(serialBuffer);
-  Serial.print("i=");
-  Serial.println(i);
+  //Serial.print("serialBuffer=");
+  //Serial.println(serialBuffer);
+  //Serial.print("i=");
+  //Serial.println(i);
   
   if(serialBuffer[i  ]=='M' &&
      serialBuffer[i+1]=='1' &&
      serialBuffer[i+2]=='1' &&
-     serialBuffer[i+3]=='7' &&
-     serialBuffer[i+4]==' ' ) {
+     serialBuffer[i+3]=='7' ) {
     // message found.  
-    Serial.println("Found M117");
+    //Serial.println("Found M117");
     
-    i+=5;
+    i+=4;
+    while(serialBuffer[i]==' ' && i<LCD_MESSAGE_LENGTH) {
+      ++i;
+    }
 
     
     // check for CRC.
@@ -635,18 +639,18 @@ void parseMessage() {
     char *stopAtPtr = strrchr(serialBuffer,'*');
     if( stopAtPtr == NULL ) {
       // no CRC
-      Serial.println("No CRC");
+      //Serial.println("No CRC");
       stopAt = strlen(serialBuffer);
     } else {
       // CRC found
-      Serial.println("Yes CRC");
+      //Serial.println("Yes CRC");
       stopAt = (int)(stopAtPtr-serialBuffer);
     }
-    Serial.print("message reads=");
+    //Serial.print("message reads=");
     
     // isolated portion of serialBuffer that contains message.  Preserve message for display.
     for(;i<stopAt;++i) {
-      Serial.print(serialBuffer[i]);
+      //Serial.print(serialBuffer[i]);
       lcd_message[j] = serialBuffer[i];
       if(lcd_message[j]==0) break;
       ++j;
@@ -656,8 +660,8 @@ void parseMessage() {
     }
   }
 
-  Serial.println();
-  Serial.println("wiping remainder");
+  //Serial.println();
+  //Serial.println("wiping remainder");
   
   // wipe any characters left from previous messages.
   for(;j<LCD_MESSAGE_LENGTH;++j) {
@@ -665,9 +669,9 @@ void parseMessage() {
   }
   lcd_message[LCD_MESSAGE_LENGTH]=0;
   
-  Serial.print("LCD >>");
-  Serial.print(lcd_message);
-  Serial.println("<< LCD");
+  //Serial.print("LCD >>");
+  //Serial.print(lcd_message);
+  //Serial.println("<< LCD");
 #endif
 }
 
@@ -682,11 +686,13 @@ void pauseForUserInput() {
   int pin = parseNumber('P', BTN_ENC);
   int newState = parseNumber('S', 0);
   newState = (newState==1)?HIGH:LOW;
-  
+  Serial.print("pausing");
   while(digitalRead(pin)!=newState) {
     SD_check();
-    LCD_update();
+    //LCD_update();
+    Serial.print(".");
   }
+  Serial.println(" ended.");
 #endif
 }
 
@@ -718,7 +724,7 @@ void processCommand() {
     case 114:  where();  break;
     case 117:  parseMessage();  break;
     case 226:  pauseForUserInput();  break;
-    //case 300:  LCD_beep( parseNumber('S',60), parseNumber('P', 500) );  break;
+    case 300:  LCD_beep( parseNumber('S',60), parseNumber('P', 500) );  break;
     default:   break;
   }
 
