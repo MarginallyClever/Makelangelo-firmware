@@ -11,6 +11,7 @@
 
 #define MACHINE_STYLE_NAME       "TRADITIONALXY"
 #define MACHINE_HARDWARE_VERSION 1
+#define MACHINE_HAS_LIFTABLE_PEN
 
 #define STEP_DELAY           (50)  // delay between steps, in milliseconds, when doing fixed tasks like homing
 

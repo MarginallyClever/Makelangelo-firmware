@@ -154,7 +154,6 @@ void motor_setup() {
     pinMode(motors[i].enable_pin,OUTPUT);
 
     // set the switch pin
-    motors[i].limit_switch_state=HIGH;
     pinMode(motors[i].limit_switch_pin,INPUT);
     digitalWrite(motors[i].limit_switch_pin,HIGH);
   }

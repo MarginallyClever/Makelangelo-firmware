@@ -12,6 +12,7 @@
 
 #define MACHINE_STYLE_NAME       "ZARPLOTTER"
 #define MACHINE_HARDWARE_VERSION 6
+#define MACHINE_HAS_LIFTABLE_PEN
 
 #define NUM_AXIES            (3)  // more motors than axies. Unusual!
 #define NUM_MOTORS           (4)

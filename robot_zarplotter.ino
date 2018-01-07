@@ -14,10 +14,15 @@
  * @param axies the cartesian coordinates
  * @param motorStepArray a measure of each belt to that plotter position
  */
-void IK(float *axies, long *motorStepArray) {
-  float x = axies[0];
-  float y = axies[1];
-  float z = axies[2];
+void IK(float *cartesian, long *motorStepArray) {
+  float limit_xmin = axies[0].limitMin;
+  float limit_xmax = axies[0].limitMax;
+  float limit_ymin = axies[1].limitMin;
+  float limit_ymax = axies[1].limitMax;
+  
+  float x = cartesian[0];
+  float y = cartesian[1];
+  float z = cartesian[2];
   
   float L,R,U,V,dy,dx;
   dy = abs(y - limit_ymax)-ZARPLOTTER_COMPENSATION;  dx = abs(x - limit_xmin)-ZARPLOTTER_COMPENSATION;  L = sqrt(dx*dx+dy*dy);  motorStepArray[0] = lround( L / THREAD_PER_STEP );  // M0 (top left)
@@ -43,7 +48,11 @@ void IK(float *axies, long *motorStepArray) {
  * @param axies the resulting cartesian coordinate
  * @return 0 if no problem, 1 on failure.
  */
-int FK(long *motorStepArray,float *axies) {
+int FK(long *motorStepArray, float *cartesian) {
+  float limit_xmin = axies[0].limitMin;
+  float limit_xmax = axies[0].limitMax;
+  float limit_ymax = axies[1].limitMax;
+  
   // use law of cosines: theta = acos((a*a+b*b-c*c)/(2*a*b));
   float a = (float)motorStepArray[0] * THREAD_PER_STEP;
   float b = (limit_xmax-limit_xmin);
@@ -60,9 +69,9 @@ int FK(long *motorStepArray,float *axies) {
   // and we know that sin(acos(i)) = sqrt(1-i*i)
   float theta = ((a*a+b*b-c*c)/(2.0*a*b));
   
-  axies[0] = theta * a + limit_xmin;
-  axies[1] = limit_ymax - (sqrt( 1.0 - theta * theta ) * a);
-  axies[2] = motorStepArray[NUM_MOTORS];
+  cartesian[0] = theta * a + limit_xmin;
+  cartesian[1] = limit_ymax - (sqrt( 1.0 - theta * theta ) * a);
+  cartesian[2] = motorStepArray[NUM_MOTORS];
 }
 
 
@@ -70,4 +79,9 @@ int FK(long *motorStepArray,float *axies) {
 void robot_findHome() {
 
 }
+
+
+void robot_setup() {
+}
+
 #endif

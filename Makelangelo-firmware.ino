@@ -588,6 +588,50 @@ char checkCRCisOK() {
 }
 
 /**
+ * M117 [string] 
+ * Display string on the LCD panel.  Command is ignored if there is no LCD panel.
+ */
+void parseMessage() {
+#ifdef HAS_LCD
+  int i;
+  // "M117 " is 5 characters long
+  for(i=0;i<5;++i) {
+    if(serialBuffer[i]==0) {
+      // no message
+      lcd_message[0]=0;
+      return;  
+    }
+  }
+
+  // preserve message for display
+  for(i=0;i<LCD_MESSAGE_LENGTH;++i) {
+    lcd_message[i] = serialBuffer[i+5];
+    if(lcd_message[i]==0) break;
+  }
+#endif
+}
+
+
+/**
+ * M226 P[a] S[b] 
+ * Wait for pin a to be in state b (1 or 0).  if P or S are missing, wait for user to press click wheel on LCD
+ * Command is ignored if there is no LCD panel (and no button to press)
+ */
+void pauseForUserInput() {
+#ifdef HAS_LCD
+  int pin = parseNumber('P', BTN_ENC);
+  int newState = parseNumber('S', 1);
+  newState = (newState==1)?HIGH:LOW;
+  
+  while(digitalRead(pin)!=newState) {
+    SD_check();
+    LCD_update();
+  }
+#endif
+}
+
+
+/**
  * process commands in the serial receive buffer
  */
 void processCommand() {
@@ -612,6 +656,8 @@ void processCommand() {
     case 102:  printConfig();  break;
     case 110:  line_number = parseNumber('N', line_number);  break;
     case 114:  where();  break;
+    case 117:  parseMessage();
+    case 226:  pauseForUserInput();
     default:   break;
   }
 
@@ -661,7 +707,7 @@ void processCommand() {
     case 11:  makelangelo5Setup();  break;
     case 12:  recordHome();
 #endif
-#if NUM_AXIES>2
+#ifdef MACHINE_HAS_LIFTABLE_PEN
     case 13:  setPenAngle(parseNumber('Z',axies[2].pos));  break;
 #endif
     default:  break;
@@ -673,14 +719,24 @@ void processCommand() {
 void makelangelo5Setup() {
   // if you accidentally upload m3 firmware to an m5 then upload it ONCE with this line uncommented.
   float limits[NUM_AXIES*2];
-  limits[0] = 32.5;
-  limits[1] = -32.5;
-  limits[2] = 50;
-  limits[3] = -50;
+  limits[0] = 320.5;
+  limits[1] = -320.5;
+  limits[2] = 500;
+  limits[3] = -500;
   limits[4] = PEN_UP_ANGLE;
   limits[5] = PEN_DOWN_ANGLE;
   adjustDimensions(limits);
+  
+  calibrateLeft=1011;
+  calibrateRight=1011;
   saveCalibration();
+
+  float homePos[NUM_AXIES];
+  homePos[0] = 0;
+  homePos[1] = limits[2]-210.7;
+  homePos[2] = 50;
+  setHome(homePos);
+
 }
 #endif
 
@@ -698,6 +754,8 @@ void parseSetHome() {
 void jogMotors() {
   int i, j, amount;
 
+  motor_engage();
+  
   for (i = 0; i < NUM_MOTORS; ++i) {
     if (MotorNames[i] == 0) continue;
     amount = parseNumber(MotorNames[i], 0);
@@ -814,9 +872,12 @@ void setup() {
   }
   if(NUM_AXIES>=3) pos[2]=PEN_UP_ANGLE;
   teleport(pos);
+#ifdef MACHINE_HAS_LIFTABLE_PEN
   setPenAngle(PEN_UP_ANGLE);
-
+#endif
   setFeedRate(DEFAULT_FEEDRATE);
+
+  robot_setup();
   
   // display the help at startup.
   help();
@@ -864,6 +925,25 @@ void loop() {
   if ( !segment_buffer_full() && (millis() - last_cmd_time) > TIMEOUT_OK ) {
     parser_ready();
   }
+
+#if MACHINE_STYLE == ARM6
+/*
+  static int switchState=LOW;
+  if(digitalRead(MOTOR_5_LIMIT_SWITCH_PIN)!=switchState) {
+    switchState = !switchState;
+    Serial.println(switchState?"ON":"OFF");
+  }
+  */
+  /*
+  Serial.print( digitalRead(MOTOR_0_LIMIT_SWITCH_PIN)==HIGH ? "1 " : "0 ");
+  Serial.print( digitalRead(MOTOR_1_LIMIT_SWITCH_PIN)==HIGH ? "1 " : "0 ");
+  Serial.print( digitalRead(MOTOR_2_LIMIT_SWITCH_PIN)==HIGH ? "1 " : "0 ");
+  Serial.print( digitalRead(MOTOR_3_LIMIT_SWITCH_PIN)==HIGH ? "1 " : "0 ");
+  Serial.print( digitalRead(MOTOR_4_LIMIT_SWITCH_PIN)==HIGH ? "1 " : "0 ");
+  Serial.print( digitalRead(MOTOR_5_LIMIT_SWITCH_PIN)==HIGH ? "1 " : "0 ");
+  Serial.println();*/
+  
+#endif
 }
 
 

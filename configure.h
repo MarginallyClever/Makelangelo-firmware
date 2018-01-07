@@ -15,6 +15,7 @@
 
 
 
+
 // robot styles supported
 #define POLARGRAPH       1  // polargraph like Makelangelo
 #define TRADITIONALXY    3  // gantry 2 axis setup.
@@ -28,7 +29,7 @@
 #define ARM3            10
 //#define ARM4            11
 //#define ARM5            12
-//#define ARM6            13
+#define ARM6            13
 
 #define MACHINE_STYLE POLARGRAPH  // change this
 
@@ -45,7 +46,7 @@
 #include "robot_arm3.h"
 //#include "robot_arm4.h"
 //#include "robot_arm5.h"
-//#include "robot_arm6.h"
+#include "robot_arm6.h"
 
 
 // Boards supported
@@ -92,6 +93,16 @@
 // for arc directions
 #define ARC_CW               (1)
 #define ARC_CCW              (-1)
+
+
+//------------------------------------------------------------------------------
+// LCD options
+//------------------------------------------------------------------------------
+
+#define LCD_MESSAGE_LENGTH (40)  // we have two lines of 20 characters avialable in 7.16
+#define LCD_DRAW_DELAY     (150)
+#define LCD_TURN_PER_MENU  (5)
+
 
 
 //------------------------------------------------------------------------------
@@ -154,7 +165,6 @@ typedef struct {
   int dir_pin;
   int enable_pin;
   int limit_switch_pin;
-  int limit_switch_state;
 } Motor;
 
 
@@ -186,6 +196,8 @@ extern float acceleration;
 extern Motor motors[NUM_MOTORS];
 extern const char *AxisNames;
 extern const char *MotorNames;
+
+extern char lcd_message[LCD_MESSAGE_LENGTH];
 
 
 #endif // CONFIGURE_H
