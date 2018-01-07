@@ -69,7 +69,7 @@ int lcd_turn     = 0;
 char lcd_click_old = HIGH;
 char lcd_click_now = false;
 uint8_t speed_adjust = 100;
-char lcd_message[LCD_MESSAGE_LENGTH];
+char lcd_message[LCD_MESSAGE_LENGTH+1];
 
 int menu_position_sum = 0, menu_position = 0, screen_position = 0, num_menu_items = 0, ty, screen_end;
 
@@ -218,8 +218,26 @@ void LCD_main_menu() {
 
 
 void LCD_print_message() {
-  lcd.setCursor( 0, 2);  lcd.print(lcd_message);
-  lcd.setCursor( 0, 3);  lcd.print(lcd_message + 20);
+  int k=0;
+  for(int j=0;j<2;++j) {
+    for(int i=0;i<LCD_WIDTH;++i) {
+      lcd.setCursor( i, 2+j);
+      lcd.print(lcd_message[k++]);
+    }
+  }
+}
+
+
+void LCD_beep(int freq,int ms) {
+  if(freq<=0||freq>1000) freq=60;
+  
+  int stepSize = 1000.0f/(float)freq;
+  for(int i=0;i<ms;i+=stepSize*2) {
+    digitalWrite(BEEPER,HIGH);
+    delay(stepSize);
+    digitalWrite(BEEPER,LOW);
+    delay(stepSize);
+  }
 }
 
 
@@ -432,6 +450,7 @@ void LCD_print_float(float v) {
 // initialize the Smart controller LCD panel
 void LCD_init() {
   lcd.begin(LCD_WIDTH, LCD_HEIGHT);
+  pinMode(BEEPER,OUTPUT);
   pinMode(BTN_EN1, INPUT);
   pinMode(BTN_EN2, INPUT);
   pinMode(BTN_ENC, INPUT);
@@ -440,7 +459,12 @@ void LCD_init() {
   digitalWrite(BTN_ENC, HIGH);
   current_menu = LCD_status_menu;
   menu_position_sum = 1;  /* 20160313-NM-Added so the clicking without any movement will display a menu */
-  lcd_message[0] = 0;
+  
+  // erase LCD message
+  for(int i=0;i<LCD_MESSAGE_LENGTH;++i) {
+    lcd_message[i] = ' ';
+  }
+  lcd_message[LCD_MESSAGE_LENGTH]=0;
 }
 
 
@@ -448,6 +472,7 @@ void LCD_init() {
 
 void LCD_init() {}
 void LCD_menu() {}
+void LCD_beep(int freq,int ms) {}
 
 #endif  // HAS_LCD
 
