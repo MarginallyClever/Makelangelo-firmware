@@ -14,10 +14,15 @@
  * @param axies the cartesian coordinates
  * @param motorStepArray a measure of each belt to that plotter position
  */
-void IK(float *axies, long *motorStepArray) {
-  float x = axies[0];
-  float y = axies[1];
-  float z = axies[2];
+void IK(float *cartesian, long *motorStepArray) {
+  float x = cartesian[0];
+  float y = cartesian[1];
+  float z = cartesian[2];
+  
+  float limit_xmax = axies[0].limitMax;
+  float limit_xmin = axies[0].limitMin;
+  float limit_ymax = axies[1].limitMax;
+  float limit_ymin = axies[1].limitMin;
   
   float L,R,U,V,dy,dx,dz;
 

@@ -42,13 +42,13 @@ StewartPlatform robot;
  * @param axies the cartesian coordinate
  * @param motorStepArray a measure of each belt to that plotter position
  */
-void IK(float *axies, long *motorStepArray) {
-  float x = axies[0];
-  float y = axies[1];
-  float z = axies[2];
-  float u = axies[3];
-  float v = axies[4];
-  float w = axies[5];
+void IK(float *cartesian, long *motorStepArray) {
+  float x = cartesian[0];
+  float y = cartesian[1];
+  float z = cartesian[2];
+  float u = cartesian[3];
+  float v = cartesian[4];
+  float w = cartesian[5];
 
   Vector3 mov(x,y,z);
   Vector3 rpy(u,v,w);
