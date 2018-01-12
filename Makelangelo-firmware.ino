@@ -117,6 +117,8 @@ void printFeedRate() {
 
 
 /**
+ * M101 Annn Tnnn Bnnn
+ * Change axis A limits to max T and min B.
  * look for change to dimensions in command, apply and save changes.
  */
 void parseLimits() {
