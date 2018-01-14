@@ -340,8 +340,9 @@ void teleport(float *pos) {
 
 
 /**
-   Print a helpful message to serial.  The first line must never be changed to play nice with the JAVA software.
-*/
+ * M100
+ * Print a helpful message to serial.  The first line must never be changed to play nice with the JAVA software.
+ */
 void help() {
   Serial.print(F("\n\nHELLO WORLD! "));
   sayModelAndUID();
@@ -363,6 +364,10 @@ void sayModelAndUID() {
 }
 
 
+/**
+ * D5
+ * report current firmware version
+ */
 void sayFirmwareVersionNumber() {
   char versionNumber = loadVersion();
 
@@ -372,9 +377,9 @@ void sayFirmwareVersionNumber() {
 
 
 /**
-   Print the X,Y,Z, feedrate, and acceleration to serial.
-   Equivalent to gcode M114
-*/
+ * M114
+ * Print the X,Y,Z, feedrate, acceleration, and home position
+ */
 void where() {
   wait_for_empty_segment_buffer();
 
@@ -401,8 +406,9 @@ void where() {
 
 
 /**
-   Print the machine limits to serial.
-*/
+ * M102
+ * Print the machine limits to serial.
+ */
 void printConfig() {
   int i;
 
@@ -439,8 +445,8 @@ void set_tool_offset(int toolID, float *pos) {
 
 
 /**
-   @return the position + active tool offset
-*/
+ * @return the position + active tool offset
+ */
 void get_end_plus_offset(float *results) {
   int i;
   for(i=0;i<NUM_AXIES;++i) {
@@ -450,9 +456,10 @@ void get_end_plus_offset(float *results) {
 
 
 /**
-   Change the currently active tool
-*/
-void tool_change(int tool_id) {
+ * M6 [Tnnn]
+ * Change the currently active tool
+ */
+void toolChange(int tool_id) {
   if (tool_id < 0) tool_id = 0;
   if (tool_id >= NUM_TOOLS) tool_id = NUM_TOOLS - 1;
   current_tool = tool_id;
@@ -465,11 +472,11 @@ void tool_change(int tool_id) {
 
 
 /**
-   Look for character /code/ in the buffer and read the float that immediately follows it.
-   @return the value found.  If nothing is found, /val/ is returned.
-   @input code the character to look for.
-   @input val the return value if /code/ is not found.
- **/
+ * Look for character /code/ in the buffer and read the float that immediately follows it.
+ * @return the value found.  If nothing is found, /val/ is returned.
+ * @input code the character to look for.
+ * @input val the return value if /code/ is not found.
+ */
 float parseNumber(char code, float val) {
   char *ptr = serialBuffer; // start at the beginning of buffer
   while ((long)ptr > 1 && (*ptr) && (long)ptr < (long)serialBuffer + sofar) { // walk to the end
@@ -481,6 +488,11 @@ float parseNumber(char code, float val) {
   return val;  // end reached, nothing found, return default val.
 }
 
+
+/**
+ * G4 [Snn] [Pnn]
+ * Wait S milliseconds and P seconds.
+ */
 void parseDwell() {
   wait_for_empty_segment_buffer();
   float delayTime = parseNumber('S', 0) + parseNumber('P', 0) * 1000.0f;
@@ -488,6 +500,10 @@ void parseDwell() {
 }
 
 
+/** 
+ * G0-G1 [Xnnn] [Ynnn] [Znnn] [Unnn] [Vnnn] [Wnnn] [Ann] [Fnn]
+ * straight lines
+ */
 void parseLine() {
   float offset[NUM_AXIES];
   get_end_plus_offset(offset);
@@ -505,8 +521,9 @@ void parseLine() {
 
 
 /** 
+ * G2-G3 [Xnnn] [Ynnn] [Ann] [Fnn] [Inn] [Jnn]
  * arcs in the XY plane
- * @param clockwise 1 for cw, 0 for ccw
+ * @param clockwise (G2) 1 for cw, (G3) 0 for ccw
  */
 void parseArc(int clockwise) {
   float offset[NUM_AXIES];
@@ -528,6 +545,10 @@ void parseArc(int clockwise) {
 }
 
 
+/**
+ * G92 [Xnnn] [Ynnn] [Znnn] [Unnn] [Vnnn] [Wnnn]
+ * Teleport mental position
+ */
 void parseTeleport() {
   float offset[NUM_AXIES];
   get_end_plus_offset(offset);
@@ -541,6 +562,10 @@ void parseTeleport() {
 }
 
 
+/**
+ * G54-G59 [Xnnn] [Ynnn] [Znnn] [Unnn] [Vnnn] [Wnnn]
+ * Adjust tool offset
+ */
 void parseToolOffset(int toolID) {
   int i;
   float offset[NUM_AXIES];
@@ -650,7 +675,7 @@ void processCommand() {
   // M codes
   cmd = parseNumber('M', -1);
   switch (cmd) {
-    case   6:  tool_change(parseNumber('T', current_tool));  break;
+    case   6:  toolChange(parseNumber('T', current_tool));  break;
     case  17:  motor_engage();  break;
     case  18:  motor_disengage();  break;
     case 100:  help();  break;
@@ -695,10 +720,7 @@ void processCommand() {
     case  4:  SD_StartPrintingFile(strchr(serialBuffer, ' ') + 1);  break; // read file
     case  5:  sayFirmwareVersionNumber();  break;
     case  6:  parseSetHome();  break;
-    case  7:  // set calibration length
-              calibrateLeft = parseNumber('L', calibrateLeft);
-              calibrateRight = parseNumber('R', calibrateRight);
-              // fall through to case 8, report calibration.
+    case  7:  setCalibration();  break;
     case  8:  reportCalibration();  break;
     case  9:  saveCalibration();  break;
     case 10:  // get hardware version
@@ -718,6 +740,9 @@ void processCommand() {
 
 
 #if MACHINE_STYLE == POLARGRAPH
+/**
+ * D11 makelangelo 5 specific setup call
+ */
 void makelangelo5Setup() {
   // if you accidentally upload m3 firmware to an m5 then upload it ONCE with this line uncommented.
   float limits[NUM_AXIES*2];
@@ -743,6 +768,10 @@ void makelangelo5Setup() {
 #endif
 
 
+/**
+ * D6 [Xnnn] [Ynnn] [Znnn] [Unnn] [Vnnn] [Wnnn]
+ * Set home position for each axis.
+ */
 void parseSetHome() {
   int i;
   float offset[NUM_AXIES];
@@ -753,6 +782,11 @@ void parseSetHome() {
 }
 
 
+/**
+ * D0 [Lnn] [Rnn] [Unn] [Vnn] [Wnn] [Tnn]
+ * Jog each motor nn steps.
+ * I don't know why the latter motor names are UVWT.
+ */
 void jogMotors() {
   int i, j, amount;
 
@@ -788,6 +822,21 @@ void jogMotors() {
 }
 
 
+/**
+ * D7 [Lnnn] [Rnnn]
+ * Set calibration length of each belt
+ */
+void setCalibration() {
+  calibrateLeft = parseNumber('L', calibrateLeft);
+  calibrateRight = parseNumber('R', calibrateRight);
+  reportCalibration();
+}
+
+
+/**
+ * D8
+ * Report calibration values for left and right belts
+ */
 void reportCalibration() {
   Serial.print(F("D8 L"));
   Serial.print(calibrateLeft);
@@ -797,7 +846,7 @@ void reportCalibration() {
 
 
 /**
- * equal to some decimal places?
+ * Compare two floats to the first decimal place.
  * return true when abs(a-b)<0.1
  */
 boolean equalEpsilon(float a, float b) {
