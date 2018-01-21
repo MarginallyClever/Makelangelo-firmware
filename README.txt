@@ -12,11 +12,20 @@ Makelangelo-firmware can also support traditional XY gantries, CoreXY gantries, 
  	
 ## Version ##
 
-This is version 7.11.0
 Newer versions might be available at https://www.marginallyclever.com/product/makelangelo-firmware/
 
 ## Instructions ##
 
+- Make sure the parent folder is called Makelangelo-firmware.
+- Open Makelangelo-firmware/Makelangelo-firmware.ino in arduino
+- in Makelangelo-firmware/configure.h make sure BOARD_TYPE and MACHINE_STYLE are set for your board and machine style
+  - For Makelangelo 3 or Makelangelo 5, choose POLARGRAPH
+- For Makelangelo robots, in Makelangelo-firmware/polargraph.h, set
+  for Makelangelo 3 #define MACHINE_HARDWARE_VERSION 3 
+  for Makelangelo 5 #define MACHINE_HARDWARE_VERSION 5
+- Tools > board > set type for your flavor of arduino 
+- Tools > port > set the connection for your arudion
+- upload
 
 For developers, please see
 https://github.com/MarginallyClever/Makelangelo/wiki/Home/
