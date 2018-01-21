@@ -8,6 +8,8 @@ Makelangelo is a polargraph mural drawing robot.  It is intended to teach studen
 
 This project specifically deals with the firmware: the code in the brain of the robot that receives instructions and moves the motors.  It pairs really well with Makelangelo, a project to give humans a pleasant GUI.
 
+Makelangelo-firmware can also support traditional XY gantries, CoreXY gantries, Zarplotters, Skycams, Delta robots, Stewart platforms, 3 axis arms, and 6 axis arms.
+ 	
 ## Version ##
 
 This is version 7.11.0
@@ -15,11 +17,6 @@ Newer versions might be available at https://www.marginallyclever.com/product/ma
 
 ## Instructions ##
 
-For installation instructions, see
-http://learn.marginallyclever.com/index.php/Makelangelo_2_Software
-
-Please visit the Makelangelo wiki for everything else
-http://learn.marginallyclever.com/index.php/Makelangelo_3.2
 
 For developers, please see
 https://github.com/MarginallyClever/Makelangelo/wiki/Home/

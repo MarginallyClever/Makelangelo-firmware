@@ -14,8 +14,6 @@
 //#define VERBOSE           (1)  // add to get a lot more serial output.
 
 
-
-
 // robot styles supported
 #define POLARGRAPH       1  // polargraph like Makelangelo
 #define TRADITIONALXY    3  // gantry 2 axis setup.
@@ -30,6 +28,7 @@
 //#define ARM4            11
 //#define ARM5            12
 #define ARM6            13
+
 
 #define MACHINE_STYLE POLARGRAPH  // change this
 

@@ -774,11 +774,11 @@ void makelangelo5Setup() {
  */
 void parseSetHome() {
   int i;
-  float offset[NUM_AXIES];
+  float homePos[NUM_AXIES];
   for(i=0;i<NUM_AXIES;++i) {
-    offset[i] = parseNumber(AxisNames[i], axies[i].homePos);
+    homePos[i] = parseNumber(AxisNames[i], axies[i].homePos);
   }
-  setHome(offset);
+  setHome(homePos);
 }
 
 
