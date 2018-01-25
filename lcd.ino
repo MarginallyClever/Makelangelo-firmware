@@ -130,28 +130,32 @@ void LCD_update() {
     //Serial.print('\n');
 
     (*current_menu)();
+  }
+  
+  if ( lcd_turn ) {
+    int op = menu_position_sum / LCD_TURN_PER_MENU;
+    menu_position_sum += lcd_turn;
+    lcd_turn = 0;
 
-    if ( lcd_turn ) {
-      int op = menu_position_sum / LCD_TURN_PER_MENU;
-      menu_position_sum += lcd_turn;
-      lcd_turn = 0;
-
-      if (num_menu_items > 0) {
-        if ( menu_position_sum > (num_menu_items - 1) * LCD_TURN_PER_MENU ) menu_position_sum = (num_menu_items - 1) * LCD_TURN_PER_MENU;
+    if (num_menu_items > 0) {
+      if ( menu_position_sum > (num_menu_items - 1) * LCD_TURN_PER_MENU ) {
+        menu_position_sum = (num_menu_items - 1) * LCD_TURN_PER_MENU;
       }
-      if ( menu_position_sum < 1)  menu_position_sum = 1; /* 20160313-NM-Added to stop the positon going negative at needing more winds to come back */
-
-      menu_position = menu_position_sum / LCD_TURN_PER_MENU;
-      if (op != menu_position) lcd.clear();
-
-      if (menu_position > num_menu_items - 1) menu_position = num_menu_items - 1;
-      if (menu_position < 0) {
-        menu_position = 0;
-      }
-      if (screen_position > menu_position) screen_position = menu_position;
-      if (screen_position < menu_position - (LCD_HEIGHT - 1)) screen_position = menu_position - (LCD_HEIGHT - 1);
-      screen_end = screen_position + LCD_HEIGHT;
     }
+    if ( menu_position_sum < 1) {
+      menu_position_sum = 1; /* 20160313-NM-Added to stop the positon going negative at needing more winds to come back */
+    }
+
+    menu_position = menu_position_sum / LCD_TURN_PER_MENU;
+    if (op != menu_position) lcd.clear();
+
+    if (menu_position > num_menu_items - 1) menu_position = num_menu_items - 1;
+    if (menu_position < 0) {
+      menu_position = 0;
+    }
+    if (screen_position > menu_position) screen_position = menu_position;
+    if (screen_position < menu_position - (LCD_HEIGHT - 1)) screen_position = menu_position - (LCD_HEIGHT - 1);
+    screen_end = screen_position + LCD_HEIGHT;
   }
 }
 
@@ -346,24 +350,41 @@ void LCD_start_menu() {
   MENU_START
   MENU_SUBMENU("Back", LCD_main_menu);
 
+  Serial.print(menu_position    );  Serial.print("\t");  // 0
+  Serial.print(menu_position_sum);  Serial.print("\t");  // 1
+  Serial.print(screen_position  );  Serial.print("\t");  // 0
+  Serial.print(num_menu_items   );  Serial.print("\n");  // 8
+
+  
   root.rewindDirectory();
-  while (1) {
-    File entry =  root.openNextFile();
+  while( true ) {
+    long tStart = millis();
+    File entry = root.openNextFile();
+    long tEnd = millis();
+    Serial.print(tEnd-tStart);
+    Serial.print('\t');
     if (!entry) {
       // no more files, return to the first file in the directory
       break;
     }
-    if (!entry.isDirectory() && entry.name()[0] != '_') {
-      MENU_ITEM_START(entry.name())
+    char *filename = entry.name();
+    Serial.print( entry.isDirectory()?">":" " );
+    Serial.println(filename);/*
+    if (!entry.isDirectory() && filename[0] != '_') {
+      MENU_ITEM_START(filename)
       if (menu_position == ty && lcd_click_now) {
         lcd_click_now = false;
-        SD_StartPrintingFile(entry.name());
+        SD_StartPrintingFile(filename);
         MENU_GOTO(LCD_status_menu);
       }
       MENU_ITEM_END()
-    }
+    }*/
     entry.close();
   }
+
+  Serial.println();
+  
+  
   MENU_END
 }
 
