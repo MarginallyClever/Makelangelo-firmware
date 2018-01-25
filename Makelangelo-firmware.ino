@@ -231,12 +231,12 @@ void lineSafe(float *pos, float new_feed_rate) {
 #ifdef SUBDIVIDE_LINES
   // split up long lines to make them straighter
   float delta[NUM_AXIES];
-  float start[NUM_AXIES];
+  float startPos[NUM_AXIES];
   float temp[NUM_AXIES];
   float len=0;  
   for(i=0;i<NUM_AXIES;++i) {
-    start[i] = axies[i].pos;
-    delta[i] = destination[i] - start[i];
+    startPos[i] = axies[i].pos;
+    delta[i] = destination[i] - startPos[i];
     len += delta[i] * delta[i];
   }
 
@@ -250,7 +250,7 @@ void lineSafe(float *pos, float new_feed_rate) {
   for (j = 1; j < pieces; ++j) {
     a = (float)j / (float)pieces;
     for(i=0;i<NUM_AXIES;++i) {
-      temp[i] = delta[i] * a + start[i];
+      temp[i] = delta[i] * a + startPos[i];
     }
     lineSafeInternal(temp, new_feed_rate);
   }
@@ -746,8 +746,8 @@ void processCommand() {
 void makelangelo5Setup() {
   // if you accidentally upload m3 firmware to an m5 then upload it ONCE with this line uncommented.
   float limits[NUM_AXIES*2];
-  limits[0] = 320.5;
-  limits[1] = -320.5;
+  limits[0] = 325.0;
+  limits[1] = -325.0;
   limits[2] = 500;
   limits[3] = -500;
   limits[4] = PEN_UP_ANGLE;

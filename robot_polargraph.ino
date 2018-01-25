@@ -235,27 +235,26 @@ void robot_findHome() {
   count[0] = calibrateLeft/THREAD_PER_STEP;
   count[1] = calibrateRight/THREAD_PER_STEP;
   count[2] = axies[2].pos;
-  Serial.print("cl=");   Serial.println(calibrateLeft);
-  Serial.print("cr=");   Serial.println(calibrateRight);
+  Serial.print("cl=");        Serial.println(calibrateLeft);
+  Serial.print("cr=");        Serial.println(calibrateRight);
   Serial.print("t*1000=");    Serial.println(THREAD_PER_STEP*1000);
 
   // current position is...
-  float axies2[NUM_AXIES];
-  FK(count, axies2);
-  teleport(axies2);
+  float offset[NUM_AXIES];
+  FK(count, offset);
+  teleport(offset);
   
   where();
+  get_end_plus_offset(offset);
 
   // go home.
-
-  float offset[NUM_AXIES];
-  get_end_plus_offset(offset);
   offset[0]=axies[0].homePos;
   offset[1]=axies[1].homePos;
   offset[2]=axies[2].pos;
-  Serial.print(F("Homing to "));  Serial.print(axies[0].homePos);
-  Serial.print(",");              Serial.println(axies[1].homePos);
+  Serial.print(F("Homing to "));  Serial.print  (axies[0].homePos);
+  Serial.print(',');              Serial.println(axies[1].homePos);
   lineSafe(offset, feed_rate);
+  
   Serial.println(F("Done."));
 #endif // USER_LIMIT_SWITCH
 }
