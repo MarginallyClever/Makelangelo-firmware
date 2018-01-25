@@ -115,51 +115,6 @@ void LCD_read() {
 }
 
 
-void LCD_update() {
-  LCD_read();
-
-  if (millis() >= lcd_draw_delay ) {
-    lcd_draw_delay = millis() + LCD_DRAW_DELAY;
-
-    //Serial.print(lcd_turn,DEC);
-    //Serial.print('\t');  Serial.print(menu_position,DEC);
-    //Serial.print('\t');  Serial.print(menu_position_sum,DEC);
-    //Serial.print('\t');  Serial.print(screen_position,DEC);
-    //Serial.print('\t');  Serial.print(screen_end,DEC);
-    //Serial.print('\t');  Serial.print(num_menu_items,DEC);
-    //Serial.print('\n');
-
-    (*current_menu)();
-  }
-  
-  if ( lcd_turn ) {
-    int op = menu_position_sum / LCD_TURN_PER_MENU;
-    menu_position_sum += lcd_turn;
-    lcd_turn = 0;
-
-    if (num_menu_items > 0) {
-      if ( menu_position_sum > (num_menu_items - 1) * LCD_TURN_PER_MENU ) {
-        menu_position_sum = (num_menu_items - 1) * LCD_TURN_PER_MENU;
-      }
-    }
-    if ( menu_position_sum < 1) {
-      menu_position_sum = 1; /* 20160313-NM-Added to stop the positon going negative at needing more winds to come back */
-    }
-
-    menu_position = menu_position_sum / LCD_TURN_PER_MENU;
-    if (op != menu_position) lcd.clear();
-
-    if (menu_position > num_menu_items - 1) menu_position = num_menu_items - 1;
-    if (menu_position < 0) {
-      menu_position = 0;
-    }
-    if (screen_position > menu_position) screen_position = menu_position;
-    if (screen_position < menu_position - (LCD_HEIGHT - 1)) screen_position = menu_position - (LCD_HEIGHT - 1);
-    screen_end = screen_position + LCD_HEIGHT;
-  }
-}
-
-
 // display the current machine position and feed rate on the LCD.
 void LCD_status_menu() {
   MENU_START
@@ -170,8 +125,8 @@ void LCD_status_menu() {
   if (lcd_turn) {
     speed_adjust += lcd_turn;
   }
-  // update the current status
-
+  
+  // update the current status  
   float offset[NUM_AXIES];
   get_end_plus_offset(offset);
   lcd.setCursor( 0, 0);  lcd.print('X');  LCD_print_float(offset[0]);
@@ -349,27 +304,27 @@ void LCD_start_menu() {
 
   MENU_START
   MENU_SUBMENU("Back", LCD_main_menu);
-
+/*
   Serial.print(menu_position    );  Serial.print("\t");  // 0
   Serial.print(menu_position_sum);  Serial.print("\t");  // 1
   Serial.print(screen_position  );  Serial.print("\t");  // 0
   Serial.print(num_menu_items   );  Serial.print("\n");  // 8
-
+*/
   
   root.rewindDirectory();
   while( true ) {
-    long tStart = millis();
+    //long tStart = millis();
     File entry = root.openNextFile();
-    long tEnd = millis();
-    Serial.print(tEnd-tStart);
-    Serial.print('\t');
+    //long tEnd = millis();
+    //Serial.print(tEnd-tStart);
+    //Serial.print('\t');
     if (!entry) {
       // no more files, return to the first file in the directory
       break;
     }
     char *filename = entry.name();
-    Serial.print( entry.isDirectory()?">":" " );
-    Serial.println(filename);/*
+    //Serial.print( entry.isDirectory()?">":" " );
+    //Serial.println(filename);/*
     if (!entry.isDirectory() && filename[0] != '_') {
       MENU_ITEM_START(filename)
       if (menu_position == ty && lcd_click_now) {
@@ -378,11 +333,11 @@ void LCD_start_menu() {
         MENU_GOTO(LCD_status_menu);
       }
       MENU_ITEM_END()
-    }*/
+    }
     entry.close();
   }
 
-  Serial.println();
+  //Serial.println();
   
   
   MENU_END
@@ -448,10 +403,60 @@ void LCD_print_float(float v) {
   if (right < 10) lcd.print('0');
   lcd.print(right);
 }
+#endif  // HAS_LCD
 
+
+
+
+void LCD_update() {
+#ifdef HAS_LCD
+  LCD_read();
+
+  if (millis() >= lcd_draw_delay ) {
+    lcd_draw_delay = millis() + LCD_DRAW_DELAY;
+
+    //Serial.print(lcd_turn,DEC);
+    //Serial.print('\t');  Serial.print(menu_position,DEC);
+    //Serial.print('\t');  Serial.print(menu_position_sum,DEC);
+    //Serial.print('\t');  Serial.print(screen_position,DEC);
+    //Serial.print('\t');  Serial.print(screen_end,DEC);
+    //Serial.print('\t');  Serial.print(num_menu_items,DEC);
+    //Serial.print('\n');
+
+    (*current_menu)();
+  }
+  
+  if ( lcd_turn ) {
+    int op = menu_position_sum / LCD_TURN_PER_MENU;
+    menu_position_sum += lcd_turn;
+    lcd_turn = 0;
+
+    if (num_menu_items > 0) {
+      if ( menu_position_sum > (num_menu_items - 1) * LCD_TURN_PER_MENU ) {
+        menu_position_sum = (num_menu_items - 1) * LCD_TURN_PER_MENU;
+      }
+    }
+    if ( menu_position_sum < 1) {
+      menu_position_sum = 1; /* 20160313-NM-Added to stop the positon going negative at needing more winds to come back */
+    }
+
+    menu_position = menu_position_sum / LCD_TURN_PER_MENU;
+    if (op != menu_position) lcd.clear();
+
+    if (menu_position > num_menu_items - 1) menu_position = num_menu_items - 1;
+    if (menu_position < 0) {
+      menu_position = 0;
+    }
+    if (screen_position > menu_position) screen_position = menu_position;
+    if (screen_position < menu_position - (LCD_HEIGHT - 1)) screen_position = menu_position - (LCD_HEIGHT - 1);
+    screen_end = screen_position + LCD_HEIGHT;
+  }
+#endif  // HAS_LCD
+}
 
 // initialize the Smart controller LCD panel
 void LCD_init() {
+#ifdef HAS_LCD
   lcd.begin(LCD_WIDTH, LCD_HEIGHT);
   pinMode(BTN_EN1, INPUT);
   pinMode(BTN_EN2, INPUT);
@@ -462,15 +467,8 @@ void LCD_init() {
   current_menu = LCD_status_menu;
   menu_position_sum = 1;  /* 20160313-NM-Added so the clicking without any movement will display a menu */
   lcd_message[0] = 0;
-}
-
-
-#else  // HAS_LCD
-
-void LCD_init() {}
-void LCD_menu() {}
-
 #endif  // HAS_LCD
+}
 
 
 /**
