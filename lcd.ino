@@ -36,7 +36,9 @@
   lcd.clear();  \
   num_menu_items=screen_position=menu_position=menu_position_sum=0;  \
   screen_end = screen_position + LCD_HEIGHT;  \
-  current_menu=new_menu; return;  }
+  current_menu=new_menu;  \
+  return;  \
+  }
 
 #define MENU_SUBMENU(menu_label,menu_method) \
   MENU_ITEM_START(menu_label) \
@@ -177,8 +179,9 @@ void LCD_main_menu() {
 
 
 void LCD_print_message() {
+  lcd_message[LCD_MESSAGE_LENGTH-1]=0;
   lcd.setCursor( 0, 2);  lcd.print(lcd_message);
-  lcd.setCursor( 0, 3);  lcd.print(lcd_message + 20);
+  lcd.setCursor( 0, 3);  lcd.print(lcd_message + LCD_WIDTH+1);
 }
 
 
