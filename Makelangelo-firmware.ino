@@ -197,10 +197,10 @@ void testKinematics() {
 
 
 /**
-   Translate the XYZ through the IK to get the number of motor steps and move the motors.
-   @input pos NUM_AXIES floats describing destination coordinates
-   @input new_feed_rate speed to travel along arc
-*/
+ * Translate the XYZ through the IK to get the number of motor steps and move the motors.
+ * @input pos NUM_AXIES floats describing destination coordinates
+ * @input new_feed_rate speed to travel along arc
+ */
 void lineSafeInternal(float *pos, float new_feed_rate) {
   long steps[NUM_MOTORS + NUM_SERVOS];
   IK(pos, steps);
@@ -216,10 +216,10 @@ void lineSafeInternal(float *pos, float new_feed_rate) {
 
 
 /**
-   Move the pen holder in a straight line using bresenham's algorithm
-   @input pos NUM_AXIES floats describing destination coordinates
-   @input new_feed_rate speed to travel along arc
-*/
+ * Move the pen holder in a straight line using bresenham's algorithm
+ * @input pos NUM_AXIES floats describing destination coordinates
+ * @input new_feed_rate speed to travel along arc
+ */
 void lineSafe(float *pos, float new_feed_rate) {
   float destination[NUM_AXIES];
   int i;
@@ -262,15 +262,15 @@ void lineSafe(float *pos, float new_feed_rate) {
 
 
 /**
-   This method assumes the limits have already been checked.
-   This method assumes the start and end radius match.
-   This method assumes arcs are not >180 degrees (PI radians)
-   @input cx center of circle x value
-   @input cy center of circle y value
-   @input destination point where movement ends
-   @input dir - ARC_CW or ARC_CCW to control direction of arc
-   @input new_feed_rate speed to travel along arc
-*/
+ * This method assumes the limits have already been checked.
+ * This method assumes the start and end radius match.
+ * This method assumes arcs are not >180 degrees (PI radians)
+ * @input cx center of circle x value
+ * @input cy center of circle y value
+ * @input destination point where movement ends
+ * @input dir - ARC_CW or ARC_CCW to control direction of arc
+ * @input new_feed_rate speed to travel along arc
+ */
 void arc(float cx, float cy, float *destination, char clockwise, float new_feed_rate) {
   // get radius
   float dx = axies[0].pos - cx;
@@ -431,10 +431,10 @@ void printConfig() {
 
 
 /**
-   Set the relative tool offset
-   @input toolID the active tool id
-   @input pos the offsets
-*/
+ * Set the relative tool offset
+ * @input toolID the active tool id
+ * @input pos the offsets
+ */
 void set_tool_offset(int toolID, float *pos) {
   int i;
 
@@ -614,6 +614,7 @@ char checkCRCisOK() {
   return 1;  // ok!
 }
 
+
 /**
  * M117 [string] 
  * Display string on the LCD panel.  Command is ignored if there is no LCD panel.
@@ -631,10 +632,28 @@ void parseMessage() {
   }
 
   // preserve message for display
-  for(i=0;i<LCD_MESSAGE_LENGTH;++i) {
-    lcd_message[i] = serialBuffer[i+5];
-    if(lcd_message[i]==0) break;
+  int top = min(LCD_MESSAGE_LENGTH,MAX_BUF);
+  //Serial.print("top ");  Serial.println(top);
+  //Serial.print(">>");
+
+  i=0;
+  int j=0;
+  char *buf = serialBuffer+5;
+  while(isPrintable(*buf) && *buf!='\r' && *buf!='\n' && i<LCD_MESSAGE_LENGTH-1) {
+    lcd_message[i]=*buf;
+    //Serial.print(i);    Serial.print(j);    Serial.print('\t');    Serial.println(*buf);
+    ++i;
+    ++j;
+    if((j%LCD_WIDTH)==0) {
+      lcd_message[i]=0;
+      ++i;
+    }
+    buf++;
   }
+  while(i<LCD_MESSAGE_LENGTH) {
+    lcd_message[i++]=0;
+  }
+  //Serial.print("<<END\n");
 #endif
 }
 
@@ -683,8 +702,8 @@ void processCommand() {
     case 102:  printConfig();  break;
     case 110:  line_number = parseNumber('N', line_number);  break;
     case 114:  where();  break;
-    case 117:  parseMessage();
-    case 226:  pauseForUserInput();
+    case 117:  parseMessage();  break;
+    case 226:  pauseForUserInput();  break;
     default:   break;
   }
 
@@ -711,7 +730,7 @@ void processCommand() {
     case 92:  parseTeleport();  break;
     default:  break;
   }
-
+  
   // machine style-specific codes
   cmd = parseNumber('D', -1);
   switch (cmd) {
@@ -760,7 +779,7 @@ void makelangelo5Setup() {
 
   float homePos[NUM_AXIES];
   homePos[0] = 0;
-  homePos[1] = limits[2]-210.7;
+  homePos[1] = limits[2]-217.0;
   homePos[2] = 50;
   setHome(homePos);
 
