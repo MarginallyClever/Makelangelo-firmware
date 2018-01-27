@@ -27,7 +27,7 @@ void IK(float *cartesian, long *motorStepArray) {
   dx = limit_xmax - cartesian[0];
   motorStepArray[1] = lround( sqrt(dx*dx+dy*dy) / THREAD_PER_STEP );
 
-  motorStepArray[NUM_MOTORS] = cartesian[2];
+  motorStepArray[2] = cartesian[2];
 }
 
 
@@ -60,6 +60,7 @@ int FK(long *motorStepArray,float *cartesian) {
   float theta = ((a*a+b*b-c*c)/(2.0*a*b));
   
   cartesian[0] = theta * a + limit_xmin;
+  /*
   Serial.print("ymax=");   Serial.println(limit_ymax);
   Serial.print("theta=");  Serial.println(theta);
   Serial.print("a=");      Serial.println(a);
@@ -67,13 +68,14 @@ int FK(long *motorStepArray,float *cartesian) {
   Serial.print("c=");      Serial.println(c);
   Serial.print("S0=");     Serial.println(motorStepArray[0]);
   Serial.print("S1=");     Serial.println(motorStepArray[1]);
-  
+  */
   cartesian[1] = limit_ymax - sqrt( 1.0 - theta * theta ) * a;
-  cartesian[2] = motorStepArray[NUM_MOTORS];
-  
+  cartesian[2] = motorStepArray[2];
+  /*
   Serial.print("C0=");      Serial.println(cartesian[0]);
   Serial.print("C1=");      Serial.println(cartesian[1]);
   Serial.print("C2=");      Serial.println(cartesian[2]);
+  */
 }
 
 
