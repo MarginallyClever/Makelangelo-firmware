@@ -92,7 +92,7 @@ void recordHome() {
   digitalWrite(MOTOR_1_DIR_PIN, LOW);
   int left = 0;
   int right = 0;
-  long count[NUM_MOTORS];
+  long count[NUM_MOTORS+NUM_SERVOS];
 
   // we start at home position, so we know (x,y)->(left,right) value here.
   float homes[NUM_AXIES];

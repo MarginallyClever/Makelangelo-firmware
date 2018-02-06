@@ -191,7 +191,7 @@ extern Segment *working_seg;
 extern volatile int current_segment;
 extern volatile int last_segment;
 extern float acceleration;
-extern Motor motors[NUM_MOTORS];
+extern Motor motors[NUM_MOTORS+NUM_SERVOS];
 extern const char *AxisNames;
 extern const char *MotorNames;
 

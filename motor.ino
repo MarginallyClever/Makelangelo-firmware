@@ -15,8 +15,7 @@
 //------------------------------------------------------------------------------
 // GLOBALS
 //------------------------------------------------------------------------------
-Motor motors[NUM_MOTORS];
-
+Motor motors[NUM_MOTORS+NUM_SERVOS];
 Segment line_segments[MAX_SEGMENTS];
 Segment *working_seg = NULL;
 volatile int current_segment=0;
