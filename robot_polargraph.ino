@@ -233,7 +233,7 @@ void robot_findHome() {
   delay(500);
 
   Serial.println(F("Estimating position..."));
-  long count[NUM_MOTORS];
+  long count[NUM_MOTORS+NUM_SERVOS];
   count[0] = calibrateLeft/THREAD_PER_STEP;
   count[1] = calibrateRight/THREAD_PER_STEP;
   count[2] = axies[2].pos;
@@ -277,7 +277,7 @@ void calibrateBelts() {
   digitalWrite(MOTOR_0_DIR_PIN, LOW);
   digitalWrite(MOTOR_1_DIR_PIN, LOW);
   int left = 0, right = 0;
-  long steps[NUM_MOTORS];
+  long steps[NUM_MOTORS+NUM_SERVOS];
   float homePos[NUM_AXIES];
   homePos[0]=axies[0].homePos;
   homePos[1]=axies[1].homePos;
