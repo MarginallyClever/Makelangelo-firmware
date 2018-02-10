@@ -621,14 +621,19 @@ char checkCRCisOK() {
  */
 void parseMessage() {
 #ifdef HAS_LCD
-  int i;
-  // "M117 " is 5 characters long
-  for(i=0;i<5;++i) {
-    if(serialBuffer[i]==0) {
-      // no message
-      lcd_message[0]=0;
-      return;  
+  int i,j=0;
+  for(i=0;i<strlen(serialBuffer);++i) {
+    if(serialBuffer[i]==' ') {
+      ++j;
+      if(j==2) break;
     }
+  }
+
+  if(i==strlen(serialBuffer)) {
+    // no message
+    lcd_message[0]=0;
+    lcd_message[LCD_WIDTH + 1]=0;
+    return;
   }
 
   // preserve message for display
@@ -636,9 +641,8 @@ void parseMessage() {
   //Serial.print("top ");  Serial.println(top);
   //Serial.print(">>");
 
-  i=0;
-  int j=0;
-  char *buf = serialBuffer+5;
+  char *buf = serialBuffer[i];
+  i=j=0;
   while(isPrintable(*buf) && *buf!='\r' && *buf!='\n' && i<LCD_MESSAGE_LENGTH-1) {
     lcd_message[i]=*buf;
     //Serial.print(i);    Serial.print(j);    Serial.print('\t');    Serial.println(*buf);
