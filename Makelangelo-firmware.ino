@@ -678,6 +678,22 @@ void pauseForUserInput() {
 
 
 /**
+ * M300 S[a] P[b]
+ * play frequency a for b milliseconds
+ */
+void parseBeep() {
+  int ms = parseNumber('P', 250);
+  int freq = parseNumber('S',60);
+  
+#ifdef HAS_LCD
+  digitalWrite(BEEPER,HIGH);
+  delay(ms);
+  digitalWrite(BEEPER,LOW);
+#endif
+}
+
+
+/**
  * process commands in the serial receive buffer
  */
 void processCommand() {
@@ -704,6 +720,7 @@ void processCommand() {
     case 114:  where();  break;
     case 117:  parseMessage();  break;
     case 226:  pauseForUserInput();  break;
+    case 300:  parseBeep();  break;
     default:   break;
   }
 
