@@ -490,6 +490,20 @@ float parseNumber(char code, float val) {
 
 
 /**
+ * @return 1 if the character is found in the serial buffer, 0 if it is not found.
+ */
+char hasGCode(char code) {
+  char *ptr = serialBuffer; // start at the beginning of buffer
+  while ((long)ptr > 1 && (*ptr) && (long)ptr < (long)serialBuffer + sofar) { // walk to the end
+    if (*ptr == code) { // if you find code on your walk,
+      return 1;  // found
+    }
+    ptr = strchr(ptr, ' ') + 1; // take a step from here to the letter after the next space
+  }
+  return 0;  // not found
+}
+
+/**
  * G4 [Snn] [Pnn]
  * Wait S milliseconds and P seconds.
  */
@@ -575,10 +589,11 @@ void parseToolOffset(int toolID) {
   set_tool_offset(toolID,offset);
 }
 
+
 /**
  * @return 1 if CRC ok or not present, 0 if CRC check fails.
  */
-char checkCRCisOK() {
+char checkLineNumberAndCRCisOK() {
   // is there a line number?
   long cmd = parseNumber('N', -1);
   if (cmd != -1 && serialBuffer[0] == 'N') { // line number must appear first on the line
@@ -590,11 +605,20 @@ char checkCRCisOK() {
     }
 
     // is there a checksum?
-    if (strchr(serialBuffer, '*') != 0) {
+    int i;
+    for(i=strlen(serialBuffer)-1;i>=0;--i) {
+      if(serialBuffer[i]=='*') {
+        break;
+      }
+    }
+    
+    if(i>=0) {
       // yes.  is it valid?
       char checksum = 0;
-      int c = 0;
-      while (serialBuffer[c] != '*' && c < MAX_BUF) checksum ^= serialBuffer[c++];
+      int c;
+      for(c=0;c<i;++c) {
+        checksum ^= serialBuffer[c];
+      }
       c++; // skip *
       int against = strtod(serialBuffer + c, NULL);
       if ( checksum != against ) {
@@ -607,6 +631,9 @@ char checkCRCisOK() {
       Serial.println(line_number);
       return 0;
     }
+
+    // remove checksum
+    serialBuffer[i]=0;
 
     line_number++;
   }
@@ -623,13 +650,20 @@ void parseMessage() {
 #ifdef HAS_LCD
   int i,j=0;
   for(i=0;i<strlen(serialBuffer);++i) {
-    if(serialBuffer[i]==' ') {
-      ++j;
-      if(j==2) break;
+    if((serialBuffer[i]=='M'||serialBuffer[i]=='m')&&
+       serialBuffer[i+1]=='1'&&
+       serialBuffer[i+2]=='1'&&
+       serialBuffer[i+3]=='7') {
+      i+=4;
+      //Serial.print("Found M117:");
+      //Serial.println(serialBuffer+i);
+      break;
     }
   }
+  
 
-  if(i==strlen(serialBuffer)) {
+  if(i>=strlen(serialBuffer)) {
+    //Serial.println("No message.");
     // no message
     lcd_message[0]=0;
     lcd_message[LCD_WIDTH + 1]=0;
@@ -638,17 +672,19 @@ void parseMessage() {
 
   // preserve message for display
   int top = min(LCD_MESSAGE_LENGTH,MAX_BUF);
-  //Serial.print("top ");  Serial.println(top);
-  //Serial.print(">>");
 
-  char *buf = serialBuffer[i];
+  char *buf = serialBuffer+i;
+  while(*buf==' ') ++buf;  // eat whitespace
+  
+  //Serial.print("message found:");
   i=j=0;
   while(isPrintable(*buf) && *buf!='\r' && *buf!='\n' && i<LCD_MESSAGE_LENGTH-1) {
     lcd_message[i]=*buf;
-    //Serial.print(i);    Serial.print(j);    Serial.print('\t');    Serial.println(*buf);
+    //Serial.print(*buf);
     ++i;
     ++j;
     if((j%LCD_WIDTH)==0) {
+      //Serial.println();
       lcd_message[i]=0;
       ++i;
     }
@@ -657,7 +693,7 @@ void parseMessage() {
   while(i<LCD_MESSAGE_LENGTH) {
     lcd_message[i++]=0;
   }
-  //Serial.print("<<END\n");
+  //Serial.println();
 #endif
 }
 
@@ -668,16 +704,22 @@ void parseMessage() {
  * Command is ignored if there is no LCD panel (and no button to press)
  */
 void pauseForUserInput() {
+  wait_for_empty_segment_buffer();
+  if(hasGCode('P') || hasGCode('S')) {
+    int pin = parseNumber('P', BTN_ENC);
+    int newState = parseNumber('S', 0);
+
 #ifdef HAS_LCD
-  int pin = parseNumber('P', BTN_ENC);
-  int newState = parseNumber('S', 0);
-  newState = (newState==1)?HIGH:LOW;
-  
-  while(digitalRead(pin)!=newState) {
-    SD_check();
-    LCD_update();
-  }
+    newState = (newState==1)?HIGH:LOW;
+    while(digitalRead(pin)!=newState);
 #endif
+  } else {
+#ifdef HAS_LCD
+    // does not have P or S. Wait for click and release of button.
+    while(digitalRead(BTN_ENC)!=LOW);
+    while(digitalRead(BTN_ENC)!=HIGH);
+#endif
+  }
 }
 
 
@@ -702,7 +744,7 @@ void parseBeep() {
  */
 void processCommand() {
   if (serialBuffer[0] == ';') return;  // blank lines
-  if(!checkCRCisOK()) return;  // message garbled
+  if(!checkLineNumberAndCRCisOK()) return;  // message garbled
 
   if (!strncmp(serialBuffer, "UID", 3)) {
     robot_uid = atoi(strchr(serialBuffer, ' ') + 1);
