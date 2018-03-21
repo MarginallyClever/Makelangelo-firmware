@@ -937,7 +937,9 @@ void setup() {
   for(int i=0;i<NUM_AXIES;++i) {
     pos[i]=0;
   }
+#ifdef MACHINE_HAS_LIFTABLE_PEN
   if(NUM_AXIES>=3) pos[2]=PEN_UP_ANGLE;
+#endif
   teleport(pos);
 #ifdef MACHINE_HAS_LIFTABLE_PEN
   setPenAngle(PEN_UP_ANGLE);
