@@ -21,10 +21,6 @@
 #define SEGMENT_PER_CM_LINE  (2)  // lines are split into segments.  How long are the segments?
 #define SEGMENT_PER_CM_ARC   (3)  // Arcs are split into segments.  How long are the segments?
 
-// servo angles for pen control
-#define PEN_UP_ANGLE         (90)
-#define PEN_DOWN_ANGLE       (50)  // Some steppers don't like 0 degrees
-
 #define NUM_TOOLS            (1)
 #define NUM_AXIES            (6)
 #define NUM_MOTORS           (6)
@@ -40,7 +36,7 @@
 #define MOTOR_MICROSTEPS_EXT      (1600)
 #define MOTOR_MICROSTEPS_MID      (3200)
 #define MOTOR_MICROSTEPS_INT      (200)
-#define NEMA23_RATIO              (47)
+#define NEMA23_RATIO              (46.656)
 #define NEMA17_RATIO              (15)
 #define NEMA14_RATIO              (19)
 #define NEMA08_RATIO              (90)
