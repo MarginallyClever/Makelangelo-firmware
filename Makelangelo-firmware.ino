@@ -737,9 +737,9 @@ void processCommand() {
     case  3:  parseArc(0);  break;  // counter-clockwise
     case  4:  parseDwell();  break;
     case 28:  robot_findHome();  break;
-    #if MACHINE_STYLE == POLARGRAPH
+#if MACHINE_STYLE == POLARGRAPH
     case 29:  calibrateBelts();  break;
-    #endif
+#endif
     case 54:
     case 55:
     case 56:
