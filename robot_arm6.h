@@ -47,6 +47,32 @@
 #define MOTOR_4_STEPS_PER_TURN    ((unsigned long)MOTOR_MICROSTEPS_INT*NEMA14_RATIO)
 #define MOTOR_5_STEPS_PER_TURN    ((unsigned long)MOTOR_MICROSTEPS_INT*NEMA08_RATIO)
 
+// Relative offset from joint N to joint N+1.
+// shoulder pan
+#define OFFSET_0X    0
+#define OFFSET_0Y    0
+#define OFFSET_0Z    0
+// shoulder tilt
+#define OFFSET_1X    0
+#define OFFSET_1Y    0
+#define OFFSET_1Z    250
+// elbow tilt
+#define OFFSET_2X    0
+#define OFFSET_2Y    50
+#define OFFSET_2Z    250
+// elbow pan
+#define OFFSET_3X    0
+#define OFFSET_3Y    -50
+#define OFFSET_3Z    100
+// wrist
+#define OFFSET_4X    0
+#define OFFSET_4Y    0
+#define OFFSET_4Z    100
+// wrist to wrist face
+#define OFFSET_5X    0
+#define OFFSET_5Y    0
+#define OFFSET_5Z    50
+
 
 #endif  // #ifdef ARM6
 
