@@ -38,8 +38,8 @@
 #define MOTOR_MICROSTEPS_INT      (200)
 #define NEMA23_RATIO              (46.656)
 #define NEMA17_RATIO              (15)
-#define NEMA14_RATIO              (19)
-#define NEMA08_RATIO              (90)
+#define NEMA14_RATIO              (19.19)
+#define NEMA08_RATIO              (90.25)
 #define MOTOR_0_STEPS_PER_TURN    ((unsigned long)MOTOR_MICROSTEPS_EXT*NEMA23_RATIO)
 #define MOTOR_1_STEPS_PER_TURN    ((unsigned long)MOTOR_MICROSTEPS_EXT*NEMA23_RATIO)
 #define MOTOR_2_STEPS_PER_TURN    ((unsigned long)MOTOR_MICROSTEPS_MID*NEMA17_RATIO)
@@ -73,6 +73,34 @@
 #define OFFSET_5Y    0
 #define OFFSET_5Z    50
 
+// angle (degrees) when homing switches report in
+#define MIN_ANGLE_0 0
+#define MIN_ANGLE_1 -90
+#define MIN_ANGLE_2 -11.1
+#define MIN_ANGLE_3 0
+#define MIN_ANGLE_4 -90
+#define MIN_ANGLE_5 0
+
+#define MAX_ANGLE_0 180
+#define MAX_ANGLE_1 90
+#define MAX_ANGLE_2 (180-11.1)
+#define MAX_ANGLE_3 180
+#define MAX_ANGLE_4 90
+#define MAX_ANGLE_5 180
+
+#define HOME_ANGLE_0 MIN_ANGLE_0
+#define HOME_ANGLE_1 MIN_ANGLE_1
+#define HOME_ANGLE_2 MIN_ANGLE_2
+#define HOME_ANGLE_3 MIN_ANGLE_3
+#define HOME_ANGLE_4 MIN_ANGLE_4
+#define HOME_ANGLE_5 MIN_ANGLE_5
+
+#define HOME_DIR_0 -1
+#define HOME_DIR_1 -1
+#define HOME_DIR_2 -1
+#define HOME_DIR_3 -1
+#define HOME_DIR_4 -1
+#define HOME_DIR_5 -1
 
 #endif  // #ifdef ARM6
 
