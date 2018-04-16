@@ -31,7 +31,7 @@
 //#define ARM5            12
 #define ARM6            13
 
-#define MACHINE_STYLE ARM6  // change this
+#define MACHINE_STYLE POLARGRAPH  // change this
 
 // robot style descriptions
 #include "robot_polargraph.h"
@@ -54,7 +54,6 @@
 #define BOARD_RAMPS        2
 #define BOARD_SANGUINOLULU 3
 #define BOARD_TEENSYLU     4
-#define BOARD_MKS          5
 
 #define MOTHERBOARD BOARD_RUMBA  // change this
 
