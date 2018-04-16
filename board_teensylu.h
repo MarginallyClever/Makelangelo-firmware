@@ -1,5 +1,5 @@
-#ifndef BOARD_RAMPS_H
-#define BOARD_RAMPS_H
+#ifndef BOARD_TEENSYLU_H
+#define BOARD_TEENSYLU_H
 //------------------------------------------------------------------------------
 // Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
@@ -27,5 +27,5 @@
 #endif
 
 
-#endif  // BOARD_RAMPS_H
+#endif  // BOARD_TEENSYLU_H
 
