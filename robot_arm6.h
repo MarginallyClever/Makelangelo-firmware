@@ -33,9 +33,9 @@
 #define DEFAULT_ACCELERATION (2500)
 
 
-#define MOTOR_MICROSTEPS_EXT      (1600)
-#define MOTOR_MICROSTEPS_MID      (3200)
-#define MOTOR_MICROSTEPS_INT      (200)
+#define MOTOR_MICROSTEPS_EXT      (1600)  // motor full steps * microstepping setting
+#define MOTOR_MICROSTEPS_MID      (3200)  // motor full steps * microstepping setting
+#define MOTOR_MICROSTEPS_INT      ( 200)  // motor full steps * microstepping setting
 #define NEMA23_RATIO              (46.656)
 #define NEMA17_RATIO              (15)
 #define NEMA14_RATIO              (19.19)
