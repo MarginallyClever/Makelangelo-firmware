@@ -772,11 +772,15 @@ void processCommand() {
               break;
 #if MACHINE_STYLE == POLARGRAPH
     case 11:  makelangelo5Setup();  break;
-    case 12:  recordHome();
+    case 12:  recordHome();  break;
 #endif
 #ifdef MACHINE_HAS_LIFTABLE_PEN
     case 13:  setPenAngle(parseNumber('Z',axies[2].pos));  break;
 #endif
+    case 14:  // get machine style
+              Serial.print(F("D14 "));
+              Serial.println(MACHINE_STYLE_NAME);
+              break;
     default:  break;
   }
 }
