@@ -73,7 +73,7 @@ int global_step_dir_5;
 
 
 const char *MotorNames="LRUVWT";
-const char *AxisNames="XYZUVW";
+const char *AxisNames="XYZUVWT";
 
 
 //------------------------------------------------------------------------------
@@ -230,6 +230,12 @@ void motor_engage() {
   for(i=0;i<NUM_MOTORS;++i) {
     digitalWrite(motors[i].enable_pin,LOW);
   }
+/*
+#if MACHINE_STYLE == ARM6
+  // DM320T drivers want high for enabled
+  digitalWrite(motors[4].enable_pin,HIGH);
+  digitalWrite(motors[5].enable_pin,HIGH);
+#endif*/
 }
 
 
@@ -238,7 +244,12 @@ void motor_disengage() {
   int i;
   for(i=0;i<NUM_MOTORS;++i) {
     digitalWrite(motors[i].enable_pin,HIGH);
-  }
+  }/*
+#if MACHINE_STYLE == ARM6
+  // DM320T drivers want low for disabled
+  digitalWrite(motors[4].enable_pin,LOW);
+  digitalWrite(motors[5].enable_pin,LOW);
+#endif*/
 }
 
 
@@ -564,7 +575,6 @@ ISR(TIMER1_COMPA_vect) {
       #endif
 
       #if NUM_SERVOS>0
-      //move the z axis
       servos[0].write(working_seg->a[NUM_MOTORS].step_count);
       #endif
 

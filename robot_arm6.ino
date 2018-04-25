@@ -44,23 +44,40 @@ int FK(long *motorStepArray,float *axies) {
 void robot_findHome() {
   motor_engage();
   
-  char i,hits;
-  // back up until all switches are hit
-  do {
-    hits=0;
-    // for each stepper,
-    for(i=0;i<NUM_MOTORS;++i) {
-      // if this switch hasn't been hit yet
-      if( digitalRead(motors[i].limit_switch_pin) == HIGH ) {
-        // move "down"
-        digitalWrite(motors[i].dir_pin,LOW);
-        digitalWrite(motors[i].step_pin,HIGH);
-        digitalWrite(motors[i].step_pin,LOW);
-      }
+  char i;
+  // for each stepper,
+  for(i=0;i<NUM_MOTORS;++i) {
+    Serial.print("Homing ");
+    Serial.print(i);
+    Serial.print('(');
+    Serial.print(AxisNames[i]);
+    Serial.println(')');
+    
+    // back up until all switches are hit
+    digitalWrite(motors[i].dir_pin,HIGH);
+    while( digitalRead(motors[i].limit_switch_pin) == HIGH ) {
+      // move "down"
+      digitalWrite(motors[i].step_pin,HIGH);
+      digitalWrite(motors[i].step_pin,LOW);
+      pause(STEP_DELAY);
     }
-    pause(STEP_DELAY);
-  } while(hits>0);
-
+    // back off in case we started in hit position
+    digitalWrite(motors[i].dir_pin,LOW);
+    while( digitalRead(motors[i].limit_switch_pin) == LOW ) {
+      // move "down"
+      digitalWrite(motors[i].step_pin,HIGH);
+      digitalWrite(motors[i].step_pin,LOW);
+      pause(STEP_DELAY);
+    }
+    // back up until all switches are hit
+    digitalWrite(motors[i].dir_pin,HIGH);
+    while( digitalRead(motors[i].limit_switch_pin) == HIGH ) {
+      // move "down"
+      digitalWrite(motors[i].step_pin,HIGH);
+      digitalWrite(motors[i].step_pin,LOW);
+      pause(STEP_DELAY);
+    }
+  }
   // set robot to home position
   float zeros[6] = {0,0,0,0,0,0};
   teleport(zeros);

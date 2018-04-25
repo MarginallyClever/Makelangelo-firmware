@@ -12,7 +12,7 @@
 #define MACHINE_STYLE_NAME           "ARM6"
 #define MACHINE_HARDWARE_VERSION     5
 
-#define STEP_DELAY           (50)  // delay between steps, in milliseconds, when doing fixed tasks like homing
+#define STEP_DELAY           (1000)  // delay between steps, in milliseconds, when doing fixed tasks like homing
 
 #define MAX_ACCELERATION     (5000)
 #define MIN_ACCELERATION     (100)
