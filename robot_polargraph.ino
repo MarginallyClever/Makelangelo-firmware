@@ -27,6 +27,7 @@ void IK(float *cartesian, long *motorStepArray) {
   dx = limit_xmax - cartesian[0];
   motorStepArray[1] = lround( sqrt(dx*dx+dy*dy) / THREAD_PER_STEP );
 
+  // Pass the servo angle through
   motorStepArray[NUM_MOTORS] = cartesian[2];
 }
 
@@ -69,6 +70,7 @@ int FK(long *motorStepArray,float *cartesian) {
   Serial.print("S1=");     Serial.println(motorStepArray[1]);
   
   cartesian[1] = limit_ymax - sqrt( 1.0 - theta * theta ) * a;
+  // Pass the servo angle through
   cartesian[2] = motorStepArray[NUM_MOTORS];
   
   Serial.print("C0=");      Serial.println(cartesian[0]);

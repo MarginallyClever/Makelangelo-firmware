@@ -16,6 +16,7 @@
 // GLOBALS
 //------------------------------------------------------------------------------
 Motor motors[NUM_MOTORS];
+Servo servos[NUM_SERVOS];
 
 Segment line_segments[MAX_SEGMENTS];
 Segment *working_seg = NULL;
@@ -23,8 +24,6 @@ volatile int current_segment=0;
 volatile int last_segment=0;
 int step_multiplier, nominal_step_multiplier;
 unsigned short nominal_OCR1A;
-
-Servo servos[NUM_SERVOS];
 
 // used by timer1 to optimize interrupt inner loop
 int steps_total;

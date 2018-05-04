@@ -242,12 +242,12 @@ public:
   }
 
 
-  Vector3 operator * ( const Vector3 &b ) const { // vector * vector
+  Vector3 operator * ( const Vector3 &b ) const { // dot(this,b)
     return Vector3( x * b.x, y * b.y, z * b.z );
   }
 
 
-  Vector3 operator ^ ( const Vector3 &b ) const { // cross(a,b)
+  Vector3 operator ^ ( const Vector3 &b ) const { // cross(this,b)
     float nx, ny, nz;
 
     nx = y * b.z - z * b.y;
@@ -263,6 +263,10 @@ public:
   }
 
 
+  /**
+   * @axis vector3 axis around which to rotate counter-clockwise
+   * @param angle radians
+   */
   void rotate( Vector3 &axis, float angle ) {
     float sa = (float)sin( angle );
     float ca = (float)cos( angle );

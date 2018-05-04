@@ -21,15 +21,15 @@
 #define SEGMENT_PER_CM_LINE  (2)  // lines are split into segments.  How long are the segments?
 #define SEGMENT_PER_CM_ARC   (3)  // Arcs are split into segments.  How long are the segments?
 
-#define NUM_TOOLS            (1)
-#define NUM_AXIES            (6)
+#define NUM_AXIES            (7)
 #define NUM_MOTORS           (6)
-#define NUM_SERVOS           (0)
+#define NUM_SERVOS           (1)
+#define NUM_TOOLS            (1)
 
 #define MAX_FEEDRATE         (9000.0)  // depends on timer interrupt & hardware
 #define MIN_FEEDRATE         (100)
 #define MAX_JERK             (5.0)
-#define DEFAULT_FEEDRATE     (7000.0)
+#define DEFAULT_FEEDRATE     (2000.0)
 #define DEFAULT_ACCELERATION (2500)
 
 
@@ -47,6 +47,12 @@
 #define MOTOR_4_STEPS_PER_TURN    ((unsigned long)MOTOR_MICROSTEPS_INT*NEMA14_RATIO)
 #define MOTOR_5_STEPS_PER_TURN    ((unsigned long)MOTOR_MICROSTEPS_INT*NEMA08_RATIO)
 
+// DIMENSIONS
+
+#define ADJUST_WRIST_ELBOW_ANGLE      (14.036243)
+#define ADJUST_SHOULDER_ELBOW_ANGLE   (11.309932)
+#define ADJUST_ULNA_ELBOW_ANGLE       (26.56505117707799)
+
 // Relative offset from joint N to joint N+1.
 // shoulder pan
 #define OFFSET_0X    0
@@ -55,7 +61,7 @@
 // shoulder tilt
 #define OFFSET_1X    0
 #define OFFSET_1Y    0
-#define OFFSET_1Z    250
+#define OFFSET_1Z    258
 // elbow tilt
 #define OFFSET_2X    0
 #define OFFSET_2Y    50
