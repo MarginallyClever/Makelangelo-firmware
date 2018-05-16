@@ -822,6 +822,10 @@ void parseSetHome() {
 }
 
 
+/**
+ * D0 command
+ * MotorNames are delcared in motor.ino. LRUVWT
+ */
 void jogMotors() {
   int i, j, amount;
 

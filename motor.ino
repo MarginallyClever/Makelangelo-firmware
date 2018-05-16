@@ -811,14 +811,13 @@ void motor_line(long *n,float new_feed_rate) {
     if( new_seg.steps_total < new_seg.a[i].absdelta ) {
       new_seg.steps_total = new_seg.a[i].absdelta;
     }
-    //Serial.print(i);
-    //Serial.print('\t');    Serial.print(n[i]);
-    //Serial.print('\t');    Serial.print(old_seg.a[i].step_count);
-    //Serial.print('\t');    Serial.print(new_seg.a[i].step_count);
-    //Serial.print('\t');    Serial.print(new_seg.a[i].dir);
-    //Serial.print('\t');    Serial.print(new_seg.a[i].dir);
-    //Serial.print('\t');    Serial.print(new_seg.a[i].absdelta);
-    //Serial.println();
+    Serial.print(i);
+    Serial.print('\t');    Serial.print(n[i]);
+    Serial.print('\t');    Serial.print(old_seg.a[i].step_count);
+    Serial.print('\t');    Serial.print(new_seg.a[i].step_count);
+    Serial.print('\t');    Serial.print(new_seg.a[i].dir);
+    Serial.print('\t');    Serial.print(new_seg.a[i].absdelta);
+    Serial.println();
   }
 
   // No steps?  No work!  Stop now.

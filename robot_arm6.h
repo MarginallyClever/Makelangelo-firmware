@@ -26,11 +26,11 @@
 #define NUM_SERVOS           (1)
 #define NUM_TOOLS            (1)
 
-#define MAX_FEEDRATE         (9000.0)  // depends on timer interrupt & hardware
+#define MAX_FEEDRATE         (4000.0)  // depends on timer interrupt & hardware
 #define MIN_FEEDRATE         (100)
 #define MAX_JERK             (5.0)
-#define DEFAULT_FEEDRATE     (2000.0)
-#define DEFAULT_ACCELERATION (2500)
+#define DEFAULT_FEEDRATE     (1500.0)
+#define DEFAULT_ACCELERATION (1500)
 
 
 #define MOTOR_MICROSTEPS_EXT      (1600)  // motor full steps * microstepping setting
@@ -101,12 +101,12 @@
 #define HOME_ANGLE_4 MIN_ANGLE_4
 #define HOME_ANGLE_5 MIN_ANGLE_5
 
-#define HOME_DIR_0 -1
-#define HOME_DIR_1 -1
-#define HOME_DIR_2 -1
-#define HOME_DIR_3 -1
-#define HOME_DIR_4 -1
-#define HOME_DIR_5 -1
+#define HOME_DIR_0 HIGH
+#define HOME_DIR_1 HIGH
+#define HOME_DIR_2 LOW
+#define HOME_DIR_3 HIGH
+#define HOME_DIR_4 LOW
+#define HOME_DIR_5 HIGH
 
 #endif  // #ifdef ARM6
 
