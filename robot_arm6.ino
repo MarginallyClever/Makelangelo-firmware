@@ -16,12 +16,12 @@
    @param motorStepArray a measure of each belt to that plotter position
 */
 void IK(float *axies, long *motorStepArray) {
-  float x = axies[0];
-  float y = axies[1];
-  float z = axies[2];
-  float u = axies[3];
+  float x = -axies[0];
+  float y = -axies[1];
+  float z = -axies[2];
+  float u = -axies[3];
   float v = axies[4];
-  float w = axies[5];
+  float w = -axies[5];
   
   motorStepArray[0] = x * MOTOR_0_STEPS_PER_TURN / 360.0;
   motorStepArray[1] = y * MOTOR_1_STEPS_PER_TURN / 360.0;
@@ -113,10 +113,10 @@ void robot_findHome() {
   //float homeAxies[6] ={ -43.414, 0, 17.358, 0, 0, 172 };
 
   // these are temporary until IK is finished.
-  float homeAxies[6] ={0,-90,0,188,0,0};
+  float homeAxies[6] ={0,0,188,0,-90,0};
   
   //FK(homeSteps,homeAxies);
-  (homeAxies);
+  teleport(homeAxies);
 }
 
 
