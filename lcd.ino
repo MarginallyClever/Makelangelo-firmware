@@ -393,7 +393,6 @@ void LCD_start_menu() {
   MENU_END
 }
 
-
 void LCD_update_long(char *name, long &value) {
   lcd.clear();
   do {
@@ -483,7 +482,6 @@ void LCD_menu() {}
 void LCD_beep(int freq,int ms) {}
 
 #endif  // HAS_LCD
-
 
 /**
    This file is part of makelangelo-firmware.

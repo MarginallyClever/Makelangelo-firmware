@@ -73,6 +73,7 @@ int global_step_dir_5;
 
 const char *MotorNames="LRUVWT";
 const char *AxisNames="XYZUVWT";
+float maxFeedRate[NUM_MOTORS];
 
 
 //------------------------------------------------------------------------------
@@ -155,6 +156,7 @@ void motor_setup() {
     // set the switch pin
     pinMode(motors[i].limit_switch_pin,INPUT);
     digitalWrite(motors[i].limit_switch_pin,HIGH);
+    maxFeedRate[i] = MAX_FEEDRATE;
   }
 
   long steps[NUM_MOTORS+NUM_SERVOS];

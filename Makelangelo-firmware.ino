@@ -675,6 +675,16 @@ void parseMessage() {
 #endif
 }
 
+/**
+ * M203 X2000 Y5000 Z200 etc...
+ * adjust the max feedrate of each axis
+ */
+void adjustMaxFeedRates() { 
+  int i;
+  for(i=0;i<NUM_MOTORS;++i) {
+    maxFeedRate[i] = parseNumber(MotorNames[i], maxFeedRate[i]);
+  }
+}
 
 /**
  * M226 P[a] S[b] 
@@ -717,12 +727,14 @@ void processCommand() {
     case   6:  tool_change(parseNumber('T', current_tool));  break;
     case  17:  motor_engage();  break;
     case  18:  motor_disengage();  break;
+    case  20:  SD_listFiles();  break;
     case 100:  help();  break;
     case 101:  parseLimits();  break;
     case 102:  printConfig();  break;
     case 110:  line_number = parseNumber('N', line_number);  break;
     case 114:  where();  break;
     case 117:  parseMessage();  break;
+    case 204:  adjustMaxFeedRates();  break;
     case 226:  pauseForUserInput();  break;
     case 300:  LCD_beep( parseNumber('S',60), parseNumber('P', 500) );  break;
     default:   break;

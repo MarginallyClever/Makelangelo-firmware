@@ -32,6 +32,8 @@
 #define DEFAULT_FEEDRATE     (1500.0)
 #define DEFAULT_ACCELERATION (1500)
 
+//#define HAS_LCD
+#define HAS_SD
 
 #define MOTOR_MICROSTEPS_EXT      (1600)  // motor full steps * microstepping setting
 #define MOTOR_MICROSTEPS_MID      (3200)  // motor full steps * microstepping setting

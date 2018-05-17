@@ -20,7 +20,7 @@ void IK(float *axies, long *motorStepArray) {
   float y = -axies[1];
   float z = -axies[2];
   float u = -axies[3];
-  float v = axies[4];
+  float v =  axies[4];
   float w = -axies[5];
   
   motorStepArray[0] = x * MOTOR_0_STEPS_PER_TURN / 360.0;
@@ -101,7 +101,7 @@ void robot_findHome() {
   }
   // set robot to home position
   float homeSteps[6] = {
-    0    / MOTOR_0_STEPS_PER_TURN,
+    -45  / MOTOR_0_STEPS_PER_TURN,
     0    / MOTOR_1_STEPS_PER_TURN,
     188  / MOTOR_2_STEPS_PER_TURN,
     0    / MOTOR_3_STEPS_PER_TURN,
@@ -113,7 +113,7 @@ void robot_findHome() {
   //float homeAxies[6] ={ -43.414, 0, 17.358, 0, 0, 172 };
 
   // these are temporary until IK is finished.
-  float homeAxies[6] ={0,0,188,0,-90,0};
+  float homeAxies[6] ={-45,0,188,0,-90,0};
   
   //FK(homeSteps,homeAxies);
   teleport(homeAxies);
