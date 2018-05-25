@@ -688,22 +688,38 @@ void adjustMaxFeedRates() {
 
 /**
  * M226 P[a] S[b] 
- * Wait for pin a to be in state b (1 or 0).  if P or S are missing, wait for user to press click wheel on LCD
- * Command is ignored if there is no LCD panel (and no button to press)
+ * Wait for pin a to be in state b (1 or 0).  
+ * If there is an LCD and P or S are missing, wait for user to press click wheel on LCD.
+ * If there is no LCD, P must be specified.
  */
-void pauseForUserInput() {
+void waitForPinState() {
 #ifdef HAS_LCD
   int pin = parseNumber('P', BTN_ENC);
+#else
+  int pin = parseNumber('P',-1);
+  if(pin==-1) return;  // no pin specified.
+#endif
   int newState = parseNumber('S', 0);
   newState = (newState==1)?HIGH:LOW;
-  Serial.print("pausing");
+  //Serial.print("pausing");
   while(digitalRead(pin)!=newState) {
     SD_check();
     //LCD_update();
-    Serial.print(".");
+    //Serial.print(".");
   }
-  Serial.println(" ended.");
-#endif
+  //Serial.println(" ended.");
+}
+
+
+/**
+ * M42 P[a] S[b]
+ * Set digital pin a to state b (1 or 0).  
+ * default pin is LED_BUILTIN.  default state is LOW
+ */
+void adjustPinState() {
+  int pin = parseNumber('P', LED_BUILTIN);
+  int newState = parseNumber('S', 0);
+  digitalWrite(pin,newState?HIGH:LOW);
 }
 
 
@@ -728,6 +744,7 @@ void processCommand() {
     case  17:  motor_engage();  break;
     case  18:  motor_disengage();  break;
     case  20:  SD_listFiles();  break;
+    case  42:  adjustPinState();  break;
     case 100:  help();  break;
     case 101:  parseLimits();  break;
     case 102:  printConfig();  break;
@@ -735,7 +752,7 @@ void processCommand() {
     case 114:  where();  break;
     case 117:  parseMessage();  break;
     case 204:  adjustMaxFeedRates();  break;
-    case 226:  pauseForUserInput();  break;
+    case 226:  waitForPinState();  break;
     case 300:  LCD_beep( parseNumber('S',60), parseNumber('P', 500) );  break;
     default:   break;
   }
