@@ -172,8 +172,17 @@ void LCD_status_menu() {
   get_end_plus_offset(offset);
   lcd.setCursor( 0, 0);  lcd.print('X');  LCD_print_float(offset[0]);
   lcd.setCursor(10, 0);  lcd.print('Z');  LCD_print_float(offset[2]);
+#if MACHINE_STYLE == POLARGRAPH && defined(USE_LIMIT_SWITCH)
+  lcd.setCursor(19, 0);  lcd.print(( digitalRead(LIMIT_SWITCH_PIN_LEFT) == LOW ) ? '*':' ');
+#endif
+
   lcd.setCursor( 0, 1);  lcd.print('Y');  LCD_print_float(offset[1]);
   lcd.setCursor(10, 1);  lcd.print('F');  LCD_print_long(speed_adjust);  lcd.print(F("% "));
+#if MACHINE_STYLE == POLARGRAPH && defined(USE_LIMIT_SWITCH)
+  lcd.setCursor(19, 1);  lcd.print(( digitalRead(LIMIT_SWITCH_PIN_RIGHT) == LOW ) ? '*':' ');
+#endif
+  
+  
   //lcd.setCursor(10, 1);  lcd.print('F');  LCD_print_float(feed_rate);
   //lcd.setCursor( 0, 1);  lcd.print(F("Makelangelo #"));  lcd.print(robot_uid);
   lcd.setCursor( 0, 2);
