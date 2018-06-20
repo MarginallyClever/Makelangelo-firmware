@@ -437,8 +437,9 @@ void set_tool_offset(int toolID, float *pos) {
 
 
 /**
-   @return the position + active tool offset
-*/
+ * @param results array of NUM_AXIES floats
+ * @return the position + active tool offset
+ */
 void get_end_plus_offset(float *results) {
   int i;
   for(i=0;i<NUM_AXIES;++i) {

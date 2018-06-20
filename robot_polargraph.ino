@@ -34,8 +34,8 @@ void IK(float *cartesian, long *motorStepArray) {
 
 /** 
  * Forward Kinematics - turns step counts into XY coordinates
- * @param motorStepArray a measure of each belt to that plotter position
- * @param axies the resulting cartesian coordinate
+ * @param motorStepArray a measure of each belt to that plotter position.  NUM_MOTORS+NUM_SERVOS long.
+ * @param axies the resulting cartesian coordinate. NUM_AXIES long.
  * @return 0 if no problem, 1 on failure.
  */
 int FK(long *motorStepArray,float *cartesian) {
@@ -233,7 +233,7 @@ void robot_findHome() {
   delay(500);
 
   Serial.println(F("Estimating position..."));
-  long count[NUM_MOTORS];
+  long count[NUM_MOTORS+NUM_SERVOS];
   count[0] = calibrateLeft/THREAD_PER_STEP;
   count[1] = calibrateRight/THREAD_PER_STEP;
   count[2] = axies[2].pos;
@@ -245,11 +245,9 @@ void robot_findHome() {
   float axies2[NUM_AXIES];
   FK(count, axies2);
   teleport(axies2);
-  
   where();
 
   // go home.
-
   float offset[NUM_AXIES];
   get_end_plus_offset(offset);
   offset[0]=axies[0].homePos;
