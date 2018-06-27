@@ -445,6 +445,7 @@ void set_tool_offset(int toolID, float *pos) {
 
 
 /**
+ * @param results array of NUM_AXIES floats
  * @return the position + active tool offset
  */
 void get_end_plus_offset(float *results) {
@@ -697,11 +698,22 @@ void parseMessage() {
 #endif
 }
 
+/**
+ * M203 X2000 Y5000 Z200 etc...
+ * adjust the max feedrate of each axis
+ */
+void adjustMaxFeedRates() { 
+  int i;
+  for(i=0;i<NUM_MOTORS;++i) {
+    maxFeedRate[i] = parseNumber(MotorNames[i], maxFeedRate[i]);
+  }
+}
 
 /**
  * M226 P[a] S[b] 
- * Wait for pin a to be in state b (1 or 0).  if P or S are missing, wait for user to press click wheel on LCD
- * Command is ignored if there is no LCD panel (and no button to press)
+ * Wait for pin a to be in state b (1 or 0).  
+ * If there is an LCD and P or S are missing, wait for user to press click wheel on LCD.
+ * If there is no LCD, P must be specified.
  */
 void pauseForUserInput() {
   wait_for_empty_segment_buffer();
@@ -759,6 +771,8 @@ void processCommand() {
     case   6:  toolChange(parseNumber('T', current_tool));  break;
     case  17:  motor_engage();  break;
     case  18:  motor_disengage();  break;
+    case  20:  SD_listFiles();  break;
+    case  42:  adjustPinState();  break;
     case 100:  help();  break;
     case 101:  parseLimits();  break;
     case 102:  printConfig();  break;
@@ -779,9 +793,9 @@ void processCommand() {
     case  3:  parseArc(0);  break;  // counter-clockwise
     case  4:  parseDwell();  break;
     case 28:  robot_findHome();  break;
-    #if MACHINE_STYLE == POLARGRAPH
+#if MACHINE_STYLE == POLARGRAPH
     case 29:  calibrateBelts();  break;
-    #endif
+#endif
     case 54:
     case 55:
     case 56:
@@ -811,11 +825,15 @@ void processCommand() {
               break;
 #if MACHINE_STYLE == POLARGRAPH
     case 11:  makelangelo5Setup();  break;
-    case 12:  recordHome();
+    case 12:  recordHome();  break;
 #endif
 #ifdef MACHINE_HAS_LIFTABLE_PEN
     case 13:  setPenAngle(parseNumber('Z',axies[2].pos));  break;
 #endif
+    case 14:  // get machine style
+              Serial.print(F("D14 "));
+              Serial.println(MACHINE_STYLE_NAME);
+              break;
     default:  break;
   }
 }
@@ -1003,7 +1021,9 @@ void setup() {
   for(int i=0;i<NUM_AXIES;++i) {
     pos[i]=0;
   }
+#ifdef MACHINE_HAS_LIFTABLE_PEN
   if(NUM_AXIES>=3) pos[2]=PEN_UP_ANGLE;
+#endif
   teleport(pos);
 #ifdef MACHINE_HAS_LIFTABLE_PEN
   setPenAngle(PEN_UP_ANGLE);
@@ -1029,7 +1049,7 @@ void Serial_listen() {
     if (c == '\r') continue;
     if (sofar < MAX_BUF) serialBuffer[sofar++] = c;
     if (c == '\n') {
-      serialBuffer[sofar] = 0;
+      serialBuffer[sofar-1] = 0;
 
       // echo confirmation
       //      Serial.println(F(serialBuffer));

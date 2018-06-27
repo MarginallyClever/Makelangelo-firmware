@@ -138,6 +138,26 @@ void SD_StartPrintingFile(char *filename) {
 }
 
 
+void SD_listFiles() {
+#ifdef HAS_SD
+  if (!sd_inserted) return;
+
+  root.rewindDirectory();
+  while (1) {
+    File entry =  root.openNextFile();
+    if (!entry) {
+      // no more files, return to the first file in the directory
+      break;
+    }
+    if (!entry.isDirectory() && entry.name()[0] != '_') {
+      Serial.println(entry.name());
+    }
+    entry.close();
+  }
+#endif
+}
+
+
 /**
  * This file is part of makelangelo-firmware.
  *

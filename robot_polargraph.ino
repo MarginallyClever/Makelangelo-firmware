@@ -26,15 +26,15 @@ void IK(float *cartesian, long *motorStepArray) {
   // find length to M2
   dx = limit_xmax - cartesian[0];
   motorStepArray[1] = lround( sqrt(dx*dx+dy*dy) / THREAD_PER_STEP );
-
+  
   motorStepArray[2] = cartesian[2];
 }
 
 
 /** 
  * Forward Kinematics - turns step counts into XY coordinates
- * @param motorStepArray a measure of each belt to that plotter position
- * @param axies the resulting cartesian coordinate
+ * @param motorStepArray a measure of each belt to that plotter position.  NUM_MOTORS+NUM_SERVOS long.
+ * @param axies the resulting cartesian coordinate. NUM_AXIES long.
  * @return 0 if no problem, 1 on failure.
  */
 int FK(long *motorStepArray,float *cartesian) {
@@ -70,8 +70,14 @@ int FK(long *motorStepArray,float *cartesian) {
   Serial.print("S1=");     Serial.println(motorStepArray[1]);
   */
   cartesian[1] = limit_ymax - sqrt( 1.0 - theta * theta ) * a;
+<<<<<<< HEAD
   cartesian[2] = motorStepArray[2];
   /*
+=======
+  // Pass the servo angle through
+  cartesian[2] = motorStepArray[NUM_MOTORS];
+  
+>>>>>>> dev
   Serial.print("C0=");      Serial.println(cartesian[0]);
   Serial.print("C1=");      Serial.println(cartesian[1]);
   Serial.print("C2=");      Serial.println(cartesian[2]);
@@ -242,14 +248,25 @@ void robot_findHome() {
   Serial.print("t*1000=");    Serial.println(THREAD_PER_STEP*1000);
 
   // current position is...
+<<<<<<< HEAD
   float offset[NUM_AXIES];
   FK(count, offset);
   teleport(offset);
   
+=======
+  float axies2[NUM_AXIES];
+  FK(count, axies2);
+  teleport(axies2);
+>>>>>>> dev
   where();
   get_end_plus_offset(offset);
 
   // go home.
+<<<<<<< HEAD
+=======
+  float offset[NUM_AXIES];
+  get_end_plus_offset(offset);
+>>>>>>> dev
   offset[0]=axies[0].homePos;
   offset[1]=axies[1].homePos;
   offset[2]=axies[2].pos;

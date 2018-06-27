@@ -15,6 +15,7 @@
 //------------------------------------------------------------------------------
 // GLOBALS
 //------------------------------------------------------------------------------
+
 Motor motors[NUM_MOTORS+NUM_SERVOS];
 Segment line_segments[MAX_SEGMENTS];
 Segment *working_seg = NULL;
@@ -22,8 +23,6 @@ volatile int current_segment=0;
 volatile int last_segment=0;
 int step_multiplier, nominal_step_multiplier;
 unsigned short nominal_OCR1A;
-
-Servo servos[NUM_SERVOS];
 
 // used by timer1 to optimize interrupt inner loop
 int steps_total;
@@ -72,7 +71,8 @@ int global_step_dir_5;
 
 
 const char *MotorNames="LRUVWT";
-const char *AxisNames="XYZUVW";
+const char *AxisNames="XYZUVWT";
+float maxFeedRate[NUM_MOTORS];
 
 
 //------------------------------------------------------------------------------
@@ -155,6 +155,7 @@ void motor_setup() {
     // set the switch pin
     pinMode(motors[i].limit_switch_pin,INPUT);
     digitalWrite(motors[i].limit_switch_pin,HIGH);
+    maxFeedRate[i] = MAX_FEEDRATE;
   }
 
   long steps[NUM_MOTORS+NUM_SERVOS];
@@ -229,6 +230,12 @@ void motor_engage() {
   for(i=0;i<NUM_MOTORS;++i) {
     digitalWrite(motors[i].enable_pin,LOW);
   }
+/*
+#if MACHINE_STYLE == ARM6
+  // DM320T drivers want high for enabled
+  digitalWrite(motors[4].enable_pin,HIGH);
+  digitalWrite(motors[5].enable_pin,HIGH);
+#endif*/
 }
 
 
@@ -237,7 +244,12 @@ void motor_disengage() {
   int i;
   for(i=0;i<NUM_MOTORS;++i) {
     digitalWrite(motors[i].enable_pin,HIGH);
-  }
+  }/*
+#if MACHINE_STYLE == ARM6
+  // DM320T drivers want low for disabled
+  digitalWrite(motors[4].enable_pin,LOW);
+  digitalWrite(motors[5].enable_pin,LOW);
+#endif*/
 }
 
 
@@ -563,7 +575,6 @@ ISR(TIMER1_COMPA_vect) {
       #endif
 
       #if NUM_SERVOS>0
-      //move the z axis
       servos[0].write(working_seg->a[NUM_MOTORS].step_count);
       #endif
 
@@ -805,7 +816,6 @@ void motor_line(long *n,float new_feed_rate) {
     //Serial.print('\t');    Serial.print(n[i]);
     //Serial.print('\t');    Serial.print(old_seg.a[i].step_count);
     //Serial.print('\t');    Serial.print(new_seg.a[i].step_count);
-    //Serial.print('\t');    Serial.print(new_seg.a[i].dir);
     //Serial.print('\t');    Serial.print(new_seg.a[i].dir);
     //Serial.print('\t');    Serial.print(new_seg.a[i].absdelta);
     //Serial.println();

@@ -25,7 +25,6 @@
 #define PEN_UP_ANGLE         (90)
 #define PEN_DOWN_ANGLE       (50)  // Some steppers don't like 0 degrees
 
-
 #define NUM_AXIES            (3)
 #define NUM_MOTORS           (2)
 #define NUM_SERVOS           (1)

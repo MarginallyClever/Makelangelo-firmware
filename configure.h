@@ -70,6 +70,10 @@
 #error "The number of servos needed is more than this board supports."
 #endif
 
+#if NUM_SERVOS + NUM_MOTORS != NUM_AXIES
+// not always the case!  Skycam has more motors than axies.  
+//#error "NUM_SERVOS + NUM_MOTORS != NUM_AXIES"
+#endif
 
 // for serial comms
 #define BAUD                 (57600)  // How fast is the Arduino talking?
@@ -194,8 +198,9 @@ extern float acceleration;
 extern Motor motors[NUM_MOTORS+NUM_SERVOS];
 extern const char *AxisNames;
 extern const char *MotorNames;
+extern float maxFeedRate[NUM_MOTORS];
 
-extern char lcd_message[LCD_MESSAGE_LENGTH];
+extern char lcd_message[LCD_MESSAGE_LENGTH+1];
 
 
 #endif // CONFIGURE_H

@@ -71,7 +71,7 @@ int lcd_turn     = 0;
 char lcd_click_old = HIGH;
 char lcd_click_now = false;
 uint8_t speed_adjust = 100;
-char lcd_message[LCD_MESSAGE_LENGTH];
+char lcd_message[LCD_MESSAGE_LENGTH+1];
 
 int menu_position_sum = 0, menu_position = 0, screen_position = 0, num_menu_items = 0, ty, screen_end;
 
@@ -133,8 +133,17 @@ void LCD_status_menu() {
   get_end_plus_offset(offset);
   lcd.setCursor( 0, 0);  lcd.print('X');  LCD_print_float(offset[0]);
   lcd.setCursor(10, 0);  lcd.print('Z');  LCD_print_float(offset[2]);
+#if MACHINE_STYLE == POLARGRAPH && defined(USE_LIMIT_SWITCH)
+  lcd.setCursor(19, 0);  lcd.print(( digitalRead(LIMIT_SWITCH_PIN_LEFT) == LOW ) ? '*':' ');
+#endif
+
   lcd.setCursor( 0, 1);  lcd.print('Y');  LCD_print_float(offset[1]);
   lcd.setCursor(10, 1);  lcd.print('F');  LCD_print_long(speed_adjust);  lcd.print(F("% "));
+#if MACHINE_STYLE == POLARGRAPH && defined(USE_LIMIT_SWITCH)
+  lcd.setCursor(19, 1);  lcd.print(( digitalRead(LIMIT_SWITCH_PIN_RIGHT) == LOW ) ? '*':' ');
+#endif
+  
+  
   //lcd.setCursor(10, 1);  lcd.print('F');  LCD_print_float(feed_rate);
   //lcd.setCursor( 0, 1);  lcd.print(F("Makelangelo #"));  lcd.print(robot_uid);
   lcd.setCursor( 0, 2);
@@ -346,7 +355,6 @@ void LCD_start_menu() {
   MENU_END
 }
 
-
 void LCD_update_long(char *name, long &value) {
   lcd.clear();
   do {
@@ -463,6 +471,7 @@ void LCD_init() {
   lcd.begin(LCD_WIDTH, LCD_HEIGHT);
   pinMode(BEEPER,OUTPUT);
   digitalWrite(BEEPER,LOW);
+
   pinMode(BTN_EN1, INPUT);
   pinMode(BTN_EN2, INPUT);
   pinMode(BTN_ENC, INPUT);
@@ -471,10 +480,10 @@ void LCD_init() {
   digitalWrite(BTN_ENC, HIGH);
   current_menu = LCD_status_menu;
   menu_position_sum = 1;  /* 20160313-NM-Added so the clicking without any movement will display a menu */
+
   lcd_message[0] = 0;
 #endif  // HAS_LCD
 }
-
 
 /**
    This file is part of makelangelo-firmware.

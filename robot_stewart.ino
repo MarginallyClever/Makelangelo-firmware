@@ -234,7 +234,7 @@ void robot_findHome() {
     // for each stepper,
     for(i=0;i<NUM_MOTORS;++i) {
       // if this switch hasn't been hit yet
-      if(motors[i].limit_switch_state == HIGH) {
+      if(digitalRead(motors[i].limit_switch_pin) == HIGH) {
         // move "down"
         digitalWrite(motors[i].dir_pin,LOW);
         digitalWrite(motors[i].step_pin,HIGH);
@@ -335,36 +335,6 @@ void stewart_build_shoulders() {
     Serial.println(arm.elbow.z);
   }
 #endif
-}
-
-
-/**
- * read the limit switch states
- * @return number of switches being hit
- */
-char stewart_read_switches() {
-  char i, hit=0;
-  int state;
-  
-  for(i=0;i<NUM_MOTORS;++i) {
-    state=digitalRead(motors[i].limit_switch_pin);
-#if DEBUG_SWITCHES > 0
-    Serial.print(state);
-    Serial.print('\t');
-#endif
-    if(motors[i].limit_switch_state != state) {
-      motors[i].limit_switch_state = state;
-#if DEBUG_SWITCHES > 0
-      Serial.print(F("Switch "));
-      Serial.println(i,DEC);
-#endif
-    }
-    if(state == LOW) ++hit;
-  }
-#if DEBUG_SWITCHES > 0
-  Serial.print('\n');
-#endif
-  return hit;
 }
 
 
