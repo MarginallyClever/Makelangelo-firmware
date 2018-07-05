@@ -709,29 +709,42 @@ void adjustMaxFeedRates() {
   }
 }
 
+
+
 /**
  * M226 P[a] S[b] 
  * Wait for pin a to be in state b (1 or 0).  
  * If there is an LCD and P or S are missing, wait for user to press click wheel on LCD.
  * If there is no LCD, P must be specified.
  */
-void pauseForUserInput() {
-  wait_for_empty_segment_buffer();
-  if(hasGCode('P') || hasGCode('S')) {
-    int pin = parseNumber('P', BTN_ENC);
-    int newState = parseNumber('S', 0);
-
+void waitForPinState() {
 #ifdef HAS_LCD
-    newState = (newState==1)?HIGH:LOW;
-    while(digitalRead(pin)!=newState);
+  int pin = parseNumber('P', BTN_ENC);
+#else
+  int pin = parseNumber('P',-1);
+  if(pin==-1) return;  // no pin specified.
 #endif
-  } else {
-#ifdef HAS_LCD
-    // does not have P or S. Wait for click and release of button.
-    while(digitalRead(BTN_ENC)!=LOW);
-    while(digitalRead(BTN_ENC)!=HIGH);
-#endif
+  int newState = parseNumber('S', 0);
+  newState = (newState==1)?HIGH:LOW;
+  //Serial.print("pausing");
+  while(digitalRead(pin)!=newState) {
+    SD_check();
+    //LCD_update();
+    //Serial.print(".");
   }
+  //Serial.println(" ended.");
+}
+
+
+/**
+ * M42 P[a] S[b]
+ * Set digital pin a to state b (1 or 0).  
+ * default pin is LED_BUILTIN.  default state is LOW
+ */
+void adjustPinState() {
+  int pin = parseNumber('P', LED_BUILTIN);
+  int newState = parseNumber('S', 0);
+  digitalWrite(pin,newState?HIGH:LOW);
 }
 
 
@@ -779,7 +792,7 @@ void processCommand() {
     case 110:  line_number = parseNumber('N', line_number);  break;
     case 114:  where();  break;
     case 117:  parseMessage();  break;
-    case 226:  pauseForUserInput();  break;
+    case 226:  waitForPinState();  break;
     case 300:  parseBeep();  break;
     default:   break;
   }
@@ -1004,6 +1017,9 @@ void tools_setup() {
 void setup() {
   // start communications
   Serial.begin(BAUD);
+  
+  SD_init();
+  LCD_init();
 
   loadConfig();
 
@@ -1013,8 +1029,6 @@ void setup() {
   findStepDelay();
 
   //easyPWM_init();
-  SD_init();
-  LCD_init();
 
   // initialize the plotter position.
   float pos[NUM_AXIES];

@@ -70,14 +70,8 @@ int FK(long *motorStepArray,float *cartesian) {
   Serial.print("S1=");     Serial.println(motorStepArray[1]);
   */
   cartesian[1] = limit_ymax - sqrt( 1.0 - theta * theta ) * a;
-<<<<<<< HEAD
   cartesian[2] = motorStepArray[2];
   /*
-=======
-  // Pass the servo angle through
-  cartesian[2] = motorStepArray[NUM_MOTORS];
-  
->>>>>>> dev
   Serial.print("C0=");      Serial.println(cartesian[0]);
   Serial.print("C1=");      Serial.println(cartesian[1]);
   Serial.print("C2=");      Serial.println(cartesian[2]);
@@ -248,25 +242,14 @@ void robot_findHome() {
   Serial.print("t*1000=");    Serial.println(THREAD_PER_STEP*1000);
 
   // current position is...
-<<<<<<< HEAD
   float offset[NUM_AXIES];
   FK(count, offset);
   teleport(offset);
-  
-=======
-  float axies2[NUM_AXIES];
-  FK(count, axies2);
-  teleport(axies2);
->>>>>>> dev
+
   where();
   get_end_plus_offset(offset);
 
   // go home.
-<<<<<<< HEAD
-=======
-  float offset[NUM_AXIES];
-  get_end_plus_offset(offset);
->>>>>>> dev
   offset[0]=axies[0].homePos;
   offset[1]=axies[1].homePos;
   offset[2]=axies[2].pos;

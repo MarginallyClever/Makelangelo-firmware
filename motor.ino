@@ -17,6 +17,8 @@
 //------------------------------------------------------------------------------
 
 Motor motors[NUM_MOTORS+NUM_SERVOS];
+Servo servos[NUM_SERVOS];
+
 Segment line_segments[MAX_SEGMENTS];
 Segment *working_seg = NULL;
 volatile int current_segment=0;
@@ -29,6 +31,7 @@ int steps_total;
 int steps_taken;
 int accel_until,decel_after;
 long current_feed_rate;
+long current_acceleration;
 long old_feed_rate=0;
 long start_feed_rate,end_feed_rate;
 long time_accelerating,time_decelerating;
@@ -99,10 +102,16 @@ FORCE_INLINE int get_prev_segment(int i) {
   return SEGMOD( i - 1 );
 }
 
-
-float max_speed_allowed(float acceleration, float target_velocity, float distance) {
-  return sqrt(target_velocity*target_velocity - 2*acceleration*distance);
-  //return target_velocity - acceleration * distance;
+/**
+ * Calculate the maximum allowable speed at this point, in order
+ * to reach 'target_velocity' using 'acceleration' within a given
+ * 'distance'.
+ * @param acc acceleration
+ * @param target_velocity 
+ * @param distance 
+ */
+float max_speed_allowed(float acc, float target_velocity, float distance) {
+  return sqrt( target_velocity*target_velocity - 2 * acc * distance );
 }
 
 
@@ -585,6 +594,7 @@ ISR(TIMER1_COMPA_vect) {
       start_feed_rate = working_seg->feed_rate_start;
       end_feed_rate = working_seg->feed_rate_end;
       current_feed_rate = start_feed_rate;
+      current_acceleration = acceleration;
       time_decelerating = 0;
       time_accelerating = calc_timer(start_feed_rate);
       OCR1A = time_accelerating;
@@ -698,8 +708,7 @@ ISR(TIMER1_COMPA_vect) {
     // accel
     unsigned short t;
     if( steps_taken <= accel_until ) {
-      current_feed_rate = (acceleration * time_accelerating / 1000000);
-      current_feed_rate += start_feed_rate;
+      current_feed_rate = start_feed_rate + (current_acceleration * time_accelerating / 1000000);
       if(current_feed_rate > working_seg->feed_rate_max) {
         current_feed_rate = working_seg->feed_rate_max;
       }
@@ -707,8 +716,7 @@ ISR(TIMER1_COMPA_vect) {
       OCR1A = t;
       time_accelerating+=t;
     } else if( steps_taken > decel_after ) {
-      unsigned short step_time = (acceleration * time_decelerating / 1000000);
-      long end_feed_rate = current_feed_rate - step_time;
+      long end_feed_rate = current_feed_rate - (current_acceleration * time_decelerating / 1000000);
       if( end_feed_rate < working_seg->feed_rate_end ) {
         end_feed_rate = working_seg->feed_rate_end;
       }
