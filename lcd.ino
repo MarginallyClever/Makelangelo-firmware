@@ -493,9 +493,9 @@ void LCD_init() {
   strcpy(ptr, mhv );                 ptr += strlen(mhv);
 
   int x = (LCD_WIDTH - strlen(message)) / 2;
-  lcd.setCursor(x,1);
+  lcd.setCursor(x,LCD_HEIGHT/2);
   lcd.print(message);
-  lcd.setCursor(0,2);
+  lcd.setCursor(0,LCD_HEIGHT/2 + 1);
   lcd.print("marginallyclever.com");
   delay(2500);
   lcd.clear();
