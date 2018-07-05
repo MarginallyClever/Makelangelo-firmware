@@ -493,10 +493,14 @@ void LCD_init() {
   strcpy(ptr, mhv );                 ptr += strlen(mhv);
 
   int x = (LCD_WIDTH - strlen(message)) / 2;
-  lcd.setCursor(x,LCD_HEIGHT/2);
+  int y = LCD_HEIGHT/2;
+  lcd.setCursor(x,y);
   lcd.print(message);
-  lcd.setCursor(0,LCD_HEIGHT/2 + 1);
+  x = (LCD_WIDTH - strlen("marginallyclever.com")) / 2;
+  y++;
+  lcd.setCursor(x,y);
   lcd.print("marginallyclever.com");
+  
   delay(2500);
   lcd.clear();
 
