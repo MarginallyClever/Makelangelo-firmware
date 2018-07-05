@@ -481,7 +481,25 @@ void LCD_init() {
   current_menu = LCD_status_menu;
   menu_position_sum = 1;  /* 20160313-NM-Added so the clicking without any movement will display a menu */
 
-  lcd_message[0] = 0;
+  lcd_message[0]=0;
+
+  // splash screen
+  char message[LCD_WIDTH];
+  char mhv[10];
+  itoa(MACHINE_HARDWARE_VERSION,mhv,10);
+  char *ptr = message;
+  strcpy(ptr, MACHINE_STYLE_NAME );  ptr += strlen(MACHINE_STYLE_NAME);
+  strcpy(ptr, " v" );                ptr += strlen(" v");
+  strcpy(ptr, mhv );                 ptr += strlen(mhv);
+
+  int x = (LCD_WIDTH - strlen(message)) / 2;
+  lcd.setCursor(x,1);
+  lcd.print(message);
+  lcd.setCursor(0,2);
+  lcd.print("marginallyclever.com");
+  delay(2500);
+  lcd.clear();
+
 #endif  // HAS_LCD
 }
 
