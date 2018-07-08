@@ -14,9 +14,6 @@
 #define MACHINE_HARDWARE_VERSION 5  // If you have a makelangelo 5+
 #define MACHINE_HAS_LIFTABLE_PEN
 
-#define MAX_ACCELERATION     (5000)
-#define MIN_ACCELERATION     (100)
-
 #define SUBDIVIDE_LINES
 #define SEGMENT_PER_CM_LINE  (2)  // lines are subdivided.  How long are the divisions?
 #define SEGMENT_PER_CM_ARC   (3)  // Arcs are subdivided.  How long are the divisions?
@@ -30,11 +27,15 @@
 #define NUM_SERVOS           (1)
 #define NUM_TOOLS            (1)
 
-#define MAX_FEEDRATE         (9000.0)  // depends on timer interrupt & hardware
+#define MAX_FEEDRATE         (20000.0)  // depends on timer interrupt & hardware
 #define MIN_FEEDRATE         (100)
-#define MAX_JERK             (5.0)
-#define DEFAULT_FEEDRATE     (7000.0)
+#define DEFAULT_FEEDRATE     (9000.0)
+
+#define MAX_ACCELERATION     (5000)
+#define MIN_ACCELERATION     (100)
 #define DEFAULT_ACCELERATION (2500)
+
+#define MAX_JERK             (5.0)
 
 
 #if MACHINE_HARDWARE_VERSION == 5
