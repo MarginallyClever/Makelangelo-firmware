@@ -18,21 +18,39 @@
 #endif
 #ifdef LCD_IS_128X64
 #include <Arduino.h>
-#include <U8g2lib.h>
+#include <U8glib.h>
 #include <SPI.h>
 #include <Wire.h>
+#include "dogm_font_data_6x9.h"
 #endif
 
+//------------------------------------------------------------------------------
+// GLOBALS
+//------------------------------------------------------------------------------
+#ifdef LCD_IS_SMART
+LiquidCrystal lcd(LCD_PINS_RS, LCD_PINS_ENABLE, LCD_PINS_D4, LCD_PINS_D5, LCD_PINS_D6, LCD_PINS_D7);
+#endif
+#ifdef LCD_IS_128X64
+// This is not ideal - will not work when board models change.
+U8GLIB_ST7920_128X64_1X u8g(LCD_PINS_D4,LCD_PINS_ENABLE,LCD_PINS_RS);
+#endif
 
-// macros to swap between LCD panels
+//------------------------------------------------------------------------------
+// MACROS
+//------------------------------------------------------------------------------
+
 /**
  * Clear the screen
  */
 #ifdef LCD_IS_SMART
-#define LCD_clear      lcd.clear
+#define LCD_clear()      lcd.clear()
 #endif
 #ifdef LCD_IS_128X64
-#define LCD_clear      u8g2.clear
+void LCD_clear() {
+  u8g.setColorIndex(0);
+  u8g.drawBox(0,0,LCD_PIXEL_WIDTH,LCD_PIXEL_HEIGHT);
+  u8g.setColorIndex(1);
+}
 #endif
 
 /**
@@ -42,7 +60,7 @@
 #define LCD_print      lcd.print
 #endif
 #ifdef LCD_IS_128X64
-#define LCD_print      u8g2.print
+#define LCD_print      u8g.print
 #endif
 
 
@@ -53,7 +71,7 @@
 #define LCD_setCursor(x,y)   lcd.setCursor(x,y)
 #endif
 #ifdef LCD_IS_128X64
-#define LCD_setCursor(x,y)   u8g2.setCursor(((x)+1)*FONT_WIDTH,((y)+1)*FONT_HEIGHT)
+#define LCD_setCursor(x,y)   u8g.setPrintPos(((x)+1)*FONT_WIDTH,((y)+1)*FONT_HEIGHT)
 #endif
 
 
@@ -108,13 +126,6 @@
 //------------------------------------------------------------------------------
 // GLOBALS
 //------------------------------------------------------------------------------
-#ifdef LCD_IS_SMART
-LiquidCrystal lcd(LCD_PINS_RS, LCD_PINS_ENABLE, LCD_PINS_D4, LCD_PINS_D5, LCD_PINS_D6, LCD_PINS_D7);
-#endif
-#ifdef LCD_IS_128X64
-// This is not ideal - will not work when board models change.
-U8G2_ST7920_128X64_1_SW_SPI u8g2(U8G2_R0, LCD_PINS_D4,LCD_PINS_ENABLE,LCD_PINS_RS);
-#endif
 
 long lcd_draw_delay = 0;
 
@@ -486,7 +497,14 @@ void LCD_update() {
     //Serial.print('\t');  Serial.print(num_menu_items,DEC);
     //Serial.print('\n');
 
+#ifdef LCD_IS_128X64
+  u8g.firstPage();
+  do {
+#endif
     (*current_menu)();
+#ifdef LCD_IS_128X64
+  } while(u8g.nextPage());
+#endif
   }
 
   if ( lcd_turn ) {
@@ -525,7 +543,10 @@ void LCD_init() {
   lcd.begin(LCD_WIDTH, LCD_HEIGHT);
 #endif
 #ifdef LCD_IS_128X64
-  u8g2.begin();
+  u8g.begin();
+  u8g.disableCursor();
+  u8g.setFont(u8g_font_6x9);
+//  u8g.setFont(u8g_font_helvR08);
 #endif
 
   pinMode(BEEPER,OUTPUT);
@@ -542,6 +563,15 @@ void LCD_init() {
 
   lcd_message[0]=0;
 
+  LCD_drawSplash();
+  //LCD_drawSplash();
+
+#endif  // HAS_LCD
+}
+
+
+#ifdef HAS_LCD
+void LCD_drawSplash() {
   // splash screen
   char message[LCD_WIDTH];
   char mhv[10];
@@ -553,18 +583,27 @@ void LCD_init() {
 
   int x = (LCD_WIDTH - strlen(message)) / 2;
   int y = LCD_HEIGHT/2;
-  LCD_setCursor(x,y);
-  LCD_print(message);
-  x = (LCD_WIDTH - strlen("marginallyclever.com")) / 2;
-  y++;
-  LCD_setCursor(x,y);
-  LCD_print("marginallyclever.com");
+  int x2 = (LCD_WIDTH - strlen("marginallyclever.com")) / 2;
+  int y2 = y+1;
+
+#ifdef LCD_IS_128X64
+  u8g.firstPage();
+  do {
+#endif
+    LCD_clear();
+    LCD_setCursor(x,y);
+    LCD_print(message);
+    LCD_setCursor(x2,y2);
+    LCD_print("marginallyclever.com");
+#ifdef LCD_IS_128X64
+  } while(u8g.nextPage());
+#endif
   
   delay(2500);
   LCD_clear();
-
-#endif  // HAS_LCD
 }
+#endif
+
 
 /**
    This file is part of makelangelo-firmware.

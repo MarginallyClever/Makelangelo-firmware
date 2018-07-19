@@ -44,8 +44,8 @@
 #define LCD_PIXEL_HEIGHT   64
 #define LCD_PIXEL_WIDTH    128
 
-#define FONT_HEIGHT        8
-#define FONT_WIDTH         8
+#define FONT_HEIGHT        9
+#define FONT_WIDTH         6
 #define LCD_HEIGHT         (LCD_PIXEL_HEIGHT/FONT_HEIGHT)
 #define LCD_WIDTH          (LCD_PIXEL_WIDTH/FONT_WIDTH)
 
