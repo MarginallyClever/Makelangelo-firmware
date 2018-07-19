@@ -500,7 +500,7 @@ void motor_set_step_count(long *a) {
 
 
 /**
- * Supports movement with both styles of Motor Shield
+ * Step one motor one time in the currently set direction.
  * @input newx the destination x position
  * @input newy the destination y position
  **/

@@ -9,8 +9,53 @@
 // INCLUDES
 //------------------------------------------------------------------------------
 #ifdef HAS_LCD
-#include <LiquidCrystal.h>
+#include "lcd.h"
+
 #include "sdcard.h"
+
+#ifdef LCD_IS_SMART
+#include <LiquidCrystal.h>
+#endif
+#ifdef LCD_IS_128X64
+#include <Arduino.h>
+#include <U8g2lib.h>
+#include <SPI.h>
+#include <Wire.h>
+#endif
+
+
+// macros to swap between LCD panels
+/**
+ * Clear the screen
+ */
+#ifdef LCD_IS_SMART
+#define LCD_clear      lcd.clear
+#endif
+#ifdef LCD_IS_128X64
+#define LCD_clear      u8g2.clear
+#endif
+
+/**
+ * print text to the LCD
+ */
+#ifdef LCD_IS_SMART
+#define LCD_print      lcd.print
+#endif
+#ifdef LCD_IS_128X64
+#define LCD_print      u8g2.print
+#endif
+
+
+/**
+ * Set the row/column of text at which to begin printing
+ */
+#ifdef LCD_IS_SMART
+#define LCD_setCursor(x,y)   lcd.setCursor(x,y)
+#endif
+#ifdef LCD_IS_128X64
+#define LCD_setCursor(x,y)   u8g2.setCursor(((x)+1)*FONT_WIDTH,((y)+1)*FONT_HEIGHT)
+#endif
+
 
 
 // Convenience macros that make it easier to generate menus
@@ -23,9 +68,9 @@
 
 #define MENU_ITEM_START(key) \
   if(ty>=screen_position && ty<screen_end) { \
-    lcd.setCursor(0,ty-screen_position); \
-    lcd.print((menu_position==ty)?'>':' '); \
-    lcd.print(key); \
+    LCD_setCursor(0,ty-screen_position); \
+    LCD_print((menu_position==ty)?'>':' '); \
+    LCD_print(key); \
 
 #define MENU_ITEM_END() \
   } \
@@ -33,7 +78,7 @@
 
 #define MENU_GOTO(new_menu) {  \
     lcd_click_now=false;  \
-    lcd.clear();  \
+    LCD_clear();  \
     num_menu_items=screen_position=menu_position=menu_position_sum=0;  \
     screen_end = screen_position + LCD_HEIGHT;  \
     current_menu=new_menu;  \
@@ -63,7 +108,14 @@
 //------------------------------------------------------------------------------
 // GLOBALS
 //------------------------------------------------------------------------------
+#ifdef LCD_IS_SMART
 LiquidCrystal lcd(LCD_PINS_RS, LCD_PINS_ENABLE, LCD_PINS_D4, LCD_PINS_D5, LCD_PINS_D6, LCD_PINS_D7);
+#endif
+#ifdef LCD_IS_128X64
+// This is not ideal - will not work when board models change.
+U8G2_ST7920_128X64_1_SW_SPI u8g2(U8G2_R0, LCD_PINS_D4,LCD_PINS_ENABLE,LCD_PINS_RS);
+#endif
+
 long lcd_draw_delay = 0;
 
 int lcd_rot_old  = 0;
@@ -131,27 +183,27 @@ void LCD_status_menu() {
   // update the current status
   float offset[NUM_AXIES];
   get_end_plus_offset(offset);
-  lcd.setCursor( 0, 0);  lcd.print('X');  LCD_print_float(offset[0]);
-  lcd.setCursor(10, 0);  lcd.print('Z');  LCD_print_float(offset[2]);
+  LCD_setCursor( 0, 0);  LCD_print('X');  LCD_print_float(offset[0]);
+  LCD_setCursor(10, 0);  LCD_print('Z');  LCD_print_float(offset[2]);
 #if MACHINE_STYLE == POLARGRAPH && defined(USE_LIMIT_SWITCH)
-  lcd.setCursor(19, 0);  lcd.print(( digitalRead(LIMIT_SWITCH_PIN_LEFT) == LOW ) ? '*':' ');
+  LCD_setCursor(19, 0);  LCD_print(( digitalRead(LIMIT_SWITCH_PIN_LEFT) == LOW ) ? '*':' ');
 #endif
 
-  lcd.setCursor( 0, 1);  lcd.print('Y');  LCD_print_float(offset[1]);
-  lcd.setCursor(10, 1);  lcd.print('F');  LCD_print_long(speed_adjust);  lcd.print(F("% "));
+  LCD_setCursor( 0, 1);  LCD_print('Y');  LCD_print_float(offset[1]);
+  LCD_setCursor(10, 1);  LCD_print('F');  LCD_print_long(speed_adjust);  LCD_print(F("% "));
 #if MACHINE_STYLE == POLARGRAPH && defined(USE_LIMIT_SWITCH)
-  lcd.setCursor(19, 1);  lcd.print(( digitalRead(LIMIT_SWITCH_PIN_RIGHT) == LOW ) ? '*':' ');
+  LCD_setCursor(19, 1);  LCD_print(( digitalRead(LIMIT_SWITCH_PIN_RIGHT) == LOW ) ? '*':' ');
 #endif
   
   
-  //lcd.setCursor(10, 1);  lcd.print('F');  LCD_print_float(feed_rate);
-  //lcd.setCursor( 0, 1);  lcd.print(F("Makelangelo #"));  lcd.print(robot_uid);
-  lcd.setCursor( 0, 2);
+  //LCD_setCursor(10, 1);  LCD_print('F');  LCD_print_float(feed_rate);
+  //LCD_setCursor( 0, 1);  LCD_print(F("Makelangelo #"));  LCD_print(robot_uid);
+  LCD_setCursor( 0, 2);
   if (sd_printing_now == true/* && sd_printing_paused==false*/) {
     LCD_print_float(sd_percent_complete);
-    lcd.print('%');
+    LCD_print('%');
   } else {
-    lcd.print(F("          "));
+    LCD_print(F("          "));
   }
   LCD_print_message();
   MENU_END
@@ -189,8 +241,8 @@ void LCD_main_menu() {
 
 void LCD_print_message() {
   lcd_message[LCD_MESSAGE_LENGTH - 1] = 0;
-  lcd.setCursor( 0, 2);  lcd.print(lcd_message);
-  lcd.setCursor( 0, 3);  lcd.print(lcd_message + LCD_WIDTH + 1);
+  LCD_setCursor( 0, 2);  LCD_print(lcd_message);
+  LCD_setCursor( 0, 3);  LCD_print(lcd_message + LCD_WIDTH + 1);
 }
 
 
@@ -260,7 +312,7 @@ void LCD_driveX() {
     lineSafe(offset, feed_rate);
   }
 
-  lcd.setCursor( 0, 0);  lcd.print('X');  LCD_print_float(offset[0]);
+  LCD_setCursor( 0, 0);  LCD_print('X');  LCD_print_float(offset[0]);
 }
 
 
@@ -275,7 +327,7 @@ void LCD_driveY() {
     lineSafe(offset, feed_rate);
   }
 
-  lcd.setCursor( 0, 0);  lcd.print('Y');  LCD_print_float(offset[1]);
+  LCD_setCursor( 0, 0);  LCD_print('Y');  LCD_print_float(offset[1]);
 }
 
 
@@ -291,7 +343,7 @@ void LCD_driveZ() {
     lineSafe(offset, feed_rate);
   }
 
-  lcd.setCursor( 0, 0);  lcd.print('Z');  LCD_print_float(offset[2]);
+  LCD_setCursor( 0, 0);  LCD_print('Z');  LCD_print_float(offset[2]);
 }
 
 
@@ -307,7 +359,7 @@ void LCD_driveF() {
     feed_rate = newF;
   }
 
-  lcd.setCursor( 0, 0);  lcd.print('F');  LCD_print_float(feed_rate);
+  LCD_setCursor( 0, 0);  LCD_print('F');  LCD_print_float(feed_rate);
 }
 
 
@@ -356,32 +408,32 @@ void LCD_start_menu() {
 }
 
 void LCD_update_long(char *name, long &value) {
-  lcd.clear();
+  LCD_clear();
   do {
     LCD_read();
     if ( lcd_turn ) {
       value += lcd_turn > 0 ? 1 : -1;
       lcd_turn = 0;
     }
-    lcd.setCursor(0, 0);
-    lcd.print(name);
-    lcd.setCursor(0, 1);
+    LCD_setCursor(0, 0);
+    LCD_print(name);
+    LCD_setCursor(0, 1);
     LCD_print_long(value);
   } while ( !lcd_click_now );
 }
 
 
 void LCD_update_float(char *name, float &value) {
-  lcd.clear();
+  LCD_clear();
   do {
     LCD_read();
     if ( lcd_turn ) {
       value += lcd_turn > 0 ? 0.01 : -0.01;
       lcd_turn = 0;
     }
-    lcd.setCursor(0, 0);
-    lcd.print(name);
-    lcd.setCursor(0, 1);
+    LCD_setCursor(0, 0);
+    LCD_print(name);
+    LCD_setCursor(0, 1);
     LCD_print_float(value);
   } while ( !lcd_click_now );
 }
@@ -391,11 +443,11 @@ void LCD_print_long(long v) {
   long av = abs(v);
   int x = 1000;
   while (x > av && x > 1) {
-    lcd.print(' ');
+    LCD_print(' ');
     x /= 10;
   };
-  if (v > 0) lcd.print(' ');
-  lcd.print(v);
+  if (v > 0) LCD_print(' ');
+  LCD_print(v);
 }
 
 
@@ -404,15 +456,15 @@ void LCD_print_float(float v) {
   int left = abs(v);
   int right = abs((int)(v * 100) % 100);
 
-  if (left < 1000) lcd.print(' ');
-  if (left < 100) lcd.print(' ');
-  if (left < 10) lcd.print(' ');
-  if (v < 0) lcd.print('-');
-  else lcd.print(' ');
-  lcd.print(left);
-  lcd.print('.');
-  if (right < 10) lcd.print('0');
-  lcd.print(right);
+  if (left < 1000) LCD_print(' ');
+  if (left < 100) LCD_print(' ');
+  if (left < 10) LCD_print(' ');
+  if (v < 0) LCD_print('-');
+  else LCD_print(' ');
+  LCD_print(left);
+  LCD_print('.');
+  if (right < 10) LCD_print('0');
+  LCD_print(right);
 }
 #endif  // HAS_LCD
 
@@ -452,7 +504,7 @@ void LCD_update() {
     }
 
     menu_position = menu_position_sum / LCD_TURN_PER_MENU;
-    if (op != menu_position) lcd.clear();
+    if (op != menu_position) LCD_clear();
 
     if (menu_position > num_menu_items - 1) menu_position = num_menu_items - 1;
     if (menu_position < 0) {
@@ -468,7 +520,14 @@ void LCD_update() {
 // initialize the Smart controller LCD panel
 void LCD_init() {
 #ifdef HAS_LCD
+
+#ifdef LCD_IS_SMART
   lcd.begin(LCD_WIDTH, LCD_HEIGHT);
+#endif
+#ifdef LCD_IS_128X64
+  u8g2.begin();
+#endif
+
   pinMode(BEEPER,OUTPUT);
   digitalWrite(BEEPER,LOW);
 
@@ -494,15 +553,15 @@ void LCD_init() {
 
   int x = (LCD_WIDTH - strlen(message)) / 2;
   int y = LCD_HEIGHT/2;
-  lcd.setCursor(x,y);
-  lcd.print(message);
+  LCD_setCursor(x,y);
+  LCD_print(message);
   x = (LCD_WIDTH - strlen("marginallyclever.com")) / 2;
   y++;
-  lcd.setCursor(x,y);
-  lcd.print("marginallyclever.com");
+  LCD_setCursor(x,y);
+  LCD_print("marginallyclever.com");
   
   delay(2500);
-  lcd.clear();
+  LCD_clear();
 
 #endif  // HAS_LCD
 }

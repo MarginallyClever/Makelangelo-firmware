@@ -10,6 +10,7 @@
 // INCLUDES
 //------------------------------------------------------------------------------
 #include "configure.h"
+#include "lcd.h"
 
 #include <SPI.h>  // pkm fix for Arduino 1.5
 

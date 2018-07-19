@@ -52,35 +52,6 @@
 #define LIMIT_SWITCH_PIN_LEFT     (MOTOR_0_LIMIT_SWITCH_PIN)
 #define LIMIT_SWITCH_PIN_RIGHT    (MOTOR_1_LIMIT_SWITCH_PIN)
 
-// Smart controller settings
-#define BEEPER             44
-#define LCD_PINS_RS        19
-#define LCD_PINS_ENABLE    42
-#define LCD_PINS_D4        18
-#define LCD_PINS_D5        38
-#define LCD_PINS_D6        41
-#define LCD_PINS_D7        40
-
-// Encoder rotation values
-#define BTN_EN1            11
-#define BTN_EN2            12
-#define BTN_ENC            43
-
-// SD card settings
-#define SDPOWER            -1
-#define SDSS               53
-#define SDCARDDETECT       49
-
-#define LCD_HEIGHT         4
-#define LCD_WIDTH          20
-
-#define BLEN_C             2
-#define BLEN_B             1
-#define BLEN_A             0
-#define encrot0            0
-#define encrot1            2
-#define encrot2            3
-#define encrot3            1
 
 #endif
 

@@ -99,15 +99,6 @@
 
 
 //------------------------------------------------------------------------------
-// LCD options
-//------------------------------------------------------------------------------
-
-#define LCD_MESSAGE_LENGTH (LCD_HEIGHT * (LCD_WIDTH + 1))  // we have two lines of 20 characters avialable in 7.16
-#define LCD_DRAW_DELAY     (150)
-#define LCD_TURN_PER_MENU  (5)
-
-
-//------------------------------------------------------------------------------
 // EEPROM MEMORY MAP
 //------------------------------------------------------------------------------
 #define EEPROM_VERSION          8    // Increment when adding new variables
@@ -199,8 +190,6 @@ extern Motor motors[NUM_MOTORS+NUM_SERVOS];
 extern const char *AxisNames;
 extern const char *MotorNames;
 extern float maxFeedRate[NUM_MOTORS];
-
-extern char lcd_message[LCD_MESSAGE_LENGTH+1];
 
 
 #endif // CONFIGURE_H
