@@ -14,7 +14,10 @@
 //#define VERBOSE           (1)  // add to get a lot more serial output.
 
 
-// robot styles supported
+//------------------------------------------------------------------------------
+// Robot styles supported
+//------------------------------------------------------------------------------
+
 #define POLARGRAPH       1  // polargraph like Makelangelo
 #define TRADITIONALXY    3  // gantry 2 axis setup.
 #define COREXY           2  // gantry CoreXY setup.
@@ -29,10 +32,8 @@
 //#define ARM5            12
 #define ARM6            13
 
+#define MACHINE_STYLE POLARGRAPH  // Change this
 
-#define MACHINE_STYLE POLARGRAPH  // change this
-
-// robot style descriptions
 #include "robot_polargraph.h"
 #include "robot_traditionalxy.h"
 #include "robot_corexy.h"
@@ -47,8 +48,10 @@
 //#include "robot_arm5.h"
 #include "robot_arm6.h"
 
+//------------------------------------------------------------------------------
+// Microcontrollers supported
+//------------------------------------------------------------------------------
 
-// Boards supported
 #define BOARD_RUMBA        1
 #define BOARD_RAMPS        2
 #define BOARD_SANGUINOLULU 3
@@ -56,13 +59,63 @@
 
 #define MOTHERBOARD BOARD_RUMBA  // change this
 
-// Board descriptions
 #include "board_rumba.h"
 #include "board_ramps.h"
 #include "board_sanguinolulu.h"
 #include "board_teensylu.h"
 
-// sanity checks
+//------------------------------------------------------------------------------
+// MOTOR DETAILS
+//------------------------------------------------------------------------------
+
+// 400 step-per-turn motors move 0.9 degrees per step.  (360/400=0.9).  Marginallyclever.com default.
+// 200 step-per-turn motors move 1.8 degrees per step.  (360/200=1.8)
+// see your stepper motor data sheet for more info.
+#define DEGREES_PER_STEP     ( 0.9)
+
+// stepper motor drivers can use microstepping to split steps into fractions of steps for greater precision.
+// A4988 drivers (Marginallyclever.com default) use 16x.
+// DRV8825 can go up to 32x.
+// TMC2130 can go to 256x.
+// see your driver data sheet.
+// note that some boards have dip switches or jumpers that can be activated to turn stepping on and off.
+// make sure your dip switch settings match the firmware value.
+#define MICROSTEPS           (16.0)
+
+// Marginallyclever.com uses GT2 timing belt, which has 2mm teeth.
+// We also use GT2-20 pulleys which have 20 teeth.
+// 20*2 means the pitch is 40.
+#define PULLEY_PITCH         (40.0)
+
+// These numbers are calculated from the above.  No need to change these.
+#define NORMAL_MOTOR_STEPS   (360.0/DEGREES_PER_STEP)
+#define STEPS_PER_TURN       (NORMAL_MOTOR_STEPS * MICROSTEPS)
+#define THREAD_PER_STEP      (PULLEY_PITCH/STEPS_PER_TURN)
+#define MICROSTEP_PER_DEGREE (STEPS_PER_TURN/360.0)
+
+//------------------------------------------------------------------------------
+// COMMUNICATION & BUFFERING
+//------------------------------------------------------------------------------
+// for serial
+#define BAUD                 (57600)  // How fast is the Arduino talking?
+#define MAX_BUF              (64)  // What is the longest message Arduino can store?
+
+// buffering commands
+#define MAX_SEGMENTS         (32)  // number of line segments to buffer ahead. must be a power of two.
+#define SEGMOD(x)            ((x)&(MAX_SEGMENTS-1))
+
+//------------------------------------------------------------------------------
+// MISC
+//------------------------------------------------------------------------------
+
+// for arc directions
+#define ARC_CW               (1)
+#define ARC_CCW              (-1)
+
+//------------------------------------------------------------------------------
+// SANITY CHECKS
+//------------------------------------------------------------------------------
+
 #if NUM_MOTORS > MAX_MOTORS
 #error "The number of motors needed is more than this board supports."
 #endif
@@ -74,28 +127,6 @@
 // not always the case!  Skycam has more motors than axies.  
 //#error "NUM_SERVOS + NUM_MOTORS != NUM_AXIES"
 #endif
-
-// for serial comms
-#define BAUD                 (57600)  // How fast is the Arduino talking?
-#define MAX_BUF              (64)  // What is the longest message Arduino can store?
-
-// motor details
-#define MICROSTEPS           (16.0)  // change this.  microstepping on this microcontroller
-#define DEGREES_PER_STEP     ( 0.9)  // change this.  as advertised by the stepper motor maker
-
-#define NORMAL_MOTOR_STEPS   (360.0/DEGREES_PER_STEP)  // 360/0.9=400.  360/1.8=200.
-#define STEPS_PER_TURN       (NORMAL_MOTOR_STEPS * MICROSTEPS)  // default number of steps per turn * microsteps
-#define PULLEY_PITCH         (2*20.0) // 2mm per tooth, 20 teeth.
-#define THREAD_PER_STEP      (PULLEY_PITCH/STEPS_PER_TURN)
-#define MICROSTEP_PER_DEGREE (STEPS_PER_TURN/360.0)
-
-// buffering commands
-#define MAX_SEGMENTS         (32)  // number of line segments to buffer ahead. must be a power of two.
-#define SEGMOD(x)            ((x)&(MAX_SEGMENTS-1))
-
-// for arc directions
-#define ARC_CW               (1)
-#define ARC_CCW              (-1)
 
 
 //------------------------------------------------------------------------------
