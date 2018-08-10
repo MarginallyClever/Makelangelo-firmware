@@ -13,8 +13,8 @@
 #ifdef HAS_LCD
 
 // only uncomment one of these options
-#define LCD_IS_128X64  // reprapdiscount Full Graphic Smart LCD Controller
-//#define LCD_IS_SMART  // reprapdiscount Smart LCD Controller (including XXL model)
+//#define LCD_IS_128X64  // reprapdiscount Full Graphic Smart LCD Controller
+#define LCD_IS_SMART  // reprapdiscount Smart LCD Controller (including XXL model)
 
 
 //----------------------------------------------------
@@ -53,10 +53,10 @@
 #define BLEN_B             1
 #define BLEN_A             0
   
-#define encrot0            0
-#define encrot1            2
-#define encrot2            3
-#define encrot3            1
+#define ENCROT0            0
+#define ENCROT1            2
+#define ENCROT2            3
+#define ENCROT3            1
 
 #include "dogm_font_data_6x9.h"
 
@@ -90,10 +90,10 @@
 #define BLEN_B             1
 #define BLEN_A             0
   
-#define encrot0            0
-#define encrot1            2
-#define encrot2            3
-#define encrot3            1
+#define ENCROT0            0
+#define ENCROT1            2
+#define ENCROT2            3
+#define ENCROT3            1
 
 #endif
 
@@ -102,7 +102,7 @@
 //------------------------------------------------------------------------------
 
 #define LCD_MESSAGE_LENGTH (LCD_HEIGHT * (LCD_WIDTH + 1))  // we have two lines of 20 characters avialable in 7.16
-#define LCD_DRAW_DELAY     (150)
+#define LCD_DRAW_DELAY     (50)
 #define LCD_TURN_PER_MENU  (5)
 
 extern char lcd_message[LCD_MESSAGE_LENGTH+1];

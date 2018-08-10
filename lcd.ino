@@ -47,9 +47,11 @@ U8GLIB_ST7920_128X64_1X u8g(LCD_PINS_D4,LCD_PINS_ENABLE,LCD_PINS_RS);
 #endif
 #ifdef LCD_IS_128X64
 void LCD_clear() {
-  u8g.setColorIndex(0);
-  u8g.drawBox(0,0,LCD_PIXEL_WIDTH,LCD_PIXEL_HEIGHT);
-  u8g.setColorIndex(1);
+  u8g.firstPage(); 
+  while( u8g.nextPage() );
+  //u8g.setColorIndex(0);
+  //u8g.drawBox(0,0,LCD_PIXEL_WIDTH,LCD_PIXEL_HEIGHT);
+  //u8g.setColorIndex(1);
 }
 #endif
 
@@ -148,29 +150,32 @@ void (*current_menu)();
 
 
 void LCD_read() {
-  // detect pot turns
+  // detect potentiometer changes
   int rot = ((digitalRead(BTN_EN1) == LOW) << BLEN_A)
-            | ((digitalRead(BTN_EN2) == LOW) << BLEN_B);
+          | ((digitalRead(BTN_EN2) == LOW) << BLEN_B);
+  // potentiometer uses grey code.  Pattern is 0 3 
   switch (rot) {
-    case encrot0:
-      if ( lcd_rot_old == encrot3 ) lcd_turn++;
-      if ( lcd_rot_old == encrot1 ) lcd_turn--;
+    case ENCROT0:
+      if ( lcd_rot_old == ENCROT3 ) lcd_turn++;
+      if ( lcd_rot_old == ENCROT1 ) lcd_turn--;
       break;
-    case encrot1:
-      if ( lcd_rot_old == encrot0 ) lcd_turn++;
-      if ( lcd_rot_old == encrot2 ) lcd_turn--;
+    case ENCROT1:
+      if ( lcd_rot_old == ENCROT0 ) lcd_turn++;
+      if ( lcd_rot_old == ENCROT2 ) lcd_turn--;
       break;
-    case encrot2:
-      if ( lcd_rot_old == encrot1 ) lcd_turn++;
-      if ( lcd_rot_old == encrot3 ) lcd_turn--;
+    case ENCROT2:
+      if ( lcd_rot_old == ENCROT1 ) lcd_turn++;
+      if ( lcd_rot_old == ENCROT3 ) lcd_turn--;
       break;
-    case encrot3:
-      if ( lcd_rot_old == encrot2 ) lcd_turn++;
-      if ( lcd_rot_old == encrot0 ) lcd_turn--;
+    case ENCROT3:
+      if ( lcd_rot_old == ENCROT2 ) lcd_turn++;
+      if ( lcd_rot_old == ENCROT0 ) lcd_turn--;
       break;
   }
   lcd_rot_old = rot;
 
+  //if(lcd_turn !=0) Serial.print(lcd_turn>0?'+':'-');  // for debugging potentiometer
+  
   // find click state
   int btn = digitalRead(BTN_ENC);
   if ( btn != lcd_click_old && btn == HIGH ) {
@@ -317,13 +322,15 @@ void LCD_driveX() {
 
   float offset[NUM_AXIES];
   get_end_plus_offset(offset);
-
+  
   if (lcd_turn) {
-    offset[0] += lcd_turn;
+    offset[0] += lcd_turn > 0 ? 1 : -1;
     lineSafe(offset, feed_rate);
   }
 
-  LCD_setCursor( 0, 0);  LCD_print('X');  LCD_print_float(offset[0]);
+  LCD_setCursor( 0, 0);
+  LCD_print('X');
+  LCD_print_float(offset[0]);
 }
 
 
@@ -334,11 +341,13 @@ void LCD_driveY() {
   get_end_plus_offset(offset);
 
   if (lcd_turn) {
-    offset[1] += lcd_turn;
+    offset[1] += lcd_turn > 0 ? 1 : -1;
     lineSafe(offset, feed_rate);
   }
 
-  LCD_setCursor( 0, 0);  LCD_print('Y');  LCD_print_float(offset[1]);
+  LCD_setCursor( 0, 0);
+  LCD_print('Y');
+  LCD_print_float(offset[1]);
 }
 
 
@@ -350,11 +359,13 @@ void LCD_driveZ() {
 
   if (lcd_turn) {
     // protect servo, don't drive beyond physical limits
-    offset[2] += lcd_turn;
+    offset[2] += lcd_turn > 0 ? 1 : -1;
     lineSafe(offset, feed_rate);
   }
 
-  LCD_setCursor( 0, 0);  LCD_print('Z');  LCD_print_float(offset[2]);
+  LCD_setCursor( 0, 0);
+  LCD_print('Z');
+  LCD_print_float(offset[2]);
 }
 
 
@@ -363,14 +374,16 @@ void LCD_driveF() {
 
   if (lcd_turn) {
     // protect servo, don't drive beyond physical limits
-    float newF = feed_rate + lcd_turn;
+    float newF = feed_rate + lcd_turn > 0 ? 1 : -1;
     if (newF < MIN_FEEDRATE) newF = MIN_FEEDRATE;
     if (newF > MAX_FEEDRATE) newF = MAX_FEEDRATE;
     // move
     feed_rate = newF;
   }
 
-  LCD_setCursor( 0, 0);  LCD_print('F');  LCD_print_float(feed_rate);
+  LCD_setCursor( 0, 0);
+  LCD_print('F');
+  LCD_print_float(feed_rate);
 }
 
 
@@ -418,7 +431,7 @@ void LCD_start_menu() {
   MENU_END
 }
 
-void LCD_update_long(char *name, long &value) {
+void LCD_update_long(char *label, long &value) {
   LCD_clear();
   do {
     LCD_read();
@@ -427,23 +440,23 @@ void LCD_update_long(char *name, long &value) {
       lcd_turn = 0;
     }
     LCD_setCursor(0, 0);
-    LCD_print(name);
+    LCD_print(label);
     LCD_setCursor(0, 1);
     LCD_print_long(value);
   } while ( !lcd_click_now );
 }
 
 
-void LCD_update_float(char *name, float &value) {
+void LCD_update_float(char *label, float &value,float stepSize=0.01) {
   LCD_clear();
   do {
     LCD_read();
     if ( lcd_turn ) {
-      value += lcd_turn > 0 ? 0.01 : -0.01;
+      value += lcd_turn > 0 ? stepSize : -stepSize;
       lcd_turn = 0;
     }
     LCD_setCursor(0, 0);
-    LCD_print(name);
+    LCD_print(label);
     LCD_setCursor(0, 1);
     LCD_print_float(value);
   } while ( !lcd_click_now );
@@ -497,6 +510,27 @@ void LCD_update() {
     //Serial.print('\t');  Serial.print(num_menu_items,DEC);
     //Serial.print('\n');
 
+    // update the menu position
+    if ( lcd_turn && num_menu_items>1 ) {
+      int originalPosition = menu_position_sum / LCD_TURN_PER_MENU;
+      menu_position_sum += lcd_turn;
+  
+      menu_position = menu_position_sum / LCD_TURN_PER_MENU;
+      if (menu_position > num_menu_items - 1) menu_position = num_menu_items - 1;
+      if (menu_position < 0) menu_position = 0;
+  
+      if (originalPosition != menu_position) {
+        LCD_clear();
+      }
+
+      Serial.println(menu_position);
+  
+      if (screen_position > menu_position) screen_position = menu_position;
+      if (screen_position < menu_position - (LCD_HEIGHT - 1)) screen_position = menu_position - (LCD_HEIGHT - 1);
+      screen_end = screen_position + LCD_HEIGHT;
+    }
+
+    // draw the new screen contents
 #ifdef LCD_IS_128X64
   u8g.firstPage();
   do {
@@ -505,32 +539,8 @@ void LCD_update() {
 #ifdef LCD_IS_128X64
   } while(u8g.nextPage());
 #endif
-  }
 
-  if ( lcd_turn ) {
-    int op = menu_position_sum / LCD_TURN_PER_MENU;
-    menu_position_sum += lcd_turn;
-    lcd_turn = 0;
-
-    if (num_menu_items > 0) {
-      if ( menu_position_sum > (num_menu_items - 1) * LCD_TURN_PER_MENU ) {
-        menu_position_sum = (num_menu_items - 1) * LCD_TURN_PER_MENU;
-      }
-    }
-    if ( menu_position_sum < 1) {
-      menu_position_sum = 1; /* 20160313-NM-Added to stop the positon going negative at needing more winds to come back */
-    }
-
-    menu_position = menu_position_sum / LCD_TURN_PER_MENU;
-    if (op != menu_position) LCD_clear();
-
-    if (menu_position > num_menu_items - 1) menu_position = num_menu_items - 1;
-    if (menu_position < 0) {
-      menu_position = 0;
-    }
-    if (screen_position > menu_position) screen_position = menu_position;
-    if (screen_position < menu_position - (LCD_HEIGHT - 1)) screen_position = menu_position - (LCD_HEIGHT - 1);
-    screen_end = screen_position + LCD_HEIGHT;
+    lcd_turn = 0;  // reset.  must come after (*current_menu)() because it might be used there.  (damn globals...)
   }
 #endif  // HAS_LCD
 }
