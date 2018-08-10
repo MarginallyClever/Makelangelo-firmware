@@ -221,7 +221,7 @@ void LCD_read() {
   }
   if(lcd_rot_old != rot) {
     //if(lcd_turn !=0) Serial.print(lcd_turn>0?'+':'-');  // for debugging potentiometer
-    Serial.println(rot);  // for debugging potentiometer
+    //Serial.println(rot);  // for debugging potentiometer
   }
   
   lcd_rot_old = rot;
