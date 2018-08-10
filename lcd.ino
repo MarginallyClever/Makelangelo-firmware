@@ -33,6 +33,53 @@ LiquidCrystal lcd(LCD_PINS_RS, LCD_PINS_ENABLE, LCD_PINS_D4, LCD_PINS_D5, LCD_PI
 #ifdef LCD_IS_128X64
 // This is not ideal - will not work when board models change.
 U8GLIB_ST7920_128X64_1X u8g(LCD_PINS_D4,LCD_PINS_ENABLE,LCD_PINS_RS);
+
+
+/**
+ * Made with Marlin Bitmap Converter
+ * http://marlinfw.org/tools/u8glib/converter.html
+ *
+ * This bitmap from the file 'icon_mono.png'
+ * Filesize: 906 Bytes
+ * Size bitmap: 108 bytes
+ */
+#define logoImageWidth 32
+#define logoImageHeight 32
+
+const unsigned char logoImage [] PROGMEM= {
+  0x00,0x60,0x00,0x00, // .........##.....................
+  0x00,0xF0,0x00,0x00, // ........####....................
+  0x03,0x10,0x00,0x00, // ......##...#....................
+  0x01,0x60,0x00,0x00, // .......#.##.....................
+  0x01,0xC0,0x00,0x00, // .......###......................
+  0x00,0x9F,0xF0,0x00, // ........#..#########............
+  0x00,0xF0,0x3C,0x00, // ........####......####..........
+  0x01,0xC0,0x3F,0x00, // .......###........######........
+  0x03,0x00,0x1F,0x80, // ......##...........######.......
+  0x06,0x00,0x1F,0xC0, // .....##............#######......
+  0x0C,0x02,0x0F,0xE0, // ....##........#.....#######.....
+  0x08,0x06,0x0F,0xE0, // ....#........##.....#######.....
+  0x18,0x02,0x0F,0xF0, // ...##.........#.....########....
+  0x10,0x02,0x0F,0xF0, // ...#..........#.....########....
+  0x31,0x80,0x07,0xF0, // ..##...##............#######....
+  0x23,0x80,0x07,0xF8, // ..#...###............########...
+  0x23,0x00,0x07,0xF8, // ..#...##.............########...
+  0x23,0x00,0x07,0xF8, // ..#...##.............########...
+  0x23,0x00,0x07,0xF8, // ..#...##.............########...
+  0x21,0x80,0x07,0xF8, // ..#....##............########...
+  0x20,0x00,0x07,0xF8, // ..#..................########...
+  0x30,0x00,0x37,0xF8, // ..##..............##.########...
+  0x30,0x00,0x63,0xF0, // ..##.............##...######....
+  0x10,0x00,0x63,0xF0, // ...#.............##...######....
+  0x18,0x00,0x63,0xF0, // ...##............##...######....
+  0x08,0x60,0x37,0xE0, // ....#....##.......##.######.....
+  0x04,0x20,0x0F,0xC0, // .....#....#.........######......
+  0x06,0x00,0x1F,0xC0, // .....##............#######......
+  0x03,0x00,0x1F,0x80, // ......##...........######.......
+  0x00,0xC0,0x3E,0x00, // ........##........#####.........
+  0x00,0x70,0x3C,0x00, // .........###......####..........
+  0x00,0x1F,0xE0,0x00  // ...........########.............
+};
 #endif
 
 //------------------------------------------------------------------------------
@@ -47,11 +94,11 @@ U8GLIB_ST7920_128X64_1X u8g(LCD_PINS_D4,LCD_PINS_ENABLE,LCD_PINS_RS);
 #endif
 #ifdef LCD_IS_128X64
 void LCD_clear() {
-  u8g.firstPage(); 
-  while( u8g.nextPage() );
-  //u8g.setColorIndex(0);
-  //u8g.drawBox(0,0,LCD_PIXEL_WIDTH,LCD_PIXEL_HEIGHT);
-  //u8g.setColorIndex(1);
+  //u8g.firstPage(); 
+  //while( u8g.nextPage() );
+  u8g.setColorIndex(0);
+  u8g.drawBox(0,0,LCD_PIXEL_WIDTH,LCD_PIXEL_HEIGHT);
+  u8g.setColorIndex(1);
 }
 #endif
 
@@ -172,9 +219,13 @@ void LCD_read() {
       if ( lcd_rot_old == ENCROT0 ) lcd_turn--;
       break;
   }
+  if(lcd_rot_old != rot) {
+    //if(lcd_turn !=0) Serial.print(lcd_turn>0?'+':'-');  // for debugging potentiometer
+    Serial.println(rot);  // for debugging potentiometer
+  }
+  
   lcd_rot_old = rot;
 
-  //if(lcd_turn !=0) Serial.print(lcd_turn>0?'+':'-');  // for debugging potentiometer
   
   // find click state
   int btn = digitalRead(BTN_ENC);
@@ -592,7 +643,7 @@ void LCD_drawSplash() {
   strcpy(ptr, mhv );                 ptr += strlen(mhv);
 
   int x = (LCD_WIDTH - strlen(message)) / 2;
-  int y = LCD_HEIGHT/2;
+  int y = LCD_HEIGHT-2;
   int x2 = (LCD_WIDTH - strlen("marginallyclever.com")) / 2;
   int y2 = y+1;
 
@@ -601,6 +652,9 @@ void LCD_drawSplash() {
   do {
 #endif
     LCD_clear();
+#ifdef LCD_IS_128X64
+    u8g.drawBitmapP((LCD_PIXEL_WIDTH-logoImageWidth)/2,0,logoImageWidth/8,logoImageHeight,logoImage);
+#endif
     LCD_setCursor(x,y);
     LCD_print(message);
     LCD_setCursor(x2,y2);
@@ -608,7 +662,7 @@ void LCD_drawSplash() {
 #ifdef LCD_IS_128X64
   } while(u8g.nextPage());
 #endif
-  
+
   delay(2500);
   LCD_clear();
 }
