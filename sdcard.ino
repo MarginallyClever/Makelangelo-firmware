@@ -65,10 +65,18 @@ void SD_check() {
     Serial.print("SD is ");
     if(!state) {
       Serial.println(F("removed"));
+      if(sd_printing_now) {
+        // TODO: uh oh!  Please reinsert SD card!
+        // TODO: lift pen if needed
+        // TODO: flag waiting for SD return
+      }
       sd_printing_now=false;
     } else {
       Serial.println(F("added"));
       SD_load_card();
+      // TODO: is flag waiting for SD return active?
+        // TODO: lower pen if needed
+        // TODO: resume printing
     }
     sd_inserted = state;
   }
@@ -108,6 +116,11 @@ void SD_check() {
     if(sd_print_file.peek() == -1) {
       sd_print_file.close();
       sd_printing_now=false;
+      if(sd_inserted) {
+        // TODO: probably file ended OK.
+      } else {
+        // TODO: SD card remove unexpected?
+      }
     }
   }
 #endif // HAS_SD
