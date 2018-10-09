@@ -65,6 +65,14 @@
 #include "board_teensylu.h"
 
 //------------------------------------------------------------------------------
+// LCD panels supported
+//------------------------------------------------------------------------------
+
+// only uncomment one of these options
+#define LCD_IS_128X64  // reprapdiscount Full Graphic Smart LCD Controller
+//#define LCD_IS_SMART  // reprapdiscount Smart LCD Controller (including XXL model)
+
+//------------------------------------------------------------------------------
 // MOTOR DETAILS
 //------------------------------------------------------------------------------
 
@@ -224,4 +232,3 @@ extern float maxFeedRate[NUM_MOTORS];
 
 
 #endif // CONFIGURE_H
-

@@ -53,8 +53,48 @@
 #define LIMIT_SWITCH_PIN_RIGHT    (MOTOR_1_LIMIT_SWITCH_PIN)
 
 
+// LCD pins
+#ifdef LCD_IS_128X64
+#define BEEPER             44
+#define LCD_PINS_RS        19
+#define LCD_PINS_ENABLE    42
+#define LCD_PINS_D4        18
+#define LCD_PINS_D5        38
+#define LCD_PINS_D6        41
+#define LCD_PINS_D7        40
+
+// Encoder rotation values
+#define BTN_EN1            11
+#define BTN_EN2            12
+#define BTN_ENC            43
+
+// SD card settings
+#define SDPOWER            -1
+#define SDSS               53
+#define SDCARDDETECT       49
+#endif
+
+#ifdef LCD_IS_SMART
+#define BEEPER             44
+#define LCD_PINS_RS        19
+#define LCD_PINS_ENABLE    42
+#define LCD_PINS_D4        18
+#define LCD_PINS_D5        38
+#define LCD_PINS_D6        41
+#define LCD_PINS_D7        40
+
+// Encoder rotation values
+#define BTN_EN1            11
+#define BTN_EN2            12
+#define BTN_ENC            43
+
+// SD card settings
+#define SDPOWER            -1
+#define SDSS               53
+#define SDCARDDETECT       49
+#endif
+
 #endif
 
 
 #endif  // BOARD_RUMBA_H
-

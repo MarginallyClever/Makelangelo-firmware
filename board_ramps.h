@@ -50,39 +50,48 @@
 #define LIMIT_SWITCH_PIN_LEFT     (MOTOR_0_LIMIT_SWITCH_PIN)
 #define LIMIT_SWITCH_PIN_RIGHT    (MOTOR_1_LIMIT_SWITCH_PIN)
 
-// Smart controller settings
-#define BEEPER             37   /* Pin on SMART Adapter */
-#define LCD_PINS_RS        16   /* Pin on SMART Adapter */
-#define LCD_PINS_ENABLE    17   /* Pin on SMART Adapter */ 
-#define LCD_PINS_D4        23   /* Pin on SMART Adapter */
-#define LCD_PINS_D5        25   /* Pin on SMART Adapter */
-#define LCD_PINS_D6        27   /* Pin on SMART Adapter */
-#define LCD_PINS_D7        29   /* Pin on SMART Adapter */
+// LCD pins
+#ifdef LCD_IS_128X64
+// 128x64 full graphics controller
+#define BEEPER             44
+#define LCD_PINS_RS        19
+#define LCD_PINS_ENABLE    42
+#define LCD_PINS_D4        18
+#define LCD_PINS_D5        38
+#define LCD_PINS_D6        41
+#define LCD_PINS_D7        40
 
 // Encoder rotation values
-#define BTN_EN1            31   /* Pin on SMART Adapter */
-#define BTN_EN2            33   /* Pin on SMART Adapter */
-#define BTN_ENC            35  /* Pin on SMART Adapter */
-
-#define KILL_PIN    41    /* Pin on SMART Adapter */
+#define BTN_EN1            31
+#define BTN_EN2            33
+#define BTN_ENC            35
 
 // SD card settings
-#define SDPOWER            -1
-#define SDSS               53
-#define SDCARDDETECT       49
+#define SDPOWER            31
+#define SDSS               33
+#define SDCARDDETECT       35
 
-#define LCD_HEIGHT         4
-#define LCD_WIDTH          20
+#define KILL_PIN           41
+#endif
 
-#define BLEN_C             2
-#define BLEN_B             1
-#define BLEN_A             0
-#define encrot0            0
-#define encrot1            2
-#define encrot2            3
-#define encrot3            1
+#ifdef LCD_IS_SMART
+// Smart controller settings
+#define BEEPER             37
+#define LCD_PINS_RS        16
+#define LCD_PINS_ENABLE    17
+#define LCD_PINS_D4        23
+#define LCD_PINS_D5        25
+#define LCD_PINS_D6        27
+#define LCD_PINS_D7        29
+
+// SD card settings
+#define SDPOWER            31
+#define SDSS               33
+#define SDCARDDETECT       35
+
+#define KILL_PIN           41
+#endif
 
 #endif
 
 #endif  // BOARD_RAMPS_H
-
