@@ -44,8 +44,11 @@
 #define LCD_PIXEL_HEIGHT   64
 #define LCD_PIXEL_WIDTH    128
 
+// depends on the font selected
 #define FONT_HEIGHT        9
 #define FONT_WIDTH         6
+
+// # of characters
 #define LCD_HEIGHT         (LCD_PIXEL_HEIGHT/FONT_HEIGHT)
 #define LCD_WIDTH          (LCD_PIXEL_WIDTH/FONT_WIDTH)
 
@@ -83,6 +86,15 @@
 #define SDSS               53
 #define SDCARDDETECT       49
 
+// there is no practical per-pixel control.
+//#define LCD_PIXEL_HEIGHT   ?
+//#define LCD_PIXEL_WIDTH    ?
+
+// there is no font selection.
+//#define FONT_HEIGHT        ?
+//#define FONT_WIDTH         ?
+
+// # of characters
 #define LCD_HEIGHT         4
 #define LCD_WIDTH          20
 
