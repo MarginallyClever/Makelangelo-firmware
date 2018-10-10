@@ -152,6 +152,10 @@ void LCD_clear() {
     return;  \
   }
 
+#define MENU_LABEL(menu_label) \
+  MENU_ITEM_START(menu_label) \
+  MENU_ITEM_END()
+  
 #define MENU_SUBMENU(menu_label,menu_method) \
   MENU_ITEM_START(menu_label) \
   if(menu_position==ty && lcd_click_now) MENU_GOTO(menu_method); \
@@ -292,6 +296,8 @@ void LCD_main_menu() {
 #endif
     if (sd_inserted) {
       MENU_SUBMENU("Draw *.NGC file...", LCD_start_menu);
+    } else {
+      MENU_LABEL("NO SD CARD");
     }
     MENU_SUBMENU("Drive", LCD_drive_menu);
   } else {
