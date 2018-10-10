@@ -12,11 +12,6 @@
 //------------------------------------------------------------------------------
 #ifdef HAS_LCD
 
-// only uncomment one of these options
-#define LCD_IS_128X64  // reprapdiscount Full Graphic Smart LCD Controller
-//#define LCD_IS_SMART  // reprapdiscount Smart LCD Controller (including XXL model)
-
-
 //----------------------------------------------------
 
 #ifdef LCD_IS_128X64

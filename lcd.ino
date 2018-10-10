@@ -685,4 +685,3 @@ void LCD_drawSplash() {
    You should have received a copy of the GNU General Public License
    along with makelangelo-firmware.  If not, see <http://www.gnu.org/licenses/>.
 */
-

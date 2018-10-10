@@ -273,6 +273,7 @@ void setPenAngle(int arg0) {
 #if NUM_SERVOS>0
   servos[0].write(arg0);
 #endif
+
 #endif
 }
 

@@ -49,6 +49,14 @@
 #include "robot_arm6.h"
 
 //------------------------------------------------------------------------------
+// LCD panels supported
+//------------------------------------------------------------------------------
+
+// only uncomment one of these options
+//#define LCD_IS_128X64  // reprapdiscount Full Graphic Smart LCD Controller
+#define LCD_IS_SMART  // reprapdiscount Smart LCD Controller (including XXL model)
+
+//------------------------------------------------------------------------------
 // Microcontrollers supported
 //------------------------------------------------------------------------------
 
@@ -63,14 +71,6 @@
 #include "board_ramps.h"
 #include "board_sanguinolulu.h"
 #include "board_teensylu.h"
-
-//------------------------------------------------------------------------------
-// LCD panels supported
-//------------------------------------------------------------------------------
-
-// only uncomment one of these options
-#define LCD_IS_128X64  // reprapdiscount Full Graphic Smart LCD Controller
-//#define LCD_IS_SMART  // reprapdiscount Smart LCD Controller (including XXL model)
 
 //------------------------------------------------------------------------------
 // MOTOR DETAILS
