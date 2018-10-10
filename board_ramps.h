@@ -84,6 +84,11 @@
 #define LCD_PINS_D6        27
 #define LCD_PINS_D7        29
 
+// Encoder rotation values
+#define BTN_EN1            31
+#define BTN_EN2            33
+#define BTN_ENC            35
+
 // SD card settings
 #define SDPOWER            31
 #define SDSS               33
