@@ -493,35 +493,35 @@ void LCD_start_menu() {
 void LCD_draw_border() {
   MENU_START
     MENU_SUBMENU("Back", LCD_main_menu);
-    MENU_ACTION("A2 portrait",draw_A2_p);
-    MENU_ACTION("A3 portrait",draw_A3_p);
-    MENU_ACTION("A4 portrait",draw_A4_p);
-    MENU_ACTION("A5 portrait",draw_A5_p);
-    MENU_ACTION("US legal portrait",draw_USlegal_p);
-    MENU_ACTION("US letter portrait",draw_USletter_p);
+    MENU_ACTION("A2 portrait",draw_A2_portrait);
+    MENU_ACTION("A3 portrait",draw_A3_portrait);
+    MENU_ACTION("A4 portrait",draw_A4_portrait);
+    MENU_ACTION("A5 portrait",draw_A5_portrait);
+    MENU_ACTION("US legal portrait",draw_USlegal_portrait);
+    MENU_ACTION("US letter portrait",draw_USletter_portrait);
   
-    MENU_ACTION("A2 landscape",draw_A2_l);
-    MENU_ACTION("A3 landscape",draw_A3_l);
-    MENU_ACTION("A4 landscape",draw_A4_l);
-    MENU_ACTION("A5 landscape",draw_A5_l);
-    MENU_ACTION("US legal landscape",draw_USlegal_l);
-    MENU_ACTION("US letter landscape",draw_USletter_l);
+    MENU_ACTION("A2 landscape",draw_A2_landscape);
+    MENU_ACTION("A3 landscape",draw_A3_landscape);
+    MENU_ACTION("A4 landscape",draw_A4_landscape);
+    MENU_ACTION("A5 landscape",draw_A5_landscape);
+    MENU_ACTION("US legal landscape",draw_USlegal_landscape);
+    MENU_ACTION("US letter landscape",draw_USletter_landscape);
   MENU_END
 }
 
-void draw_A2_p() {  draw_border(420,594,0);  }
-void draw_A3_p() {  draw_border(297,420,0);  }
-void draw_A4_p() {  draw_border(210,297,0);  }
-void draw_A5_p() {  draw_border(148,210,0);  }
-void draw_USletter_p() {  draw_border(216,279,0);  }
-void draw_USlegal_p() {  draw_border(216,356,0);  }
+void draw_A2_portrait() {  draw_border(420,594,0);  }
+void draw_A3_portrait() {  draw_border(297,420,0);  }
+void draw_A4_portrait() {  draw_border(210,297,0);  }
+void draw_A5_portrait() {  draw_border(148,210,0);  }
+void draw_USletter_portrait() {  draw_border(216,279,0);  }
+void draw_USlegal_portrait() {  draw_border(216,356,0);  }
   
-void draw_A2_l() {  draw_border(420,594,1);  }
-void draw_A3_l() {  draw_border(297,420,1);  }
-void draw_A4_l() {  draw_border(210,297,1);  }
-void draw_A5_l() {  draw_border(148,210,1);  }
-void draw_USletter_l() {  draw_border(216,279,1);  }
-void draw_USlegal_l() {  draw_border(216,356,1);  }
+void draw_A2_landscape() {  draw_border(420,594,1);  }
+void draw_A3_landscape() {  draw_border(297,420,1);  }
+void draw_A4_landscape() {  draw_border(210,297,1);  }
+void draw_A5_landscape() {  draw_border(148,210,1);  }
+void draw_USletter_landscape() {  draw_border(216,279,1);  }
+void draw_USlegal_landscape() {  draw_border(216,356,1);  }
 
 
 void draw_border(int width,int height,int landscape) {
@@ -532,13 +532,21 @@ void draw_border(int width,int height,int landscape) {
   width /= 2;
   height /= 2;
 
+  if(landscape==1) {
+    // swap the two values.
+    int temp=width;
+    width=height;
+    height=temp;
+  }
+
   // get start position
   float start[NUM_AXIES];
   get_end_plus_offset(start);
   
   float pos[NUM_AXIES];
-  
-  // lift pen
+  // lift pen at current position
+  pos[0]=start[0];
+  pos[1]=start[1];
   pos[2]=PEN_UP_ANGLE;  lineSafe( pos, feed_rate );
   // move to first corner
   pos[0] = -width;  pos[1] =  height;  lineSafe( pos, feed_rate );
