@@ -524,9 +524,10 @@ void draw_USlegal_l() {  draw_border(216,356,1);  }
 
 
 void draw_border(int width,int height,int landscape) {
-  // make sure we don't loop forever.
-  lcd_click_now=false;
-  
+  LCD_clear();
+  LCD_setCursor(0, 0);
+  LCD_print("Drawing border...");
+    
   width /= 2;
   height /= 2;
 
@@ -552,6 +553,8 @@ void draw_border(int width,int height,int landscape) {
   
   // return to start position
   lineSafe( start, feed_rate );
+
+  MENU_GOTO(LCD_draw_border);
 }
 
 
