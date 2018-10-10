@@ -492,6 +492,7 @@ void LCD_start_menu() {
 
 void LCD_draw_border() {
   MENU_START
+    MENU_SUBMENU("Back", LCD_main_menu);
     MENU_ACTION("A2 portrait",draw_A2_p);
     MENU_ACTION("A3 portrait",draw_A3_p);
     MENU_ACTION("A4 portrait",draw_A4_p);
