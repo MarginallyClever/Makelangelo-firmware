@@ -14,6 +14,9 @@ Makelangelo-firmware can also support traditional XY gantries, CoreXY gantries, 
 
 Newer versions might be available at https://www.marginallyclever.com/product/makelangelo-firmware/
 
+## Note ##
+
+Unless otherwise stated in the code, the default units of measurement are millimeters (mm), kilograms (kg), and seconds (s).
 ## Instructions ##
 
 - Make sure the parent folder is called Makelangelo-firmware.
@@ -24,7 +27,7 @@ Newer versions might be available at https://www.marginallyclever.com/product/ma
   for Makelangelo 3 #define MACHINE_HARDWARE_VERSION 3 
   for Makelangelo 5 #define MACHINE_HARDWARE_VERSION 5
 - Tools > board > set type for your flavor of arduino 
-- Tools > port > set the connection for your arudion
+- Tools > port > set the connection for your arudio
 - upload
 
 For developers, please see
