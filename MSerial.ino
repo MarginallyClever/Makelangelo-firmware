@@ -1,8 +1,7 @@
 //------------------------------------------------------------------------------
 // Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
-// Copyright at end of file.  Please see
-// http://www.github.com/MarginallyClever/makelangeloFirmware for more information.
+// Please see http://www.github.com/MarginallyClever/makelangeloFirmware for more information.
 //------------------------------------------------------------------------------
 
 /*
@@ -30,21 +29,3 @@ void serial_setup(long baud) {
 ISR(USART0_RX_vect) {
 }
 */
-
-
-/**
- * This file is part of makelangelo-firmware.
- *
- * makelangelo-firmware is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * makelangelo-firmware is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with makelangelo-firmware.  If not, see <http://www.gnu.org/licenses/>.
- */
