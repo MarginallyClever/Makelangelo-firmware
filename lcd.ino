@@ -286,8 +286,6 @@ void LCD_main_menu() {
 
   MENU_SUBMENU("Back", LCD_status_menu);
   if (!sd_printing_now) {
-    MENU_ACTION("Disable motors", LCD_disable_motors);
-    MENU_ACTION("Enable motors", LCD_enable_motors);
 #if MACHINE_HARDWARE_VERSION  == 5
     MENU_ACTION("Find home", LCD_find_home);
 #else
@@ -295,10 +293,11 @@ void LCD_main_menu() {
     MENU_ACTION("Go home", LCD_go_home);
 #endif
     if (sd_inserted) {
-      MENU_SUBMENU("Draw *.NGC file...", LCD_start_menu);
+      MENU_SUBMENU("Print from SD card...", LCD_start_menu);
     } else {
-      MENU_LABEL("NO SD CARD");
+      MENU_LABEL("No SD card");
     }
+    MENU_SUBMENU("Draw border", LCD_draw_border);
     MENU_SUBMENU("Drive", LCD_drive_menu);
   } else {
     if (sd_printing_paused) {
@@ -366,6 +365,8 @@ void LCD_go_home() {
 void LCD_drive_menu() {
   MENU_START
   MENU_SUBMENU("Back", LCD_main_menu);
+  MENU_ACTION("Disable motors", LCD_disable_motors);
+  MENU_ACTION("Enable motors", LCD_enable_motors);
   MENU_SUBMENU("X", LCD_driveX);
   MENU_SUBMENU("Y", LCD_driveY);
   MENU_SUBMENU("Z", LCD_driveZ);
@@ -487,6 +488,72 @@ void LCD_start_menu() {
 
   MENU_END
 }
+
+
+void LCD_draw_border() {
+  MENU_START
+    MENU_ACTION("A2 portrait",draw_A2_p);
+    MENU_ACTION("A3 portrait",draw_A3_p);
+    MENU_ACTION("A4 portrait",draw_A4_p);
+    MENU_ACTION("A5 portrait",draw_A5_p);
+    MENU_ACTION("US legal portrait",draw_USlegal_p);
+    MENU_ACTION("US letter portrait",draw_USletter_p);
+  
+    MENU_ACTION("A2 landscape",draw_A2_l);
+    MENU_ACTION("A3 landscape",draw_A3_l);
+    MENU_ACTION("A4 landscape",draw_A4_l);
+    MENU_ACTION("A5 landscape",draw_A5_l);
+    MENU_ACTION("US legal landscape",draw_USlegal_l);
+    MENU_ACTION("US letter landscape",draw_USletter_l);
+  MENU_END
+}
+
+void draw_A2_p() {  draw_border(420,594,0);  }
+void draw_A3_p() {  draw_border(297,420,0);  }
+void draw_A4_p() {  draw_border(210,297,0);  }
+void draw_A5_p() {  draw_border(148,210,0);  }
+void draw_USletter_p() {  draw_border(216,279,0);  }
+void draw_USlegal_p() {  draw_border(216,356,0);  }
+  
+void draw_A2_l() {  draw_border(420,594,1);  }
+void draw_A3_l() {  draw_border(297,420,1);  }
+void draw_A4_l() {  draw_border(210,297,1);  }
+void draw_A5_l() {  draw_border(148,210,1);  }
+void draw_USletter_l() {  draw_border(216,279,1);  }
+void draw_USlegal_l() {  draw_border(216,356,1);  }
+
+
+void draw_border(int width,int height,int landscape) {
+  // make sure we don't loop forever.
+  lcd_click_now=false;
+  
+  width /= 2;
+  height /= 2;
+
+  // get start position
+  float start[NUM_AXIES];
+  get_end_plus_offset(start);
+  
+  float pos[NUM_AXIES];
+  
+  // lift pen
+  pos[2]=PEN_UP_ANGLE;  lineSafe( pos, feed_rate );
+  // move to first corner
+  pos[0] = -width;  pos[1] =  height;  lineSafe( pos, feed_rate );
+  // lower pen
+  pos[2]=PEN_DOWN_ANGLE;  lineSafe( pos, feed_rate );
+  // move around border
+  pos[0] =  width;  pos[1] =  height;  lineSafe( pos, feed_rate );
+  pos[0] =  width;  pos[1] = -height;  lineSafe( pos, feed_rate );
+  pos[0] = -width;  pos[1] = -height;  lineSafe( pos, feed_rate );
+  pos[0] = -width;  pos[1] =  height;  lineSafe( pos, feed_rate );
+  // lift pen
+  pos[2]=PEN_UP_ANGLE;  lineSafe( pos, feed_rate );
+  
+  // return to start position
+  lineSafe( start, feed_rate );
+}
+
 
 void LCD_update_long(char *label, long &value) {
   LCD_clear();
