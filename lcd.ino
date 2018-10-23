@@ -292,7 +292,7 @@ void LCD_main_menu() {
     MENU_ACTION("Go home", LCD_go_home);
 #endif
     if (sd_inserted) {
-      MENU_SUBMENU("Print from SD card...", LCD_start_menu);
+      MENU_SUBMENU("Print from SD card", LCD_start_menu);
     } else {
       MENU_LABEL("No SD card");
     }
