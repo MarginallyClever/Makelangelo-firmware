@@ -464,11 +464,11 @@ void toolChange(int tool_id) {
   if (tool_id < 0) tool_id = 0;
   if (tool_id >= NUM_TOOLS) tool_id = NUM_TOOLS - 1;
   current_tool = tool_id;
-#ifdef HAS_SD
-  if (sd_printing_now) {
-    sd_printing_paused = true;
-  }
-#endif
+//#ifdef HAS_SD
+  //if (sd_printing_now) {
+  //  sd_printing_paused = true;
+  //}
+//#endif
 }
 
 
@@ -661,8 +661,12 @@ void parseMessage() {
       break;
     }
   }
-  
 
+  // wipe previous message
+  for(int j=i;j<LCD_MESSAGE_LENGTH;++j) {
+    lcd_message[j]=0;
+  }
+  
   if(i>=strlen(serialBuffer)) {
     //Serial.println("No message.");
     // no message
@@ -690,9 +694,6 @@ void parseMessage() {
       ++i;
     }
     buf++;
-  }
-  while(i<LCD_MESSAGE_LENGTH) {
-    lcd_message[i++]=0;
   }
   //Serial.println();
 #endif
