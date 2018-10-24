@@ -655,7 +655,6 @@ void parseMessage() {
        serialBuffer[i+1]=='1'&&
        serialBuffer[i+2]=='1'&&
        serialBuffer[i+3]=='7') {
-      i+=4;
       //Serial.print("Found M117:");
       //Serial.println(serialBuffer+i);
       break;
@@ -663,15 +662,14 @@ void parseMessage() {
   }
 
   // wipe previous message
-  for(int j=i;j<LCD_MESSAGE_LENGTH;++j) {
-    lcd_message[j]=0;
+  for(int j=LCD_MESSAGE_LENGTH/2;j<LCD_MESSAGE_LENGTH;++j) {
+    lcd_message[j]=' ';
   }
   
+  i+=4;
   if(i>=strlen(serialBuffer)) {
-    //Serial.println("No message.");
     // no message
-    lcd_message[0]=0;
-    lcd_message[LCD_WIDTH + 1]=0;
+    Serial.println("No message.");
     return;
   }
 
@@ -680,22 +678,16 @@ void parseMessage() {
 
   char *buf = serialBuffer+i;
   while(*buf==' ') ++buf;  // eat whitespace
-  
-  //Serial.print("message found:");
-  i=j=0;
-  while(isPrintable(*buf) && *buf!='\r' && *buf!='\n' && i<LCD_MESSAGE_LENGTH-1) {
+
+  i=LCD_MESSAGE_LENGTH/2;
+  while(isPrintable(*buf) && (*buf)!='\r' && (*buf)!='\n' && i<LCD_MESSAGE_LENGTH) {
     lcd_message[i]=*buf;
-    //Serial.print(*buf);
     ++i;
-    ++j;
-    if((j%LCD_WIDTH)==0) {
-      //Serial.println();
-      lcd_message[i]=0;
-      ++i;
-    }
     buf++;
   }
-  //Serial.println();
+  
+  Serial.println("message found:");
+  Serial.println(lcd_message);
 #endif
 }
 
@@ -725,15 +717,22 @@ void waitForPinState() {
   int pin = parseNumber('P',-1);
   if(pin==-1) return;  // no pin specified.
 #endif
-  int newState = parseNumber('S', 0);
-  newState = (newState==1)?HIGH:LOW;
-  //Serial.print("pausing");
-  while(digitalRead(pin)!=newState) {
+  int oldState = parseNumber('S', -1);
+  if(oldState == -1) {
+    // default: assume the pin is not in the requested state
+    oldState = digitalRead(pin);
+  } else {
+    // 0 for HIGH, anything else for LOW
+    oldState = (oldState==0)?HIGH:LOW;
+  }
+  Serial.print("pausing");
+  // while pin is in oldState (opposite of state for which we are waiting)
+  while(digitalRead(pin)==oldState) {
     SD_check();
     //LCD_update();
     //Serial.print(".");
   }
-  //Serial.println(" ended.");
+  Serial.println(" ended.");
 }
 
 
@@ -1019,8 +1018,8 @@ void setup() {
   // start communications
   Serial.begin(BAUD);
   
-  SD_init();
-  LCD_init();
+  SD_setup();
+  LCD_setup();
 
   loadConfig();
 

@@ -23,8 +23,8 @@
 #define FONT_WIDTH         6
 
 // # of characters
-#define LCD_HEIGHT         (LCD_PIXEL_HEIGHT/FONT_HEIGHT)
-#define LCD_WIDTH          (LCD_PIXEL_WIDTH/FONT_WIDTH)
+#define LCD_HEIGHT         (LCD_PIXEL_HEIGHT/FONT_HEIGHT)  // 64/9=7
+#define LCD_WIDTH          (LCD_PIXEL_WIDTH/FONT_WIDTH)    // 128/6=21
 
 #include "dogm_font_data_6x9.h"
 
@@ -62,7 +62,7 @@
 #define ENCROT2            3
 #define ENCROT3            1
 
-#define LCD_MESSAGE_LENGTH (LCD_HEIGHT * (LCD_WIDTH + 1))  // we have two lines of 20 characters avialable in 7.16
+#define LCD_MESSAGE_LENGTH (LCD_HEIGHT * LCD_WIDTH + 1)  // we have two lines of 20 characters avialable in 7.16
 #define LCD_DRAW_DELAY     (100)
 #define LCD_TURN_PER_MENU  (5)
 

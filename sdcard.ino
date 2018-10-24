@@ -33,7 +33,7 @@ long sd_bytes_read;
 //------------------------------------------------------------------------------
 
 // initialize the SD card and print some info.
-void SD_init() {
+void SD_setup() {
 #ifdef HAS_SD
   pinMode(SDSS, OUTPUT);
   pinMode(SDCARDDETECT,INPUT);
