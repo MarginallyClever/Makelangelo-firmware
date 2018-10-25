@@ -145,7 +145,7 @@ inline void LCD_print(const char *x) {
 }
 
 inline void LCD_print(const __FlashStringHelper*x) {
-  LCD_print((const char*)x);
+  LCD_print((const PROGMEM char*)x);
 }
 
 // see https://en.wikibooks.org/wiki/C_Programming/stdlib.h/itoa
@@ -242,30 +242,32 @@ inline void LCD_print(const char x) {
     void LCD_read() {
       // detect potentiometer changes
       int rot = ((digitalRead(BTN_EN1) == LOW) << BLEN_A)
-                | ((digitalRead(BTN_EN2) == LOW) << BLEN_B);
+              | ((digitalRead(BTN_EN2) == LOW) << BLEN_B);
       // potentiometer uses grey code.  Pattern is 0 3
-      switch (rot) {
-        case ENCROT0:
-          if ( lcd_rot_old == ENCROT3 ) lcd_turn++;
-          if ( lcd_rot_old == ENCROT1 ) lcd_turn--;
-          break;
-        case ENCROT1:
-          if ( lcd_rot_old == ENCROT0 ) lcd_turn++;
-          if ( lcd_rot_old == ENCROT2 ) lcd_turn--;
-          break;
-        case ENCROT2:
-          if ( lcd_rot_old == ENCROT1 ) lcd_turn++;
-          if ( lcd_rot_old == ENCROT3 ) lcd_turn--;
-          break;
-        case ENCROT3:
-          if ( lcd_rot_old == ENCROT2 ) lcd_turn++;
-          if ( lcd_rot_old == ENCROT0 ) lcd_turn--;
-          break;
-      }
       if (lcd_rot_old != rot) {
+        switch (rot) {
+          case ENCROT0:
+            if ( lcd_rot_old == ENCROT3 ) lcd_turn++;
+            else if ( lcd_rot_old == ENCROT1 ) lcd_turn--;
+            break;
+          case ENCROT1:
+            if ( lcd_rot_old == ENCROT0 ) lcd_turn++;
+            else if ( lcd_rot_old == ENCROT2 ) lcd_turn--;
+            break;
+          case ENCROT2:
+            if ( lcd_rot_old == ENCROT1 ) lcd_turn++;
+            else if ( lcd_rot_old == ENCROT3 ) lcd_turn--;
+            break;
+          case ENCROT3:
+            if ( lcd_rot_old == ENCROT2 ) lcd_turn++;
+            else if ( lcd_rot_old == ENCROT0 ) lcd_turn--;
+            break;
+        }
         //if(lcd_turn !=0) Serial.print(lcd_turn>0?'+':'-');  // for debugging potentiometer
-        //Serial.println(rot);  // for debugging potentiometer
+        //else Serial.print(' ');
+        //Serial.println(lcd_turn);  // for debugging potentiometer
       }
+      //Serial.println(rot);  // for debugging potentiometer
 
       lcd_rot_old = rot;
 
@@ -309,15 +311,15 @@ inline void LCD_print(const char x) {
 
 
       //LCD_setCursor(10, 1);  LCD_print('F');  LCD_print_float(feed_rate);
-      //LCD_setCursor( 0, 1);  LCD_print(F("Makelangelo #"));  LCD_print(robot_uid);
-      LCD_setCursor( 0, 2);
+      //LCD_setCursor( 0, 1);  LCD_print("Makelangelo #");  LCD_print(robot_uid);
+      //LCD_setCursor( 0, 2);
       //if (sd_printing_now == true && sd_printing_paused==false) {
-      if (sd_printing_now == true) {
-        LCD_print_float(sd_percent_complete);
-        LCD_print('%');
-      } else {
-        LCD_print(F("          "));
-      }
+      //if (sd_printing_now == true) {
+        //LCD_print_float(sd_percent_complete);
+        //LCD_print('%');
+      //} else {
+        //LCD_print("          ");
+      //}
       MENU_END
     }
 
@@ -353,6 +355,8 @@ inline void LCD_print(const char x) {
 
 
     void LCD_pause() {
+      // TODO: if pen down before pause, lift pen on pause, lower pen on unpause.
+      // problem: machine does not know what is pen up or down.
       sd_printing_paused = (sd_printing_paused == true ? false : true);
       MENU_GOTO(LCD_main_menu);
     }
@@ -491,6 +495,7 @@ inline void LCD_print(const char x) {
         Serial.print(num_menu_items   );  Serial.print("\n");  // 8
       */
 
+      long t0=micros();
       root.rewindDirectory();
       while ( true ) {
         //long tStart = millis();
@@ -516,13 +521,14 @@ inline void LCD_print(const char x) {
         }
         entry.close();
       }
+      long t1=micros();
+      Serial.println(t1-t0);
 
       //Serial.println();
 
 
       MENU_END
     }
-
 
     void LCD_draw_border() {
       MENU_START
@@ -747,7 +753,7 @@ void LCD_refresh_display() {
   memcpy(temp + (LCD_WIDTH * 1), lcd_message + (LCD_WIDTH * 2), LCD_WIDTH);
   memcpy(temp + (LCD_WIDTH * 2), lcd_message + (LCD_WIDTH * 1), LCD_WIDTH);
   memcpy(temp + (LCD_WIDTH * 3), lcd_message + (LCD_WIDTH * 3), LCD_WIDTH);
-  for (int i = 0; i < LCD_MESSAGE_LENGTH - 1; ++i) {
+  for (int i = 0; i < LCD_MESSAGE_LENGTH-1; ++i) {
     lcd.write(temp[i]);
   }
 #endif
@@ -782,7 +788,10 @@ void LCD_setup() {
   menu_position_sum = 1;  /* 20160313-NM-Added so the clicking without any movement will display a menu */
 
   LCD_drawSplash();
-
+  
+  LCD_read();
+  lcd_turn=0;
+  LCD_clear();
 #endif  // HAS_LCD
 }
 
@@ -820,6 +829,5 @@ void LCD_drawSplash() {
 #endif
   LCD_refresh_display();
   delay(2500);
-  LCD_clear();
 }
 #endif

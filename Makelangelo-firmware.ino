@@ -729,7 +729,7 @@ void waitForPinState() {
   // while pin is in oldState (opposite of state for which we are waiting)
   while(digitalRead(pin)==oldState) {
     SD_check();
-    //LCD_update();
+    LCD_update();
     //Serial.print(".");
   }
   Serial.println(" ended.");
