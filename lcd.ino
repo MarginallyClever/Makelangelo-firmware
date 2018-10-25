@@ -144,9 +144,9 @@ inline void LCD_print(const char *x) {
   }
 }
 
-inline void LCD_print(const __FlashStringHelper*x) {
-  LCD_print((const PROGMEM char*)x);
-}
+//inline void LCD_print(const __FlashStringHelper *x) {
+//  LCD_print((const PROGMEM char*)x);
+//}
 
 // see https://en.wikibooks.org/wiki/C_Programming/stdlib.h/itoa
 inline void LCD_print(long x) {
@@ -297,22 +297,20 @@ inline void LCD_print(const char x) {
       float offset[NUM_AXIES];
       get_end_plus_offset(offset);
 
-      LCD_setCursor( 0, 0);  LCD_print('X');  LCD_print_float(offset[0]);
-      LCD_setCursor(10, 0);  LCD_print('Z');  LCD_print_float(offset[2]);
+      LCD_setCursor(0, 0);  LCD_print('X');  LCD_print_float(offset[0]);
+      LCD_setCursor(9, 0);  LCD_print('Z');  LCD_print_float(offset[2]);
 #if MACHINE_STYLE == POLARGRAPH && defined(USE_LIMIT_SWITCH)
-      LCD_setCursor(19, 0);  LCD_print(( digitalRead(LIMIT_SWITCH_PIN_LEFT) == LOW ) ? '*' : ' ');
+      LCD_setCursor(8, 0);  LCD_print(( digitalRead(LIMIT_SWITCH_PIN_LEFT) == LOW ) ? '*' : ' ');
 #endif
 
-      LCD_setCursor( 0, 1);  LCD_print('Y');  LCD_print_float(offset[1]);
-      LCD_setCursor(10, 1);  LCD_print('F');  LCD_print_long(speed_adjust);  LCD_print(F("% "));
+      LCD_setCursor(0, 1);  LCD_print('Y');  LCD_print_float(offset[1]);
+      LCD_setCursor(9, 1);  LCD_print('F');  LCD_print_long(speed_adjust);  LCD_print('%');
 #if MACHINE_STYLE == POLARGRAPH && defined(USE_LIMIT_SWITCH)
-      LCD_setCursor(19, 1);  LCD_print(( digitalRead(LIMIT_SWITCH_PIN_RIGHT) == LOW ) ? '*' : ' ');
+      LCD_setCursor(8, 1);  LCD_print(( digitalRead(LIMIT_SWITCH_PIN_RIGHT) == LOW ) ? '*' : ' ');
 #endif
 
 
-      //LCD_setCursor(10, 1);  LCD_print('F');  LCD_print_float(feed_rate);
-      //LCD_setCursor( 0, 1);  LCD_print("Makelangelo #");  LCD_print(robot_uid);
-      //LCD_setCursor( 0, 2);
+      //LCD_setCursor( 1, 15);
       //if (sd_printing_now == true && sd_printing_paused==false) {
       //if (sd_printing_now == true) {
         //LCD_print_float(sd_percent_complete);
