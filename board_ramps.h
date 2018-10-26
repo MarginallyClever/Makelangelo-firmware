@@ -89,9 +89,9 @@
 #define BTN_ENC            35
 
 // SD card settings
-#define SDPOWER            31
-#define SDSS               33
-#define SDCARDDETECT       35
+#define SDPOWER            -1
+#define SDSS               53
+#define SDCARDDETECT       49
 
 #define KILL_PIN           41
 #endif
