@@ -425,7 +425,7 @@ void LCD_driveF() {
 
   if (lcd_turn) {
     // protect servo, don't drive beyond physical limits
-    float newF = feed_rate + lcd_turn > 0 ? 1 : -1;
+    float newF = feed_rate + (lcd_turn > 0 ? 1 : -1);
     if (newF < MIN_FEEDRATE) newF = MIN_FEEDRATE;
     if (newF > MAX_FEEDRATE) newF = MAX_FEEDRATE;
     // move
