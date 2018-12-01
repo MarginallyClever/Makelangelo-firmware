@@ -31,7 +31,7 @@
 //#define ARM5            12
 #define ARM6            13
 
-#define MACHINE_STYLE POLARGRAPH  // Change this
+#define MACHINE_STYLE ZARPLOTTER  // Change this
 
 #include "robot_polargraph.h"
 #include "robot_traditionalxy.h"
@@ -50,6 +50,9 @@
 //------------------------------------------------------------------------------
 // LCD panels supported
 //------------------------------------------------------------------------------
+
+#define HAS_LCD  // if you have an LCD panel
+//#define HAS_SD   // if you have SD card support on your LCD panel (must be on panel?)
 
 // only uncomment one of these options
 //#define LCD_IS_128X64  // reprapdiscount Full Graphic Smart LCD Controller
@@ -134,7 +137,6 @@
 // not always the case!  Skycam has more motors than axies.  
 //#error "NUM_SERVOS + NUM_MOTORS != NUM_AXIES"
 #endif
-
 
 //------------------------------------------------------------------------------
 // EEPROM MEMORY MAP

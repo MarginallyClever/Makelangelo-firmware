@@ -326,20 +326,25 @@ inline void LCD_print(const char x) {
       MENU_START
 
       MENU_SUBMENU("Back", LCD_status_menu);
+#ifdef HAS_SD
       if (!sd_printing_now) {
+#endif
 #if MACHINE_HARDWARE_VERSION  == 5
         MENU_ACTION("Find home", LCD_find_home);
 #else
         MENU_ACTION("This is home", LCD_this_is_home);
         MENU_ACTION("Go home", LCD_go_home);
 #endif
+#ifdef HAS_SD
         if (sd_inserted) {
           MENU_SUBMENU("Print from SD card", LCD_start_menu);
         } else {
           MENU_LABEL("No SD card");
         }
+#endif
         MENU_SUBMENU("Draw border", LCD_draw_border);
         MENU_SUBMENU("Drive", LCD_drive_menu);
+#ifdef HAS_SD
       } else {
         if (sd_printing_paused) {
           MENU_ACTION("Unpause", LCD_pause);
@@ -348,6 +353,7 @@ inline void LCD_print(const char x) {
         }
         MENU_ACTION("Stop", LCD_stop);
       }
+#endif
       MENU_END
     }
 
@@ -355,13 +361,17 @@ inline void LCD_print(const char x) {
     void LCD_pause() {
       // TODO: if pen down before pause, lift pen on pause, lower pen on unpause.
       // problem: machine does not know what is pen up or down.
+#ifdef HAS_SD
       sd_printing_paused = (sd_printing_paused == true ? false : true);
+#endif
       MENU_GOTO(LCD_main_menu);
     }
 
 
     void LCD_stop() {
+#ifdef HAS_SD
       sd_printing_now = false;
+#endif
       MENU_GOTO(LCD_main_menu);
     }
 
@@ -482,6 +492,7 @@ inline void LCD_print(const char x) {
 
 
     void LCD_start_menu() {
+#ifdef HAS_SD
       if (!sd_inserted) MENU_GOTO(LCD_main_menu);
 
       MENU_START
@@ -523,9 +534,12 @@ inline void LCD_print(const char x) {
       Serial.println(t1-t0);
 
       //Serial.println();
-
-
       MENU_END
+#else
+      // i don't know how you got here surfing the LCD panel.
+      // someone messed up in the logic.  Go back to the main menu.
+      MENU_GOTO(LCD_main_menu);
+#endif
     }
 
     void LCD_draw_border() {

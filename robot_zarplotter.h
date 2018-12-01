@@ -43,4 +43,3 @@
 
 
 #endif  // #ifndef ROBOT_ZARPLOTTER_H
-
