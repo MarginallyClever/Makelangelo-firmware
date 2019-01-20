@@ -1,5 +1,5 @@
-#ifndef BOARD_RAMPS_H
-#define BOARD_RAMPS_H
+#ifndef BOARD_SANGUINOLULU_H
+#define BOARD_SANGUINOLULU_H
 //------------------------------------------------------------------------------
 // Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
@@ -34,7 +34,11 @@
 
 #define MAX_BOARD_SERVOS           (1)
 #define SERVO0_PIN                (12)
+
+#undef HAS_LCD
+#undef HAS_SD
+
 #endif
 
 
-#endif  // BOARD_RAMPS_H
+#endif  // BOARD_SANGUINOLULU_H

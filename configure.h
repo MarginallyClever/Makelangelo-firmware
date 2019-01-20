@@ -51,8 +51,8 @@
 // LCD panels supported
 //------------------------------------------------------------------------------
 
-//#define HAS_LCD  // if you have an LCD panel
-//#define HAS_SD   // if you have SD card support on your LCD panel (must be on panel?)
+#define HAS_LCD  // if you have an LCD panel
+#define HAS_SD   // if you have SD card support on your LCD panel (must be on panel?)
 
 // only uncomment one of these options
 //#define LCD_IS_128X64  // reprapdiscount Full Graphic Smart LCD Controller

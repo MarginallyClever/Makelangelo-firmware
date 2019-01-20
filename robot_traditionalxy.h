@@ -32,9 +32,12 @@
 #define DEFAULT_FEEDRATE     (7000.0)
 #define DEFAULT_ACCELERATION (2500)
 
+//#define SUBDIVIDE_LINES
+#define SEGMENT_PER_CM_LINE  (1)  // lines are subdivided.  How long are the divisions?
+#define SEGMENT_PER_CM_ARC   (3)  // Arcs are subdivided.  How long are the divisions?
+
 
 #endif  // #ifdef TRADITIONALXY
 
 
 #endif  // #ifndef ROBOT_TRADITIONALXY_H
-

@@ -342,7 +342,9 @@ inline void LCD_print(const char x) {
           MENU_LABEL("No SD card");
         }
 #endif
+#if NUM_AXIES == 3
         MENU_SUBMENU("Draw border", LCD_draw_border);
+#endif
         MENU_SUBMENU("Drive", LCD_drive_menu);
 #ifdef HAS_SD
       } else {
@@ -541,7 +543,7 @@ inline void LCD_print(const char x) {
       MENU_GOTO(LCD_main_menu);
 #endif
     }
-
+    
     void LCD_draw_border() {
       MENU_START
       MENU_SUBMENU("Back", LCD_main_menu);
@@ -601,6 +603,7 @@ inline void LCD_print(const char x) {
 
 
     void draw_border(int width, int height, int landscape) {
+#if NUM_AXIES == 3
       LCD_clear();
       LCD_setCursor(0, 0);
       LCD_print("Drawing border...");
@@ -623,11 +626,13 @@ inline void LCD_print(const char x) {
       // lift pen at current position
       pos[0] = start[0];
       pos[1] = start[1];
-      pos[2] = PEN_UP_ANGLE;  lineSafe( pos, feed_rate );
+      pos[2] = PEN_UP_ANGLE;
+      lineSafe( pos, feed_rate );
       // move to first corner
       pos[0] = -width;  pos[1] =  height;  lineSafe( pos, feed_rate );
       // lower pen
-      pos[2] = PEN_DOWN_ANGLE;  lineSafe( pos, feed_rate );
+      pos[2] = PEN_DOWN_ANGLE;
+      lineSafe( pos, feed_rate );
       // move around border
       pos[0] =  width;  pos[1] =  height;  lineSafe( pos, feed_rate );
       pos[0] =  width;  pos[1] = -height;  lineSafe( pos, feed_rate );
@@ -638,7 +643,7 @@ inline void LCD_print(const char x) {
 
       // return to start position
       lineSafe( start, feed_rate );
-
+#endif // NUM_AXIES
       MENU_GOTO(LCD_draw_border);
     }
 
