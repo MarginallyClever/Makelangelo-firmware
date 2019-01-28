@@ -9,8 +9,8 @@
 #if MACHINE_STYLE == POLARGRAPH
 
 #define MACHINE_STYLE_NAME       "POLARGRAPH"
-#define MACHINE_HARDWARE_VERSION 3  // If you have a makelangelo 3+
-//#define MACHINE_HARDWARE_VERSION 5  // If you have a makelangelo 5+
+//#define MACHINE_HARDWARE_VERSION 3  // If you have a makelangelo 3+
+#define MACHINE_HARDWARE_VERSION 5  // If you have a makelangelo 5+
 #define MACHINE_HAS_LIFTABLE_PEN
 
 #define SUBDIVIDE_LINES
