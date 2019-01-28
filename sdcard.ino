@@ -126,7 +126,7 @@ void SD_check() {
 }
 
 
-void SD_StartPrintingFile(char *filename) {
+void SD_StartPrintingFile(const char *filename) {
 #ifdef HAS_SD
   sd_print_file=SD.open(filename);
   if(!sd_print_file) {
