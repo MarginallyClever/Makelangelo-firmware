@@ -43,6 +43,7 @@ char lcd_click_old = HIGH;
 char lcd_click_now = false;
 uint8_t speed_adjust = 100;
 char lcd_message[LCD_MESSAGE_LENGTH + 1];
+char lcd_dirty=0;
 
 int menu_position_sum = 0, menu_position = 0, screen_position = 0, num_menu_items = 0, ty, screen_end;
 
@@ -234,477 +235,490 @@ inline void LCD_print(const char x) {
   MENU_ITEM_END()
 
 
-    //------------------------------------------------------------------------------
-    // METHODS
-    //------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+// METHODS
+//------------------------------------------------------------------------------
 
 
-    void LCD_read() {
-      // detect potentiometer changes
-      int rot = ((digitalRead(BTN_EN1) == LOW) << BLEN_A)
-              | ((digitalRead(BTN_EN2) == LOW) << BLEN_B);
-      // potentiometer uses grey code.  Pattern is 0 3
-      if (lcd_rot_old != rot) {
-        switch (rot) {
-          case ENCROT0:
-            if ( lcd_rot_old == ENCROT3 ) lcd_turn++;
-            else if ( lcd_rot_old == ENCROT1 ) lcd_turn--;
-            break;
-          case ENCROT1:
-            if ( lcd_rot_old == ENCROT0 ) lcd_turn++;
-            else if ( lcd_rot_old == ENCROT2 ) lcd_turn--;
-            break;
-          case ENCROT2:
-            if ( lcd_rot_old == ENCROT1 ) lcd_turn++;
-            else if ( lcd_rot_old == ENCROT3 ) lcd_turn--;
-            break;
-          case ENCROT3:
-            if ( lcd_rot_old == ENCROT2 ) lcd_turn++;
-            else if ( lcd_rot_old == ENCROT0 ) lcd_turn--;
-            break;
-        }
-        //if(lcd_turn !=0) Serial.print(lcd_turn>0?'+':'-');  // for debugging potentiometer
-        //else Serial.print(' ');
-        //Serial.println(lcd_turn);  // for debugging potentiometer
-      }
-      //Serial.println(rot);  // for debugging potentiometer
-
-      lcd_rot_old = rot;
-
-
-      // find click state
-      int btn = digitalRead(BTN_ENC);
-      if ( btn != lcd_click_old && btn == HIGH ) {
-        lcd_click_now = true;
-      }
-      lcd_click_old = btn;
+void LCD_read() {
+  // detect potentiometer changes
+  int rot = ((digitalRead(BTN_EN1) == LOW) << BLEN_A)
+          | ((digitalRead(BTN_EN2) == LOW) << BLEN_B);
+  // potentiometer uses grey code.  Pattern is 0 3
+  if (lcd_rot_old != rot) {
+    switch (rot) {
+      case ENCROT0:
+        if ( lcd_rot_old == ENCROT3 ) lcd_turn++;
+        else if ( lcd_rot_old == ENCROT1 ) lcd_turn--;
+        break;
+      case ENCROT1:
+        if ( lcd_rot_old == ENCROT0 ) lcd_turn++;
+        else if ( lcd_rot_old == ENCROT2 ) lcd_turn--;
+        break;
+      case ENCROT2:
+        if ( lcd_rot_old == ENCROT1 ) lcd_turn++;
+        else if ( lcd_rot_old == ENCROT3 ) lcd_turn--;
+        break;
+      case ENCROT3:
+        if ( lcd_rot_old == ENCROT2 ) lcd_turn++;
+        else if ( lcd_rot_old == ENCROT0 ) lcd_turn--;
+        break;
     }
+    //if(lcd_turn !=0) Serial.print(lcd_turn>0?'+':'-');  // for debugging potentiometer
+    //else Serial.print(' ');
+    //Serial.println(lcd_turn);  // for debugging potentiometer
+  }
+  //Serial.println(rot);  // for debugging potentiometer
+
+  lcd_rot_old = rot;
 
 
-    // display the current machine position and feed rate on the LCD.
-    void LCD_status_menu() {
-      MENU_START
+  // find click state
+  int btn = digitalRead(BTN_ENC);
+  if ( btn != lcd_click_old && btn == HIGH ) {
+    lcd_click_now = true;
+  }
+  lcd_click_old = btn;
+}
 
-      // on click go to the main menu
-      if (lcd_click_now) MENU_GOTO(LCD_main_menu);
 
-      if (lcd_turn) {
-        speed_adjust += lcd_turn;
-      }
-      LCD_setCursor( 0, 0);
+// display the current machine position and feed rate on the LCD.
+void LCD_status_menu() {
+  MENU_START
 
-      // update the current status
-      float offset[NUM_AXIES];
-      get_end_plus_offset(offset);
+  // on click go to the main menu
+  if (lcd_click_now) MENU_GOTO(LCD_main_menu);
 
-      LCD_setCursor(0, 0);  LCD_print('X');  LCD_print_float(offset[0]);
-      LCD_setCursor(9, 0);  LCD_print('Z');  LCD_print_float(offset[2]);
+  if (lcd_turn) {
+    speed_adjust += lcd_turn;
+  }
+  LCD_setCursor( 0, 0);
+
+  // update the current status
+  float offset[NUM_AXIES];
+  get_end_plus_offset(offset);
+
+  LCD_setCursor(0, 0);  LCD_print('X');  LCD_print_float(offset[0]);
+  LCD_setCursor(9, 0);  LCD_print('Z');  LCD_print_float(offset[2]);
 #if MACHINE_STYLE == POLARGRAPH && defined(USE_LIMIT_SWITCH)
-      LCD_setCursor(8, 0);  LCD_print(( digitalRead(LIMIT_SWITCH_PIN_LEFT) == LOW ) ? '*' : ' ');
+  LCD_setCursor(8, 0);  LCD_print(( digitalRead(LIMIT_SWITCH_PIN_LEFT) == LOW ) ? '*' : ' ');
 #endif
 
-      LCD_setCursor(0, 1);  LCD_print('Y');  LCD_print_float(offset[1]);
-      LCD_setCursor(9, 1);  LCD_print('F');  LCD_print_long(speed_adjust);  LCD_print('%');
+  LCD_setCursor(0, 1);  LCD_print('Y');  LCD_print_float(offset[1]);
+  LCD_setCursor(9, 1);  LCD_print('F');  LCD_print_long(speed_adjust);  LCD_print('%');
 #if MACHINE_STYLE == POLARGRAPH && defined(USE_LIMIT_SWITCH)
-      LCD_setCursor(8, 1);  LCD_print(( digitalRead(LIMIT_SWITCH_PIN_RIGHT) == LOW ) ? '*' : ' ');
+  LCD_setCursor(8, 1);  LCD_print(( digitalRead(LIMIT_SWITCH_PIN_RIGHT) == LOW ) ? '*' : ' ');
 #endif
 
 
-      //LCD_setCursor( 1, 15);
-      //if (sd_printing_now == true && sd_printing_paused==false) {
-      //if (sd_printing_now == true) {
-        //LCD_print_float(sd_percent_complete);
-        //LCD_print('%');
-      //} else {
-        //LCD_print("          ");
-      //}
-      MENU_END
-    }
+  //LCD_setCursor( 1, 15);
+  //if (sd_printing_now == true && sd_printing_paused==false) {
+  //if (sd_printing_now == true) {
+    //LCD_print_float(sd_percent_complete);
+    //LCD_print('%');
+  //} else {
+    //LCD_print("          ");
+  //}
+  MENU_END
+}
 
 
-    void LCD_main_menu() {
-      MENU_START
+void LCD_main_menu() {
+  lcd_dirty=1;
+  
+  MENU_START
 
-      MENU_SUBMENU("Back", LCD_status_menu);
+  MENU_SUBMENU("Back", LCD_status_menu);
 #ifdef HAS_SD
-      if (!sd_printing_now) {
+  if (!sd_printing_now) {
 #endif
 #if MACHINE_HARDWARE_VERSION  == 5
-        MENU_ACTION("Find home", LCD_find_home);
+    MENU_ACTION("Find home", LCD_find_home);
 #else
-        MENU_ACTION("This is home", LCD_this_is_home);
-        MENU_ACTION("Go home", LCD_go_home);
+    MENU_ACTION("This is home", LCD_this_is_home);
+    MENU_ACTION("Go home", LCD_go_home);
 #endif
 #ifdef HAS_SD
-        if (sd_inserted) {
-          MENU_SUBMENU("Print from SD card", LCD_start_menu);
-        } else {
-          MENU_LABEL("No SD card");
-        }
+    if (sd_inserted) {
+      MENU_SUBMENU("Print from SD card", LCD_start_menu);
+    } else {
+      MENU_LABEL("No SD card");
+    }
 #endif
 #if NUM_AXIES == 3
-        MENU_SUBMENU("Draw border", LCD_draw_border);
+    MENU_SUBMENU("Draw border", LCD_draw_border);
 #endif
-        MENU_SUBMENU("Drive", LCD_drive_menu);
+    MENU_SUBMENU("Drive", LCD_drive_menu);
 #ifdef HAS_SD
-      } else {
-        if (sd_printing_paused) {
-          MENU_ACTION("Unpause", LCD_pause);
-        } else {
-          MENU_ACTION("Pause", LCD_pause);
-        }
-        MENU_ACTION("Stop", LCD_stop);
-      }
-#endif
-      MENU_END
+  } else {
+    if (sd_printing_paused) {
+      MENU_ACTION("Unpause", LCD_pause);
+    } else {
+      MENU_ACTION("Pause", LCD_pause);
     }
+    MENU_ACTION("Stop", LCD_stop);
+  }
+#endif
+  MENU_END
+}
 
 
-    void LCD_pause() {
-      // TODO: if pen down before pause, lift pen on pause, lower pen on unpause.
-      // problem: machine does not know what is pen up or down.
+void LCD_pause() {
+  // TODO: if pen down before pause, lift pen on pause, lower pen on unpause.
+  // problem: machine does not know what is pen up or down.
 #ifdef HAS_SD
-      sd_printing_paused = (sd_printing_paused == true ? false : true);
+  sd_printing_paused = (sd_printing_paused == true ? false : true);
 #endif
-      MENU_GOTO(LCD_main_menu);
-    }
+  MENU_GOTO(LCD_main_menu);
+}
 
 
-    void LCD_stop() {
+void LCD_stop() {
 #ifdef HAS_SD
-      sd_printing_now = false;
+  sd_printing_now = false;
 #endif
-      MENU_GOTO(LCD_main_menu);
-    }
+  MENU_GOTO(LCD_main_menu);
+}
 
-    void LCD_disable_motors() {
-      motor_disengage();
-      MENU_GOTO(LCD_main_menu);
-    }
+void LCD_disable_motors() {
+  motor_disengage();
+  MENU_GOTO(LCD_main_menu);
+}
 
-    void LCD_enable_motors() {
-      motor_engage();
-      MENU_GOTO(LCD_main_menu);
-    }
-
-
-    void LCD_find_home() {
-      robot_findHome();
-      MENU_GOTO(LCD_main_menu);
-    }
+void LCD_enable_motors() {
+  motor_engage();
+  MENU_GOTO(LCD_main_menu);
+}
 
 
-    void LCD_this_is_home() {
-      float offset[NUM_AXIES];
-      for (int i = 0; i < NUM_AXIES; ++i) offset[i] = axies[i].homePos;
-      teleport(offset);
-      MENU_GOTO(LCD_main_menu);
-    }
+void LCD_find_home() {
+  robot_findHome();
+  MENU_GOTO(LCD_main_menu);
+}
 
 
-    void LCD_go_home() {
-      float homes[NUM_AXIES];
-      for (int i = 0; i < NUM_AXIES; ++i) homes[i] = axies[i].homePos;
-      lineSafe( homes, DEFAULT_FEEDRATE );
-      MENU_GOTO(LCD_main_menu);
-    }
+void LCD_this_is_home() {
+  float offset[NUM_AXIES];
+  for (int i = 0; i < NUM_AXIES; ++i) offset[i] = axies[i].homePos;
+  teleport(offset);
+  MENU_GOTO(LCD_main_menu);
+}
 
 
-    void LCD_drive_menu() {
-      MENU_START
-      MENU_SUBMENU("Back", LCD_main_menu);
-      MENU_ACTION("Disable motors", LCD_disable_motors);
-      MENU_ACTION("Enable motors", LCD_enable_motors);
-      MENU_SUBMENU("X", LCD_driveX);
-      MENU_SUBMENU("Y", LCD_driveY);
-      MENU_SUBMENU("Z", LCD_driveZ);
-      MENU_SUBMENU("Feedrate", LCD_driveF);
-      MENU_END
-    }
+void LCD_go_home() {
+  float homes[NUM_AXIES];
+  for (int i = 0; i < NUM_AXIES; ++i) homes[i] = axies[i].homePos;
+  lineSafe( homes, DEFAULT_FEEDRATE );
+  MENU_GOTO(LCD_main_menu);
+}
 
 
-    void LCD_driveX() {
-      if (lcd_click_now) MENU_GOTO(LCD_drive_menu);
-
-      float offset[NUM_AXIES];
-      get_end_plus_offset(offset);
-
-      if (lcd_turn) {
-        offset[0] += lcd_turn > 0 ? 1 : -1;
-        lineSafe(offset, feed_rate);
-      }
-
-      LCD_setCursor( 0, 0);
-      LCD_print('X');
-      LCD_print_float(offset[0]);
-    }
+void LCD_drive_menu() {
+  MENU_START
+  MENU_SUBMENU("Back", LCD_main_menu);
+  MENU_ACTION("Disable motors", LCD_disable_motors);
+  MENU_ACTION("Enable motors", LCD_enable_motors);
+  MENU_SUBMENU("X", LCD_driveX);
+  MENU_SUBMENU("Y", LCD_driveY);
+  MENU_SUBMENU("Z", LCD_driveZ);
+  MENU_SUBMENU("Feedrate", LCD_driveF);
+  MENU_END
+}
 
 
-    void LCD_driveY() {
-      if (lcd_click_now) MENU_GOTO(LCD_drive_menu);
+void LCD_driveX() {
+  if (lcd_click_now) MENU_GOTO(LCD_drive_menu);
 
-      float offset[NUM_AXIES];
-      get_end_plus_offset(offset);
+  float offset[NUM_AXIES];
+  get_end_plus_offset(offset);
 
-      if (lcd_turn) {
-        offset[1] += lcd_turn > 0 ? 1 : -1;
-        lineSafe(offset, feed_rate);
-      }
+  if (lcd_turn) {
+    offset[0] += lcd_turn > 0 ? 1 : -1;
+    lineSafe(offset, feed_rate);
+  }
 
-      LCD_setCursor( 0, 0);
-      LCD_print('Y');
-      LCD_print_float(offset[1]);
-    }
-
-
-    void LCD_driveZ() {
-      if (lcd_click_now) MENU_GOTO(LCD_drive_menu);
-
-      float offset[NUM_AXIES];
-      get_end_plus_offset(offset);
-
-      if (lcd_turn) {
-        // protect servo, don't drive beyond physical limits
-        offset[2] += lcd_turn > 0 ? 1 : -1;
-        lineSafe(offset, feed_rate);
-      }
-
-      LCD_setCursor( 0, 0);
-      LCD_print('Z');
-      LCD_print_float(offset[2]);
-    }
+  LCD_setCursor( 0, 0);
+  LCD_print('X');
+  LCD_print_float(offset[0]);
+}
 
 
-    void LCD_driveF() {
-      if (lcd_click_now) MENU_GOTO(LCD_drive_menu);
+void LCD_driveY() {
+  if (lcd_click_now) MENU_GOTO(LCD_drive_menu);
 
-      if (lcd_turn) {
-        // protect servo, don't drive beyond physical limits
-        float newF = feed_rate + lcd_turn > 0 ? 1 : -1;
-        if (newF < MIN_FEEDRATE) newF = MIN_FEEDRATE;
-        if (newF > MAX_FEEDRATE) newF = MAX_FEEDRATE;
-        // move
-        feed_rate = newF;
-      }
+  float offset[NUM_AXIES];
+  get_end_plus_offset(offset);
 
-      LCD_setCursor( 0, 0);
-      LCD_print('F');
-      LCD_print_float(feed_rate);
-    }
+  if (lcd_turn) {
+    offset[1] += lcd_turn > 0 ? 1 : -1;
+    lineSafe(offset, feed_rate);
+  }
+
+  LCD_setCursor( 0, 0);
+  LCD_print('Y');
+  LCD_print_float(offset[1]);
+}
 
 
-    void LCD_start_menu() {
+void LCD_driveZ() {
+  if (lcd_click_now) MENU_GOTO(LCD_drive_menu);
+
+  float offset[NUM_AXIES];
+  get_end_plus_offset(offset);
+
+  if (lcd_turn) {
+    // protect servo, don't drive beyond physical limits
+    offset[2] += lcd_turn > 0 ? 1 : -1;
+    lineSafe(offset, feed_rate);
+  }
+
+  LCD_setCursor( 0, 0);
+  LCD_print('Z');
+  LCD_print_float(offset[2]);
+}
+
+
+void LCD_driveF() {
+  if (lcd_click_now) MENU_GOTO(LCD_drive_menu);
+
+  if (lcd_turn) {
+    // protect servo, don't drive beyond physical limits
+    float newF = feed_rate + lcd_turn > 0 ? 1 : -1;
+    if (newF < MIN_FEEDRATE) newF = MIN_FEEDRATE;
+    if (newF > MAX_FEEDRATE) newF = MAX_FEEDRATE;
+    // move
+    feed_rate = newF;
+  }
+
+  LCD_setCursor( 0, 0);
+  LCD_print('F');
+  LCD_print_float(feed_rate);
+}
+
+
+void LCD_start_menu() {
 #ifdef HAS_SD
-      if (!sd_inserted) MENU_GOTO(LCD_main_menu);
+  if (!sd_inserted) MENU_GOTO(LCD_main_menu);
 
-      MENU_START
-      MENU_SUBMENU("Back", LCD_main_menu);
-      /*
-        Serial.print(menu_position    );  Serial.print("\t");  // 0
-        Serial.print(menu_position_sum);  Serial.print("\t");  // 1
-        Serial.print(screen_position  );  Serial.print("\t");  // 0
-        Serial.print(num_menu_items   );  Serial.print("\n");  // 8
-      */
+  /*
+    Serial.print(menu_position    );  Serial.print("\t");  // 0
+    Serial.print(menu_position_sum);  Serial.print("\t");  // 1
+    Serial.print(screen_position  );  Serial.print("\t");  // 0
+    Serial.print(num_menu_items   );  Serial.print("\n");  // 8
+  */
+  if(lcd_turn!=0 || lcd_click_now==1) lcd_dirty=1;
 
-      long t0=micros();
-      root.rewindDirectory();
-      while ( true ) {
-        //long tStart = millis();
-        File entry = root.openNextFile();
-        //long tEnd = millis();
-        //Serial.print(tEnd-tStart);
-        //Serial.print('\t');
-        if (!entry) {
-          // no more files, return to the first file in the directory
-          break;
-        }
-        const char *filename = entry.name();
-        //Serial.print( entry.isDirectory()?">":" " );
-        //Serial.println(filename);
-        if (!entry.isDirectory() && filename[0] != '_') {
-          MENU_ITEM_START(filename)
-          if (menu_position == ty && lcd_click_now) {
-            lcd_click_now = false;
-            SD_StartPrintingFile(filename);
-            MENU_GOTO(LCD_status_menu);
-          }
-          MENU_ITEM_END()
-        }
-        entry.close();
-      }
-      long t1=micros();
-      Serial.println(t1-t0);
-
-      //Serial.println();
-      MENU_END
-#else
-      // i don't know how you got here surfing the LCD panel.
-      // someone messed up in the logic.  Go back to the main menu.
-      MENU_GOTO(LCD_main_menu);
-#endif
-    }
+  if(lcd_dirty==1) {
+    long t0=micros();
     
-    void LCD_draw_border() {
-      MENU_START
-      MENU_SUBMENU("Back", LCD_main_menu);
-      MENU_ACTION("A2 portrait", draw_A2_portrait);
-      MENU_ACTION("A3 portrait", draw_A3_portrait);
-      MENU_ACTION("A4 portrait", draw_A4_portrait);
-      MENU_ACTION("A5 portrait", draw_A5_portrait);
-      MENU_ACTION("US legal portrait", draw_USlegal_portrait);
-      MENU_ACTION("US letter portrait", draw_USletter_portrait);
-
-      MENU_ACTION("A2 landscape", draw_A2_landscape);
-      MENU_ACTION("A3 landscape", draw_A3_landscape);
-      MENU_ACTION("A4 landscape", draw_A4_landscape);
-      MENU_ACTION("A5 landscape", draw_A5_landscape);
-      MENU_ACTION("US legal landscape", draw_USlegal_landscape);
-      MENU_ACTION("US letter landscape", draw_USletter_landscape);
-      MENU_END
-    }
-
-    void draw_A2_portrait() {
-      draw_border(420, 594, 0);
-    }
-    void draw_A3_portrait() {
-      draw_border(297, 420, 0);
-    }
-    void draw_A4_portrait() {
-      draw_border(210, 297, 0);
-    }
-    void draw_A5_portrait() {
-      draw_border(148, 210, 0);
-    }
-    void draw_USletter_portrait() {
-      draw_border(216, 279, 0);
-    }
-    void draw_USlegal_portrait() {
-      draw_border(216, 356, 0);
-    }
-
-    void draw_A2_landscape() {
-      draw_border(420, 594, 1);
-    }
-    void draw_A3_landscape() {
-      draw_border(297, 420, 1);
-    }
-    void draw_A4_landscape() {
-      draw_border(210, 297, 1);
-    }
-    void draw_A5_landscape() {
-      draw_border(148, 210, 1);
-    }
-    void draw_USletter_landscape() {
-      draw_border(216, 279, 1);
-    }
-    void draw_USlegal_landscape() {
-      draw_border(216, 356, 1);
-    }
-
-
-    void draw_border(int width, int height, int landscape) {
-#if NUM_AXIES == 3
-      LCD_clear();
-      LCD_setCursor(0, 0);
-      LCD_print("Drawing border...");
-
-      width /= 2;
-      height /= 2;
-
-      if (landscape == 1) {
-        // swap the two values.
-        int temp = width;
-        width = height;
-        height = temp;
+    MENU_START
+    MENU_SUBMENU("Back", LCD_main_menu);
+    
+    root.rewindDirectory();
+    while ( true ) {
+      //long tStart = millis();
+      File entry = root.openNextFile();
+      //long tEnd = millis();
+      //Serial.print(tEnd-tStart);
+      //Serial.print('\t');
+      if (!entry) {
+        // no more files, return to the first file in the directory
+        break;
       }
+      const char *filename = entry.name();
+      //Serial.print( entry.isDirectory()?">":" " );
+      //Serial.println(filename);
+      if (!entry.isDirectory() && filename[0] != '_') {
+        MENU_ITEM_START(filename)
+        if (menu_position == ty && lcd_click_now) {
+          lcd_click_now = false;
+          SD_StartPrintingFile(filename);
+          MENU_GOTO(LCD_status_menu);
+        }
+        MENU_ITEM_END()
+      }
+      entry.close();
+    }
+    MENU_END
+    
+    long t1=micros();
+    Serial.print(menu_position,DEC);
+    Serial.print(' ');
+    Serial.print(num_menu_items,DEC);
+    //Serial.print(' ');
+    //Serial.print(t1-t0);
+    Serial.println();
+    lcd_dirty=0;
+  }
+  
+#else
+  // i don't know how you got here surfing the LCD panel.
+  // someone messed up in the logic.  Go back to the main menu.
+  MENU_GOTO(LCD_main_menu);
+#endif
+}
 
-      // get start position
-      float start[NUM_AXIES];
-      get_end_plus_offset(start);
+void LCD_draw_border() {
+  MENU_START
+  MENU_SUBMENU("Back", LCD_main_menu);
+  MENU_ACTION("A2 portrait", draw_A2_portrait);
+  MENU_ACTION("A3 portrait", draw_A3_portrait);
+  MENU_ACTION("A4 portrait", draw_A4_portrait);
+  MENU_ACTION("A5 portrait", draw_A5_portrait);
+  MENU_ACTION("US legal portrait", draw_USlegal_portrait);
+  MENU_ACTION("US letter portrait", draw_USletter_portrait);
 
-      float pos[NUM_AXIES];
-      // lift pen at current position
-      pos[0] = start[0];
-      pos[1] = start[1];
-      pos[2] = PEN_UP_ANGLE;
-      lineSafe( pos, feed_rate );
-      // move to first corner
-      pos[0] = -width;  pos[1] =  height;  lineSafe( pos, feed_rate );
-      // lower pen
-      pos[2] = PEN_DOWN_ANGLE;
-      lineSafe( pos, feed_rate );
-      // move around border
-      pos[0] =  width;  pos[1] =  height;  lineSafe( pos, feed_rate );
-      pos[0] =  width;  pos[1] = -height;  lineSafe( pos, feed_rate );
-      pos[0] = -width;  pos[1] = -height;  lineSafe( pos, feed_rate );
-      pos[0] = -width;  pos[1] =  height;  lineSafe( pos, feed_rate );
-      // lift pen
-      pos[2] = PEN_UP_ANGLE;  lineSafe( pos, feed_rate );
+  MENU_ACTION("A2 landscape", draw_A2_landscape);
+  MENU_ACTION("A3 landscape", draw_A3_landscape);
+  MENU_ACTION("A4 landscape", draw_A4_landscape);
+  MENU_ACTION("A5 landscape", draw_A5_landscape);
+  MENU_ACTION("US legal landscape", draw_USlegal_landscape);
+  MENU_ACTION("US letter landscape", draw_USletter_landscape);
+  MENU_END
+}
 
-      // return to start position
-      lineSafe( start, feed_rate );
+void draw_A2_portrait() {
+  draw_border(420, 594, 0);
+}
+void draw_A3_portrait() {
+  draw_border(297, 420, 0);
+}
+void draw_A4_portrait() {
+  draw_border(210, 297, 0);
+}
+void draw_A5_portrait() {
+  draw_border(148, 210, 0);
+}
+void draw_USletter_portrait() {
+  draw_border(216, 279, 0);
+}
+void draw_USlegal_portrait() {
+  draw_border(216, 356, 0);
+}
+
+void draw_A2_landscape() {
+  draw_border(420, 594, 1);
+}
+void draw_A3_landscape() {
+  draw_border(297, 420, 1);
+}
+void draw_A4_landscape() {
+  draw_border(210, 297, 1);
+}
+void draw_A5_landscape() {
+  draw_border(148, 210, 1);
+}
+void draw_USletter_landscape() {
+  draw_border(216, 279, 1);
+}
+void draw_USlegal_landscape() {
+  draw_border(216, 356, 1);
+}
+
+
+void draw_border(int width, int height, int landscape) {
+#if NUM_AXIES == 3
+  LCD_clear();
+  LCD_setCursor(0, 0);
+  LCD_print("Drawing border...");
+
+  width /= 2;
+  height /= 2;
+
+  if (landscape == 1) {
+    // swap the two values.
+    int temp = width;
+    width = height;
+    height = temp;
+  }
+
+  // get start position
+  float start[NUM_AXIES];
+  get_end_plus_offset(start);
+
+  float pos[NUM_AXIES];
+  // lift pen at current position
+  pos[0] = start[0];
+  pos[1] = start[1];
+  pos[2] = PEN_UP_ANGLE;
+  lineSafe( pos, feed_rate );
+  // move to first corner
+  pos[0] = -width;  pos[1] =  height;  lineSafe( pos, feed_rate );
+  // lower pen
+  pos[2] = PEN_DOWN_ANGLE;
+  lineSafe( pos, feed_rate );
+  // move around border
+  pos[0] =  width;  pos[1] =  height;  lineSafe( pos, feed_rate );
+  pos[0] =  width;  pos[1] = -height;  lineSafe( pos, feed_rate );
+  pos[0] = -width;  pos[1] = -height;  lineSafe( pos, feed_rate );
+  pos[0] = -width;  pos[1] =  height;  lineSafe( pos, feed_rate );
+  // lift pen
+  pos[2] = PEN_UP_ANGLE;  lineSafe( pos, feed_rate );
+
+  // return to start position
+  lineSafe( start, feed_rate );
 #endif // NUM_AXIES
-      MENU_GOTO(LCD_draw_border);
+  MENU_GOTO(LCD_draw_border);
+}
+
+
+void LCD_update_long(char *label, long &value) {
+  LCD_clear();
+  do {
+    LCD_read();
+    if ( lcd_turn ) {
+      value += lcd_turn > 0 ? 1 : -1;
+      lcd_turn = 0;
     }
+    LCD_setCursor(0, 0);
+    LCD_print(label);
+    LCD_setCursor(0, 1);
+    LCD_print_long(value);
+  } while ( !lcd_click_now );
+}
 
 
-    void LCD_update_long(char *label, long &value) {
-      LCD_clear();
-      do {
-        LCD_read();
-        if ( lcd_turn ) {
-          value += lcd_turn > 0 ? 1 : -1;
-          lcd_turn = 0;
-        }
-        LCD_setCursor(0, 0);
-        LCD_print(label);
-        LCD_setCursor(0, 1);
-        LCD_print_long(value);
-      } while ( !lcd_click_now );
+void LCD_update_float(char *label, float &value, float stepSize = 0.01) {
+  LCD_clear();
+  do {
+    LCD_read();
+    if ( lcd_turn ) {
+      value += lcd_turn > 0 ? stepSize : -stepSize;
+      lcd_turn = 0;
     }
+    LCD_setCursor(0, 0);
+    LCD_print(label);
+    LCD_setCursor(0, 1);
+    LCD_print_float(value);
+  } while ( !lcd_click_now );
+}
 
 
-    void LCD_update_float(char *label, float &value, float stepSize = 0.01) {
-      LCD_clear();
-      do {
-        LCD_read();
-        if ( lcd_turn ) {
-          value += lcd_turn > 0 ? stepSize : -stepSize;
-          lcd_turn = 0;
-        }
-        LCD_setCursor(0, 0);
-        LCD_print(label);
-        LCD_setCursor(0, 1);
-        LCD_print_float(value);
-      } while ( !lcd_click_now );
-    }
-
-
-    void LCD_print_long(long v) {
-      long av = abs(v);
-      int x = 1000;
-      while (x > av && x > 1) {
-        LCD_print(' ');
-        x /= 10;
-      };
-      if (v > 0) LCD_print(' ');
-      LCD_print(v);
-    }
+void LCD_print_long(long v) {
+  long av = abs(v);
+  int x = 1000;
+  while (x > av && x > 1) {
+    LCD_print(' ');
+    x /= 10;
+  };
+  if (v > 0) LCD_print(' ');
+  LCD_print(v);
+}
 
 
 
-    void LCD_print_float(float v) {
-      int left = abs(v);
-      int right = abs((int)(v * 100) % 100);
+void LCD_print_float(float v) {
+  int left = abs(v);
+  int right = abs((int)(v * 100) % 100);
 
-      if (left < 1000) LCD_print(' ');
-      if (left < 100) LCD_print(' ');
-      if (left < 10) LCD_print(' ');
+  if (left < 1000) LCD_print(' ');
+  if (left < 100) LCD_print(' ');
+  if (left < 10) LCD_print(' ');
 
-      LCD_print(left);
-      LCD_print('.');
-      LCD_print(right);
-    }
+  LCD_print(left);
+  LCD_print('.');
+  LCD_print(right);
+}
 #endif  // HAS_LCD
 
 
@@ -738,7 +752,7 @@ void LCD_update() {
         LCD_clear();
       }
 
-      Serial.println(menu_position);
+      //Serial.println(menu_position);
 
       if (screen_position > menu_position) screen_position = menu_position;
       if (screen_position < menu_position - (LCD_HEIGHT - 1)) screen_position = menu_position - (LCD_HEIGHT - 1);
