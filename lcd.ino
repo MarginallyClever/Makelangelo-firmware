@@ -509,7 +509,7 @@ void LCD_start_menu() {
   if(lcd_turn!=0 || lcd_click_now==1) lcd_dirty=1;
 
   if(lcd_dirty==1) {
-    long t0=micros();
+    //long t0=micros();
     
     MENU_START
     MENU_SUBMENU("Back", LCD_main_menu);
@@ -541,13 +541,13 @@ void LCD_start_menu() {
     }
     MENU_END
     
-    long t1=micros();
-    Serial.print(menu_position,DEC);
-    Serial.print(' ');
-    Serial.print(num_menu_items,DEC);
+    //long t1=micros();
+    //Serial.print(menu_position,DEC);
+    //Serial.print(' ');
+    //Serial.print(num_menu_items,DEC);
     //Serial.print(' ');
     //Serial.print(t1-t0);
-    Serial.println();
+    //Serial.println();
     lcd_dirty=0;
   }
   
