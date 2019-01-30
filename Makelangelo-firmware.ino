@@ -686,8 +686,8 @@ void parseMessage() {
     buf++;
   }
   
-  Serial.println("message found:");
-  Serial.println(lcd_message);
+  //Serial.print("message found: ");
+  //Serial.println(lcd_message);
 #endif
 }
 
@@ -726,12 +726,15 @@ void waitForPinState() {
     oldState = (oldState==0)?HIGH:LOW;
   }
   Serial.print("pausing");
+  sd_printing_paused=true;
+  
   // while pin is in oldState (opposite of state for which we are waiting)
   while(digitalRead(pin)==oldState) {
     SD_check();
     LCD_update();
     //Serial.print(".");
   }
+  sd_printing_paused=false;
   Serial.println(" ended.");
 }
 
@@ -1066,7 +1069,7 @@ void Serial_listen() {
       serialBuffer[sofar-1] = 0;
 
       // echo confirmation
-      //      Serial.println(F(serialBuffer));
+      //Serial.println(serialBuffer);
 
       // do something with the command
       processCommand();

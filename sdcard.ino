@@ -85,8 +85,11 @@ void SD_check() {
     int c;
     while(sd_print_file.peek() != -1) {
       c=sd_print_file.read();
-      serialBuffer[sofar++]=c;
       sd_bytes_read++;
+      if(c=='\r') continue;
+      if(sofar<MAX_BUF) {
+        serialBuffer[sofar++]=c;
+      }/*
       if(c==';') {
         // eat to the end of the line
         while(sd_print_file.peek() != -1) {
@@ -94,15 +97,15 @@ void SD_check() {
           sd_bytes_read++;
           if(c=='\n' || c=='\r') break;
         }
-      }
-      if(c=='\n' || c=='\r') {
+      }*/
+      if(c=='\n') {
         // update the % visible on the LCD.
         sd_percent_complete = (float)sd_bytes_read * 100.0 / (float)sd_file_size;
 
         // end string
-        serialBuffer[sofar]=0;
+        serialBuffer[sofar-1]=0;
         // print for our benefit
-        Serial.println(serialBuffer);
+        //Serial.println(serialBuffer);
         // process command
         processCommand();
         // reset buffer for next line
@@ -113,6 +116,7 @@ void SD_check() {
     }
 
     if(sd_print_file.peek() == -1) {
+      Serial.println("EOF Drawing done.");
       sd_print_file.close();
       sd_printing_now=false;
       if(sd_inserted) {
