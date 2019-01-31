@@ -4,8 +4,12 @@
 // Please see http://www.github.com/MarginallyClever/makelangeloFirmware for more information.
 //------------------------------------------------------------------------------
 
+#include "configure.h"
+#include "robot_stewart.h"
+
 #if MACHINE_STYLE == STEWART
 
+#include "Vector3.h"
 
 #define NUM_ARMS  (6)
 
@@ -34,33 +38,6 @@ struct StewartPlatform {
 
 
 StewartPlatform robot;
-
-
-/**
- * Inverse Kinematics turns XY coordinates into step counts from each motor
- * @param axies the cartesian coordinate
- * @param motorStepArray a measure of each belt to that plotter position
- */
-void IK(float *cartesian, long *motorStepArray) {
-  float x = cartesian[0];
-  float y = cartesian[1];
-  float z = cartesian[2];
-  float u = cartesian[3];
-  float v = cartesian[4];
-  float w = cartesian[5];
-
-  Vector3 mov(x,y,z);
-  Vector3 rpy(u,v,w);
-  
-  stewart_update_endeffector(mov,rpy);
-  stewart_update_wrists();
-  stewart_update_shoulder_angles();
-
-  int i;
-  for(i=0;i<NUM_ARMS;++i) {
-    motorStepArray[i] = robot.arms[i].angle * MICROSTEP_PER_DEGREE;
-  }
-}
 
 
 /**
@@ -208,6 +185,33 @@ void stewart_update_shoulder_angles() {
     Serial.print("\tangle =");
     Serial.println(arm.angle);
 #endif
+  }
+}
+
+
+/**
+ * Inverse Kinematics turns XY coordinates into step counts from each motor
+ * @param axies the cartesian coordinate
+ * @param motorStepArray a measure of each belt to that plotter position
+ */
+void IK(float *cartesian, long *motorStepArray) {
+  float x = cartesian[0];
+  float y = cartesian[1];
+  float z = cartesian[2];
+  float u = cartesian[3];
+  float v = cartesian[4];
+  float w = cartesian[5];
+
+  Vector3 mov(x,y,z);
+  Vector3 rpy(u,v,w);
+  
+  stewart_update_endeffector(mov,rpy);
+  stewart_update_wrists();
+  stewart_update_shoulder_angles();
+
+  int i;
+  for(i=0;i<NUM_ARMS;++i) {
+    motorStepArray[i] = robot.arms[i].angle * MICROSTEP_PER_DEGREE;
   }
 }
 

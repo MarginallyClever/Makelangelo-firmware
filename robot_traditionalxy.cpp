@@ -4,9 +4,12 @@
 // Please see http://www.github.com/MarginallyClever/makelangeloFirmware for more information.
 //------------------------------------------------------------------------------
 
+#include "configure.h"
+#include "robot_traditionalxy.h"
+
 #if MACHINE_STYLE == TRADITIONALXY
 
-
+#include <Arduino.h>
 /**
  * Inverse Kinematics turns XY coordinates into step counts from each motor
  * @param x cartesian coordinate

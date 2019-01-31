@@ -7,10 +7,11 @@
 //------------------------------------------------------------------------------
 // INCLUDES
 //------------------------------------------------------------------------------
-#ifdef HAS_LCD
 #include "lcd.h"
-
 #include "sdcard.h"
+
+
+#ifdef HAS_LCD
 
 #ifdef LCD_IS_SMART
 #include <LiquidCrystal.h>

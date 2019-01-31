@@ -4,9 +4,10 @@
 // Please see http://www.github.com/MarginallyClever/makelangeloFirmware for more information.
 //------------------------------------------------------------------------------
 
+#include "configure.h"
+#include "robot_zarplotter.h"
+
 #if MACHINE_STYLE == ZARPLOTTER
-
-
 
 /**
  * Inverse Kinematics turns XY coordinates into lengths of belt from each motor

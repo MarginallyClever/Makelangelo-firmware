@@ -4,8 +4,10 @@
 // Please see http://www.github.com/MarginallyClever/makelangeloFirmware for more information.
 //------------------------------------------------------------------------------
 
-#if MACHINE_STYLE == COREXY
+#include "configure.h"
+#include "robot_corexy.h"
 
+#if MACHINE_STYLE == COREXY
 
 /**
  * Inverse Kinematics turns XY coordinates into lengths L1,L2

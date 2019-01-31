@@ -4,6 +4,9 @@
 // Please see http://www.github.com/MarginallyClever/makelangeloFirmware for more information.
 //------------------------------------------------------------------------------
 
+#include "configure.h"
+#include "robot_arm6.h"
+
 #if MACHINE_STYLE == ARM6
 
 #include "Vector3.h"

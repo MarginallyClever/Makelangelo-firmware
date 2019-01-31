@@ -4,8 +4,10 @@
 // Please see http://www.github.com/MarginallyClever/makelangeloFirmware for more information.
 //------------------------------------------------------------------------------
 
-#if MACHINE_STYLE == POLARGRAPH
+#include "configure.h"
+#include "robot_polargraph.h"
 
+#if MACHINE_STYLE == POLARGRAPH
 
 /**
  * Inverse Kinematics turns XY coordinates into step counts from each motor

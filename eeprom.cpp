@@ -7,9 +7,10 @@
 //------------------------------------------------------------------------------
 // INCLUDES
 //------------------------------------------------------------------------------
+#include "configure.h"
+#include "motor.h"
 #include <EEPROM.h>
 #include <Arduino.h>  // for type definitions
-
 
 /** 
  * from http://www.arduino.cc/cgi-bin/yabb2/YaBB.pl?num=1234477290/3

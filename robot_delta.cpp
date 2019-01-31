@@ -4,8 +4,10 @@
 // Please see http://www.github.com/MarginallyClever/makelangeloFirmware for more information.
 //------------------------------------------------------------------------------
 
-#if MACHINE_STYLE == DELTA
+#include "configure.h"
+#include "robot_delta.h"
 
+#if MACHINE_STYLE == DELTA
 
 #define SQRT3   (sqrt(3.0))
 #define SIN120  (SQRT3/2.0)

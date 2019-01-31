@@ -67,6 +67,10 @@
 #define LCD_TURN_PER_MENU  (5)
 
 extern char lcd_message[LCD_MESSAGE_LENGTH+1];
+extern uint8_t speed_adjust;
+
+extern void LCD_update();
+extern void LCD_setup();
 
 #endif // HAS_LCD
 

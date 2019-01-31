@@ -9,7 +9,10 @@
 // INCLUDES
 //------------------------------------------------------------------------------
 #include "configure.h"
-#include "lcd.h"
+#include "motor.h"
+#include "SD.h"
+#include "LCD.h"
+#include "eeprom.h"
 
 #include <SPI.h>  // pkm fix for Arduino 1.5
 
@@ -688,7 +691,7 @@ void parseMessage() {
   
   //Serial.print("message found: ");
   //Serial.println(lcd_message);
-#endif
+#endif  // HAS_LCD
 }
 
 /**
@@ -726,7 +729,9 @@ void waitForPinState() {
     oldState = (oldState==0)?HIGH:LOW;
   }
   Serial.print("pausing");
+#ifdef HAS_SD
   sd_printing_paused=true;
+#endif
   
   // while pin is in oldState (opposite of state for which we are waiting)
   while(digitalRead(pin)==oldState) {
@@ -734,7 +739,11 @@ void waitForPinState() {
     LCD_update();
     //Serial.print(".");
   }
+
+#ifdef HAS_SD
   sd_printing_paused=false;
+#endif
+
   Serial.println(" ended.");
 }
 

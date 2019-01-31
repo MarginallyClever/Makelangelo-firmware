@@ -4,8 +4,10 @@
 // Please see http://www.github.com/MarginallyClever/makelangeloFirmware for more information.
 //------------------------------------------------------------------------------
 
-#if MACHINE_STYLE == ARM3
+#include "configure.h"
+#include "robot_arm3.h"
 
+#if MACHINE_STYLE == ARM3
 
 /**
  * Inverse Kinematics turns XY coordinates into step counts from each motor

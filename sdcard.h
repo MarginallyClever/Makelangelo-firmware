@@ -19,5 +19,9 @@ extern char sd_printing_paused;
 extern float sd_percent_complete;
 #endif
 
+extern void SD_check();
+extern void SD_setup();
+extern void SD_listFiles();
+extern void SD_StartPrintingFile(const char *);
 
 #endif // SDCARD_H

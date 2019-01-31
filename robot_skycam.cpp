@@ -4,9 +4,10 @@
 // Please see http://www.github.com/MarginallyClever/makelangeloFirmware for more information.
 //------------------------------------------------------------------------------
 
+#include "configure.h"
+#include "robot_skycam.h"
+
 #if MACHINE_STYLE == SKYCAM
-
-
 
 /**
  * Inverse Kinematics turns XY coordinates into lengths of belt from each motor
