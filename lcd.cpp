@@ -7,6 +7,7 @@
 //------------------------------------------------------------------------------
 // INCLUDES
 //------------------------------------------------------------------------------
+#include "configure.h"
 #include "lcd.h"
 #include "sdcard.h"
 
@@ -240,6 +241,18 @@ inline void LCD_print(const char x) {
 // METHODS
 //------------------------------------------------------------------------------
 
+void LCD_status_menu();
+void LCD_main_menu();
+void LCD_drawSplash();
+void LCD_driveX();
+void LCD_driveY();
+void LCD_driveZ();
+void LCD_driveF();
+void LCD_print_float(float);
+void LCD_print_long(long);
+void LCD_refresh_display();
+void LCD_draw_border();
+
 
 void LCD_read() {
   // detect potentiometer changes
@@ -280,86 +293,6 @@ void LCD_read() {
     lcd_click_now = true;
   }
   lcd_click_old = btn;
-}
-
-
-// display the current machine position and feed rate on the LCD.
-void LCD_status_menu() {
-  MENU_START
-
-  // on click go to the main menu
-  if (lcd_click_now) MENU_GOTO(LCD_main_menu);
-
-  if (lcd_turn) {
-    speed_adjust += lcd_turn;
-  }
-  LCD_setCursor( 0, 0);
-
-  // update the current status
-  float offset[NUM_AXIES];
-  get_end_plus_offset(offset);
-
-  LCD_setCursor(0, 0);  LCD_print('X');  LCD_print_float(offset[0]);
-  LCD_setCursor(9, 0);  LCD_print('Z');  LCD_print_float(offset[2]);
-#if MACHINE_STYLE == POLARGRAPH && defined(USE_LIMIT_SWITCH)
-  LCD_setCursor(8, 0);  LCD_print(( digitalRead(LIMIT_SWITCH_PIN_LEFT) == LOW ) ? '*' : ' ');
-#endif
-
-  LCD_setCursor(0, 1);  LCD_print('Y');  LCD_print_float(offset[1]);
-  LCD_setCursor(9, 1);  LCD_print('F');  LCD_print_long(speed_adjust);  LCD_print('%');
-#if MACHINE_STYLE == POLARGRAPH && defined(USE_LIMIT_SWITCH)
-  LCD_setCursor(8, 1);  LCD_print(( digitalRead(LIMIT_SWITCH_PIN_RIGHT) == LOW ) ? '*' : ' ');
-#endif
-
-  //LCD_setCursor( 1, 15);
-  //if (sd_printing_now == true && sd_printing_paused==false) {
-  //if (sd_printing_now == true) {
-    //LCD_print_float(sd_percent_complete);
-    //LCD_print('%');
-  //} else {
-    //LCD_print("          ");
-  //}
-  MENU_END
-}
-
-
-void LCD_main_menu() {
-  lcd_dirty=1;
-  
-  MENU_START
-
-  MENU_SUBMENU("Back", LCD_status_menu);
-#ifdef HAS_SD
-  if (!sd_printing_now) {
-#endif
-#if MACHINE_HARDWARE_VERSION  == 5
-    MENU_ACTION("Find home", LCD_find_home);
-#else
-    MENU_ACTION("This is home", LCD_this_is_home);
-    MENU_ACTION("Go home", LCD_go_home);
-#endif
-#ifdef HAS_SD
-    if (sd_inserted) {
-      MENU_SUBMENU("Print from SD card", LCD_start_menu);
-    } else {
-      MENU_LABEL("No SD card");
-    }
-#endif
-#if NUM_AXIES == 3
-    MENU_SUBMENU("Draw border", LCD_draw_border);
-#endif
-    MENU_SUBMENU("Drive", LCD_drive_menu);
-#ifdef HAS_SD
-  } else {
-    if (sd_printing_paused) {
-      MENU_ACTION("Unpause", LCD_pause);
-    } else {
-      MENU_ACTION("Pause", LCD_pause);
-    }
-    MENU_ACTION("Stop", LCD_stop);
-  }
-#endif
-  MENU_END
 }
 
 
@@ -558,63 +491,6 @@ void LCD_start_menu() {
 #endif
 }
 
-void LCD_draw_border() {
-  MENU_START
-  MENU_SUBMENU("Back", LCD_main_menu);
-  MENU_ACTION("A2 portrait", draw_A2_portrait);
-  MENU_ACTION("A3 portrait", draw_A3_portrait);
-  MENU_ACTION("A4 portrait", draw_A4_portrait);
-  MENU_ACTION("A5 portrait", draw_A5_portrait);
-  MENU_ACTION("US legal portrait", draw_USlegal_portrait);
-  MENU_ACTION("US letter portrait", draw_USletter_portrait);
-
-  MENU_ACTION("A2 landscape", draw_A2_landscape);
-  MENU_ACTION("A3 landscape", draw_A3_landscape);
-  MENU_ACTION("A4 landscape", draw_A4_landscape);
-  MENU_ACTION("A5 landscape", draw_A5_landscape);
-  MENU_ACTION("US legal landscape", draw_USlegal_landscape);
-  MENU_ACTION("US letter landscape", draw_USletter_landscape);
-  MENU_END
-}
-
-void draw_A2_portrait() {
-  draw_border(420, 594, 0);
-}
-void draw_A3_portrait() {
-  draw_border(297, 420, 0);
-}
-void draw_A4_portrait() {
-  draw_border(210, 297, 0);
-}
-void draw_A5_portrait() {
-  draw_border(148, 210, 0);
-}
-void draw_USletter_portrait() {
-  draw_border(216, 279, 0);
-}
-void draw_USlegal_portrait() {
-  draw_border(216, 356, 0);
-}
-
-void draw_A2_landscape() {
-  draw_border(420, 594, 1);
-}
-void draw_A3_landscape() {
-  draw_border(297, 420, 1);
-}
-void draw_A4_landscape() {
-  draw_border(210, 297, 1);
-}
-void draw_A5_landscape() {
-  draw_border(148, 210, 1);
-}
-void draw_USletter_landscape() {
-  draw_border(216, 279, 1);
-}
-void draw_USlegal_landscape() {
-  draw_border(216, 356, 1);
-}
-
 
 void draw_border(int width, int height, int landscape) {
 #if NUM_AXIES == 3
@@ -659,6 +535,63 @@ void draw_border(int width, int height, int landscape) {
   lineSafe( start, feed_rate );
 #endif // NUM_AXIES
   MENU_GOTO(LCD_draw_border);
+}
+
+void draw_A2_portrait() {
+  draw_border(420, 594, 0);
+}
+void draw_A3_portrait() {
+  draw_border(297, 420, 0);
+}
+void draw_A4_portrait() {
+  draw_border(210, 297, 0);
+}
+void draw_A5_portrait() {
+  draw_border(148, 210, 0);
+}
+void draw_USletter_portrait() {
+  draw_border(216, 279, 0);
+}
+void draw_USlegal_portrait() {
+  draw_border(216, 356, 0);
+}
+
+void draw_A2_landscape() {
+  draw_border(420, 594, 1);
+}
+void draw_A3_landscape() {
+  draw_border(297, 420, 1);
+}
+void draw_A4_landscape() {
+  draw_border(210, 297, 1);
+}
+void draw_A5_landscape() {
+  draw_border(148, 210, 1);
+}
+void draw_USletter_landscape() {
+  draw_border(216, 279, 1);
+}
+void draw_USlegal_landscape() {
+  draw_border(216, 356, 1);
+}
+
+void LCD_draw_border() {
+  MENU_START
+  MENU_SUBMENU("Back", LCD_main_menu);
+  MENU_ACTION("A2 portrait", draw_A2_portrait);
+  MENU_ACTION("A3 portrait", draw_A3_portrait);
+  MENU_ACTION("A4 portrait", draw_A4_portrait);
+  MENU_ACTION("A5 portrait", draw_A5_portrait);
+  MENU_ACTION("US legal portrait", draw_USlegal_portrait);
+  MENU_ACTION("US letter portrait", draw_USletter_portrait);
+
+  MENU_ACTION("A2 landscape", draw_A2_landscape);
+  MENU_ACTION("A3 landscape", draw_A3_landscape);
+  MENU_ACTION("A4 landscape", draw_A4_landscape);
+  MENU_ACTION("A5 landscape", draw_A5_landscape);
+  MENU_ACTION("US legal landscape", draw_USlegal_landscape);
+  MENU_ACTION("US letter landscape", draw_USletter_landscape);
+  MENU_END
 }
 
 
@@ -789,6 +722,86 @@ void LCD_refresh_display() {
   }
 #endif
 #endif  // HAS_LCD
+}
+
+
+void LCD_main_menu() {
+  lcd_dirty=1;
+  
+  MENU_START
+
+  MENU_SUBMENU("Back", LCD_status_menu);
+#ifdef HAS_SD
+  if (!sd_printing_now) {
+#endif
+#if MACHINE_HARDWARE_VERSION  == 5
+    MENU_ACTION("Find home", LCD_find_home);
+#else
+    MENU_ACTION("This is home", LCD_this_is_home);
+    MENU_ACTION("Go home", LCD_go_home);
+#endif
+#ifdef HAS_SD
+    if (sd_inserted) {
+      MENU_SUBMENU("Print from SD card", LCD_start_menu);
+    } else {
+      MENU_LABEL("No SD card");
+    }
+#endif
+#if NUM_AXIES == 3
+    MENU_SUBMENU("Draw border", LCD_draw_border);
+#endif
+    MENU_SUBMENU("Drive", LCD_drive_menu);
+#ifdef HAS_SD
+  } else {
+    if (sd_printing_paused) {
+      MENU_ACTION("Unpause", LCD_pause);
+    } else {
+      MENU_ACTION("Pause", LCD_pause);
+    }
+    MENU_ACTION("Stop", LCD_stop);
+  }
+#endif
+  MENU_END
+}
+
+
+// display the current machine position and feed rate on the LCD.
+void LCD_status_menu() {
+  MENU_START
+
+  // on click go to the main menu
+  if (lcd_click_now) MENU_GOTO(LCD_main_menu);
+
+  if (lcd_turn) {
+    speed_adjust += lcd_turn;
+  }
+  LCD_setCursor( 0, 0);
+
+  // update the current status
+  float offset[NUM_AXIES];
+  get_end_plus_offset(offset);
+
+  LCD_setCursor(0, 0);  LCD_print('X');  LCD_print_float(offset[0]);
+  LCD_setCursor(9, 0);  LCD_print('Z');  LCD_print_float(offset[2]);
+#if MACHINE_STYLE == POLARGRAPH && defined(USE_LIMIT_SWITCH)
+  LCD_setCursor(8, 0);  LCD_print(( digitalRead(LIMIT_SWITCH_PIN_LEFT) == LOW ) ? '*' : ' ');
+#endif
+
+  LCD_setCursor(0, 1);  LCD_print('Y');  LCD_print_float(offset[1]);
+  LCD_setCursor(9, 1);  LCD_print('F');  LCD_print_long(speed_adjust);  LCD_print('%');
+#if MACHINE_STYLE == POLARGRAPH && defined(USE_LIMIT_SWITCH)
+  LCD_setCursor(8, 1);  LCD_print(( digitalRead(LIMIT_SWITCH_PIN_RIGHT) == LOW ) ? '*' : ' ');
+#endif
+
+  //LCD_setCursor( 1, 15);
+  //if (sd_printing_now == true && sd_printing_paused==false) {
+  //if (sd_printing_now == true) {
+    //LCD_print_float(sd_percent_complete);
+    //LCD_print('%');
+  //} else {
+    //LCD_print("          ");
+  //}
+  MENU_END
 }
 
 
