@@ -34,7 +34,7 @@ LiquidCrystal lcd(LCD_PINS_RS, LCD_PINS_ENABLE, LCD_PINS_D4, LCD_PINS_D5, LCD_PI
 U8GLIB_ST7920_128X64_1X u8g(LCD_PINS_D4, LCD_PINS_ENABLE, LCD_PINS_RS);
 #endif
 
-long lcd_draw_delay = 0;
+long lcd_draw_delay  = 0;
 
 int lcd_rot_old  = 0;
 int lcd_turn     = 0;
@@ -309,7 +309,6 @@ void LCD_status_menu() {
 #if MACHINE_STYLE == POLARGRAPH && defined(USE_LIMIT_SWITCH)
   LCD_setCursor(8, 1);  LCD_print(( digitalRead(LIMIT_SWITCH_PIN_RIGHT) == LOW ) ? '*' : ' ');
 #endif
-
 
   //LCD_setCursor( 1, 15);
   //if (sd_printing_now == true && sd_printing_paused==false) {

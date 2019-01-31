@@ -26,10 +26,10 @@
 #define NUM_SERVOS           (1)
 #define NUM_TOOLS            (1)
 
-#define MAX_FEEDRATE         (9000.0)  // depends on timer interrupt & hardware
+#define MAX_FEEDRATE         (40000.0)  // depends on timer interrupt & hardware
 #define MIN_FEEDRATE         (100)
 #define MAX_JERK             (5.0)
-#define DEFAULT_FEEDRATE     (7000.0)
+#define DEFAULT_FEEDRATE     (15000.0)
 #define DEFAULT_ACCELERATION (2500)
 
 //#define SUBDIVIDE_LINES

@@ -17,7 +17,7 @@
 #define MAX_ACCELERATION     (5000)
 #define MIN_ACCELERATION     (100)
 
-#define SUBDIVIDE_LINES
+//#define SUBDIVIDE_LINES
 #define SEGMENT_PER_CM_LINE  (2)  // lines are split into segments.  How long are the segments?
 #define SEGMENT_PER_CM_ARC   (3)  // Arcs are split into segments.  How long are the segments?
 
@@ -26,10 +26,10 @@
 #define NUM_SERVOS           (1)
 #define NUM_TOOLS            (1)
 
-#define MAX_FEEDRATE         (4000.0)  // depends on timer interrupt & hardware
+#define MAX_FEEDRATE         (40000.0)  // depends on timer interrupt & hardware
 #define MIN_FEEDRATE         (100)
 #define MAX_JERK             (5.0)
-#define DEFAULT_FEEDRATE     (1500.0)
+#define DEFAULT_FEEDRATE     (15000.0)
 #define DEFAULT_ACCELERATION (1500)
 
 //#define HAS_LCD
@@ -37,20 +37,20 @@
 
 #if MACHINE_HARDWARE_VERSION==6
 
-#define MOTOR_MICROSTEPS_EXT      (16*200)  // motor full steps * microstepping setting
-#define MOTOR_MICROSTEPS_MID      (16*400)  // motor full steps * microstepping setting
+#define MOTOR_MICROSTEPS_EXT      (16.0*200.0)  // motor full steps * microstepping setting
+#define MOTOR_MICROSTEPS_MID      (16.0*400.0)  // motor full steps * microstepping setting
 
 #define NEMA17_CYCLOID_GEARBOX_RATIO (40.0)
 #define ELBOW_DOWNGEAR_RATIO         (30.0/14.0)
 #define NEMA17_RATIO                 (NEMA17_CYCLOID_GEARBOX_RATIO*ELBOW_DOWNGEAR_RATIO)
 
-#define MOTOR_0_STEPS_PER_TURN    ((unsigned long)MOTOR_MICROSTEPS_MID*NEMA17_RATIO)
-#define MOTOR_1_STEPS_PER_TURN    ((unsigned long)MOTOR_MICROSTEPS_MID*NEMA17_RATIO)
-#define MOTOR_2_STEPS_PER_TURN    ((unsigned long)MOTOR_MICROSTEPS_EXT*NEMA17_RATIO)
+#define MOTOR_0_STEPS_PER_TURN    (MOTOR_MICROSTEPS_MID*NEMA17_RATIO)
+#define MOTOR_1_STEPS_PER_TURN    (MOTOR_MICROSTEPS_MID*NEMA17_RATIO)
+#define MOTOR_2_STEPS_PER_TURN    (MOTOR_MICROSTEPS_EXT*NEMA17_RATIO)
 
-#define MOTOR_3_STEPS_PER_TURN    ((unsigned long)MOTOR_MICROSTEPS_MID*NEMA17_RATIO)
-#define MOTOR_4_STEPS_PER_TURN    ((unsigned long)MOTOR_MICROSTEPS_EXT*NEMA17_RATIO)
-#define MOTOR_5_STEPS_PER_TURN    ((unsigned long)MOTOR_MICROSTEPS_EXT*NEMA17_RATIO)
+#define MOTOR_3_STEPS_PER_TURN    (MOTOR_MICROSTEPS_MID*NEMA17_RATIO)
+#define MOTOR_4_STEPS_PER_TURN    (MOTOR_MICROSTEPS_EXT*NEMA17_RATIO)
+#define MOTOR_5_STEPS_PER_TURN    (MOTOR_MICROSTEPS_EXT*NEMA17_RATIO)
 
 
 // DIMENSIONS
