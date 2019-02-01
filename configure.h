@@ -31,7 +31,7 @@
 //#define ARM5            12
 #define ARM6            13
 
-#define MACHINE_STYLE POLARGRAPH  // Change this
+#define MACHINE_STYLE TRADITIONALXY  // Change this
 
 #include "robot_polargraph.h"
 #include "robot_traditionalxy.h"
@@ -111,7 +111,10 @@
 #define MAX_BUF              (64)  // What is the longest message Arduino can store?
 
 // buffering commands
+#ifndef MAX_SEGMENTS
 #define MAX_SEGMENTS         (32)  // number of line segments to buffer ahead. must be a power of two.
+#endif
+
 #define SEGMOD(x)            ((x)&(MAX_SEGMENTS-1))
 
 //------------------------------------------------------------------------------
@@ -183,53 +186,30 @@ typedef struct {
 } Axis;
 
 
-// for line()
-typedef struct {
-  long step_count;
-  long delta;  // number of steps to move
-  long absdelta;
-  int dir;
-  float delta_normalized;
-} SegmentAxis;
-
-
-typedef struct {
-  int step_pin;
-  int dir_pin;
-  int enable_pin;
-  int limit_switch_pin;
-} Motor;
-
-
-typedef struct {
-  SegmentAxis a[NUM_MOTORS+NUM_SERVOS];
-  int steps_total;
-  int steps_taken;
-  int accel_until;
-  int decel_after;
-  unsigned short feed_rate_max;
-  unsigned short feed_rate_start;
-  unsigned short feed_rate_start_max;
-  unsigned short feed_rate_end;
-  char nominal_length_flag;
-  char recalculate_flag;
-  char busy;
-} Segment;
-
+#include "motor.h"
 
 //------------------------------------------------------------------------------
 // GLOBALS
 //------------------------------------------------------------------------------
 
-extern Segment line_segments[MAX_SEGMENTS];
-extern Segment *working_seg;
-extern volatile int current_segment;
-extern volatile int last_segment;
+extern float feed_rate;
 extern float acceleration;
-extern Motor motors[NUM_MOTORS+NUM_SERVOS];
-extern const char *AxisNames;
-extern const char *MotorNames;
-extern float maxFeedRate[NUM_MOTORS];
+extern int robot_uid;
+extern Axis axies[NUM_AXIES];
+extern float calibrateRight;
+extern float calibrateLeft;
+extern char serialBuffer[MAX_BUF + 1]; // Serial buffer
+extern int sofar;                      // Serial buffer progress
 
+extern void IK(const float *const axies, long *motorStepArray);
+extern int FK(long *motorStepArray,float *axies);
+extern void robot_findHome();
+extern void robot_setup();
+extern void processCommand();
+extern void parser_ready();
+extern void teleport(float *pos);
+extern void lineSafe(float *pos, float new_feed_rate);
+extern void get_end_plus_offset(float *results);
+extern void set_tool_offset(int toolID, float *pos);
 
 #endif // CONFIGURE_H
