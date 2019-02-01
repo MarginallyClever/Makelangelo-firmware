@@ -14,7 +14,7 @@
  * @param axies the cartesian coordinate
  * @param motorStepArray a measure of each belt to that plotter position
  */
-void IK(float *cartesian, long *motorStepArray) {
+void IK(const float *const cartesian, long *motorStepArray) {
   float dy,dx;
   // find length to M1
   float limit_xmin = axies[0].limitMin;

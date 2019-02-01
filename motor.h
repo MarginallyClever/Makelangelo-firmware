@@ -31,14 +31,24 @@ typedef struct {
 
 typedef struct {
   SegmentAxis a[NUM_MOTORS+NUM_SERVOS];
-  int steps_total;
-  int steps_taken;
-  int accel_until;
-  int decel_after;
-  unsigned short feed_rate_max;
-  unsigned short feed_rate_start;
-  unsigned short feed_rate_start_max;
-  unsigned short feed_rate_end;
+
+  float distance;  // mm
+  int steps_total;  // steps
+
+  int steps_taken;  // steps
+  int accel_until;  // steps
+  int decel_after;  // steps
+
+  float acceleration;  // acceleration mm/sec^2
+  unsigned short acceleration_steps_per_s2;  // acceleration steps/sec^2
+
+  float nominal_speed;  // mm/s
+  unsigned short nominal_rate;  // steps/s
+  
+  unsigned short entry_speed;  // mm/s
+  unsigned short entry_speed_max;  // mm/s
+  unsigned short exit_speed;  // mm/s
+  
   char nominal_length_flag;
   char recalculate_flag;
   char busy;
@@ -61,7 +71,7 @@ extern float maxFeedRate[NUM_MOTORS];
 extern void motor_set_step_count(long *a);
 extern void wait_for_empty_segment_buffer();
 extern char segment_buffer_full();
-extern void motor_line(long *n,float fr_mm_s);
+extern void motor_line(const float * const target_position,float &fr_mm_s);
 extern void motor_engage();
 extern void motor_disengage();
 extern void motor_setup();

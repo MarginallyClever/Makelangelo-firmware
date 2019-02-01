@@ -15,7 +15,7 @@
  * @param y cartesian coordinate
  * @param motorStepArray a measure of each belt to that plotter position
  */
-void IK(float *axies, long *motorStepArray) {
+void IK(const float *const axies, long *motorStepArray) {
   float x = axies[0];
   float y = axies[1];
   float z = axies[2];
