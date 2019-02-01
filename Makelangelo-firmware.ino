@@ -200,25 +200,6 @@ void testKinematics() {
 
 
 /**
- * Translate the XYZ through the IK to get the number of motor steps and move the motors.
- * @input pos NUM_AXIES floats describing destination coordinates
- * @input new_feed_rate speed to travel along arc
- */
-void lineSafeInternal(float *pos, float new_feed_rate) {
-  long steps[NUM_MOTORS + NUM_SERVOS];
-  IK(pos, steps);
-
-  int i;
-  for(i=0;i<NUM_AXIES;++i) {
-    axies[i].pos = pos[i];
-  }
-  
-  feed_rate = new_feed_rate;
-  motor_line(steps, new_feed_rate);
-}
-
-
-/**
  * Move the pen holder in a straight line using bresenham's algorithm
  * @input pos NUM_AXIES floats describing destination coordinates
  * @input new_feed_rate speed to travel along arc
@@ -255,12 +236,12 @@ void lineSafe(float *pos, float new_feed_rate) {
     for(i=0;i<NUM_AXIES;++i) {
       temp[i] = delta[i] * a + startPos[i];
     }
-    lineSafeInternal(temp, new_feed_rate);
+    motor_line(temp, new_feed_rate);
   }
 #endif
 
   // guarantee we stop exactly at the destination (no rounding errors).
-  lineSafeInternal(destination, new_feed_rate);
+  motor_line(destination, new_feed_rate);
 }
 
 
@@ -467,11 +448,6 @@ void toolChange(int tool_id) {
   if (tool_id < 0) tool_id = 0;
   if (tool_id >= NUM_TOOLS) tool_id = NUM_TOOLS - 1;
   current_tool = tool_id;
-//#ifdef HAS_SD
-  //if (sd_printing_now) {
-  //  sd_printing_paused = true;
-  //}
-//#endif
 }
 
 
@@ -520,7 +496,7 @@ void parseDwell() {
 
 /** 
  * G0-G1 [Xnnn] [Ynnn] [Znnn] [Unnn] [Vnnn] [Wnnn] [Ann] [Fnn]
- * straight lines
+ * straight lines.  distance in mm.
  */
 void parseLine() {
   float offset[NUM_AXIES];
@@ -1099,9 +1075,9 @@ void loop() {
   // The PC will wait forever for the ready signal.
   // if Arduino hasn't received a new instruction in a while, send ready() again
   // just in case USB garbled ready and each half is waiting on the other.
-  if ( !segment_buffer_full() && (millis() - last_cmd_time) > TIMEOUT_OK ) {
-    parser_ready();
-  }
+//  if ( !segment_buffer_full() && (millis() - last_cmd_time) > TIMEOUT_OK ) {
+//    parser_ready();
+//  }
 
 #if MACHINE_STYLE == ARM6
 /*
