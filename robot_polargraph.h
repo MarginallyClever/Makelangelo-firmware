@@ -26,15 +26,15 @@
 #define NUM_SERVOS           (1)
 #define NUM_TOOLS            (1)
 
-#define MAX_FEEDRATE         (20000.0)  // depends on timer interrupt & hardware
-#define MIN_FEEDRATE         (100)
-#define DEFAULT_FEEDRATE     (9000.0)
+#define MAX_FEEDRATE         (1500.0)  // depends on timer interrupt & hardware
+#define MIN_FEEDRATE         (1)
+#define DEFAULT_FEEDRATE     (900.0)
 
-#define MAX_ACCELERATION     (10000)
-#define MIN_ACCELERATION     (100)
-#define DEFAULT_ACCELERATION (1000)
+#define MAX_ACCELERATION     (1000)
+#define MIN_ACCELERATION     (1)
+#define DEFAULT_ACCELERATION (400)
 
-#define MAX_JERK             (15.0)
+#define MAX_JERK             (5.0)
 
 
 #if MACHINE_HARDWARE_VERSION == 5
