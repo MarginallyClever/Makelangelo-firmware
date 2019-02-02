@@ -224,9 +224,9 @@ void lineSafe(float *pos, float new_feed_rate) {
     len += delta[i] * delta[i];
   }
 
-  len = sqrt(len);
+  len = sqrt(len);  //mm
   // @TODO what if some axies don't need subdividing?  like z axis on polargraph.
-  int pieces = ceil(len * (float)SEGMENT_PER_CM_LINE );
+  int pieces = ceil(len * (float)SEGMENT_PER_CM_LINE/10.0 );
   float a;
   long j;
 
@@ -277,9 +277,9 @@ void arc(float cx, float cy, float *destination, char clockwise, float new_feed_
   // float len=theta*circ/(PI*2.0);
   // simplifies to
   float len1 = abs(da) * sr;
-  float len = sqrt( len1 * len1 + dr * dr );
+  float len = sqrt( len1 * len1 + dr * dr ); // mm
 
-  int i, segments = ceil( len * SEGMENT_PER_CM_ARC );
+  int i, segments = ceil( len * SEGMENT_PER_CM_ARC/10 );
 
   float n[NUM_AXIES], angle3, scale;
   float a, r;
@@ -501,8 +501,10 @@ void parseDwell() {
 void parseLine() {
   float offset[NUM_AXIES];
   get_end_plus_offset(offset);
-  acceleration = min(max(parseNumber('A', acceleration), MIN_ACCELERATION), MAX_ACCELERATION);
+  acceleration = parseNumber('A', acceleration);
+  acceleration = min(max(acceleration, MIN_ACCELERATION), MAX_ACCELERATION);
   float f = parseNumber('F', feed_rate);
+  f = min(max(f,MIN_FEEDRATE),MAX_FEEDRATE);
   
   int i;
   float pos[NUM_AXIES];
@@ -522,8 +524,10 @@ void parseLine() {
 void parseArc(int clockwise) {
   float offset[NUM_AXIES];
   get_end_plus_offset(offset);
-  acceleration = min(max(parseNumber('A', acceleration), MIN_ACCELERATION), MAX_ACCELERATION);
+  acceleration = parseNumber('A', acceleration);
+  acceleration = min(max(acceleration, MIN_ACCELERATION), MAX_ACCELERATION);
   float f = parseNumber('F', feed_rate);
+  f = min(max(f,MIN_FEEDRATE),MAX_FEEDRATE);
   
   int i;
   float pos[NUM_AXIES];
