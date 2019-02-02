@@ -6,6 +6,8 @@
 // Please see http://www.github.com/MarginallyClever/makelangeloFirmware for more information.
 //------------------------------------------------------------------------------
 
+#include <Arduino.h>
+
 //------------------------------------------------------------------------------
 // CONSTANTS
 //------------------------------------------------------------------------------
@@ -21,33 +23,32 @@ typedef struct {
 
 // for line()
 typedef struct {
-  long step_count;
-  long delta;  // number of steps to move
+  long step_count;  // current motor position, in steps.
+  long delta;  // steps
+  long delta_mm;  // mm
   long absdelta;
   int dir;
-  float delta_normalized;
 } SegmentAxis;
 
 
 typedef struct {
   SegmentAxis a[NUM_MOTORS+NUM_SERVOS];
 
-  float distance;  // mm
-  int steps_total;  // steps
+  float distance;         // mm
+  float nominal_speed;    // mm/s
+  float entry_speed;      // mm/s
+  float entry_speed_max;  // mm/s
+  float acceleration;     // mm/sec^2
 
-  int steps_taken;  // steps
-  int accel_until;  // steps
-  int decel_after;  // steps
-
-  float acceleration;  // acceleration mm/sec^2
-  unsigned short acceleration_steps_per_s2;  // acceleration steps/sec^2
-
-  float nominal_speed;  // mm/s
-  unsigned short nominal_rate;  // steps/s
+  int32_t steps_total;    // steps
+  int32_t steps_taken;    // steps
+  int32_t accel_until;    // steps
+  int32_t decel_after;    // steps
   
-  unsigned short entry_speed;  // mm/s
-  unsigned short entry_speed_max;  // mm/s
-  unsigned short exit_speed;  // mm/s
+  int32_t nominal_rate;   // steps/s
+  int32_t entry_rate;     // steps/s
+  int32_t exit_rate;      // steps/s
+  int32_t acceleration_steps_per_s2;  // steps/s^2
   
   char nominal_length_flag;
   char recalculate_flag;
