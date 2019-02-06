@@ -144,7 +144,7 @@
 //------------------------------------------------------------------------------
 // EEPROM MEMORY MAP
 //------------------------------------------------------------------------------
-#define EEPROM_VERSION          8    // Increment when adding new variables
+#define FIRMWARE_VERSION        9    // Increment when adding new variables
 #define ADDR_VERSION            0                          // 0..255 (1 byte)
 #define ADDR_UUID               (ADDR_VERSION+1)           // long - 4 bytes
 #define ADDR_LIMITS             (ADDR_UUID+4)              // float - 4 bytes

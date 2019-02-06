@@ -23,10 +23,10 @@ typedef struct {
 
 // for line()
 typedef struct {
-  long step_count;  // current motor position, in steps.
-  long delta_steps;  // steps
-  long delta_mm;  // mm
-  long absdelta;
+  int32_t step_count;  // current motor position, in steps.
+  int32_t delta_steps;  // steps
+  int32_t delta_mm;  // mm
+  uint32_t absdelta;
   int dir;
 } SegmentAxis;
 

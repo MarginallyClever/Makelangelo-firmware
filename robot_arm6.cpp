@@ -91,7 +91,7 @@ void robot_findHome() {
 
   int homeDirections[NUM_MOTORS] = {HOME_DIR_0,HOME_DIR_1,HOME_DIR_2,HOME_DIR_3,HOME_DIR_4,HOME_DIR_5};
   
-  char i;
+  uint8_t i;
   // for each stepper,
   for (i = 0; i < NUM_MOTORS; ++i) {
     Serial.print("Homing ");

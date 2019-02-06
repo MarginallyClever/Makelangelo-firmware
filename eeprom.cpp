@@ -17,7 +17,7 @@
  */
 void EEPROM_writeLong(int ee, long value) {
   byte* p = (byte*)(void*)&value;
-  for (int i = 0; i < sizeof(value); i++)
+  for (uint16_t i = 0; i < sizeof(value); i++)
   EEPROM.write(ee++, *p++);
 }
 
@@ -28,7 +28,7 @@ void EEPROM_writeLong(int ee, long value) {
 float EEPROM_readLong(int ee) {
   long value = 0;
   byte* p = (byte*)(void*)&value;
-  for (int i = 0; i < sizeof(value); i++)
+  for (uint16_t i = 0; i < sizeof(value); i++)
   *p++ = EEPROM.read(ee++);
   return value;
 }
@@ -159,10 +159,10 @@ void loadCalibration() {
  */
 void loadConfig() {
   char versionNumber = loadVersion();
-  if( versionNumber != EEPROM_VERSION ) {
-    // If not the current EEPROM_VERSION or the EEPROM_VERSION is sullied (i.e. unknown data)
+  if( versionNumber != FIRMWARE_VERSION ) {
+    // If not the current FIRMWARE_VERSION or the FIRMWARE_VERSION is sullied (i.e. unknown data)
     // Update the version number
-    EEPROM.write(ADDR_VERSION,EEPROM_VERSION);
+    EEPROM.write(ADDR_VERSION,FIRMWARE_VERSION);
 #if MAKELANGELO_HARDWARE_VERSION == 5 || MAKELANGELO_HARDWARE_VERSION == 6
     adjustDimensions(50,-50,-32.5,32.5);
     saveCalibration();

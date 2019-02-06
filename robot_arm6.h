@@ -26,19 +26,19 @@
 #define NUM_SERVOS           (1)
 #define NUM_TOOLS            (1)
 
-#define MAX_FEEDRATE         (40000.0)  // depends on timer interrupt & hardware
-#define MIN_FEEDRATE         (100)
+#define MAX_FEEDRATE         (400.0)  // depends on timer interrupt & hardware
+#define MIN_FEEDRATE         (0)
 #define MAX_JERK             (5.0)
-#define DEFAULT_FEEDRATE     (15000.0)
-#define DEFAULT_ACCELERATION (1500)
+#define DEFAULT_FEEDRATE     (100.0)
+#define DEFAULT_ACCELERATION (500)
 
 //#define HAS_LCD
 #define HAS_SD
 
 #if MACHINE_HARDWARE_VERSION==6
 
-#define MOTOR_MICROSTEPS_EXT      (16.0*200.0)  // motor full steps * microstepping setting
-#define MOTOR_MICROSTEPS_MID      (16.0*400.0)  // motor full steps * microstepping setting
+#define MOTOR_MICROSTEPS_EXT      ((1.0*200.0))  // motor full steps * microstepping setting
+#define MOTOR_MICROSTEPS_MID      ((1.0*400.0))  // motor full steps * microstepping setting
 
 #define NEMA17_CYCLOID_GEARBOX_RATIO (40.0)
 #define ELBOW_DOWNGEAR_RATIO         (30.0/14.0)
