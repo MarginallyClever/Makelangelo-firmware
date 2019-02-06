@@ -34,7 +34,7 @@
 #define MIN_ACCELERATION     (0.0)
 #define DEFAULT_ACCELERATION (180.0)
 
-#define MAX_JERK             (1.0)
+#define MAX_JERK             (10.0)
 
 
 #if MACHINE_HARDWARE_VERSION == 5
