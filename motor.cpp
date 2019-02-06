@@ -413,8 +413,8 @@ void segment_update_trapezoid(Segment *s, const float &entry_factor, const float
   if (!s->busy) {
     s->accel_until = accelerate_steps;
     s->decel_after = accelerate_steps + plateau_steps;
-    s->entry_rate = intial_rate;
-    s->exit_rate  = final_rate;
+    s->initial_rate = intial_rate;
+    s->final_rate  = final_rate;
   }
   CRITICAL_SECTION_END
 }
@@ -493,9 +493,9 @@ void describe_segments() {
     Serial.print(F("\t"));   Serial.print(next->nominal_speed);
     Serial.print(F("\t"));   Serial.print(next->entry_speed_max);
     
-    Serial.print(F("\t"));   Serial.print(next->entry_rate);
+    Serial.print(F("\t"));   Serial.print(next->initial_rate);
     Serial.print(F("\t"));   Serial.print(next->nominal_rate);
-    Serial.print(F("\t"));   Serial.print(next->exit_rate);
+    Serial.print(F("\t"));   Serial.print(next->final_rate);
     
     Serial.print(F("\t"));   Serial.print(next->accel_until);
     Serial.print(F("\t"));   Serial.print(coast);
@@ -617,6 +617,68 @@ FORCE_INLINE unsigned short calc_timer(uint32_t desired_freq_hz, uint8_t*loops) 
 }
 
 
+#define A(CODE) " " CODE "\n\t"
+
+// intRes = longIn1 * longIn2 >> 24
+// uses:
+// A[tmp] to store 0
+// B[tmp] to store bits 16-23 of the 48bit result. The top bit is used to round the two byte result.
+// note that the lower two bytes and the upper byte of the 48bit result are not calculated.
+// this can cause the result to be out by one as the lower bytes may cause carries into the upper ones.
+// B A are bits 24-39 and are the returned value
+// C B A is longIn1
+// D C B A is longIn2
+//
+static FORCE_INLINE uint16_t MultiU24X32toH16(uint32_t longIn1, uint32_t longIn2) {
+  register uint8_t tmp1;
+  register uint8_t tmp2;
+  register uint16_t intRes;
+  __asm__ __volatile__(
+    A("clr %[tmp1]")
+    A("mul %A[longIn1], %B[longIn2]")
+    A("mov %[tmp2], r1")
+    A("mul %B[longIn1], %C[longIn2]")
+    A("movw %A[intRes], r0")
+    A("mul %C[longIn1], %C[longIn2]")
+    A("add %B[intRes], r0")
+    A("mul %C[longIn1], %B[longIn2]")
+    A("add %A[intRes], r0")
+    A("adc %B[intRes], r1")
+    A("mul %A[longIn1], %C[longIn2]")
+    A("add %[tmp2], r0")
+    A("adc %A[intRes], r1")
+    A("adc %B[intRes], %[tmp1]")
+    A("mul %B[longIn1], %B[longIn2]")
+    A("add %[tmp2], r0")
+    A("adc %A[intRes], r1")
+    A("adc %B[intRes], %[tmp1]")
+    A("mul %C[longIn1], %A[longIn2]")
+    A("add %[tmp2], r0")
+    A("adc %A[intRes], r1")
+    A("adc %B[intRes], %[tmp1]")
+    A("mul %B[longIn1], %A[longIn2]")
+    A("add %[tmp2], r1")
+    A("adc %A[intRes], %[tmp1]")
+    A("adc %B[intRes], %[tmp1]")
+    A("lsr %[tmp2]")
+    A("adc %A[intRes], %[tmp1]")
+    A("adc %B[intRes], %[tmp1]")
+    A("mul %D[longIn2], %A[longIn1]")
+    A("add %A[intRes], r0")
+    A("adc %B[intRes], r1")
+    A("mul %D[longIn2], %B[longIn1]")
+    A("add %B[intRes], r0")
+    A("clr r1")
+      : [intRes] "=&r" (intRes),
+        [tmp1] "=&r" (tmp1),
+        [tmp2] "=&r" (tmp2)
+      : [longIn1] "d" (longIn1),
+        [longIn2] "d" (longIn2)
+      : "cc"
+  );
+  return intRes;
+}
+
 /**
    Process all line segments in the ring buffer.  Uses bresenham's line algorithm to move all motors.
 */
@@ -658,14 +720,14 @@ ISR(TIMER1_COMPA_vect) {
       servos[0].write(working_seg->a[NUM_MOTORS].step_count);
 #endif
 
-      start_feed_rate = working_seg->entry_rate;
-      end_feed_rate = working_seg->exit_rate;
+      start_feed_rate = working_seg->initial_rate;
+      end_feed_rate = working_seg->final_rate;
       current_feed_rate = start_feed_rate;
-      current_acceleration = working_seg->acceleration;
+      current_acceleration = working_seg->acceleration_rate;
       accel_until = working_seg->accel_until;
       decel_after = working_seg->decel_after;
-      time_decelerating = 0;
       time_accelerating = 0;
+      time_decelerating = 0;
       isr_nominal_rate = 0;
 
       // defererencing some data so the loop runs faster.
@@ -784,13 +846,18 @@ ISR(TIMER1_COMPA_vect) {
     // accel
     uint32_t interval;
     if ( steps_taken <= accel_until ) {
-      current_feed_rate = start_feed_rate + ((current_acceleration * time_accelerating ) /10000);
+      current_feed_rate = start_feed_rate + MultiU24X32toH16( time_accelerating, current_acceleration );
       if (current_feed_rate > working_seg->nominal_rate) {
         current_feed_rate = working_seg->nominal_rate;
       }
       interval = calc_timer(current_feed_rate, &isr_step_multiplier);
       time_accelerating += interval;
       OCR1A = interval;
+      /*
+      Serial.print("A\t");   
+      Serial.print(current_feed_rate);
+      Serial.print("\t");   
+      Serial.println(isr_step_multiplier);//*/
       /*
       Serial.print("A >> ");   Serial.print(interval);
       Serial.print("\t");      Serial.print(isr_step_multiplier);
@@ -800,13 +867,18 @@ ISR(TIMER1_COMPA_vect) {
       Serial.print(" * ");     Serial.print(time_accelerating);
       Serial.println();//*/
     } else if ( steps_taken > decel_after ) {
-      uint32_t end_feed_rate = current_feed_rate - ((current_acceleration * time_decelerating ) /10000);
-      if ( end_feed_rate < working_seg->exit_rate ) {
-        end_feed_rate = working_seg->exit_rate;
+      uint32_t end_feed_rate = current_feed_rate - MultiU24X32toH16( time_decelerating, current_acceleration );
+      if ( end_feed_rate < working_seg->final_rate ) {
+        end_feed_rate = working_seg->final_rate;
       }
       interval = calc_timer(end_feed_rate, &isr_step_multiplier);
       time_decelerating += interval;
       OCR1A = interval;
+      /*
+      Serial.print("D\t");   
+      Serial.print(end_feed_rate);
+      Serial.print("\t");   
+      Serial.println(isr_step_multiplier);//*/
       /*
       Serial.print("D >> ");  Serial.print(interval);
       Serial.print("\t");     Serial.print(isr_step_multiplier);
@@ -820,6 +892,11 @@ ISR(TIMER1_COMPA_vect) {
         isr_nominal_rate = calc_timer(working_seg->nominal_rate, &isr_step_multiplier);
       }
       OCR1A = isr_nominal_rate;
+      /*
+      Serial.print("C\t");   
+      Serial.print(working_seg->nominal_rate);
+      Serial.print("\t");   
+      Serial.println(isr_step_multiplier);//*/
       /*
       Serial.print("C >> ");  Serial.println(working_seg->nominal_rate);
       //Serial.print("\t");  Serial.print(interval);
@@ -936,6 +1013,7 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
   }
   new_seg.acceleration_steps_per_s2 = accel;
   new_seg.acceleration = accel / steps_per_mm;
+  new_seg.acceleration_rate = (uint32_t)(accel * (4096.0f * 4096.0f / (TIMER_RATE)));
   new_seg.steps_taken = 0;
 
   // TODO explain this

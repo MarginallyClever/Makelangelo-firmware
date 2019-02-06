@@ -164,6 +164,7 @@
 #define MAX_COUNTER           (65536L)
 // time passed with no instruction?  Make sure PC knows we are waiting.
 #define TIMEOUT_OK            (1000)
+#define TIMER_RATE            ((CLOCK_FREQ)/8)
 
 // optimize code, please
 #define FORCE_INLINE         __attribute__((always_inline)) inline

@@ -40,15 +40,16 @@ typedef struct {
   float entry_speed_max;  // mm/s
   float acceleration;     // mm/sec^2
 
-  int32_t steps_total;    // steps
-  int32_t steps_taken;    // steps
-  int32_t accel_until;    // steps
-  int32_t decel_after;    // steps
+  uint32_t steps_total;    // steps
+  uint32_t steps_taken;    // steps
+  uint32_t accel_until;    // steps
+  uint32_t decel_after;    // steps
   
-  int32_t nominal_rate;   // steps/s
-  int32_t entry_rate;     // steps/s
-  int32_t exit_rate;      // steps/s
-  int32_t acceleration_steps_per_s2;  // steps/s^2
+  uint32_t nominal_rate;   // steps/s
+  uint32_t initial_rate;     // steps/s
+  uint32_t final_rate;      // steps/s
+  uint32_t acceleration_steps_per_s2;  // steps/s^2
+  uint32_t acceleration_rate;  // 
   
   char nominal_length_flag;
   char recalculate_flag;
