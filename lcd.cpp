@@ -36,7 +36,7 @@ LiquidCrystal lcd(LCD_PINS_RS, LCD_PINS_ENABLE, LCD_PINS_D4, LCD_PINS_D5, LCD_PI
 U8GLIB_ST7920_128X64_1X u8g(LCD_PINS_D4, LCD_PINS_ENABLE, LCD_PINS_RS);
 #endif
 
-long lcd_draw_delay  = 0;
+uint32_t lcd_draw_delay  = 0;
 
 int lcd_rot_old  = 0;
 int lcd_turn     = 0;

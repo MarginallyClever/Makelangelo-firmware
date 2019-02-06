@@ -281,7 +281,7 @@ void arc(float cx, float cy, float *destination, char clockwise, float new_feed_
 
   int i, segments = ceil( len * SEGMENT_PER_CM_ARC / 10 );
 
-  float n[NUM_AXIES], angle3, scale;
+  float n[NUM_AXIES], scale;
   float a, r;
 #if NUM_AXIES>2
   float sz = axies[2].pos;
@@ -632,7 +632,7 @@ char checkLineNumberAndCRCisOK() {
 */
 void parseMessage() {
 #ifdef HAS_LCD
-  int i, j = 0;
+  uint16_t i;
   for (i = 0; i < strlen(serialBuffer); ++i) {
     if ((serialBuffer[i] == 'M' || serialBuffer[i] == 'm') &&
         serialBuffer[i + 1] == '1' &&
@@ -645,7 +645,7 @@ void parseMessage() {
   }
 
   // wipe previous message
-  for (int j = LCD_MESSAGE_LENGTH / 2; j < LCD_MESSAGE_LENGTH; ++j) {
+  for (uint16_t j = LCD_MESSAGE_LENGTH / 2; j < LCD_MESSAGE_LENGTH; ++j) {
     lcd_message[j] = ' ';
   }
 
@@ -657,13 +657,13 @@ void parseMessage() {
   }
 
   // preserve message for display
-  int top = min(LCD_MESSAGE_LENGTH, MAX_BUF);
+  uint16_t top = min(LCD_MESSAGE_LENGTH, MAX_BUF);
 
   char *buf = serialBuffer + i;
   while (*buf == ' ') ++buf; // eat whitespace
 
   i = LCD_MESSAGE_LENGTH / 2;
-  while (isPrintable(*buf) && (*buf) != '\r' && (*buf) != '\n' && i < LCD_MESSAGE_LENGTH) {
+  while (isPrintable(*buf) && (*buf) != '\r' && (*buf) != '\n' && i < top) {
     lcd_message[i] = *buf;
     ++i;
     buf++;
@@ -746,7 +746,7 @@ void adjustPinState() {
 */
 void parseBeep() {
   int ms = parseNumber('P', 250);
-  int freq = parseNumber('S', 60);
+  //int freq = parseNumber('S', 60);
 
 #ifdef HAS_LCD
   digitalWrite(BEEPER, HIGH);
