@@ -24,7 +24,7 @@ typedef struct {
 // for line()
 typedef struct {
   long step_count;  // current motor position, in steps.
-  long delta;  // steps
+  long delta_steps;  // steps
   long delta_mm;  // mm
   long absdelta;
   int dir;

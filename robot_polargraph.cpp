@@ -6,6 +6,7 @@
 
 #include "configure.h"
 #include "robot_polargraph.h"
+#include "eeprom.h"
 
 #if MACHINE_STYLE == POLARGRAPH
 
@@ -256,7 +257,7 @@ void robot_findHome() {
   offset[2]=axies[2].pos;
   Serial.print(F("Homing to "));  Serial.print  (axies[0].homePos);
   Serial.print(',');              Serial.println(axies[1].homePos);
-  lineSafe(offset, feed_rate);
+  lineSafe(offset, DEFAULT_FEEDRATE);
   
   Serial.println(F("Done."));
 #endif // USER_LIMIT_SWITCH

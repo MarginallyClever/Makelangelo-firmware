@@ -13,6 +13,12 @@
 #include "MServo.h"
 #include "LCD.h"
 
+//------------------------------------------------------------------------------
+// DEFINES
+//------------------------------------------------------------------------------
+
+#define BLOCK_DELAY_FOR_1ST_MOVE 100
+#define MIN_STEP_RATE 120
 
 //------------------------------------------------------------------------------
 // GLOBALS
@@ -25,6 +31,7 @@ Segment line_segments[MAX_SEGMENTS];
 Segment *working_seg = NULL;
 volatile int current_segment = 0;
 volatile int last_segment = 0;
+int first_segment_delay;
 
 // used by timer1 to optimize interrupt inner loop
 int steps_total;
@@ -32,7 +39,7 @@ int steps_taken;
 int accel_until, decel_after;
 uint32_t current_feed_rate;
 uint32_t current_acceleration;
-uint32_t start_feed_rate, end_feed_rate;
+uint32_t start_feed_rate, end_feed_rate, isr_nominal_rate;
 uint32_t time_accelerating, time_decelerating;
 float max_xy_jerk = MAX_JERK;
 
@@ -87,13 +94,20 @@ float maxFeedRate[NUM_MOTORS];
 //------------------------------------------------------------------------------
 
 
+const int movesPlanned() {
+  return SEGMOD( last_segment - current_segment );
+}
+
 // for reasons I don't understand... if i put this method in the .h file i get compile errors.
 // so I put it here, which forces the externs.
-FORCE_INLINE Segment *segment_get_working() {
+FORCE_INLINE Segment *get_current_segment() {
   if (current_segment == last_segment ) return NULL;
-  working_seg = &line_segments[current_segment];
-  working_seg->busy = true;
-  return working_seg;
+  if(first_segment_delay>0) {
+    --first_segment_delay;
+    if(movesPlanned()>3) first_segment_delay=0;
+    return NULL;
+  }
+  return &line_segments[current_segment];
 }
 
 
@@ -219,6 +233,7 @@ void motor_setup() {
 #endif
 
   working_seg = NULL;
+  first_segment_delay = 0;
 
   // disable global interrupts
   noInterrupts();
@@ -286,64 +301,55 @@ void setPenAngle(int arg0) {
 
 
 
-void recalculate_reverse2(Segment *const current, const Segment *next) {
-  if (current == NULL || next == NULL) return;
+void recalculate_reverse_kernel(Segment *const current, const Segment *next) {
+  if (current == NULL) return;
 
-  float entry_speed_max = current->entry_speed_max;
-  if (current->entry_speed != entry_speed_max) {
+  const float entry_speed_max2 = current->entry_speed_max;
+  if (current->entry_speed != entry_speed_max2 || (next && next->recalculate_flag) ) {
     // If nominal length true, max junction speed is guaranteed to be reached. Only compute
     // for max allowable speed if block is decelerating and nominal length is false.
-    if (current->nominal_length_flag || entry_speed_max <= next->entry_speed ) {
-      current->entry_speed = entry_speed_max;
-    } else {
-      current->entry_speed =
-        min( entry_speed_max, max_speed_allowed(-current->acceleration, next->entry_speed, current->distance) );
+    const float new_entry_speed = current->nominal_length_flag 
+      ? entry_speed_max2 
+      : min( entry_speed_max2, max_speed_allowed(-current->acceleration, (next ? next->entry_speed : MIN_FEEDRATE), current->distance) );
+        
+    if (current->entry_speed != new_entry_speed ) {
+      current->entry_speed = new_entry_speed;
+      current->recalculate_flag = true;
     }
-    current->recalculate_flag = true;
   }
-}
-
-const int movesPlanned() {
-  return SEGMOD( last_segment + current_segment + MAX_SEGMENTS );
 }
 
 
 void recalculate_reverse() {
-  CRITICAL_SECTION_START
-  int s = last_segment;
-  CRITICAL_SECTION_END
+  if(last_segment==current_segment) return;
+  
+  int s = get_prev_segment(last_segment);
+  
+  Segment *current, *next=NULL;
+  while (s != current_segment) {
+    current = &line_segments[s];
 
-  int count = movesPlanned();
-  if (count > 3) {
-    Segment *blocks[3] = {NULL, NULL, NULL};
-    while (s != current_segment) {
-      s = get_prev_segment(s);
-      blocks[2] = blocks[1];
-      blocks[1] = blocks[0];
-      blocks[0] = &line_segments[s];
-      recalculate_reverse2(blocks[1], blocks[2]);
-    }
+    recalculate_reverse_kernel(current,next);
+    next = current;
+    s = get_prev_segment(s);
   }
 }
 
 
-void recalculate_forward2(const Segment *prev, Segment *const current) {
+void recalculate_forward_kernel(const Segment *prev, Segment *const current) {
   if (prev == NULL) return;
 
   // If the previous block is an acceleration block, but it is not long enough to complete the
   // full speed change within the block, we need to adjust the entry speed accordingly. Entry
   // speeds have already been reset, maximized, and reverse planned by reverse planner.
   // If nominal length is true, max junction speed is guaranteed to be reached. No need to recheck.
-  if (!prev->nominal_length_flag) {
-    if (prev->entry_speed < current->entry_speed) {
-      double entry_speed = min( current->entry_speed,
-                                max_speed_allowed(-prev->acceleration, prev->entry_speed, prev->distance) );
-
-      // Check for junction speed change
-      if (current->entry_speed != entry_speed) {
-        current->entry_speed = entry_speed;
-        current->recalculate_flag = true;
-      }
+  if (!prev->nominal_length_flag && prev->entry_speed < current->entry_speed) {
+    const float new_entry_speed2 = max_speed_allowed(-prev->acceleration, prev->entry_speed, prev->distance);
+    // Check for junction speed change
+    if (new_entry_speed2 < current->entry_speed) {
+      current->recalculate_flag = true;
+    } else {
+      current->entry_speed = new_entry_speed2;
     }
   }
 }
@@ -352,15 +358,13 @@ void recalculate_forward2(const Segment *prev, Segment *const current) {
 void recalculate_forward() {
   int s = current_segment;
 
-  Segment *blocks[3] = {NULL, NULL, NULL};
+  Segment *previous=NULL, *current;
   while (s != last_segment) {
+    current = &line_segments[s];
+    recalculate_forward_kernel(previous,current);
+    previous=current;
     s = get_next_segment(s);
-    blocks[0] = blocks[1];
-    blocks[1] = blocks[2];
-    blocks[2] = &line_segments[s];
-    recalculate_forward2(blocks[0], blocks[1]);
   }
-  recalculate_forward2(blocks[1], blocks[2]);
 }
 
 
@@ -370,31 +374,30 @@ float estimate_acceleration_distance(const float &initial_rate, const float &tar
 }
 
 
-int intersection_distance(const float &start_speed, const float &end_speed, const float &accel, const float &distance) {
-  return ( 2.0 * accel * distance - sq(start_speed) + sq(end_speed) ) / (4.0 * accel);
+int intersection_distance(const float &start_rate, const float &end_rate, const float &accel, const float &distance) {
+  return ( 2.0 * accel * distance - sq(start_rate) + sq(end_rate) ) / (4.0 * accel);
 }
 
-#define MIN_STEP_RATE 120
 
 void segment_update_trapezoid(Segment *s, const float &entry_factor, const float &exit_factor) {
   uint32_t intial_rate = ceil(s->nominal_rate * entry_factor);
   uint32_t final_rate  = ceil(s->nominal_rate * exit_factor );
 
   if (intial_rate < MIN_STEP_RATE) intial_rate = MIN_STEP_RATE;
-  if (final_rate < MIN_STEP_RATE) final_rate = MIN_STEP_RATE;
+  if (final_rate  < MIN_STEP_RATE) final_rate  = MIN_STEP_RATE;
 
-  int32_t accel = s->acceleration_steps_per_s2;
-  int32_t accelerate_steps   =  ceil( estimate_acceleration_distance(intial_rate     , s->nominal_rate,  accel) );
-  int32_t deceleration_steps = floor( estimate_acceleration_distance(s->nominal_rate, final_rate      , -accel) );
-  int32_t plateau_steps = s->steps_total - accelerate_steps - deceleration_steps;
+  const int32_t accel = s->acceleration_steps_per_s2;
+  int32_t accelerate_steps =  ceil( estimate_acceleration_distance(intial_rate    , s->nominal_rate,  accel) );
+  int32_t decelerate_steps = floor( estimate_acceleration_distance(s->nominal_rate, final_rate     , -accel) );
+  int32_t plateau_steps = s->steps_total - accelerate_steps - decelerate_steps;
   if (plateau_steps < 0) {
     accelerate_steps = ceil( intersection_distance( intial_rate, final_rate, accel, s->steps_total ) );
-    accelerate_steps = max( accelerate_steps, 0 );
-    accelerate_steps = min( accelerate_steps, s->steps_total );
+    accelerate_steps = min( (uint32_t)max( accelerate_steps, 0 ), s->steps_total );
     plateau_steps = 0;
   }
   CRITICAL_SECTION_START
-  deceleration_steps = s->steps_total - plateau_steps - accelerate_steps;
+  /*
+  decelerate_steps = s->steps_total - plateau_steps - accelerate_steps;
   Serial.print("t entry_factor=");  Serial.print(entry_factor);
   Serial.print(" exit_factor=");  Serial.print(exit_factor);
   Serial.print(" accel=");  Serial.print(accel);
@@ -404,9 +407,9 @@ void segment_update_trapezoid(Segment *s, const float &entry_factor, const float
   Serial.print(" steps_total=");  Serial.print(s->steps_total);
   Serial.print(" accelerate_steps=");  Serial.print(accelerate_steps);
   Serial.print(" plateau_steps=");  Serial.print(plateau_steps);
-  Serial.print(" deceleration_steps=");  Serial.print(deceleration_steps);
+  Serial.print(" decelerate_steps=");  Serial.print(decelerate_steps);
   Serial.println();
-
+  */
   if (!s->busy) {
     s->accel_until = accelerate_steps;
     s->decel_after = accelerate_steps + plateau_steps;
@@ -419,54 +422,63 @@ void segment_update_trapezoid(Segment *s, const float &entry_factor, const float
 
 void recalculate_trapezoids() {
   int s = current_segment;
-  Segment *current;
+  Segment *current = NULL;
   Segment *next = NULL;
 
+  float current_entry_speed=0, next_entry_speed=0;
+
   while (s != last_segment) {
-    current = next;
     next = &line_segments[s];
+    next_entry_speed=next->entry_speed;
     if (current) {
       // Recalculate if current block entry or exit junction speed has changed.
-      if (current->recalculate_flag || next->recalculate_flag)
-      {
-        // NOTE: Entry and exit factors always > 0 by all previous logic operations.
-        float nom = current->nominal_speed;
-        segment_update_trapezoid(current, current->entry_speed / nom, next->entry_speed / nom);
-        current->recalculate_flag = false; // Reset current only to ensure next trapezoid is computed
+      if( current->recalculate_flag || next->recalculate_flag ) {
+        if(!current->busy) {
+          // NOTE: Entry and exit factors always > 0 by all previous logic operations.
+          const float inom = 1.0 / current->nominal_speed;
+          segment_update_trapezoid(current, current_entry_speed * inom, next_entry_speed * inom);
+        }
       }
+      current->recalculate_flag = false; // Reset current only to ensure next trapezoid is computed
     }
     s = get_next_segment(s);
+    current_entry_speed = next_entry_speed;
+    current = next;
   }
+  
   // Last/newest block in buffer. Make sure the last block always ends motion.
   if (next != NULL) {
-    float nom = next->nominal_speed;
-    segment_update_trapezoid(next, next->entry_speed / nom, MIN_FEEDRATE / nom);
+    const float inom = 1.0 / next->nominal_speed;
+    segment_update_trapezoid(next, next_entry_speed * inom, MIN_FEEDRATE * inom);
     next->recalculate_flag = false;
   }
 }
 
 
-void recalculate_acceleration() {
-  recalculate_reverse();
-  recalculate_forward();
-  recalculate_trapezoids();
-}
-
 void describe_segments() {
   CRITICAL_SECTION_START
+  /**/
   Serial.println("A = index");
-  Serial.println("B = start speed max");
+  Serial.println("B = distance");
   Serial.println("C = acceleration");
-  Serial.println("D = entry rate");
-  Serial.println("E = nominal rate");
-  Serial.println("F = exit rate");
-  Serial.println("G = accel steps");
-  Serial.println("H = coast steps");
-  Serial.println("I = decel steps");
-  Serial.println("J = total steps");
-  Serial.println("K = nominal?");
-  Serial.println("\nA\tB\tC\tD\tE\t\tF\tG\tH\tI\tJ\tK");
-  Serial.println("------------------------------------------------------------------------------------------");
+  
+  Serial.println("D = entry_speed");
+  Serial.println("E = nominal_speed");
+  Serial.println("F = entry_speed_max");
+  
+  Serial.println("G = entry rate");
+  Serial.println("H = nominal rate");
+  Serial.println("I = exit rate");
+  
+  Serial.println("J = accel_until");
+  Serial.println("K = coast steps");
+  Serial.println("L = decel steps");
+  
+  Serial.println("O = nominal?");
+  Serial.println("P = recalculate?");
+  Serial.println("Q = busy?");/**/
+  Serial.println("\nA\tB\tC\tD\tE\tF\t[G\tH\tI]\t[J\tK\tL]\tO\tP\tQ");
+  Serial.println("---------------------------------------------------------------------------------------------------------------------------");
 
   int s = current_segment;
   while (s != last_segment) {
@@ -474,19 +486,40 @@ void describe_segments() {
     int coast = next->decel_after - next->accel_until;
     int decel = next->steps_total - next->decel_after;
     Serial.print(s);
-    Serial.print(F("\t"));   Serial.print(next->entry_speed_max);
+    Serial.print(F("\t"));   Serial.print(next->distance);
     Serial.print(F("\t"));   Serial.print(next->acceleration);
+    
+    Serial.print(F("\t"));   Serial.print(next->entry_speed);
+    Serial.print(F("\t"));   Serial.print(next->nominal_speed);
+    Serial.print(F("\t"));   Serial.print(next->entry_speed_max);
+    
     Serial.print(F("\t"));   Serial.print(next->entry_rate);
     Serial.print(F("\t"));   Serial.print(next->nominal_rate);
     Serial.print(F("\t"));   Serial.print(next->exit_rate);
+    
     Serial.print(F("\t"));   Serial.print(next->accel_until);
     Serial.print(F("\t"));   Serial.print(coast);
     Serial.print(F("\t"));   Serial.print(decel);
-    Serial.print(F("\t"));   Serial.print(next->steps_total);
-    Serial.print(F("\t"));   Serial.println(next->nominal_length_flag != 0 ? 'Y' : 'N');
+    //Serial.print(F("\t"));   Serial.print(next->steps_total);
+    //Serial.print(F("\t"));   Serial.print(next->steps_taken);
+    
+    Serial.print(F("\t"));   Serial.print(next->nominal_length_flag != 0 ? 'Y' : 'N');
+    Serial.print(F("\t"));   Serial.print(next->recalculate_flag != 0 ? 'Y' : 'N');
+    Serial.print(F("\t"));   Serial.print(next->busy != 0 ? 'Y' : 'N');
+    Serial.println();
     s = get_next_segment(s);
   }
   CRITICAL_SECTION_END
+}
+
+
+void recalculate_acceleration() {
+  recalculate_reverse();
+  recalculate_forward();
+  recalculate_trapezoids();
+  
+  //Serial.println("**FINISHED**");
+  //describe_segments();
 }
 
 
@@ -589,11 +622,13 @@ FORCE_INLINE unsigned short calc_timer(uint32_t desired_freq_hz, uint8_t*loops) 
 */
 ISR(TIMER1_COMPA_vect) {
   // segment buffer empty? do nothing
-  if ( working_seg == NULL ) {
-    working_seg = segment_get_working();
+  if( working_seg == NULL ) {
+    working_seg = get_current_segment();
 
-    if ( working_seg != NULL ) {
+    if( working_seg != NULL ) {
       // New segment!
+      working_seg->busy = true;
+      
       // set the direction pins
       digitalWrite( MOTOR_0_DIR_PIN, working_seg->a[0].dir );
       global_step_dir_0 = (working_seg->a[0].dir == HIGH) ? 1 : -1;
@@ -627,8 +662,11 @@ ISR(TIMER1_COMPA_vect) {
       end_feed_rate = working_seg->exit_rate;
       current_feed_rate = start_feed_rate;
       current_acceleration = working_seg->acceleration;
+      accel_until = working_seg->accel_until;
+      decel_after = working_seg->decel_after;
       time_decelerating = 0;
       time_accelerating = 0;
+      isr_nominal_rate = 0;
 
       // defererencing some data so the loop runs faster.
       steps_total = working_seg->steps_total;
@@ -649,8 +687,6 @@ ISR(TIMER1_COMPA_vect) {
 #if NUM_MOTORS>5
       delta5 = working_seg->a[5].absdelta;      over5 = -(steps_total >> 1);
 #endif
-      accel_until = working_seg->accel_until;
-      decel_after = working_seg->decel_after;
       return;
     } else {
       OCR1A = 2000; // wait 1ms
@@ -736,49 +772,63 @@ ISR(TIMER1_COMPA_vect) {
       if (steps_taken >= steps_total) break;
     }
 
-    // accel
-    uint32_t interval;
-    if ( steps_taken <= accel_until ) {
-      //current_feed_rate = start_feed_rate + (current_acceleration * time_accelerating / 1000000);
-      current_feed_rate = start_feed_rate + (current_acceleration * time_accelerating);
-      if (current_feed_rate > working_seg->nominal_speed) {
-        current_feed_rate = working_seg->nominal_speed;
-      }
-      interval = calc_timer(current_feed_rate, &isr_step_multiplier);
-      time_accelerating += interval;
-      //Serial.print("A >> ");  Serial.print(current_feed_rate);
-      //Serial.print(" S");  Serial.print(start_feed_rate);
-      //Serial.print(" A");  Serial.print(current_acceleration);
-      //Serial.print(" T");  Serial.print(time_accelerating);
-      //Serial.println();
-      OCR1A = interval;
-    } else if ( steps_taken > decel_after ) {
-      //long end_feed_rate = current_feed_rate - (current_acceleration * time_decelerating / 1000000);
-      long end_feed_rate = current_feed_rate - (current_acceleration * time_decelerating);
-      if (end_feed_rate < current_feed_rate) {
-        end_feed_rate = current_feed_rate - end_feed_rate;
-        if ( end_feed_rate < working_seg->exit_rate ) end_feed_rate = working_seg->exit_rate;
-      } else {
-        end_feed_rate = working_seg->exit_rate;
-      }
-      interval = calc_timer(end_feed_rate, &isr_step_multiplier);
-      time_decelerating += interval;
-      //Serial.print("D >> ");  Serial.println(end_feed_rate);
-      OCR1A = interval;
-    } else {
-      interval = calc_timer(working_seg->nominal_rate, &isr_step_multiplier);
-      OCR1A = interval;
-      //Serial.print("C >> ");  Serial.println(working_seg->nominal_rate);
-    }
-
-    OCR1A = (OCR1A < (TCNT1 + 16)) ? (TCNT1 + 16) : OCR1A;
 
     // Is this segment done?
     if ( steps_taken >= steps_total ) {
       // Move on to next segment without wasting an interrupt tick.
       working_seg = NULL;
       current_segment = get_next_segment(current_segment);
+      return;
     }
+    
+    // accel
+    uint32_t interval;
+    if ( steps_taken <= accel_until ) {
+      current_feed_rate = start_feed_rate + ((current_acceleration * time_accelerating ) /10000);
+      if (current_feed_rate > working_seg->nominal_rate) {
+        current_feed_rate = working_seg->nominal_rate;
+      }
+      interval = calc_timer(current_feed_rate, &isr_step_multiplier);
+      time_accelerating += interval;
+      OCR1A = interval;
+      /*
+      Serial.print("A >> ");   Serial.print(interval);
+      Serial.print("\t");      Serial.print(isr_step_multiplier);
+      Serial.print("\t");      Serial.print(current_feed_rate);
+      Serial.print(" = ");     Serial.print(start_feed_rate);
+      Serial.print(" + ");     Serial.print(current_acceleration);
+      Serial.print(" * ");     Serial.print(time_accelerating);
+      Serial.println();//*/
+    } else if ( steps_taken > decel_after ) {
+      uint32_t end_feed_rate = current_feed_rate - ((current_acceleration * time_decelerating ) /10000);
+      if ( end_feed_rate < working_seg->exit_rate ) {
+        end_feed_rate = working_seg->exit_rate;
+      }
+      interval = calc_timer(end_feed_rate, &isr_step_multiplier);
+      time_decelerating += interval;
+      OCR1A = interval;
+      /*
+      Serial.print("D >> ");  Serial.print(interval);
+      Serial.print("\t");     Serial.print(isr_step_multiplier);
+      Serial.print("\t");     Serial.print(end_feed_rate);
+      Serial.print(" = ");     Serial.print(current_feed_rate);
+      Serial.print(" - ");     Serial.print(current_acceleration);
+      Serial.print(" * ");     Serial.print(time_decelerating);
+      Serial.println();//*/
+    } else {
+      if(isr_nominal_rate==0) {
+        isr_nominal_rate = calc_timer(working_seg->nominal_rate, &isr_step_multiplier);
+      }
+      OCR1A = isr_nominal_rate;
+      /*
+      Serial.print("C >> ");  Serial.println(working_seg->nominal_rate);
+      //Serial.print("\t");  Serial.print(interval);
+      //Serial.print("\t");     Serial.print(isr_step_multiplier);
+      Serial.print("\t");     Serial.print(current_feed_rate);
+      Serial.println();//*/
+    }
+
+    OCR1A = (OCR1A < (TCNT1 + 16)) ? (TCNT1 + 16) : OCR1A;
   }
 }
 
@@ -834,16 +884,16 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
   new_seg.busy = false;
   new_seg.distance = distance_mm;
   float inverse_distance_mm = 1.0 / new_seg.distance;
-  float inverse_mm_s = fr_mm_s * inverse_distance_mm;
+  float inverse_secs = fr_mm_s * inverse_distance_mm;
 
   // The axis that has the most steps will control the overall acceleration as per bresenham's algorithm.
   new_seg.steps_total = 0;
   for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
     new_seg.a[i].step_count = steps[i];
-    new_seg.a[i].delta = steps[i] - old_seg.a[i].step_count;
-    new_seg.a[i].delta_mm = new_seg.a[i].delta * THREAD_PER_STEP;
-    new_seg.a[i].dir = ( new_seg.a[i].delta < 0 ? HIGH : LOW );
-    new_seg.a[i].absdelta = abs(new_seg.a[i].delta);
+    new_seg.a[i].delta_steps = steps[i] - old_seg.a[i].step_count;
+    new_seg.a[i].delta_mm = new_seg.a[i].delta_steps * THREAD_PER_STEP;
+    new_seg.a[i].dir = ( new_seg.a[i].delta_steps < 0 ? HIGH : LOW );
+    new_seg.a[i].absdelta = abs(new_seg.a[i].delta_steps);
     if ( new_seg.steps_total < new_seg.a[i].absdelta ) {
       new_seg.steps_total = new_seg.a[i].absdelta;
     }
@@ -852,26 +902,13 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
   // No steps?  No work!  Stop now.
   if ( new_seg.steps_total == 0 ) return;
 
-  new_seg.nominal_speed = new_seg.distance * inverse_mm_s;
-  new_seg.nominal_rate = ceil(new_seg.steps_total * inverse_mm_s);
-
-  Serial.print("distance=");  Serial.println(new_seg.distance);
-  Serial.print("inverse_distance_mm=");  Serial.println(inverse_distance_mm);
-  Serial.print("inverse_mm_s=");  Serial.println(inverse_mm_s);
-  Serial.print("nominal_speed=");  Serial.println(new_seg.nominal_speed);
-  Serial.print("nominal_rate=");  Serial.println(new_seg.nominal_rate);
-  Serial.print("delta_mm=");
-  for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
-    if (i > 0) Serial.print(", ");
-    Serial.print(new_seg.a[i].delta_mm);
-  }
-  Serial.println();
+  new_seg.nominal_speed = new_seg.distance * inverse_secs;
+  new_seg.nominal_rate = ceil(new_seg.steps_total * inverse_secs);
 
   // Calculate the the speed limit for each axis
   float current_speed[NUM_MOTORS + NUM_SERVOS], speed_factor = 1.0;
-
   for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
-    current_speed[i] = new_seg.a[i].delta_mm * inverse_mm_s;
+    current_speed[i] = new_seg.a[i].delta_mm * inverse_secs;
     const float cs = fabs(current_speed[i]);
     //if(cs>max_feedrate_mm_s[i]) speed_factor = min (speed_factor, max_feedrate_mm_s[i]/cs);
     if (cs > MAX_FEEDRATE) speed_factor = min (speed_factor, MAX_FEEDRATE / cs);
@@ -888,25 +925,17 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
   const float steps_per_mm = new_seg.steps_total * inverse_distance_mm;
   uint32_t accel = ceil( acceleration * steps_per_mm );
 
-  const float max_acceleration_steps_per_s2 = MAX_ACCELERATION * steps_per_mm;
+  const float max_acceleration_steps_per_s2 = acceleration * steps_per_mm;
   for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
-    if (new_seg.a[i].delta && max_acceleration_steps_per_s2 < accel) {
-      const float comp = max_acceleration_steps_per_s2 * (float)new_seg.steps_total;
-      if (accel * (float)new_seg.a[i].delta > comp ) {
-        accel = comp / (float)new_seg.a[i].delta;
+    if (new_seg.a[i].delta_steps && max_acceleration_steps_per_s2 < accel) {
+      const float comp = (float)max_acceleration_steps_per_s2 * (float)new_seg.steps_total;
+      if ((float)accel * (float)new_seg.a[i].delta_steps > comp ) {
+        accel = comp / (float)new_seg.a[i].delta_steps;
       }
     }
   }
   new_seg.acceleration_steps_per_s2 = accel;
   new_seg.acceleration = accel / steps_per_mm;
-
-  Serial.print("speed_factor=");  Serial.println(speed_factor);
-  Serial.print("steps_per_mm=");  Serial.println(steps_per_mm);
-  Serial.print("accel=");  Serial.println(accel);
-  Serial.print("acceleration_steps_per_s2=");  Serial.println(new_seg.acceleration_steps_per_s2);
-  Serial.print("acceleration=");  Serial.println(new_seg.acceleration);
-  Serial.print("acceleration original=");  Serial.println(acceleration);
-
   new_seg.steps_taken = 0;
 
   // TODO explain this
@@ -921,39 +950,32 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
         if (jerk * safe_speed > mjerk) safe_speed = mjerk / jerk;
       } else {
         ++limited;
-        safe_speed = maxj;
+        safe_speed *= maxj / jerk;
       }
     }
   }
-
-  Serial.print("safe_speed=");  Serial.println(safe_speed);
-  Serial.print("limited=");  Serial.println(limited, DEC);
 
   // what is the maximum starting speed for this segment?
   float vmax_junction = MIN_FEEDRATE;
 
   int movesQueued = movesPlanned();
-  if (movesQueued > 1 && previous_safe_speed > 0.0001) {
+  if (movesQueued > 0 && previous_safe_speed > 0.0001) {
     // Estimate a maximum velocity allowed at a joint of two successive segments.
     // If this maximum velocity allowed is lower than the minimum of the entry / exit safe velocities,
     // then the machine is not coasting anymore and the safe entry / exit velocities shall be used.
 
     // The junction velocity will be shared between successive segments. Limit the junction velocity to their minimum.
-    bool prev_speed_larger = previous_nominal_speed > new_seg.nominal_speed;
-    float smaller_speed_factor = prev_speed_larger
-                                 ? (new_seg.nominal_speed / previous_nominal_speed)
-                                 : (previous_nominal_speed / new_seg.nominal_speed);
     // Pick the smaller of the nominal speeds. Higher speed shall not be achieved at the junction during coasting.
-    vmax_junction = prev_speed_larger ? new_seg.nominal_speed : previous_nominal_speed;
+    vmax_junction = min(new_seg.nominal_speed, previous_nominal_speed);
+    const float smaller_speed_factor = vmax_junction / previous_nominal_speed;
     // Factor to multiply the previous / current nominal velocities to get componentwise limited velocities.
-    float v_factor = 1.f;
+    float v_factor = 1.0f;
     limited = 0;
     // Now limit the jerk in all axes.
     for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
       // Limit an axis. We have to differentiate: coasting, reversal of an axis, full stop.
-      float v_exit = previous_speed[i];
+      float v_exit = previous_speed[i] * smaller_speed_factor;
       float v_entry = current_speed[i];
-      if (prev_speed_larger) v_exit *= smaller_speed_factor;
       if (limited) {
         v_exit *= v_factor;
         v_entry *= v_factor;
@@ -961,10 +983,10 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
 
       // Calculate jerk depending on whether the axis is coasting in the same direction or reversing.
       const float jerk = (v_exit > v_entry)
-                         ? //                                  coasting             axis reversal
-                         ( (v_entry > 0.f || v_exit < 0.f) ? (v_exit - v_entry) : max(v_exit, -v_entry) )
-                         : // v_exit <= v_entry                coasting             axis reversal
-                         ( (v_entry < 0.f || v_exit > 0.f) ? (v_entry - v_exit) : max(-v_exit, v_entry) );
+                         ? //                            coasting             axis reversal
+                         ( (v_entry > 0 || v_exit < 0) ? (v_exit - v_entry) : max(v_exit, -v_entry) )
+                         : // v_exit <= v_entry          coasting             axis reversal
+                         ( (v_entry < 0 || v_exit > 0) ? (v_entry - v_exit) : max(-v_exit, v_entry) );
 
       if (jerk > MAX_JERK) {
         v_factor *= MAX_JERK / jerk;
@@ -987,16 +1009,11 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
 
 #if NUM_SERVOS>0
   // come to a stop for entering or exiting a Z move
-  //if( new_seg.a[NUM_SERVOS].delta != 0 || old_seg.a[NUM_SERVOS].delta != 0 ) allowable_speed = MIN_FEEDRATE;
+  //if( new_seg.a[NUM_SERVOS].delta_steps != 0 || old_seg.a[NUM_SERVOS].delta_steps != 0 ) allowable_speed = MIN_FEEDRATE;
 #endif
-
-  Serial.print("vmax_junction=");  Serial.println(vmax_junction);
-  Serial.print("allowable_speed=");  Serial.println(allowable_speed);
-  Serial.print("nominal_speed=");  Serial.println(new_seg.nominal_speed);
 
   new_seg.entry_speed_max = vmax_junction;
   new_seg.entry_speed = min(vmax_junction, allowable_speed);
-
   new_seg.nominal_length_flag = ( allowable_speed >= new_seg.nominal_speed );
   new_seg.recalculate_flag = true;
 
@@ -1009,10 +1026,37 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
   // when should we accelerate and decelerate in this segment?
   segment_update_trapezoid(&new_seg, new_seg.entry_speed / new_seg.nominal_speed, (float)MIN_FEEDRATE / new_seg.nominal_speed);
 
+  if (current_segment == last_segment ) {
+    first_segment_delay = BLOCK_DELAY_FOR_1ST_MOVE;
+  }
   last_segment = next_segment;
 
   recalculate_acceleration();
-  //describe_segments();
+  /*
+  Serial.print("distance=");  Serial.println(new_seg.distance);
+  Serial.print("acceleration original=");  Serial.println(acceleration);
+  Serial.print("nominal_speed=");  Serial.println(new_seg.nominal_speed);
+
+  Serial.print("inverse_distance_mm=");  Serial.println(inverse_distance_mm);
+  Serial.print("inverse_secs=");  Serial.println(inverse_secs);
+  Serial.print("nominal_rate=");  Serial.println(new_seg.nominal_rate);
+  Serial.print("delta_mm=");
+  for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
+    if (i > 0) Serial.print(", ");
+    Serial.print(new_seg.a[i].delta_mm);
+  }
+  Serial.println();
+  Serial.print("speed_factor=");  Serial.println(speed_factor);
+  Serial.print("steps_per_mm=");  Serial.println(steps_per_mm);
+  Serial.print("accel=");  Serial.println(accel);
+  Serial.print("acceleration_steps_per_s2=");  Serial.println(new_seg.acceleration_steps_per_s2);
+  Serial.print("acceleration=");  Serial.println(new_seg.acceleration);
+  Serial.print("limited=");  Serial.println(limited, DEC);
+  Serial.print("nominal_speed=");  Serial.println(new_seg.nominal_speed);
+  Serial.print("vmax_junction=");  Serial.println(vmax_junction);
+  Serial.print("allowable_speed=");  Serial.println(allowable_speed);
+  Serial.print("safe_speed=");  Serial.println(safe_speed);
+  //*/
 }
 
 

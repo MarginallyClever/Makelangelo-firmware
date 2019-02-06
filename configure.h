@@ -31,7 +31,7 @@
 //#define ARM5            12
 #define ARM6            13
 
-#define MACHINE_STYLE TRADITIONALXY  // Change this
+#define MACHINE_STYLE POLARGRAPH  // Change this
 
 #include "robot_polargraph.h"
 #include "robot_traditionalxy.h"
@@ -158,6 +158,7 @@
 //------------------------------------------------------------------------------
 // TIMERS
 //------------------------------------------------------------------------------
+
 // for timer interrupt control
 #define CLOCK_FREQ            (16000000L)
 #define MAX_COUNTER           (65536L)
@@ -167,6 +168,11 @@
 // optimize code, please
 #define FORCE_INLINE         __attribute__((always_inline)) inline
 
+// TODO a guess.  use real math here!
+// https://reprap.org/wiki/Step_rates
+// 0.9deg stepper, 20-tooth GT2 pulley, 1/16 microstepping = 160 steps/mm, 1500mm/s = 240000 steps/s
+#define CLOCK_MAX_STEP_FREQUENCY (240000)
+#define CLOCK_MIN_STEP_FREQUENCY (CLOCK_FREQ/500000U)
 
 #ifndef CRITICAL_SECTION_START
   #define CRITICAL_SECTION_START  unsigned char _sreg = SREG;  cli();
@@ -194,6 +200,7 @@ typedef struct {
 
 extern float feed_rate;
 extern float acceleration;
+extern float step_delay;
 extern int robot_uid;
 extern Axis axies[NUM_AXIES];
 extern float calibrateRight;
@@ -201,6 +208,8 @@ extern float calibrateLeft;
 extern char serialBuffer[MAX_BUF + 1]; // Serial buffer
 extern int sofar;                      // Serial buffer progress
 
+extern void pause(const long us);
+extern void findStepDelay();
 extern void IK(const float *const axies, long *motorStepArray);
 extern int FK(long *motorStepArray,float *axies);
 extern void robot_findHome();
@@ -211,5 +220,7 @@ extern void teleport(float *pos);
 extern void lineSafe(float *pos, float new_feed_rate);
 extern void get_end_plus_offset(float *results);
 extern void set_tool_offset(int toolID, float *pos);
+extern void reportCalibration();
+extern void where();
 
 #endif // CONFIGURE_H

@@ -24,12 +24,12 @@
 #define NUM_TOOLS            (1)
 
 #define MAX_FEEDRATE         (1500.0)  // depends on timer interrupt & hardware
-#define MIN_FEEDRATE         (5)
+#define MIN_FEEDRATE         (0.0)
 #define DEFAULT_FEEDRATE     (200.0)
 
-#define MAX_ACCELERATION     (2000)
-#define MIN_ACCELERATION     (2)
-#define DEFAULT_ACCELERATION (1000)
+#define MAX_ACCELERATION     (2000.0)
+#define MIN_ACCELERATION     (0.0)
+#define DEFAULT_ACCELERATION (1000.0)
 #define MAX_JERK             (5.0)
 
 #define SUBDIVIDE_LINES
