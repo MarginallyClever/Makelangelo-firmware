@@ -942,7 +942,7 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
   float safe_speed = new_seg.nominal_speed;
   char limited = 0;
   for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
-    const float jerk = fabs(current_speed[i]), maxj = MAX_JERK;
+    const float jerk = fabs(current_speed[i]), maxj = max_xy_jerk;
     if (jerk > maxj) {
       if (limited) {
         // TODO explain this
@@ -988,8 +988,8 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
                          : // v_exit <= v_entry          coasting             axis reversal
                          ( (v_entry < 0 || v_exit > 0) ? (v_entry - v_exit) : max(-v_exit, v_entry) );
 
-      if (jerk > MAX_JERK) {
-        v_factor *= MAX_JERK / jerk;
+      if (jerk > max_xy_jerk) {
+        v_factor *= max_xy_jerk / jerk;
         ++limited;
       }
     }

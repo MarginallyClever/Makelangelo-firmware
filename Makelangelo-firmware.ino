@@ -685,7 +685,14 @@ void adjustMaxFeedRates() {
   }
 }
 
-
+/**
+ * M205 X4.0
+ * adjust max jerk
+ */
+void parseAdvancedSettings() {
+  max_xy_jerk = parseNumber('X',max_xy_jerk);
+  max_xy_jerk = max(min(max_xy_jerk,MAX_JERK),0);
+}
 
 /**
    M226 P[a] S[b]
@@ -784,6 +791,7 @@ void processCommand() {
     case 110:  line_number = parseNumber('N', line_number);  break;
     case 114:  where();  break;
     case 117:  parseMessage();  break;
+    case 205:  parseAdvancedSettings();  break;
     case 226:  waitForPinState();  break;
     case 300:  parseBeep();  break;
     default:   break;
