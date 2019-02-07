@@ -847,6 +847,9 @@ void processCommand() {
       Serial.print(F("D14 "));
       Serial.println(MACHINE_STYLE_NAME);
       break;
+#if MACHINE_STYLE == STEWART
+    case 15:  stewartDemo();  break;
+#endif
     default:  break;
   }
 }
@@ -904,6 +907,7 @@ void jogMotors() {
   int i, j, amount;
 
   motor_engage();
+  findStepDelay();
 
   for (i = 0; i < NUM_MOTORS; ++i) {
     if (MotorNames[i] == 0) continue;
