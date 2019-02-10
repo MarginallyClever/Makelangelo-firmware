@@ -90,7 +90,6 @@ char readSwitches() {
 void setFeedRate(float v1) {
   if ( feed_rate != v1 ) {
     feed_rate = v1;
-    if (feed_rate > MAX_FEEDRATE) feed_rate = MAX_FEEDRATE;
     if (feed_rate < MIN_FEEDRATE) feed_rate = MIN_FEEDRATE;
 #ifdef VERBOSE
     Serial.print(F("F="));
@@ -106,16 +105,6 @@ void setFeedRate(float v1) {
 void pause(const long us) {
   delay(us / 1000);
   delayMicroseconds(us % 1000);
-}
-
-
-/**
-   print the current feed rate
-*/
-void printFeedRate() {
-  Serial.print(F("F"));
-  Serial.print(feed_rate);
-  Serial.print(F("steps/s"));
 }
 
 
@@ -221,8 +210,15 @@ void lineSafe(float *pos, float new_feed_rate) {
   for (i = 0; i < NUM_AXIES; ++i) {
     startPos[i] = axies[i].pos;
     delta[i] = destination[i] - startPos[i];
-    len += delta[i] * delta[i];
+    len += sq(delta[i]);
   }
+  
+#if MACHINE_STYLE == POLARGRAPH
+  // often SEGMENT_PER_CM_LINE is 10mm or 20mm.  but a servo movement can be 90-160=70, or 7 segments.  This is pretty nuts.
+  // discount the z movement from the subdivision to use less segments and (I hope) move the servo faster.
+  len -= sq(delta[2]);
+  delta[2] = 0;
+#endif
 
   len = sqrt(len);  //mm
   // @TODO what if some axies don't need subdividing?  like z axis on polargraph.
@@ -374,7 +370,9 @@ void where() {
     Serial.print(' ');
   }
 
-  printFeedRate();
+  Serial.print(F("F"));
+  Serial.print(feed_rate);
+  Serial.print(F("mm/s"));
 
   Serial.print(F(" A"  ));
   Serial.println(acceleration);
@@ -504,7 +502,7 @@ void parseLine() {
   acceleration = parseNumber('A', acceleration);
   acceleration = min(max(acceleration, MIN_ACCELERATION), MAX_ACCELERATION);
   float f = parseNumber('F', feed_rate);
-  f = min(max(f, MIN_FEEDRATE), MAX_FEEDRATE);
+  f = max(f, MIN_FEEDRATE);
 
   int i;
   float pos[NUM_AXIES];
@@ -527,7 +525,7 @@ void parseArc(int clockwise) {
   acceleration = parseNumber('A', acceleration);
   acceleration = min(max(acceleration, MIN_ACCELERATION), MAX_ACCELERATION);
   float f = parseNumber('F', feed_rate);
-  f = min(max(f, MIN_FEEDRATE), MAX_FEEDRATE);
+  f = max(f, MIN_FEEDRATE);
 
   int i;
   float pos[NUM_AXIES];
@@ -686,12 +684,12 @@ void adjustMaxFeedRates() {
 }
 
 /**
- * M205 X4.0
- * adjust max jerk
- */
+   M205 X4.0
+   adjust max jerk
+*/
 void parseAdvancedSettings() {
-  max_xy_jerk = parseNumber('X',max_xy_jerk);
-  max_xy_jerk = max(min(max_xy_jerk,MAX_JERK),0);
+  max_xy_jerk = parseNumber('X', max_xy_jerk);
+  max_xy_jerk = max(min(max_xy_jerk, MAX_JERK), 0);
 }
 
 /**
