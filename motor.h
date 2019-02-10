@@ -70,6 +70,7 @@ extern const char *AxisNames;
 extern const char *MotorNames;
 extern float maxFeedRate[NUM_MOTORS];
 extern float max_xy_jerk;
+extern float max_feedrate_mm_s[NUM_MOTORS+NUM_SERVOS];
 
 extern void motor_set_step_count(long *a);
 extern void wait_for_empty_segment_buffer();

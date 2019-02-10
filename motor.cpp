@@ -42,7 +42,7 @@ uint32_t current_acceleration;
 uint32_t start_feed_rate, end_feed_rate, isr_nominal_rate;
 uint32_t time_accelerating, time_decelerating;
 float max_xy_jerk = MAX_JERK;
-
+float max_feedrate_mm_s[NUM_MOTORS + NUM_SERVOS];
 uint8_t isr_step_multiplier = 1;
 
 int delta0;
@@ -182,12 +182,17 @@ void motor_setup() {
     // set the switch pin
     pinMode(motors[i].limit_switch_pin, INPUT);
     digitalWrite(motors[i].limit_switch_pin, HIGH);
-    maxFeedRate[i] = MAX_FEEDRATE;
   }
 
   long steps[NUM_MOTORS + NUM_SERVOS];
   memset(steps, 0, (NUM_MOTORS + NUM_SERVOS)*sizeof(long));
 
+  for (i = 0; i < NUM_MOTORS; ++i) {
+    max_feedrate_mm_s[i] = MAX_FEEDRATE;
+  }
+  for (i = NUM_MOTORS; i < NUM_MOTORS + NUM_SERVOS; ++i) {
+    max_feedrate_mm_s[i] = MAX_FEEDRATE;
+  }
 
   motor_set_step_count(steps);
 
@@ -987,8 +992,8 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
   for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
     current_speed[i] = new_seg.a[i].delta_mm * inverse_secs;
     const float cs = fabs(current_speed[i]);
-    //if(cs>max_feedrate_mm_s[i]) speed_factor = min (speed_factor, max_feedrate_mm_s[i]/cs);
-    if (cs > MAX_FEEDRATE) speed_factor = min (speed_factor, MAX_FEEDRATE / cs);
+    if(cs>max_feedrate_mm_s[i]) speed_factor = min (speed_factor, max_feedrate_mm_s[i]/cs);
+    //if (cs > MAX_FEEDRATE) speed_factor = min (speed_factor, MAX_FEEDRATE / cs);
   }
 
   if (speed_factor < 1.0) {
