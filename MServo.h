@@ -45,6 +45,8 @@
 #ifndef Servo_h
 #define Servo_h
 
+#ifndef ESP8266
+
 #include <avr/interrupt.h>
 #include <Arduino.h>
 #include <inttypes.h>
@@ -132,4 +134,6 @@ private:
    int8_t max;                       // maximum is this value times 4 added to MAX_PULSE_WIDTH
 };
 
-#endif
+#endif // ESP8266
+
+#endif // Servo_h

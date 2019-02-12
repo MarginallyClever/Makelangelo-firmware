@@ -45,6 +45,8 @@
 
 #include "MServo.h"
 
+#ifndef ESP8266
+
 #define usToTicks(_us)    (( clockCyclesPerMicrosecond()* _us) / 8)     // converts microseconds to tick (assumes prescale of 8)  // 12 Aug 2009
 #define ticksToUs(_ticks) (( (unsigned)_ticks * 8)/ clockCyclesPerMicrosecond() ) // converts from ticks back to microseconds
 
@@ -333,3 +335,6 @@ bool Servo::attached()
 {
   return servos[this->servoIndex].Pin.isActive ;
 }
+
+
+#endif // ESP8266

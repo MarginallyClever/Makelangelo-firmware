@@ -25,7 +25,9 @@
 //------------------------------------------------------------------------------
 
 Motor motors[NUM_MOTORS + NUM_SERVOS];
+#ifndef ESP8266
 Servo servos[NUM_SERVOS];
+#endif
 
 Segment line_segments[MAX_SEGMENTS];
 Segment *working_seg = NULL;
@@ -197,6 +199,7 @@ void motor_setup() {
   motor_set_step_count(steps);
 
   // setup servos
+#ifndef ESP8266
 #if NUM_SERVOS>0
   servos[0].attach(SERVO0_PIN);
 #endif
@@ -212,6 +215,7 @@ void motor_setup() {
 #if NUM_SERVOS>4
   servos[4].attach(SERVO4_PIN);
 #endif
+#endif  // ESP8266
 
   current_segment = 0;
   last_segment = 0;
@@ -296,9 +300,13 @@ void setPenAngle(int arg0) {
 
   axies[2].pos = arg0;
 
+#ifndef ESP8266
 #if NUM_SERVOS>0
   servos[0].write(arg0);
 #endif
+#else // ESP8266
+  
+#endif // ESP8266
 
 #endif
 }
