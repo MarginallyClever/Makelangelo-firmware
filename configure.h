@@ -162,7 +162,10 @@
 //------------------------------------------------------------------------------
 
 // for timer interrupt control
+#ifndef CLOCK_FREQ
 #define CLOCK_FREQ            (16000000L)
+#endif // CLOCK_FREQ
+
 #define MAX_COUNTER           (65536L)
 // time passed with no instruction?  Make sure PC knows we are waiting.
 #define TIMEOUT_OK            (1000)
