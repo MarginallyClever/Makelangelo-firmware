@@ -14,6 +14,16 @@
 #include "LCD.h"
 
 //------------------------------------------------------------------------------
+// MACROS
+//------------------------------------------------------------------------------
+
+#ifdef ESP8266
+#define CLOCK_ADJUST(x) {  timer0_write(ESP.getCycleCount() + (long) (80000L*(x)) );  }  // microseconds
+#else
+#define CLOCK_ADJUST(x) {  OCR1A = (x);  }  // microseconds
+#endif
+
+//------------------------------------------------------------------------------
 // DEFINES
 //------------------------------------------------------------------------------
 
@@ -199,10 +209,14 @@ void motor_setup() {
   motor_set_step_count(steps);
 
   // setup servos
-#ifndef ESP8266
 #if NUM_SERVOS>0
+#ifdef ESP8266
+  pinMode(SERVO0_PIN,OUTPUT);
+#else
   servos[0].attach(SERVO0_PIN);
+#endif  // ESP8266
 #endif
+
 #if NUM_SERVOS>1
   servos[1].attach(SERVO1_PIN);
 #endif
@@ -215,7 +229,6 @@ void motor_setup() {
 #if NUM_SERVOS>4
   servos[4].attach(SERVO4_PIN);
 #endif
-#endif  // ESP8266
 
   current_segment = 0;
   last_segment = 0;
@@ -246,6 +259,11 @@ void motor_setup() {
 
   // disable global interrupts
   noInterrupts();
+#ifdef ESP8266
+  timer0_isr_init();
+  timer0_attachInterrupt(itr);
+  CLOCK_ADJUST(2000);
+#else
   // set entire TCCR1A register to 0
   TCCR1A = 0;
   // set the overflow clock to 0
@@ -258,6 +276,7 @@ void motor_setup() {
   TCCR1B = (TCCR1B & ~(0x07 << CS10)) | (2 << CS10);
   // enable timer compare interrupt
   TIMSK1 |= (1 << OCIE1A);
+#endif  // ESP8266
 
   interrupts();  // enable global interrupts
 }
@@ -300,15 +319,15 @@ void setPenAngle(int arg0) {
 
   axies[2].pos = arg0;
 
-#ifndef ESP8266
 #if NUM_SERVOS>0
+#ifdef ESP8266
+  analogWrite(SERVO0_PIN,arg0);
+#else
   servos[0].write(arg0);
-#endif
-#else // ESP8266
-  
-#endif // ESP8266
+#endif  // ESP8266
+#endif // NUM_SERVOS>0
 
-#endif
+#endif  // NUM_AXIES>=3
 }
 
 
@@ -695,7 +714,12 @@ static FORCE_INLINE uint16_t MultiU24X32toH16(uint32_t longIn1, uint32_t longIn2
 /**
    Process all line segments in the ring buffer.  Uses bresenham's line algorithm to move all motors.
 */
+
+#ifdef ESP8266
+void itr() {
+#else
 ISR(TIMER1_COMPA_vect) {
+#endif
   // segment buffer empty? do nothing
   if( working_seg == NULL ) {
     working_seg = get_current_segment();
@@ -730,8 +754,12 @@ ISR(TIMER1_COMPA_vect) {
 #endif
 
 #if NUM_SERVOS>0
+#ifdef ESP8266
+      analogWrite(SERVO0_PIN,working_seg->a[NUM_MOTORS].step_count);
+#else
       servos[0].write(working_seg->a[NUM_MOTORS].step_count);
-#endif
+#endif  // ESP8266
+#endif  // NUM_SERVOS>0
 
       start_feed_rate = working_seg->initial_rate;
       end_feed_rate = working_seg->final_rate;
@@ -764,7 +792,7 @@ ISR(TIMER1_COMPA_vect) {
 #endif
       return;
     } else {
-      OCR1A = 2000; // wait 1ms
+      CLOCK_ADJUST(2000); // wait 1ms
       return;
     }
   }
@@ -865,7 +893,7 @@ ISR(TIMER1_COMPA_vect) {
       }
       interval = calc_timer(current_feed_rate, &isr_step_multiplier);
       time_accelerating += interval;
-      OCR1A = interval;
+      CLOCK_ADJUST(interval);
       /*
       Serial.print("A\t");   
       Serial.print(current_feed_rate);
@@ -886,7 +914,7 @@ ISR(TIMER1_COMPA_vect) {
       }
       interval = calc_timer(end_feed_rate, &isr_step_multiplier);
       time_decelerating += interval;
-      OCR1A = interval;
+      CLOCK_ADJUST(interval);
       /*
       Serial.print("D\t");   
       Serial.print(end_feed_rate);
@@ -904,7 +932,7 @@ ISR(TIMER1_COMPA_vect) {
       if(isr_nominal_rate==0) {
         isr_nominal_rate = calc_timer(working_seg->nominal_rate, &isr_step_multiplier);
       }
-      OCR1A = isr_nominal_rate;
+      CLOCK_ADJUST(isr_nominal_rate);
       /*
       Serial.print("C\t");   
       Serial.print(working_seg->nominal_rate);
@@ -917,8 +945,9 @@ ISR(TIMER1_COMPA_vect) {
       Serial.print("\t");     Serial.print(current_feed_rate);
       Serial.println();//*/
     }
-
+#ifndef ESP8266
     OCR1A = (OCR1A < (TCNT1 + 16)) ? (TCNT1 + 16) : OCR1A;
+#endif // ESP8266
   }
 }
 
