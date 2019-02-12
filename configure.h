@@ -66,13 +66,15 @@
 #define BOARD_RAMPS        2
 #define BOARD_SANGUINOLULU 3
 #define BOARD_TEENSYLU     4
+#define BOARD_WEMOS        5
 
-#define MOTHERBOARD BOARD_RUMBA  // change this
+#define MOTHERBOARD BOARD_WEMOS  // change this
 
 #include "board_rumba.h"
 #include "board_ramps.h"
 #include "board_sanguinolulu.h"
 #include "board_teensylu.h"
+#include "board_wemos.h"
 
 //------------------------------------------------------------------------------
 // MOTOR DETAILS

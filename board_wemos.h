@@ -43,6 +43,8 @@
 #define WIFI_SSID_NAME "CSIS VAN #1"    // WiFi AP SSID Name
 #define WIFI_SSID_PASS "TDPJYGZEDH123"  // WiFi AP SSID Password
 
+#define CLOCK_FREQ            (80000000L)
+
 #undef HAS_SD  
 #undef HAS_LCD  
 

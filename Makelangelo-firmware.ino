@@ -50,6 +50,17 @@ long line_number = 0;           // make sure commands arrive in order
 float tool_offset[NUM_TOOLS][NUM_AXIES];
 int current_tool = 0;
 
+#ifdef HAS_WIFI
+
+#include <ESP8266WiFi.h>
+#include <WiFiUdp.h>
+const char* SSID_NAME = WIFI_SSID_NAME;
+const char* SSID_PASS = WIFI_SSID_PASS;
+WiFiUDP port;
+unsigned int localPort = 9999;
+
+#endif  // HAS_WIFI
+
 
 
 
@@ -333,6 +344,14 @@ void help() {
   Serial.println(F("       - display/update board dimensions."));
   Serial.println(F("As well as the following G-codes (http://en.wikipedia.org/wiki/G-code):"));
   Serial.println(F("G00,G01,G02,G03,G04,G28,G90,G91,G92,M18,M114"));
+#ifdef HAS_WIFI
+  // Print the IP address
+  Serial.print("Use this URL to connect: http://");
+  Serial.print(WiFi.softAPIP());
+  Serial.print(':');
+  Serial.print(localPort);
+  Serial.println('/');
+#endif  // HAS_WIFI
 }
 
 
@@ -1019,6 +1038,19 @@ void tools_setup() {
 void setup() {
   // start communications
   Serial.begin(BAUD);
+  
+#ifdef HAS_WIFI
+  // Start WIFI
+  WiFi.mode(WIFI_AP);
+  Serial.println( WiFi.softAP(SSID_NAME, SSID_PASS) ? "WIFI OK":"WIFI FAILED" );
+  Serial.println( port.begin(localPort) ? "UDP OK" : "UDP FAILED" );
+  // Print the IP address
+  Serial.print("Use this URL to connect: http://");
+  Serial.print(WiFi.softAPIP());
+  Serial.print(':');
+  Serial.print(localPort);
+  Serial.println('/');
+#endif  // HAS_WIFI
 
   SD_setup();
   LCD_setup();
@@ -1075,6 +1107,20 @@ void Serial_listen() {
       parser_ready();
     }
   }
+
+#ifdef HAS_WIFI
+  int packetSize = port.parsePacket();
+  if (packetSize) {
+    int len = port.read(serialBuffer, MAX_BUF);
+    sofar = len;
+    if (len > 0) serialBuffer[len - 1] = 0;
+    Serial.println(serialBuffer);
+    processCommand();
+    port.beginPacket(port.remoteIP(), port.remotePort());
+    port.write("ok\r\n");
+    port.endPacket();
+  }
+#endif  // HAS_WIFI
 }
 
 
