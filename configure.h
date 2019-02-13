@@ -163,32 +163,27 @@
 
 #ifdef ESP8266
 
-#define CLOCK_FREQ            (80000000L)
-#define MAX_COUNTER           (4294967295L)  // 32 bits
-
-// optimize code, please
-#define FORCE_INLINE         __attribute__((always_inline)) inline
-
-
-#define CRITICAL_SECTION_START  noInterrupts();
-#define CRITICAL_SECTION_END    interrupts();
+  #define CLOCK_FREQ            (80000000L)
+  #define MAX_COUNTER           (4294967295L)  // 32 bits
+  #define CRITICAL_SECTION_START  noInterrupts();
+  #define CRITICAL_SECTION_END    interrupts();
 
 #else  // ESP8266
 
-// for timer interrupt control
-#define CLOCK_FREQ            (16000000L)
-#define MAX_COUNTER           (65536L)  // 16 bits
-
-// optimize code, please
-#define FORCE_INLINE         __attribute__((always_inline)) inline
-
-#ifndef CRITICAL_SECTION_START
-  #define CRITICAL_SECTION_START  unsigned char _sreg = SREG;  cli();
-  #define CRITICAL_SECTION_END    SREG = _sreg;
-#endif //CRITICAL_SECTION_START
+  // for timer interrupt control
+  #define CLOCK_FREQ            (16000000L)
+  #define MAX_COUNTER           (65536L)  // 16 bits
+  #ifndef CRITICAL_SECTION_START
+    #define CRITICAL_SECTION_START  unsigned char _sreg = SREG;  cli();
+    #define CRITICAL_SECTION_END    SREG = _sreg;
+  #endif //CRITICAL_SECTION_START
 
 #endif  // ESP8266
 
+#define TIMER_RATE            ((CLOCK_FREQ)/8)
+
+// optimize code, please
+#define FORCE_INLINE         __attribute__((always_inline)) inline
 
 // TODO a guess.  use real math here!
 // https://reprap.org/wiki/Step_rates
@@ -196,6 +191,7 @@
 #define CLOCK_MAX_STEP_FREQUENCY (240000)
 #define CLOCK_MIN_STEP_FREQUENCY (CLOCK_FREQ/500000U)
 
+#define TIMEOUT_OK (1000)
 
 //------------------------------------------------------------------------------
 // STRUCTURES

@@ -46,7 +46,7 @@
 #define CLOCK_FREQ            (80000000L)
 
 #undef HAS_SD  
-#undef HAS_LCD  
+#undef HAS_LCD
 
 #endif // MOTHERBOARD == BOARD_WEMOS 
 

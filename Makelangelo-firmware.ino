@@ -519,9 +519,9 @@ void parseLine() {
   float offset[NUM_AXIES];
   get_end_plus_offset(offset);
   acceleration = parseNumber('A', acceleration);
-  acceleration = min(max(acceleration, MIN_ACCELERATION), MAX_ACCELERATION);
+  acceleration = min(max(acceleration, (float)MIN_ACCELERATION), (float)MAX_ACCELERATION);
   float f = parseNumber('F', feed_rate);
-  f = max(f, MIN_FEEDRATE);
+  f = max(f, (float)MIN_FEEDRATE);
 
   int i;
   float pos[NUM_AXIES];
@@ -542,9 +542,9 @@ void parseArc(int clockwise) {
   float offset[NUM_AXIES];
   get_end_plus_offset(offset);
   acceleration = parseNumber('A', acceleration);
-  acceleration = min(max(acceleration, MIN_ACCELERATION), MAX_ACCELERATION);
+  acceleration = min(max(acceleration, (float)MIN_ACCELERATION), (float)MAX_ACCELERATION);
   float f = parseNumber('F', feed_rate);
-  f = max(f, MIN_FEEDRATE);
+  f = max(f, (float)MIN_FEEDRATE);
 
   int i;
   float pos[NUM_AXIES];
@@ -708,7 +708,7 @@ void adjustMaxFeedRates() {
 */
 void parseAdvancedSettings() {
   max_xy_jerk = parseNumber('X', max_xy_jerk);
-  max_xy_jerk = max(min(max_xy_jerk, MAX_JERK), 0);
+  max_xy_jerk = max(min(max_xy_jerk, (float)MAX_JERK), (float)0);
 }
 
 /**
@@ -769,10 +769,10 @@ void adjustPinState() {
    play frequency a for b milliseconds
 */
 void parseBeep() {
+#ifdef HAS_LCD
   int ms = parseNumber('P', 250);
   //int freq = parseNumber('S', 60);
 
-#ifdef HAS_LCD
   digitalWrite(BEEPER, HIGH);
   delay(ms);
   digitalWrite(BEEPER, LOW);
@@ -1057,11 +1057,16 @@ void setup() {
 
   loadConfig();
 
+  Serial.println("A1");
   motor_setup();
+  Serial.println("A2");
   motor_engage();
+  Serial.println("A3");
   tools_setup();
+  Serial.println("A4");
   findStepDelay();
 
+  Serial.println('B');
   //easyPWM_init();
 
   // initialize the plotter position.
@@ -1078,6 +1083,7 @@ void setup() {
 #endif
   setFeedRate(DEFAULT_FEEDRATE);
 
+  Serial.println('C');
   robot_setup();
 
   // display the help at startup.

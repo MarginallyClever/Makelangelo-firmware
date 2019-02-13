@@ -117,9 +117,9 @@ const int movesPlanned() {
 // so I put it here, which forces the externs.
 FORCE_INLINE Segment *get_current_segment() {
   if (current_segment == last_segment ) return NULL;
-  if(first_segment_delay>0) {
+  if (first_segment_delay > 0) {
     --first_segment_delay;
-    if(movesPlanned()>3) first_segment_delay=0;
+    if (movesPlanned() > 3) first_segment_delay = 0;
     return NULL;
   }
   return &line_segments[current_segment];
@@ -187,16 +187,19 @@ void motor_setup() {
   motors[5].limit_switch_pin = MOTOR_5_LIMIT_SWITCH_PIN;
 #endif
 
+  Serial.println("  set pins");
+
   int i;
   for (i = 0; i < NUM_MOTORS; ++i) {
     // set the motor pin & scale
-    pinMode(motors[i].step_pin, OUTPUT);
-    pinMode(motors[i].dir_pin, OUTPUT);
-    pinMode(motors[i].enable_pin, OUTPUT);
+    //pinMode(motors[i].step_pin, OUTPUT);
+    //pinMode(motors[i].dir_pin, OUTPUT);
+    //pinMode(motors[i].enable_pin, OUTPUT);
+    delay(100);
 
     // set the switch pin
-    pinMode(motors[i].limit_switch_pin, INPUT);
-    digitalWrite(motors[i].limit_switch_pin, HIGH);
+    //pinMode(motors[i].limit_switch_pin, INPUT);
+    //digitalWrite(motors[i].limit_switch_pin, HIGH);
   }
 
   long steps[NUM_MOTORS + NUM_SERVOS];
@@ -209,12 +212,13 @@ void motor_setup() {
     max_feedrate_mm_s[i] = MAX_FEEDRATE;
   }
 
+  Serial.println("  motor_set_step_count()");
   motor_set_step_count(steps);
 
   // setup servos
 #if NUM_SERVOS>0
 #ifdef ESP8266
-  pinMode(SERVO0_PIN,OUTPUT);
+  pinMode(SERVO0_PIN, OUTPUT);
 #else
   servos[0].attach(SERVO0_PIN);
 #endif  // ESP8266
@@ -260,6 +264,8 @@ void motor_setup() {
   working_seg = NULL;
   first_segment_delay = 0;
 
+  Serial.println("  interrupt setup");
+
   // disable global interrupts
   noInterrupts();
 #ifdef ESP8266
@@ -282,6 +288,8 @@ void motor_setup() {
 #endif  // ESP8266
 
   interrupts();  // enable global interrupts
+
+  Serial.println("  done");
 }
 
 
@@ -324,7 +332,7 @@ void setPenAngle(int arg0) {
 
 #if NUM_SERVOS>0
 #ifdef ESP8266
-  analogWrite(SERVO0_PIN,arg0);
+  analogWrite(SERVO0_PIN, arg0);
 #else
   servos[0].write(arg0);
 #endif  // ESP8266
@@ -343,10 +351,10 @@ void recalculate_reverse_kernel(Segment *const current, const Segment *next) {
   if (current->entry_speed != entry_speed_max2 || (next && next->recalculate_flag) ) {
     // If nominal length true, max junction speed is guaranteed to be reached. Only compute
     // for max allowable speed if block is decelerating and nominal length is false.
-    const float new_entry_speed = current->nominal_length_flag 
-      ? entry_speed_max2 
-      : min( entry_speed_max2, max_speed_allowed(-current->acceleration, (next ? next->entry_speed : MIN_FEEDRATE), current->distance) );
-        
+    const float new_entry_speed = current->nominal_length_flag
+                                  ? entry_speed_max2
+                                  : min( entry_speed_max2, max_speed_allowed(-current->acceleration, (next ? next->entry_speed : MIN_FEEDRATE), current->distance) );
+
     if (current->entry_speed != new_entry_speed ) {
       current->entry_speed = new_entry_speed;
       current->recalculate_flag = true;
@@ -356,15 +364,15 @@ void recalculate_reverse_kernel(Segment *const current, const Segment *next) {
 
 
 void recalculate_reverse() {
-  if(last_segment==current_segment) return;
-  
+  if (last_segment == current_segment) return;
+
   int s = get_prev_segment(last_segment);
-  
-  Segment *current, *next=NULL;
+
+  Segment *current, *next = NULL;
   while (s != current_segment) {
     current = &line_segments[s];
 
-    recalculate_reverse_kernel(current,next);
+    recalculate_reverse_kernel(current, next);
     next = current;
     s = get_prev_segment(s);
   }
@@ -393,11 +401,11 @@ void recalculate_forward_kernel(const Segment *prev, Segment *const current) {
 void recalculate_forward() {
   int s = current_segment;
 
-  Segment *previous=NULL, *current;
+  Segment *previous = NULL, *current;
   while (s != last_segment) {
     current = &line_segments[s];
-    recalculate_forward_kernel(previous,current);
-    previous=current;
+    recalculate_forward_kernel(previous, current);
+    previous = current;
     s = get_next_segment(s);
   }
 }
@@ -432,18 +440,18 @@ void segment_update_trapezoid(Segment *s, const float &entry_factor, const float
   }
   CRITICAL_SECTION_START
   /*
-  decelerate_steps = s->steps_total - plateau_steps - accelerate_steps;
-  Serial.print("t entry_factor=");  Serial.print(entry_factor);
-  Serial.print(" exit_factor=");  Serial.print(exit_factor);
-  Serial.print(" accel=");  Serial.print(accel);
-  Serial.print(" intial_rate=");  Serial.print(intial_rate);
-  Serial.print(" nominal_rate=");  Serial.print(s->nominal_rate);
-  Serial.print(" final_rate=");  Serial.print(final_rate);
-  Serial.print(" steps_total=");  Serial.print(s->steps_total);
-  Serial.print(" accelerate_steps=");  Serial.print(accelerate_steps);
-  Serial.print(" plateau_steps=");  Serial.print(plateau_steps);
-  Serial.print(" decelerate_steps=");  Serial.print(decelerate_steps);
-  Serial.println();
+    decelerate_steps = s->steps_total - plateau_steps - accelerate_steps;
+    Serial.print("t entry_factor=");  Serial.print(entry_factor);
+    Serial.print(" exit_factor=");  Serial.print(exit_factor);
+    Serial.print(" accel=");  Serial.print(accel);
+    Serial.print(" intial_rate=");  Serial.print(intial_rate);
+    Serial.print(" nominal_rate=");  Serial.print(s->nominal_rate);
+    Serial.print(" final_rate=");  Serial.print(final_rate);
+    Serial.print(" steps_total=");  Serial.print(s->steps_total);
+    Serial.print(" accelerate_steps=");  Serial.print(accelerate_steps);
+    Serial.print(" plateau_steps=");  Serial.print(plateau_steps);
+    Serial.print(" decelerate_steps=");  Serial.print(decelerate_steps);
+    Serial.println();
   */
   if (!s->busy) {
     s->accel_until = accelerate_steps;
@@ -460,15 +468,15 @@ void recalculate_trapezoids() {
   Segment *current = NULL;
   Segment *next = NULL;
 
-  float current_entry_speed=0, next_entry_speed=0;
+  float current_entry_speed = 0, next_entry_speed = 0;
 
   while (s != last_segment) {
     next = &line_segments[s];
-    next_entry_speed=next->entry_speed;
+    next_entry_speed = next->entry_speed;
     if (current) {
       // Recalculate if current block entry or exit junction speed has changed.
-      if( current->recalculate_flag || next->recalculate_flag ) {
-        if(!current->busy) {
+      if ( current->recalculate_flag || next->recalculate_flag ) {
+        if (!current->busy) {
           // NOTE: Entry and exit factors always > 0 by all previous logic operations.
           const float inom = 1.0 / current->nominal_speed;
           segment_update_trapezoid(current, current_entry_speed * inom, next_entry_speed * inom);
@@ -480,7 +488,7 @@ void recalculate_trapezoids() {
     current_entry_speed = next_entry_speed;
     current = next;
   }
-  
+
   // Last/newest block in buffer. Make sure the last block always ends motion.
   if (next != NULL) {
     const float inom = 1.0 / next->nominal_speed;
@@ -496,19 +504,19 @@ void describe_segments() {
   Serial.println("A = index");
   Serial.println("B = distance");
   Serial.println("C = acceleration");
-  
+
   Serial.println("D = entry_speed");
   Serial.println("E = nominal_speed");
   Serial.println("F = entry_speed_max");
-  
+
   Serial.println("G = entry rate");
   Serial.println("H = nominal rate");
   Serial.println("I = exit rate");
-  
+
   Serial.println("J = accel_until");
   Serial.println("K = coast steps");
   Serial.println("L = decel steps");
-  
+
   Serial.println("O = nominal?");
   Serial.println("P = recalculate?");
   Serial.println("Q = busy?");/**/
@@ -523,21 +531,21 @@ void describe_segments() {
     Serial.print(s);
     Serial.print(F("\t"));   Serial.print(next->distance);
     Serial.print(F("\t"));   Serial.print(next->acceleration);
-    
+
     Serial.print(F("\t"));   Serial.print(next->entry_speed);
     Serial.print(F("\t"));   Serial.print(next->nominal_speed);
     Serial.print(F("\t"));   Serial.print(next->entry_speed_max);
-    
+
     Serial.print(F("\t"));   Serial.print(next->initial_rate);
     Serial.print(F("\t"));   Serial.print(next->nominal_rate);
     Serial.print(F("\t"));   Serial.print(next->final_rate);
-    
+
     Serial.print(F("\t"));   Serial.print(next->accel_until);
     Serial.print(F("\t"));   Serial.print(coast);
     Serial.print(F("\t"));   Serial.print(decel);
     //Serial.print(F("\t"));   Serial.print(next->steps_total);
     //Serial.print(F("\t"));   Serial.print(next->steps_taken);
-    
+
     Serial.print(F("\t"));   Serial.print(next->nominal_length_flag != 0 ? 'Y' : 'N');
     Serial.print(F("\t"));   Serial.print(next->recalculate_flag != 0 ? 'Y' : 'N');
     Serial.print(F("\t"));   Serial.print(next->busy != 0 ? 'Y' : 'N');
@@ -552,7 +560,7 @@ void recalculate_acceleration() {
   recalculate_reverse();
   recalculate_forward();
   recalculate_trapezoids();
-  
+
   //Serial.println("**FINISHED**");
   //describe_segments();
 }
@@ -665,6 +673,9 @@ FORCE_INLINE unsigned short calc_timer(uint32_t desired_freq_hz, uint8_t*loops) 
 // D C B A is longIn2
 //
 static FORCE_INLINE uint16_t MultiU24X32toH16(uint32_t longIn1, uint32_t longIn2) {
+#ifdef ESP8266
+  uint16_t intRes = longIn1 * longIn2 >> 24;
+#else // ESP8266
   register uint8_t tmp1;
   register uint8_t tmp2;
   register uint16_t intRes;
@@ -704,13 +715,14 @@ static FORCE_INLINE uint16_t MultiU24X32toH16(uint32_t longIn1, uint32_t longIn2
     A("mul %D[longIn2], %B[longIn1]")
     A("add %B[intRes], r0")
     A("clr r1")
-      : [intRes] "=&r" (intRes),
-        [tmp1] "=&r" (tmp1),
-        [tmp2] "=&r" (tmp2)
-      : [longIn1] "d" (longIn1),
-        [longIn2] "d" (longIn2)
-      : "cc"
+    : [intRes] "=&r" (intRes),
+    [tmp1] "=&r" (tmp1),
+    [tmp2] "=&r" (tmp2)
+    : [longIn1] "d" (longIn1),
+    [longIn2] "d" (longIn2)
+    : "cc"
   );
+#endif // ESP8266
   return intRes;
 }
 
@@ -724,13 +736,13 @@ void itr() {
 ISR(TIMER1_COMPA_vect) {
 #endif
   // segment buffer empty? do nothing
-  if( working_seg == NULL ) {
+  if ( working_seg == NULL ) {
     working_seg = get_current_segment();
 
-    if( working_seg != NULL ) {
+    if ( working_seg != NULL ) {
       // New segment!
       working_seg->busy = true;
-      
+
       // set the direction pins
       digitalWrite( MOTOR_0_DIR_PIN, working_seg->a[0].dir );
       global_step_dir_0 = (working_seg->a[0].dir == HIGH) ? 1 : -1;
@@ -758,7 +770,7 @@ ISR(TIMER1_COMPA_vect) {
 
 #if NUM_SERVOS>0
 #ifdef ESP8266
-      analogWrite(SERVO0_PIN,working_seg->a[NUM_MOTORS].step_count);
+      analogWrite(SERVO0_PIN, working_seg->a[NUM_MOTORS].step_count);
 #else
       servos[0].write(working_seg->a[NUM_MOTORS].step_count);
 #endif  // ESP8266
@@ -886,7 +898,7 @@ ISR(TIMER1_COMPA_vect) {
       current_segment = get_next_segment(current_segment);
       return;
     }
-    
+
     // accel
     uint32_t interval;
     if ( steps_taken <= accel_until ) {
@@ -898,18 +910,18 @@ ISR(TIMER1_COMPA_vect) {
       time_accelerating += interval;
       CLOCK_ADJUST(interval);
       /*
-      Serial.print("A\t");   
-      Serial.print(current_feed_rate);
-      Serial.print("\t");   
-      Serial.println(isr_step_multiplier);//*/
+        Serial.print("A\t");
+        Serial.print(current_feed_rate);
+        Serial.print("\t");
+        Serial.println(isr_step_multiplier);//*/
       /*
-      Serial.print("A >> ");   Serial.print(interval);
-      Serial.print("\t");      Serial.print(isr_step_multiplier);
-      Serial.print("\t");      Serial.print(current_feed_rate);
-      Serial.print(" = ");     Serial.print(start_feed_rate);
-      Serial.print(" + ");     Serial.print(current_acceleration);
-      Serial.print(" * ");     Serial.print(time_accelerating);
-      Serial.println();//*/
+        Serial.print("A >> ");   Serial.print(interval);
+        Serial.print("\t");      Serial.print(isr_step_multiplier);
+        Serial.print("\t");      Serial.print(current_feed_rate);
+        Serial.print(" = ");     Serial.print(start_feed_rate);
+        Serial.print(" + ");     Serial.print(current_acceleration);
+        Serial.print(" * ");     Serial.print(time_accelerating);
+        Serial.println();//*/
     } else if ( steps_taken > decel_after ) {
       uint32_t end_feed_rate = current_feed_rate - MultiU24X32toH16( time_decelerating, current_acceleration );
       if ( end_feed_rate < working_seg->final_rate ) {
@@ -919,34 +931,34 @@ ISR(TIMER1_COMPA_vect) {
       time_decelerating += interval;
       CLOCK_ADJUST(interval);
       /*
-      Serial.print("D\t");   
-      Serial.print(end_feed_rate);
-      Serial.print("\t");   
-      Serial.println(isr_step_multiplier);//*/
+        Serial.print("D\t");
+        Serial.print(end_feed_rate);
+        Serial.print("\t");
+        Serial.println(isr_step_multiplier);//*/
       /*
-      Serial.print("D >> ");  Serial.print(interval);
-      Serial.print("\t");     Serial.print(isr_step_multiplier);
-      Serial.print("\t");     Serial.print(end_feed_rate);
-      Serial.print(" = ");     Serial.print(current_feed_rate);
-      Serial.print(" - ");     Serial.print(current_acceleration);
-      Serial.print(" * ");     Serial.print(time_decelerating);
-      Serial.println();//*/
+        Serial.print("D >> ");  Serial.print(interval);
+        Serial.print("\t");     Serial.print(isr_step_multiplier);
+        Serial.print("\t");     Serial.print(end_feed_rate);
+        Serial.print(" = ");     Serial.print(current_feed_rate);
+        Serial.print(" - ");     Serial.print(current_acceleration);
+        Serial.print(" * ");     Serial.print(time_decelerating);
+        Serial.println();//*/
     } else {
-      if(isr_nominal_rate==0) {
+      if (isr_nominal_rate == 0) {
         isr_nominal_rate = calc_timer(working_seg->nominal_rate, &isr_step_multiplier);
       }
       CLOCK_ADJUST(isr_nominal_rate);
       /*
-      Serial.print("C\t");   
-      Serial.print(working_seg->nominal_rate);
-      Serial.print("\t");   
-      Serial.println(isr_step_multiplier);//*/
+        Serial.print("C\t");
+        Serial.print(working_seg->nominal_rate);
+        Serial.print("\t");
+        Serial.println(isr_step_multiplier);//*/
       /*
-      Serial.print("C >> ");  Serial.println(working_seg->nominal_rate);
-      //Serial.print("\t");  Serial.print(interval);
-      //Serial.print("\t");     Serial.print(isr_step_multiplier);
-      Serial.print("\t");     Serial.print(current_feed_rate);
-      Serial.println();//*/
+        Serial.print("C >> ");  Serial.println(working_seg->nominal_rate);
+        //Serial.print("\t");  Serial.print(interval);
+        //Serial.print("\t");     Serial.print(isr_step_multiplier);
+        Serial.print("\t");     Serial.print(current_feed_rate);
+        Serial.println();//*/
     }
 #ifndef ESP8266
     OCR1A = (OCR1A < (TCNT1 + 16)) ? (TCNT1 + 16) : OCR1A;
@@ -1032,7 +1044,7 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
   for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
     current_speed[i] = new_seg.a[i].delta_mm * inverse_secs;
     const float cs = fabs(current_speed[i]);
-    if(cs>max_feedrate_mm_s[i]) speed_factor = min (speed_factor, max_feedrate_mm_s[i]/cs);
+    if (cs > max_feedrate_mm_s[i]) speed_factor = min (speed_factor, max_feedrate_mm_s[i] / cs);
     //if (cs > MAX_FEEDRATE) speed_factor = min (speed_factor, MAX_FEEDRATE / cs);
   }
 
@@ -1156,30 +1168,30 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
 
   recalculate_acceleration();
   /*
-  Serial.print("distance=");  Serial.println(new_seg.distance);
-  Serial.print("acceleration original=");  Serial.println(acceleration);
-  Serial.print("nominal_speed=");  Serial.println(new_seg.nominal_speed);
+    Serial.print("distance=");  Serial.println(new_seg.distance);
+    Serial.print("acceleration original=");  Serial.println(acceleration);
+    Serial.print("nominal_speed=");  Serial.println(new_seg.nominal_speed);
 
-  Serial.print("inverse_distance_mm=");  Serial.println(inverse_distance_mm);
-  Serial.print("inverse_secs=");  Serial.println(inverse_secs);
-  Serial.print("nominal_rate=");  Serial.println(new_seg.nominal_rate);
-  Serial.print("delta_mm=");
-  for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
+    Serial.print("inverse_distance_mm=");  Serial.println(inverse_distance_mm);
+    Serial.print("inverse_secs=");  Serial.println(inverse_secs);
+    Serial.print("nominal_rate=");  Serial.println(new_seg.nominal_rate);
+    Serial.print("delta_mm=");
+    for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
     if (i > 0) Serial.print(", ");
     Serial.print(new_seg.a[i].delta_mm);
-  }
-  Serial.println();
-  Serial.print("speed_factor=");  Serial.println(speed_factor);
-  Serial.print("steps_per_mm=");  Serial.println(steps_per_mm);
-  Serial.print("accel=");  Serial.println(accel);
-  Serial.print("acceleration_steps_per_s2=");  Serial.println(new_seg.acceleration_steps_per_s2);
-  Serial.print("acceleration=");  Serial.println(new_seg.acceleration);
-  Serial.print("limited=");  Serial.println(limited, DEC);
-  Serial.print("nominal_speed=");  Serial.println(new_seg.nominal_speed);
-  Serial.print("vmax_junction=");  Serial.println(vmax_junction);
-  Serial.print("allowable_speed=");  Serial.println(allowable_speed);
-  Serial.print("safe_speed=");  Serial.println(safe_speed);
-  //*/
+    }
+    Serial.println();
+    Serial.print("speed_factor=");  Serial.println(speed_factor);
+    Serial.print("steps_per_mm=");  Serial.println(steps_per_mm);
+    Serial.print("accel=");  Serial.println(accel);
+    Serial.print("acceleration_steps_per_s2=");  Serial.println(new_seg.acceleration_steps_per_s2);
+    Serial.print("acceleration=");  Serial.println(new_seg.acceleration);
+    Serial.print("limited=");  Serial.println(limited, DEC);
+    Serial.print("nominal_speed=");  Serial.println(new_seg.nominal_speed);
+    Serial.print("vmax_junction=");  Serial.println(vmax_junction);
+    Serial.print("allowable_speed=");  Serial.println(allowable_speed);
+    Serial.print("safe_speed=");  Serial.println(safe_speed);
+    //*/
 }
 
 

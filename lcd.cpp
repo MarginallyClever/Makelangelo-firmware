@@ -726,6 +726,7 @@ void LCD_refresh_display() {
 
 
 void LCD_main_menu() {
+#ifdef HAS_LCD
   lcd_dirty=1;
   
   MENU_START
@@ -762,11 +763,13 @@ void LCD_main_menu() {
   }
 #endif
   MENU_END
+#endif  // HAS_LCD
 }
 
 
 // display the current machine position and feed rate on the LCD.
 void LCD_status_menu() {
+#ifdef HAS_LCD
   MENU_START
 
   // on click go to the main menu
@@ -802,6 +805,7 @@ void LCD_status_menu() {
     //LCD_print("          ");
   //}
   MENU_END
+#endif  // HAS_LCD
 }
 
 
@@ -874,4 +878,4 @@ void LCD_drawSplash() {
   LCD_refresh_display();
   delay(2500);
 }
-#endif
+#endif  // HAS_LCD

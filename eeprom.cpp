@@ -84,7 +84,7 @@ void loadLimits() {
  * @param limits NUM_AXIES pairs of floats.  each pair is one float for max limit and one for min limit.
  */
 void adjustDimensions(float *limits) {
-  int i,j;
+  int i,j=0;
   int changed=0;
   float v;
   for(i=0;i<NUM_AXIES;++i) {

@@ -71,9 +71,9 @@
 extern char lcd_message[LCD_MESSAGE_LENGTH+1];
 extern uint8_t speed_adjust;
 
+#endif // HAS_LCD
+
 extern void LCD_update();
 extern void LCD_setup();
-
-#endif // HAS_LCD
 
 #endif // LCD_H
