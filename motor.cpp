@@ -329,16 +329,16 @@ void setPenAngle(int arg0) {
   if (arg0 > axies[2].limitMax) arg0 = axies[2].limitMax;
 
   axies[2].pos = arg0;
+#endif  // NUM_AXIES>=3
 
 #if NUM_SERVOS>0
-#ifdef ESP8266
+// this is commented out because compiler segfault for unknown reasons.
+//#ifndef ESP8266
+//  servos[0].write(arg0);
+//#else
   analogWrite(SERVO0_PIN, arg0);
-#else
-  servos[0].write(arg0);
-#endif  // ESP8266
+//#endif  // ESP8266
 #endif // NUM_SERVOS>0
-
-#endif  // NUM_AXIES>=3
 }
 
 

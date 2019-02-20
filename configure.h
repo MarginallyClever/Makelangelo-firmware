@@ -68,7 +68,7 @@
 #define BOARD_TEENSYLU     4
 #define BOARD_WEMOS        5
 
-#define MOTHERBOARD BOARD_WEMOS  // change this
+#define MOTHERBOARD BOARD_RUMBA  // change this
 
 #include "board_rumba.h"
 #include "board_ramps.h"
