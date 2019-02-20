@@ -3,8 +3,7 @@
 //------------------------------------------------------------------------------
 // Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
-// Copyright at end of file.  Please see
-// http://www.github.com/MarginallyClever/makelangeloFirmware for more information.
+// Please see http://www.github.com/MarginallyClever/makelangeloFirmware for more information.
 //------------------------------------------------------------------------------
 
 
@@ -84,10 +83,15 @@
 #define LCD_PINS_D6        27
 #define LCD_PINS_D7        29
 
+// Encoder rotation values
+#define BTN_EN1            31
+#define BTN_EN2            33
+#define BTN_ENC            35
+
 // SD card settings
-#define SDPOWER            31
-#define SDSS               33
-#define SDCARDDETECT       35
+#define SDPOWER            -1
+#define SDSS               53
+#define SDCARDDETECT       49
 
 #define KILL_PIN           41
 #endif

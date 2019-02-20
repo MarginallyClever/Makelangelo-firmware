@@ -1,13 +1,13 @@
 //------------------------------------------------------------------------------
 // Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
-// Copyright at end of file.  Please see
-// http://www.github.com/MarginallyClever/makelangeloFirmware for more information.
+// Please see http://www.github.com/MarginallyClever/makelangeloFirmware for more information.
 //------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------
 // INCLUDES
 //------------------------------------------------------------------------------
+#include "configure.h"
 #include "sdcard.h"
 #include <SD.h>
 
@@ -34,7 +34,7 @@ long sd_bytes_read;
 //------------------------------------------------------------------------------
 
 // initialize the SD card and print some info.
-void SD_init() {
+void SD_setup() {
 #ifdef HAS_SD
   pinMode(SDSS, OUTPUT);
   pinMode(SDCARDDETECT,INPUT);
@@ -86,8 +86,11 @@ void SD_check() {
     int c;
     while(sd_print_file.peek() != -1) {
       c=sd_print_file.read();
-      serialBuffer[sofar++]=c;
       sd_bytes_read++;
+      if(c=='\r') continue;
+      if(sofar<MAX_BUF) {
+        serialBuffer[sofar++]=c;
+      }/*
       if(c==';') {
         // eat to the end of the line
         while(sd_print_file.peek() != -1) {
@@ -95,15 +98,15 @@ void SD_check() {
           sd_bytes_read++;
           if(c=='\n' || c=='\r') break;
         }
-      }
-      if(c=='\n' || c=='\r') {
+      }*/
+      if(c=='\n') {
         // update the % visible on the LCD.
         sd_percent_complete = (float)sd_bytes_read * 100.0 / (float)sd_file_size;
 
         // end string
-        serialBuffer[sofar]=0;
+        serialBuffer[sofar-1]=0;
         // print for our benefit
-        Serial.println(serialBuffer);
+        //Serial.println(serialBuffer);
         // process command
         processCommand();
         // reset buffer for next line
@@ -114,6 +117,7 @@ void SD_check() {
     }
 
     if(sd_print_file.peek() == -1) {
+      Serial.println("EOF Drawing done.");
       sd_print_file.close();
       sd_printing_now=false;
       if(sd_inserted) {
@@ -127,7 +131,7 @@ void SD_check() {
 }
 
 
-void SD_StartPrintingFile(char *filename) {
+void SD_StartPrintingFile(const char *filename) {
 #ifdef HAS_SD
   sd_print_file=SD.open(filename);
   if(!sd_print_file) {
@@ -169,21 +173,3 @@ void SD_listFiles() {
   }
 #endif
 }
-
-
-/**
- * This file is part of makelangelo-firmware.
- *
- * makelangelo-firmware is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * makelangelo-firmware is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with makelangelo-firmware.  If not, see <http://www.gnu.org/licenses/>.
- */

@@ -3,8 +3,7 @@
 //------------------------------------------------------------------------------
 // Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
-// Copyright at end of file.  Please see
-// http://www.github.com/MarginallyClever/makelangeloFirmware for more information.
+// Please see http://www.github.com/MarginallyClever/makelangeloFirmware for more information.
 //------------------------------------------------------------------------------
 
 //------------------------------------------------------------------------------
@@ -49,6 +48,17 @@
 #include "robot_arm6.h"
 
 //------------------------------------------------------------------------------
+// LCD panels supported
+//------------------------------------------------------------------------------
+
+#define HAS_LCD  // if you have an LCD panel
+#define HAS_SD   // if you have SD card support on your LCD panel (must be on panel?)
+
+// only uncomment one of these options
+//#define LCD_IS_128X64  // reprapdiscount Full Graphic Smart LCD Controller
+#define LCD_IS_SMART  // reprapdiscount Smart LCD Controller (including XXL model)
+
+//------------------------------------------------------------------------------
 // Microcontrollers supported
 //------------------------------------------------------------------------------
 
@@ -56,6 +66,7 @@
 #define BOARD_RAMPS        2
 #define BOARD_SANGUINOLULU 3
 #define BOARD_TEENSYLU     4
+#define BOARD_WEMOS        5
 
 #define MOTHERBOARD BOARD_RUMBA  // change this
 
@@ -63,14 +74,7 @@
 #include "board_ramps.h"
 #include "board_sanguinolulu.h"
 #include "board_teensylu.h"
-
-//------------------------------------------------------------------------------
-// LCD panels supported
-//------------------------------------------------------------------------------
-
-// only uncomment one of these options
-#define LCD_IS_128X64  // reprapdiscount Full Graphic Smart LCD Controller
-//#define LCD_IS_SMART  // reprapdiscount Smart LCD Controller (including XXL model)
+#include "board_wemos.h"
 
 //------------------------------------------------------------------------------
 // MOTOR DETAILS
@@ -109,7 +113,10 @@
 #define MAX_BUF              (64)  // What is the longest message Arduino can store?
 
 // buffering commands
+#ifndef MAX_SEGMENTS
 #define MAX_SEGMENTS         (32)  // number of line segments to buffer ahead. must be a power of two.
+#endif
+
 #define SEGMOD(x)            ((x)&(MAX_SEGMENTS-1))
 
 //------------------------------------------------------------------------------
@@ -136,11 +143,10 @@
 //#error "NUM_SERVOS + NUM_MOTORS != NUM_AXIES"
 #endif
 
-
 //------------------------------------------------------------------------------
 // EEPROM MEMORY MAP
 //------------------------------------------------------------------------------
-#define EEPROM_VERSION          8    // Increment when adding new variables
+#define FIRMWARE_VERSION        9    // Increment when adding new variables
 #define ADDR_VERSION            0                          // 0..255 (1 byte)
 #define ADDR_UUID               (ADDR_VERSION+1)           // long - 4 bytes
 #define ADDR_LIMITS             (ADDR_UUID+4)              // float - 4 bytes
@@ -154,21 +160,38 @@
 //------------------------------------------------------------------------------
 // TIMERS
 //------------------------------------------------------------------------------
-// for timer interrupt control
-#define CLOCK_FREQ            (16000000L)
-#define MAX_COUNTER           (65536L)
-// time passed with no instruction?  Make sure PC knows we are waiting.
-#define TIMEOUT_OK            (1000)
+
+#ifdef ESP8266
+
+  #define CLOCK_FREQ            (80000000L)
+  #define MAX_COUNTER           (4294967295L)  // 32 bits
+  #define CRITICAL_SECTION_START  noInterrupts();
+  #define CRITICAL_SECTION_END    interrupts();
+
+#else  // ESP8266
+
+  // for timer interrupt control
+  #define CLOCK_FREQ            (16000000L)
+  #define MAX_COUNTER           (65536L)  // 16 bits
+  #ifndef CRITICAL_SECTION_START
+    #define CRITICAL_SECTION_START  unsigned char _sreg = SREG;  cli();
+    #define CRITICAL_SECTION_END    SREG = _sreg;
+  #endif //CRITICAL_SECTION_START
+
+#endif  // ESP8266
+
+#define TIMER_RATE            ((CLOCK_FREQ)/8)
 
 // optimize code, please
 #define FORCE_INLINE         __attribute__((always_inline)) inline
 
+// TODO a guess.  use real math here!
+// https://reprap.org/wiki/Step_rates
+// 0.9deg stepper, 20-tooth GT2 pulley, 1/16 microstepping = 160 steps/mm, 1500mm/s = 240000 steps/s
+#define CLOCK_MAX_STEP_FREQUENCY (240000)
+#define CLOCK_MIN_STEP_FREQUENCY (CLOCK_FREQ/500000U)
 
-#ifndef CRITICAL_SECTION_START
-  #define CRITICAL_SECTION_START  unsigned char _sreg = SREG;  cli();
-  #define CRITICAL_SECTION_END    SREG = _sreg;
-#endif //CRITICAL_SECTION_START
-
+#define TIMEOUT_OK (1000)
 
 //------------------------------------------------------------------------------
 // STRUCTURES
@@ -182,53 +205,35 @@ typedef struct {
 } Axis;
 
 
-// for line()
-typedef struct {
-  long step_count;
-  long delta;  // number of steps to move
-  long absdelta;
-  int dir;
-  float delta_normalized;
-} SegmentAxis;
-
-
-typedef struct {
-  int step_pin;
-  int dir_pin;
-  int enable_pin;
-  int limit_switch_pin;
-} Motor;
-
-
-typedef struct {
-  SegmentAxis a[NUM_MOTORS+NUM_SERVOS];
-  int steps_total;
-  int steps_taken;
-  int accel_until;
-  int decel_after;
-  unsigned short feed_rate_max;
-  unsigned short feed_rate_start;
-  unsigned short feed_rate_start_max;
-  unsigned short feed_rate_end;
-  char nominal_length_flag;
-  char recalculate_flag;
-  char busy;
-} Segment;
-
+#include "motor.h"
 
 //------------------------------------------------------------------------------
 // GLOBALS
 //------------------------------------------------------------------------------
 
-extern Segment line_segments[MAX_SEGMENTS];
-extern Segment *working_seg;
-extern volatile int current_segment;
-extern volatile int last_segment;
+extern float feed_rate;
 extern float acceleration;
-extern Motor motors[NUM_MOTORS+NUM_SERVOS];
-extern const char *AxisNames;
-extern const char *MotorNames;
-extern float maxFeedRate[NUM_MOTORS];
+extern float step_delay;
+extern int robot_uid;
+extern Axis axies[NUM_AXIES];
+extern float calibrateRight;
+extern float calibrateLeft;
+extern char serialBuffer[MAX_BUF + 1]; // Serial buffer
+extern int sofar;                      // Serial buffer progress
 
+extern void pause(const long us);
+extern void findStepDelay();
+extern void IK(const float *const axies, long *motorStepArray);
+extern int FK(long *motorStepArray,float *axies);
+extern void robot_findHome();
+extern void robot_setup();
+extern void processCommand();
+extern void parser_ready();
+extern void teleport(float *pos);
+extern void lineSafe(float *pos, float new_feed_rate);
+extern void get_end_plus_offset(float *results);
+extern void set_tool_offset(int toolID, float *pos);
+extern void reportCalibration();
+extern void where();
 
 #endif // CONFIGURE_H

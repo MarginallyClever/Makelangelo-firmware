@@ -1,9 +1,11 @@
   //------------------------------------------------------------------------------
 // Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
-// Copyright at end of file.  Please see
-// http://www.github.com/MarginallyClever/makelangeloFirmware for more information.
+// Please see http://www.github.com/MarginallyClever/makelangeloFirmware for more information.
 //------------------------------------------------------------------------------
+
+#include "configure.h"
+#include "robot_arm6.h"
 
 #if MACHINE_STYLE == ARM6
 
@@ -15,17 +17,41 @@
    @param axies the cartesian coordinate
    @param motorStepArray a measure of each belt to that plotter position
 */
-void IK(float *axies, long *motorStepArray) {
+void IK(const float *const axies, long *motorStepArray) {
+#if MACHINE_HARDWARE_VERSION==5
   float x = -axies[0];
   float y = -axies[1];
   float z = -axies[2];
   float u = -axies[3];
   float v =  axies[4];
   float w = -axies[5];
+#endif
+
+#if MACHINE_HARDWARE_VERSION==6
+  // each of the xyz motors are differential to each other.
+  // to move only one motor means applying the negative of that value to the other two motors
+
+  // consider a two motor differential: 
+  // if x moves, subtract x from y.
+  // if y moves, subtract y from x.
+  // so for three axis,
+  // for any axis N subtract the other two axies from this axis.
+
+  float a=axies[0];  // hand (G0 X*)
+  float b=axies[1];  // wrist (G0 Y*)
+  float c=axies[2];  // ulna (G0 Z*)
   
-  motorStepArray[0] = x * MOTOR_0_STEPS_PER_TURN / 360.0;
-  motorStepArray[1] = y * MOTOR_1_STEPS_PER_TURN / 360.0;
-  motorStepArray[2] = z * MOTOR_2_STEPS_PER_TURN / 360.0;
+  float x = a+b+c;  // supposed to move hand
+  float y = b+c;  // supposed to move wrist
+  float z = c;  // supposed to move ulna
+  float u = -axies[3];
+  float v =  axies[4];
+  float w = -axies[5];
+#endif
+  
+  motorStepArray[0] = y * MOTOR_0_STEPS_PER_TURN / 360.0;  // WRIST
+  motorStepArray[1] = x * MOTOR_1_STEPS_PER_TURN / 360.0;  // HAND
+  motorStepArray[2] = z * MOTOR_2_STEPS_PER_TURN / 360.0;  // ULNA
   motorStepArray[3] = u * MOTOR_3_STEPS_PER_TURN / 360.0;
   motorStepArray[4] = v * MOTOR_4_STEPS_PER_TURN / 360.0;
   motorStepArray[5] = w * MOTOR_5_STEPS_PER_TURN / 360.0;
@@ -65,7 +91,7 @@ void robot_findHome() {
 
   int homeDirections[NUM_MOTORS] = {HOME_DIR_0,HOME_DIR_1,HOME_DIR_2,HOME_DIR_3,HOME_DIR_4,HOME_DIR_5};
   
-  char i;
+  uint8_t i;
   // for each stepper,
   for (i = 0; i < NUM_MOTORS; ++i) {
     Serial.print("Homing ");

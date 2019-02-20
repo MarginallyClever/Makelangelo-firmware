@@ -1,19 +1,21 @@
 //------------------------------------------------------------------------------
 // Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
-// Copyright at end of file.  Please see
-// http://www.github.com/MarginallyClever/makelangeloFirmware for more information.
+// Please see http://www.github.com/MarginallyClever/makelangeloFirmware for more information.
 //------------------------------------------------------------------------------
 
-#if MACHINE_STYLE == POLARGRAPH
+#include "configure.h"
+#include "robot_polargraph.h"
+#include "eeprom.h"
 
+#if MACHINE_STYLE == POLARGRAPH
 
 /**
  * Inverse Kinematics turns XY coordinates into step counts from each motor
  * @param axies the cartesian coordinate
  * @param motorStepArray a measure of each belt to that plotter position
  */
-void IK(float *cartesian, long *motorStepArray) {
+void IK(const float *const cartesian, long *motorStepArray) {
   float dy,dx;
   // find length to M1
   float limit_xmin = axies[0].limitMin;
@@ -76,6 +78,7 @@ int FK(long *motorStepArray,float *cartesian) {
   Serial.print("C1=");      Serial.println(cartesian[1]);
   Serial.print("C2=");      Serial.println(cartesian[2]);
   */
+  return 0;
 }
 
 
@@ -255,7 +258,7 @@ void robot_findHome() {
   offset[2]=axies[2].pos;
   Serial.print(F("Homing to "));  Serial.print  (axies[0].homePos);
   Serial.print(',');              Serial.println(axies[1].homePos);
-  lineSafe(offset, feed_rate);
+  lineSafe(offset, DEFAULT_FEEDRATE);
   
   Serial.println(F("Done."));
 #endif // USER_LIMIT_SWITCH

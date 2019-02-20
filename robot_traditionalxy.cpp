@@ -1,26 +1,28 @@
 //------------------------------------------------------------------------------
 // Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
-// Copyright at end of file.  Please see
-// http://www.github.com/MarginallyClever/makelangeloFirmware for more information.
+// Please see http://www.github.com/MarginallyClever/makelangeloFirmware for more information.
 //------------------------------------------------------------------------------
+
+#include "configure.h"
+#include "robot_traditionalxy.h"
 
 #if MACHINE_STYLE == TRADITIONALXY
 
-
+#include <Arduino.h>
 /**
  * Inverse Kinematics turns XY coordinates into step counts from each motor
  * @param x cartesian coordinate
  * @param y cartesian coordinate
  * @param motorStepArray a measure of each belt to that plotter position
  */
-void IK(float *cartesian, long *motorStepArray) {
+void IK(const float *const cartesian, long *motorStepArray) {
   float x = cartesian[0];
   float y = cartesian[1];
   float z = cartesian[2];
   
-  motorStepArray[0] = lround((x) / THREAD_PER_STEP);
-  motorStepArray[1] = lround((y) / THREAD_PER_STEP);
+  motorStepArray[0] = lround(x / THREAD_PER_STEP);
+  motorStepArray[1] = lround(y / THREAD_PER_STEP);
 
   motorStepArray[NUM_MOTORS] = z;
 }

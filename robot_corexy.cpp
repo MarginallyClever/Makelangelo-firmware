@@ -1,19 +1,20 @@
 //------------------------------------------------------------------------------
 // Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
-// Copyright at end of file.  Please see
-// http://www.github.com/MarginallyClever/makelangeloFirmware for more information.
+// Please see http://www.github.com/MarginallyClever/makelangeloFirmware for more information.
 //------------------------------------------------------------------------------
 
-#if MACHINE_STYLE == COREXY
+#include "configure.h"
+#include "robot_corexy.h"
 
+#if MACHINE_STYLE == COREXY
 
 /**
  * Inverse Kinematics turns XY coordinates into lengths L1,L2
  * @param axies the cartesian coordinate
  * @param motorStepArray a measure of each belt to that plotter position
  */
-void IK(float *axies, long *motorStepArray) {
+void IK(const float *const axies, long *motorStepArray) {
   float x = axies[0];
   float y = axies[1];
   float z = axies[2];

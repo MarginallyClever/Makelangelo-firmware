@@ -1,20 +1,20 @@
 //------------------------------------------------------------------------------
 // Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
-// Copyright at end of file.  Please see
-// http://www.github.com/MarginallyClever/makelangeloFirmware for more information.
+// Please see http://www.github.com/MarginallyClever/makelangeloFirmware for more information.
 //------------------------------------------------------------------------------
 
+#include "configure.h"
+#include "robot_skycam.h"
+
 #if MACHINE_STYLE == SKYCAM
-
-
 
 /**
  * Inverse Kinematics turns XY coordinates into lengths of belt from each motor
  * @param axies the cartesian coordinates
  * @param motorStepArray a measure of each belt to that plotter position
  */
-void IK(float *cartesian, long *motorStepArray) {
+void IK(const float *const cartesian, long *motorStepArray) {
   float x = cartesian[0];
   float y = cartesian[1];
   float z = cartesian[2];

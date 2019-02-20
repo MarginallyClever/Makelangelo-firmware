@@ -1,20 +1,20 @@
 //------------------------------------------------------------------------------
 // Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
-// Copyright at end of file.  Please see
-// http://www.github.com/MarginallyClever/makelangeloFirmware for more information.
+// Please see http://www.github.com/MarginallyClever/makelangeloFirmware for more information.
 //------------------------------------------------------------------------------
 
+#include "configure.h"
+#include "robot_zarplotter.h"
+
 #if MACHINE_STYLE == ZARPLOTTER
-
-
 
 /**
  * Inverse Kinematics turns XY coordinates into lengths of belt from each motor
  * @param axies the cartesian coordinates
  * @param motorStepArray a measure of each belt to that plotter position
  */
-void IK(float *cartesian, long *motorStepArray) {
+void IK(const float *const cartesian, long *motorStepArray) {
   float limit_xmin = axies[0].limitMin;
   float limit_xmax = axies[0].limitMax;
   float limit_ymin = axies[1].limitMin;

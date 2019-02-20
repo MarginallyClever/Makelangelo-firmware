@@ -1,12 +1,13 @@
 //------------------------------------------------------------------------------
 // Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
-// Copyright at end of file.  Please see
-// http://www.github.com/MarginallyClever/makelangeloFirmware for more information.
+// Please see http://www.github.com/MarginallyClever/makelangeloFirmware for more information.
 //------------------------------------------------------------------------------
 
-#if MACHINE_STYLE == DELTA
+#include "configure.h"
+#include "robot_delta.h"
 
+#if MACHINE_STYLE == DELTA
 
 #define SQRT3   (sqrt(3.0))
 #define SIN120  (SQRT3/2.0)
@@ -21,7 +22,7 @@
  * @param axies the cartesian coordinate
  * @param motorStepArray a measure of each belt to that plotter position
  */
-void IK(float *axies, long *motorStepArray) {
+void IK(const float *const axies, long *motorStepArray) {
   float x = axies[0];
   float y = axies[1];
   float z = axies[2];
