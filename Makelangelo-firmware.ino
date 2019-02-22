@@ -1057,16 +1057,11 @@ void setup() {
 
   loadConfig();
 
-  Serial.println("A1");
   motor_setup();
-  Serial.println("A2");
   motor_engage();
-  Serial.println("A3");
   tools_setup();
-  Serial.println("A4");
   findStepDelay();
 
-  Serial.println('B');
   //easyPWM_init();
 
   // initialize the plotter position.
@@ -1083,7 +1078,6 @@ void setup() {
 #endif
   setFeedRate(DEFAULT_FEEDRATE);
 
-  Serial.println('C');
   robot_setup();
 
   // display the help at startup.

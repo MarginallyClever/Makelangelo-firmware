@@ -187,19 +187,16 @@ void motor_setup() {
   motors[5].limit_switch_pin = MOTOR_5_LIMIT_SWITCH_PIN;
 #endif
 
-  Serial.println("  set pins");
-
   int i;
   for (i = 0; i < NUM_MOTORS; ++i) {
     // set the motor pin & scale
-    //pinMode(motors[i].step_pin, OUTPUT);
-    //pinMode(motors[i].dir_pin, OUTPUT);
-    //pinMode(motors[i].enable_pin, OUTPUT);
-    delay(100);
+    pinMode(motors[i].step_pin, OUTPUT);
+    pinMode(motors[i].dir_pin, OUTPUT);
+    pinMode(motors[i].enable_pin, OUTPUT);
 
     // set the switch pin
-    //pinMode(motors[i].limit_switch_pin, INPUT);
-    //digitalWrite(motors[i].limit_switch_pin, HIGH);
+    pinMode(motors[i].limit_switch_pin, INPUT);
+    digitalWrite(motors[i].limit_switch_pin, HIGH);
   }
 
   long steps[NUM_MOTORS + NUM_SERVOS];
@@ -212,7 +209,6 @@ void motor_setup() {
     max_feedrate_mm_s[i] = MAX_FEEDRATE;
   }
 
-  Serial.println("  motor_set_step_count()");
   motor_set_step_count(steps);
 
   // setup servos
@@ -264,8 +260,6 @@ void motor_setup() {
   working_seg = NULL;
   first_segment_delay = 0;
 
-  Serial.println("  interrupt setup");
-
   // disable global interrupts
   noInterrupts();
 #ifdef ESP8266
@@ -288,8 +282,6 @@ void motor_setup() {
 #endif  // ESP8266
 
   interrupts();  // enable global interrupts
-
-  Serial.println("  done");
 }
 
 
