@@ -982,6 +982,12 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
 
   float distance_mm = 0;
 
+#if MACHINE_STYLE == POLARGRAPH
+  // see "adjust the maximum acceleration" further down.
+  float oldX = axies[0].pos;
+  float oldY = axies[1].pos;
+#endif
+
   // record the new target position & feed rate for the next movement.
   int i;
   for (i = 0; i < NUM_AXIES; ++i) {
@@ -1048,10 +1054,64 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
     new_seg.nominal_rate *= speed_factor;
   }
 
-  const float steps_per_mm = new_seg.steps_total * inverse_distance_mm;
-  uint32_t accel = ceil( acceleration * steps_per_mm );
+  float max_acceleration = acceleration;
+#if MACHINE_STYLE == POLARGRAPH
+#if 0  // TODO this feature doesn't work yet!
+  {
+    // Adjust the maximum acceleration based on the plotter position to reduce wobble at the bottom of the picture.
 
-  const float max_acceleration_steps_per_s2 = acceleration * steps_per_mm;
+    // normal vectors pointing from plotter to motor
+    float R1x = axies[0].limitMin - target_position[0];
+    float R1y = axies[1].limitMax - target_position[1];
+    float Rlen = sqrt(sq(R1x)+sq(R1y));
+    R1x/=Rlen;
+    R1y/=Rlen;
+
+    float R2x = axies[0].limitMax - target_position[0];
+    float R2y = R1y;
+    Rlen = sqrt(sq(R2x)+sq(R2y));
+    R2x/=Rlen;
+    R2y/=Rlen;
+    
+    // if T is your target direction unit vector,
+    float Tx=target_position[0]-oldX;
+    float Ty=target_position[1]-oldY;
+    Rlen = sqrt(sq(Tx)+sq(Ty));
+    if(Rlen>0) {
+      // only affects XY non-zero movement.  Servo is not touched.
+      Tx/=Rlen;
+      Ty/=Rlen;
+      // solve cT = -gY + k1 R1 for c [and k1]
+      // solve cT = -gY + k2 R2 for c [and k2]
+#define GRAVITYy   (1.0)
+#define GRAVITYmag (98.0)
+      float c1 = -GRAVITYy*GRAVITYmag * R1x / (Tx*R1y - Ty*R1x);
+      float c2 = -GRAVITYy*GRAVITYmag * R2x / (Tx*R2y - Ty*R2x);
+      
+      // If c is negative, that means that that support rope doesn't limit the acceleration; discard that c.
+      float cT=0;
+      // If c is positive in both cases, take the smaller one.
+      if( c1>0 && c2>0 ) {
+        cT = ( c1 < c2 ) ? c1 : c2;
+      } else if(c1>0) cT=c1;
+      else if(c2>0) cT=c2;
+      
+      // The maximum acceleration is given by cT.    
+      if(cT>0 && max_acceleration>cT) {
+        //Serial.print(max_acceleration);
+        //Serial.print(" >> ");  
+        //Serial.println(cT);
+        max_acceleration = cT;
+      }
+    }
+  }
+#endif  // 0
+#endif  // MACHINE_STYLE == POLARGRAPH
+
+  const float steps_per_mm = new_seg.steps_total * inverse_distance_mm;
+  uint32_t accel = ceil( max_acceleration * steps_per_mm );
+
+  const float max_acceleration_steps_per_s2 = max_acceleration * steps_per_mm;
   for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
     if (new_seg.a[i].delta_steps && max_acceleration_steps_per_s2 < accel) {
       const float comp = (float)max_acceleration_steps_per_s2 * (float)new_seg.steps_total;
@@ -1060,6 +1120,7 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
       }
     }
   }
+  
   new_seg.acceleration_steps_per_s2 = accel;
   new_seg.acceleration = accel / steps_per_mm;
   new_seg.acceleration_rate = (uint32_t)(accel * (4096.0f * 4096.0f / (TIMER_RATE)));
