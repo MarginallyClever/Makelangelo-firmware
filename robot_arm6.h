@@ -32,6 +32,8 @@
 #define DEFAULT_FEEDRATE     (100.0)
 #define DEFAULT_ACCELERATION (500)
 
+#define MAX_SEGMENTS 16  // override the default to save RAM
+
 //#define HAS_LCD
 #define HAS_SD
 
