@@ -58,6 +58,7 @@
 //#define LCD_IS_128X64  // reprapdiscount Full Graphic Smart LCD Controller
 #define LCD_IS_SMART  // reprapdiscount Smart LCD Controller (including XXL model)
 
+
 //------------------------------------------------------------------------------
 // Microcontrollers supported
 //------------------------------------------------------------------------------
@@ -83,7 +84,9 @@
 // 400 step-per-turn motors move 0.9 degrees per step.  (360/400=0.9).  Marginallyclever.com default.
 // 200 step-per-turn motors move 1.8 degrees per step.  (360/200=1.8)
 // see your stepper motor data sheet for more info.
+#ifndef DEGREES_PER_STEP
 #define DEGREES_PER_STEP     ( 0.9)
+#endif
 
 // stepper motor drivers can use microstepping to split steps into fractions of steps for greater precision.
 // A4988 drivers (Marginallyclever.com default) use 16x.
@@ -92,7 +95,9 @@
 // see your driver data sheet.
 // note that some boards have dip switches or jumpers that can be activated to turn stepping on and off.
 // make sure your dip switch settings match the firmware value.
+#ifndef MICROSTEPS
 #define MICROSTEPS           (16.0)
+#endif
 
 // Marginallyclever.com uses GT2 timing belt, which has 2mm teeth.
 // We also use GT2-20 pulleys which have 20 teeth.
@@ -104,6 +109,7 @@
 #define STEPS_PER_TURN       (NORMAL_MOTOR_STEPS * MICROSTEPS)
 #define THREAD_PER_STEP      (PULLEY_PITCH/STEPS_PER_TURN)
 #define MICROSTEP_PER_DEGREE (STEPS_PER_TURN/360.0)
+
 
 //------------------------------------------------------------------------------
 // COMMUNICATION & BUFFERING
