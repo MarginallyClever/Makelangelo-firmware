@@ -37,25 +37,33 @@ void IK(const float *const axies, long *motorStepArray) {
   // so for three axis,
   // for any axis N subtract the other two axies from this axis.
 
-  float a=axies[0];  // hand (G0 X*)
-  float b=axies[1];  // wrist (G0 Y*)
-  float c=axies[2];  // ulna (G0 Z*)
-  
-  float x = a+b+c;  // supposed to move hand
-  float y = b+c;  // supposed to move wrist
-  float z = c;  // supposed to move ulna
-  float u = -axies[3];
-  float v =  axies[4];
-  float w = -axies[5];
+  float J0=axies[5];  // hand (G0 X*)
+  float J1=axies[4];  // wrist (G0 Y*)
+  float J2=axies[3];  // ulna (G0 Z*)
+  /*
+  float x = a;//+b+c;  // supposed to move hand
+  float y = b;//+c;  // supposed to move wrist
+  float z = c;  // supposed to move ulna*/
+  float J3 = axies[2];
+  float J4 = axies[1];
+  float J5 = axies[0];
 #endif
   
-  motorStepArray[0] = y * MOTOR_0_STEPS_PER_TURN / 360.0;  // WRIST
-  motorStepArray[1] = x * MOTOR_1_STEPS_PER_TURN / 360.0;  // HAND
-  motorStepArray[2] = z * MOTOR_2_STEPS_PER_TURN / 360.0;  // ULNA
-  motorStepArray[3] = u * MOTOR_3_STEPS_PER_TURN / 360.0;
-  motorStepArray[4] = v * MOTOR_4_STEPS_PER_TURN / 360.0;
-  motorStepArray[5] = w * MOTOR_5_STEPS_PER_TURN / 360.0;
+  motorStepArray[0] = J0 * MOTOR_0_STEPS_PER_TURN / 360.0;  // ANCHOR
+  motorStepArray[1] = J1 * MOTOR_1_STEPS_PER_TURN / 360.0;  // SHOULDER
+  motorStepArray[2] = J2 * MOTOR_2_STEPS_PER_TURN / 360.0;  // ELBOW
+  motorStepArray[3] = J3 * MOTOR_3_STEPS_PER_TURN / 360.0;  // ULNA
+  motorStepArray[4] = J4 * MOTOR_4_STEPS_PER_TURN / 360.0;  // WRIST
+  motorStepArray[5] = J5 * MOTOR_5_STEPS_PER_TURN / 360.0;  // HAND
   motorStepArray[NUM_MOTORS] = axies[6];
+
+  Serial.print("J=");  Serial.print(J0);
+  Serial.print('\t');  Serial.print(J1);
+  Serial.print('\t');  Serial.print(J2);
+  Serial.print('\t');  Serial.print(J3);
+  Serial.print('\t');  Serial.print(J4);
+  Serial.print('\t');  Serial.print(J5);
+  Serial.print('\n');
 }
 
 #define CAP_LIMIT 360
@@ -73,12 +81,13 @@ float capRotationDegrees(double arg0) {
    @return 0 if no problem, 1 on failure.
 */
 int FK(long *motorStepArray, float *axies) {
+  /*
   float angle0rad = motorStepArray[0] * PI*2.0 / MOTOR_0_STEPS_PER_TURN;
   float angle1rad = motorStepArray[1] * PI*2.0 / MOTOR_1_STEPS_PER_TURN;
   float angle2rad = motorStepArray[2] * PI*2.0 / MOTOR_2_STEPS_PER_TURN;
   float angle3rad = motorStepArray[3] * PI*2.0 / MOTOR_3_STEPS_PER_TURN;
   float angle4rad = motorStepArray[4] * PI*2.0 / MOTOR_4_STEPS_PER_TURN;
-  float angle5rad = motorStepArray[5] * PI*2.0 / MOTOR_5_STEPS_PER_TURN;
+  float angle5rad = motorStepArray[5] * PI*2.0 / MOTOR_5_STEPS_PER_TURN;*/
 
   // TODO fill me in!
 
