@@ -53,7 +53,7 @@ uint32_t current_feed_rate;
 uint32_t current_acceleration;
 uint32_t start_feed_rate, end_feed_rate, isr_nominal_rate;
 uint32_t time_accelerating, time_decelerating;
-float max_xy_jerk = MAX_JERK;
+float max_jerk[NUM_MOTORS + NUM_SERVOS];
 float max_feedrate_mm_s[NUM_MOTORS + NUM_SERVOS];
 uint8_t isr_step_multiplier = 1;
 
@@ -202,10 +202,8 @@ void motor_setup() {
   long steps[NUM_MOTORS + NUM_SERVOS];
   memset(steps, 0, (NUM_MOTORS + NUM_SERVOS)*sizeof(long));
 
-  for (i = 0; i < NUM_MOTORS; ++i) {
-    max_feedrate_mm_s[i] = MAX_FEEDRATE;
-  }
-  for (i = NUM_MOTORS; i < NUM_MOTORS + NUM_SERVOS; ++i) {
+  for (i = 0; i < NUM_MOTORS+NUM_SERVOS; ++i) {
+    max_jerk[i] = MAX_JERK;
     max_feedrate_mm_s[i] = MAX_FEEDRATE;
   }
 
@@ -236,22 +234,9 @@ void motor_setup() {
   current_segment = 0;
   last_segment = 0;
   Segment &old_seg = line_segments[get_prev_segment(last_segment)];
-  old_seg.a[0].step_count = 0;
-#if NUM_MOTORS>1
-  old_seg.a[1].step_count = 0;
-#endif
-#if NUM_MOTORS>2
-  old_seg.a[2].step_count = 0;
-#endif
-#if NUM_MOTORS>3
-  old_seg.a[3].step_count = 0;
-#endif
-#if NUM_MOTORS>4
-  old_seg.a[4].step_count = 0;
-#endif
-#if NUM_MOTORS>5
-  old_seg.a[5].step_count = 0;
-#endif
+  for(i=0;i<NUM_MOTORS;++i) {
+    old_seg.a[i].step_count = 0;
+  }
 
 #if NUM_SERVOS>0
   old_seg.a[NUM_MOTORS].step_count = 0;
@@ -804,6 +789,7 @@ ISR(TIMER1_COMPA_vect) {
     }
   }
 
+
   if ( working_seg != NULL ) {
     // move each axis
     for (uint8_t i = 0; i < isr_step_multiplier; ++i) {
@@ -1056,18 +1042,17 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
 
   float max_acceleration = acceleration;
 #if MACHINE_STYLE == POLARGRAPH
-#if 0  // TODO this feature doesn't work yet!
   {
     // Adjust the maximum acceleration based on the plotter position to reduce wobble at the bottom of the picture.
 
     // normal vectors pointing from plotter to motor
-    float R1x = axies[0].limitMin - target_position[0];
-    float R1y = axies[1].limitMax - target_position[1];
+    float R1x = axies[0].limitMin - oldX;
+    float R1y = axies[1].limitMax - oldY;
     float Rlen = sqrt(sq(R1x)+sq(R1y));
     R1x/=Rlen;
     R1y/=Rlen;
 
-    float R2x = axies[0].limitMax - target_position[0];
+    float R2x = axies[0].limitMax - oldX;
     float R2y = R1y;
     Rlen = sqrt(sq(R2x)+sq(R2y));
     R2x/=Rlen;
@@ -1098,14 +1083,13 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
       
       // The maximum acceleration is given by cT.    
       if(cT>0 && max_acceleration>cT) {
-        //Serial.print(max_acceleration);
-        //Serial.print(" >> ");  
-        //Serial.println(cT);
-        max_acceleration = cT;
+        Serial.print(max_acceleration);
+        Serial.print(" >> ");  
+        Serial.println(cT);
+        //max_acceleration = cT;
       }
     }
   }
-#endif  // 0
 #endif  // MACHINE_STYLE == POLARGRAPH
 
   const float steps_per_mm = new_seg.steps_total * inverse_distance_mm;
@@ -1130,7 +1114,7 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
   float safe_speed = new_seg.nominal_speed;
   char limited = 0;
   for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
-    const float jerk = fabs(current_speed[i]), maxj = max_xy_jerk;
+    const float jerk = fabs(current_speed[i]), maxj = max_jerk[i];
     if (jerk > maxj) {
       if (limited) {
         // TODO explain this
@@ -1176,8 +1160,8 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
                          : // v_exit <= v_entry          coasting             axis reversal
                          ( (v_entry < 0 || v_exit > 0) ? (v_entry - v_exit) : max(-v_exit, v_entry) );
 
-      if (jerk > max_xy_jerk) {
-        v_factor *= max_xy_jerk / jerk;
+      if(jerk > max_jerk[i]) {
+        v_factor *= max_jerk[i] / jerk;
         ++limited;
       }
     }
@@ -1230,8 +1214,8 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
     Serial.print("nominal_rate=");  Serial.println(new_seg.nominal_rate);
     Serial.print("delta_mm=");
     for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
-    if (i > 0) Serial.print(", ");
-    Serial.print(new_seg.a[i].delta_mm);
+      if (i > 0) Serial.print(", ");
+      Serial.print(new_seg.a[i].delta_mm);
     }
     Serial.println();
     Serial.print("speed_factor=");  Serial.println(speed_factor);

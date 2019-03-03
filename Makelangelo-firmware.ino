@@ -703,12 +703,33 @@ void adjustMaxFeedRates() {
 }
 
 /**
-   M205 X4.0
+   M205 X<jerk> Y<jerk> Z<jerk> U<jerk> V<jerk> W<jerk>
    adjust max jerk
 */
 void parseAdvancedSettings() {
-  max_xy_jerk = parseNumber('X', max_xy_jerk);
-  max_xy_jerk = max(min(max_xy_jerk, (float)MAX_JERK), (float)0);
+  float f;
+  f = parseNumber('X', max_jerk[0]);  max_jerk[0] = max(min(f, (float)MAX_JERK), (float)0);
+#if NUM_AXIES>1
+  f = parseNumber('Y', max_jerk[1]);  max_jerk[1] = max(min(f, (float)MAX_JERK), (float)0);
+#endif
+#if NUM_AXIES>2
+  f = parseNumber('Z', max_jerk[2]);  max_jerk[2] = max(min(f, (float)MAX_JERK), (float)0);
+#endif
+#if NUM_AXIES>3
+  f = parseNumber('U', max_jerk[3]);  max_jerk[3] = max(min(f, (float)MAX_JERK), (float)0);
+#endif
+#if NUM_AXIES>4
+  f = parseNumber('V', max_jerk[4]);  max_jerk[4] = max(min(f, (float)MAX_JERK), (float)0);
+#endif
+#if NUM_AXIES>5
+  f = parseNumber('W', max_jerk[5]);  max_jerk[5] = max(min(f, (float)MAX_JERK), (float)0);
+#endif
+  Serial.print("M205 X");  Serial.print(max_jerk[0]);
+  Serial.print(" Y");  Serial.print(max_jerk[1]);
+  Serial.print(" Z");  Serial.print(max_jerk[2]);
+  Serial.print(" U");  Serial.print(max_jerk[3]);
+  Serial.print(" V");  Serial.print(max_jerk[4]);
+  Serial.print(" W");  Serial.println(max_jerk[5]);
 }
 
 /**
@@ -867,10 +888,44 @@ void processCommand() {
 #if MACHINE_STYLE == STEWART
     case 15:  stewartDemo();  break;
 #endif
+#if MACHINE_STYLE == ARM6
+    case 16:  setFeedratePerAxis();  break;
+#endif
     default:  break;
   }
 }
 
+
+/**
+ * D16 X<jerk> Y<jerk> Z<jerk> U<jerk> V<jerk> W<jerk>
+ * set axis n to feedrate m and jerk o.
+ */
+void setFeedratePerAxis() {
+  float f;
+  
+  f = parseNumber('X', max_feedrate_mm_s[0]);  max_feedrate_mm_s[0] = max(f, (float)MIN_FEEDRATE);
+#if NUM_AXIES > 1
+  f = parseNumber('Y', max_feedrate_mm_s[1]);  max_feedrate_mm_s[1] = max(f, (float)MIN_FEEDRATE);
+#endif
+#if NUM_AXIES > 2
+  f = parseNumber('Z', max_feedrate_mm_s[2]);  max_feedrate_mm_s[2] = max(f, (float)MIN_FEEDRATE);
+#endif
+#if NUM_AXIES > 3
+  f = parseNumber('U', max_feedrate_mm_s[3]);  max_feedrate_mm_s[3] = max(f, (float)MIN_FEEDRATE);
+#endif
+#if NUM_AXIES > 4
+  f = parseNumber('V', max_feedrate_mm_s[4]);  max_feedrate_mm_s[4] = max(f, (float)MIN_FEEDRATE);
+#endif
+#if NUM_AXIES > 5
+  f = parseNumber('W', max_feedrate_mm_s[5]);  max_feedrate_mm_s[5] = max(f, (float)MIN_FEEDRATE);
+#endif
+  Serial.print("D16 X");  Serial.print(max_feedrate_mm_s[0]);
+  Serial.print(" Y");  Serial.print(max_feedrate_mm_s[1]);
+  Serial.print(" Z");  Serial.print(max_feedrate_mm_s[2]);
+  Serial.print(" U");  Serial.print(max_feedrate_mm_s[3]);
+  Serial.print(" V");  Serial.print(max_feedrate_mm_s[4]);
+  Serial.print(" W");  Serial.println(max_feedrate_mm_s[5]);
+}
 
 #if MACHINE_STYLE == POLARGRAPH
 /**
