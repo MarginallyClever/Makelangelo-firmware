@@ -76,6 +76,13 @@ void loadLimits() {
     j+=4;
     axies[i].limitMin = (float)EEPROM_readLong(j)/100.0f;
     j+=4;
+    //Serial.print("Axis ");
+    //Serial.print(i);
+    //Serial.print(" Min ");
+    //Serial.print(axies[i].limitMin);
+    //Serial.print(" Max ");
+    //Serial.print(axies[i].limitMax);
+    //Serial.println();
   }
 }
 

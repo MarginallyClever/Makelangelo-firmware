@@ -207,7 +207,11 @@ void motor_setup() {
     max_feedrate_mm_s[i] = MAX_FEEDRATE;
   }
 
-  motor_set_step_count(steps);
+#ifdef POLARGRAPH
+    max_jerk[2] = MAX_Z_JERK;
+#endif
+
+   motor_set_step_count(steps);
 
   // setup servos
 #if NUM_SERVOS>0
@@ -1029,7 +1033,6 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
     current_speed[i] = new_seg.a[i].delta_mm * inverse_secs;
     const float cs = fabs(current_speed[i]);
     if (cs > max_feedrate_mm_s[i]) speed_factor = min (speed_factor, max_feedrate_mm_s[i] / cs);
-    //if (cs > MAX_FEEDRATE) speed_factor = min (speed_factor, MAX_FEEDRATE / cs);
   }
 
   if (speed_factor < 1.0) {
@@ -1044,16 +1047,15 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
 #if MACHINE_STYLE == POLARGRAPH
   {
     // Adjust the maximum acceleration based on the plotter position to reduce wobble at the bottom of the picture.
-
     // normal vectors pointing from plotter to motor
     float R1x = axies[0].limitMin - oldX;
     float R1y = axies[1].limitMax - oldY;
     float Rlen = sqrt(sq(R1x)+sq(R1y));
     R1x/=Rlen;
     R1y/=Rlen;
-
+    
     float R2x = axies[0].limitMax - oldX;
-    float R2y = R1y;
+    float R2y = axies[1].limitMax - oldY;
     Rlen = sqrt(sq(R2x)+sq(R2y));
     R2x/=Rlen;
     R2y/=Rlen;
@@ -1083,12 +1085,14 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
       
       // The maximum acceleration is given by cT.    
       if(cT>0 && max_acceleration>cT) {
-        Serial.print(max_acceleration);
-        Serial.print(" >> ");  
-        Serial.println(cT);
-        //max_acceleration = cT;
+        max_acceleration = max(cT,MIN_ACCELERATION);
       }
     }
+    //Serial.print(oldX);
+    //Serial.print(',');  
+    //Serial.print(oldY);
+    //Serial.print('=');  
+    //Serial.println(max_acceleration);  
   }
 #endif  // MACHINE_STYLE == POLARGRAPH
 

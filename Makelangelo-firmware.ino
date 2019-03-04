@@ -1106,7 +1106,7 @@ void setup() {
   Serial.print(localPort);
   Serial.println('/');
 #endif  // HAS_WIFI
-
+    
   SD_setup();
   LCD_setup();
 
