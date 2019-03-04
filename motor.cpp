@@ -207,7 +207,7 @@ void motor_setup() {
     max_feedrate_mm_s[i] = MAX_FEEDRATE;
   }
 
-#ifdef POLARGRAPH
+#if MACHINE_STYLE == POLARGRAPH
     max_jerk[2] = MAX_Z_JERK;
 #endif
 
