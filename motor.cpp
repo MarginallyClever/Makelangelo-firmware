@@ -1142,7 +1142,15 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
 
     // The junction velocity will be shared between successive segments. Limit the junction velocity to their minimum.
     // Pick the smaller of the nominal speeds. Higher speed shall not be achieved at the junction during coasting.
+#if MACHINE_STYLE == POLARGRAPH
+    if(new_seg.a[i].delta_mm!=0) {
+      vmax_junction = 0;
+    } else {
+      vmax_junction = min(new_seg.nominal_speed, previous_nominal_speed);
+    }
+#else
     vmax_junction = min(new_seg.nominal_speed, previous_nominal_speed);
+#endif
     const float smaller_speed_factor = vmax_junction / previous_nominal_speed;
     // Factor to multiply the previous / current nominal velocities to get componentwise limited velocities.
     float v_factor = 1.0f;
