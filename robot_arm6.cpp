@@ -18,16 +18,6 @@
    @param motorStepArray a measure of each belt to that plotter position
 */
 void IK(const float *const axies, long *motorStepArray) {
-#if MACHINE_HARDWARE_VERSION==5
-  float x = -axies[0];
-  float y = -axies[1];
-  float z = -axies[2];
-  float u = -axies[3];
-  float v =  axies[4];
-  float w = -axies[5];
-#endif
-
-#if MACHINE_HARDWARE_VERSION==6
   // each of the xyz motors are differential to each other.
   // to move only one motor means applying the negative of that value to the other two motors
 
@@ -37,17 +27,21 @@ void IK(const float *const axies, long *motorStepArray) {
   // so for three axis,
   // for any axis N subtract the other two axies from this axis.
 
-  float J0=axies[5];  // hand (G0 X*)
-  float J1=axies[4];  // wrist (G0 Y*)
-  float J2=axies[3];  // ulna (G0 Z*)
+  float J0=axies[0];  // hand (G0 X*)
+  float J1=axies[1];  // wrist (G0 Y*)
+  float J2=axies[2];  // ulna (G0 Z*)
+
   /*
   float x = a;//+b+c;  // supposed to move hand
   float y = b;//+c;  // supposed to move wrist
   float z = c;  // supposed to move ulna*/
-  float J3 = axies[2];
-  float J4 = axies[1];
-  float J5 = axies[0];
-#endif
+  float J3 = axies[3];  // u ulna
+  float J4 = axies[4];  // v wrist
+  float J5 = axies[5];  // w hand
+
+  // differential
+  J5 += J4+J3;
+  J4 += J3;
   
   motorStepArray[0] = J0 * MOTOR_0_STEPS_PER_TURN / 360.0;  // ANCHOR
   motorStepArray[1] = J1 * MOTOR_1_STEPS_PER_TURN / 360.0;  // SHOULDER

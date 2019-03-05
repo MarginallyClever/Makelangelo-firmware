@@ -798,40 +798,40 @@ ISR(TIMER1_COMPA_vect) {
     // move each axis
     for (uint8_t i = 0; i < isr_step_multiplier; ++i) {
       over0 += delta0;
-      if (over0 > 0) digitalWrite(MOTOR_0_STEP_PIN, LOW);
+      if (over0 > 0) digitalWrite(MOTOR_0_STEP_PIN, START0);
 #if NUM_MOTORS>1
       over1 += delta1;
-      if (over1 > 0) digitalWrite(MOTOR_1_STEP_PIN, LOW);
+      if (over1 > 0) digitalWrite(MOTOR_1_STEP_PIN, START1);
 #endif
 #if NUM_MOTORS>2
       over2 += delta2;
-      if (over2 > 0) digitalWrite(MOTOR_2_STEP_PIN, LOW);
+      if (over2 > 0) digitalWrite(MOTOR_2_STEP_PIN, START2);
 #endif
 #if NUM_MOTORS>3
       over3 += delta3;
-      if (over3 > 0) digitalWrite(MOTOR_3_STEP_PIN, LOW);
+      if (over3 > 0) digitalWrite(MOTOR_3_STEP_PIN, START3);
 #endif
 #if NUM_MOTORS>4
       over4 += delta4;
-      if (over4 > 0) digitalWrite(MOTOR_4_STEP_PIN, LOW);
+      if (over4 > 0) digitalWrite(MOTOR_4_STEP_PIN, START4);
 #endif
 #if NUM_MOTORS>5
       over5 += delta5;
-      if (over5 > 0) digitalWrite(MOTOR_5_STEP_PIN, LOW);
+      if (over5 > 0) digitalWrite(MOTOR_5_STEP_PIN, START5);
 #endif
       // now that the pins have had a moment to settle, do the second half of the steps.
       // M0
       if (over0 > 0) {
         over0 -= steps_total;
         global_steps_0 += global_step_dir_0;
-        digitalWrite(MOTOR_0_STEP_PIN, HIGH);
+        digitalWrite(MOTOR_0_STEP_PIN, END0);
       }
 #if NUM_MOTORS>1
       // M1
       if (over1 > 0) {
         over1 -= steps_total;
         global_steps_1 += global_step_dir_1;
-        digitalWrite(MOTOR_1_STEP_PIN, HIGH);
+        digitalWrite(MOTOR_1_STEP_PIN, END1);
       }
 #endif
 #if NUM_MOTORS>2
@@ -839,7 +839,7 @@ ISR(TIMER1_COMPA_vect) {
       if (over2 > 0) {
         over2 -= steps_total;
         global_steps_2 += global_step_dir_2;
-        digitalWrite(MOTOR_2_STEP_PIN, HIGH);
+        digitalWrite(MOTOR_2_STEP_PIN, END2);
       }
 #endif
 #if NUM_MOTORS>3
@@ -847,7 +847,7 @@ ISR(TIMER1_COMPA_vect) {
       if (over3 > 0) {
         over3 -= steps_total;
         global_steps_3 += global_step_dir_3;
-        digitalWrite(MOTOR_3_STEP_PIN, HIGH);
+        digitalWrite(MOTOR_3_STEP_PIN, END3);
       }
 #endif
 #if NUM_MOTORS>4
@@ -855,7 +855,7 @@ ISR(TIMER1_COMPA_vect) {
       if (over4 > 0) {
         over4 -= steps_total;
         global_steps_4 += global_step_dir_4;
-        digitalWrite(MOTOR_4_STEP_PIN, HIGH);
+        digitalWrite(MOTOR_4_STEP_PIN, END4);
       }
 #endif
 #if NUM_MOTORS>5
@@ -863,7 +863,7 @@ ISR(TIMER1_COMPA_vect) {
       if (over5 > 0) {
         over5 -= steps_total;
         global_steps_5 += global_step_dir_5;
-        digitalWrite(MOTOR_5_STEP_PIN, HIGH);
+        digitalWrite(MOTOR_5_STEP_PIN, END5);
       }
 #endif
 

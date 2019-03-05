@@ -26,10 +26,10 @@
 //#define KOSSEL           7  // 3 arm delta robot, linear action.  not supported yet.
 #define STEWART          8  // 6 arm stewart platform, rotary action.  untested.
 //#define OSGOODE          9  // 6 arm stewart platform, linear action.  not supported yet.
-#define ARM3            10
-//#define ARM4            11
-//#define ARM5            12
-#define ARM6            13
+#define ARM3             10
+//#define ARM4             11
+//#define ARM5             12
+#define ARM6             13
 
 #define MACHINE_STYLE POLARGRAPH  // Change this
 
@@ -46,6 +46,48 @@
 //#include "robot_arm4.h"
 //#include "robot_arm5.h"
 #include "robot_arm6.h"
+
+//------------------------------------------------------------------------------
+// step direction
+//------------------------------------------------------------------------------
+
+#ifndef START0
+#define START0 LOW
+#endif
+#ifndef START1
+#define START1 LOW
+#endif
+#ifndef START2
+#define START2 LOW
+#endif
+#ifndef START3
+#define START3 LOW
+#endif
+#ifndef START4
+#define START4 LOW
+#endif
+#ifndef START5
+#define START5 LOW
+#endif
+
+#ifndef END0
+#define END0 HIGH
+#endif
+#ifndef END1
+#define END1 HIGH
+#endif
+#ifndef END2
+#define END2 HIGH
+#endif
+#ifndef END3
+#define END3 HIGH
+#endif
+#ifndef END4
+#define END4 HIGH
+#endif
+#ifndef END5
+#define END5 HIGH
+#endif
 
 //------------------------------------------------------------------------------
 // LCD panels supported
@@ -68,14 +110,16 @@
 #define BOARD_SANGUINOLULU 3
 #define BOARD_TEENSYLU     4
 #define BOARD_WEMOS        5
+#define BOARD_SIXI_MEGA    6
 
-#define MOTHERBOARD BOARD_RUMBA  // change this
+#define MOTHERBOARD BOARD_SIXI_MEGA  // change this
 
 #include "board_rumba.h"
 #include "board_ramps.h"
 #include "board_sanguinolulu.h"
 #include "board_teensylu.h"
 #include "board_wemos.h"
+#include "board_sixi_mega.h"
 
 //------------------------------------------------------------------------------
 // MOTOR DETAILS
