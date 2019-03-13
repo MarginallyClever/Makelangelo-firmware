@@ -34,7 +34,7 @@
 #define MIN_ACCELERATION     (0.0)
 #define DEFAULT_ACCELERATION (180.0)
 
-#define MAX_JERK           (10.0)
+#define MAX_JERK             (10.0)
 #define MAX_Z_JERK           (0.3)
 
 

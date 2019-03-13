@@ -51,6 +51,7 @@
 #define LIMIT_SWITCH_PIN_LEFT     (MOTOR_0_LIMIT_SWITCH_PIN)
 #define LIMIT_SWITCH_PIN_RIGHT    (MOTOR_1_LIMIT_SWITCH_PIN)
 
+#undef HAS_LCD
 
 // LCD pins
 #ifdef LCD_IS_128X64
@@ -71,7 +72,7 @@
 #define SDPOWER            -1
 #define SDSS               53
 #define SDCARDDETECT       49
-#endif
+#endif  // LCD_IS_128x64
 
 #ifdef LCD_IS_SMART
 #define BEEPER             44
@@ -91,12 +92,9 @@
 #define SDPOWER            -1
 #define SDSS               53
 #define SDCARDDETECT       49
-#endif
+#endif  // LCD_IS_SMART
 
-#undef HAS_LCD
-#undef HAS_SD
-
-#endif
+#endif  // MOTHERBOARD == BOARD_SIXI_MEGA 
 
 
 #endif  // BOARD_SIXI_MEGA_H

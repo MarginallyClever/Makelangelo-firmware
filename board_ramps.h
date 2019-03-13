@@ -53,9 +53,15 @@
 #ifdef LCD_IS_128X64
 // 128x64 full graphics controller
 #define BEEPER             44
+
 #define LCD_PINS_RS        19
 #define LCD_PINS_ENABLE    42
 #define LCD_PINS_D4        18
+// these alternate pins might help - see https://www.marginallyclever.com/forums/topic/using-reprap-kit-from-amazon-ramps-1-6-lcd-display/#post-22131
+//#define LCD_PINS_RS        16
+//#define LCD_PINS_ENABLE    17
+//#define LCD_PINS_D4        23
+
 #define LCD_PINS_D5        38
 #define LCD_PINS_D6        41
 #define LCD_PINS_D7        40

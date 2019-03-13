@@ -37,6 +37,8 @@
 
 //#define HAS_LCD
 #define HAS_SD
+#define MOTHERBOARD BOARD_SIXI_MEGA  // sixi only supports one motherboard right now
+
 
 #define MOTOR_STEPS_PER_TURN          (200.0)  // motor full steps * microstepping setting
 
