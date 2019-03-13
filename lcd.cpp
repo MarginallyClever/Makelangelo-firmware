@@ -253,39 +253,40 @@ void LCD_print_long(long);
 void LCD_refresh_display();
 void LCD_draw_border();
 
+int buttons=0;
+unsigned long next_lcd_read=0;
+
 
 void LCD_read() {
-  // detect potentiometer changes
-  int rot = ((digitalRead(BTN_EN1) == LOW) << BLEN_A)
-          | ((digitalRead(BTN_EN2) == LOW) << BLEN_B);
-  // potentiometer uses grey code.  Pattern is 0 3
-  if (lcd_rot_old != rot) {
-    switch (rot) {
-      case ENCROT0:
-        if ( lcd_rot_old == ENCROT3 ) lcd_turn++;
-        else if ( lcd_rot_old == ENCROT1 ) lcd_turn--;
-        break;
-      case ENCROT1:
-        if ( lcd_rot_old == ENCROT0 ) lcd_turn++;
-        else if ( lcd_rot_old == ENCROT2 ) lcd_turn--;
-        break;
-      case ENCROT2:
-        if ( lcd_rot_old == ENCROT1 ) lcd_turn++;
-        else if ( lcd_rot_old == ENCROT3 ) lcd_turn--;
-        break;
-      case ENCROT3:
-        if ( lcd_rot_old == ENCROT2 ) lcd_turn++;
-        else if ( lcd_rot_old == ENCROT0 ) lcd_turn--;
-        break;
-    }
-    //if(lcd_turn !=0) Serial.print(lcd_turn>0?'+':'-');  // for debugging potentiometer
-    //else Serial.print(' ');
-    //Serial.println(lcd_turn);  // for debugging potentiometer
+  long now = millis();
+  
+  if(ELAPSED(now,next_lcd_read)) {
+    // detect potentiometer changes
+    buttons = ((digitalRead(BTN_EN1) == LOW) << BLEN_A)
+            | ((digitalRead(BTN_EN2) == LOW) << BLEN_B);
+    next_lcd_read=now+100;
   }
-  //Serial.println(rot);  // for debugging potentiometer
-
-  lcd_rot_old = rot;
-
+  
+  // potentiometer uses grey code.  Pattern is 0 3
+  if (lcd_rot_old != buttons) {
+    switch (buttons) {
+      case ENCROT0:  switch( lcd_rot_old ) { case ENCROT3: lcd_turn++; break; case ENCROT1: lcd_turn--; break; } break;
+      case ENCROT1:  switch( lcd_rot_old ) { case ENCROT0: lcd_turn++; break; case ENCROT2: lcd_turn--; break; } break;
+      case ENCROT2:  switch( lcd_rot_old ) { case ENCROT1: lcd_turn++; break; case ENCROT3: lcd_turn--; break; } break;
+      case ENCROT3:  switch( lcd_rot_old ) { case ENCROT2: lcd_turn++; break; case ENCROT0: lcd_turn--; break; } break;
+    }
+    // for debugging potentiometer
+    {
+      //if(lcd_turn !=0) Serial.print(lcd_turn>0?'+':'-');
+      //else Serial.print(' ');
+      Serial.print(millis());     Serial.print('\t');
+      Serial.print(lcd_rot_old);  Serial.print('\t');
+      Serial.print(buttons);      Serial.print('\t');
+      Serial.print(lcd_turn);     Serial.print('\n');
+    }
+    
+    lcd_rot_old = buttons;
+  }
 
   // find click state
   int btn = digitalRead(BTN_ENC);
@@ -660,8 +661,9 @@ void LCD_print_float(float v) {
 void LCD_update() {
 #ifdef HAS_LCD
   LCD_read();
-
+  
   if (millis() >= lcd_draw_delay ) {
+  
     lcd_draw_delay = millis() + LCD_DRAW_DELAY;
 
     //Serial.print(lcd_turn,DEC);
@@ -812,7 +814,6 @@ void LCD_status_menu() {
 // initialize the Smart controller LCD panel
 void LCD_setup() {
 #ifdef HAS_LCD
-
 #ifdef LCD_IS_SMART
   lcd.begin(LCD_WIDTH, LCD_HEIGHT);
 #endif

@@ -48,48 +48,6 @@
 #include "robot_arm6.h"
 
 //------------------------------------------------------------------------------
-// step direction
-//------------------------------------------------------------------------------
-
-#ifndef START0
-#define START0 LOW
-#endif
-#ifndef START1
-#define START1 LOW
-#endif
-#ifndef START2
-#define START2 LOW
-#endif
-#ifndef START3
-#define START3 LOW
-#endif
-#ifndef START4
-#define START4 LOW
-#endif
-#ifndef START5
-#define START5 LOW
-#endif
-
-#ifndef END0
-#define END0 HIGH
-#endif
-#ifndef END1
-#define END1 HIGH
-#endif
-#ifndef END2
-#define END2 HIGH
-#endif
-#ifndef END3
-#define END3 HIGH
-#endif
-#ifndef END4
-#define END4 HIGH
-#endif
-#ifndef END5
-#define END5 HIGH
-#endif
-
-//------------------------------------------------------------------------------
 // LCD panels supported
 //------------------------------------------------------------------------------
 
@@ -112,7 +70,9 @@
 #define BOARD_WEMOS        5
 #define BOARD_SIXI_MEGA    6
 
-#define MOTHERBOARD BOARD_SIXI_MEGA  // change this
+#ifndef MOTHERBOARD
+#define MOTHERBOARD BOARD_RUMBA  // change this
+#endif
 
 #include "board_rumba.h"
 #include "board_ramps.h"
@@ -194,6 +154,48 @@
 #endif
 
 //------------------------------------------------------------------------------
+// step direction
+//------------------------------------------------------------------------------
+
+#ifndef START0
+#define START0 LOW
+#endif
+#ifndef START1
+#define START1 LOW
+#endif
+#ifndef START2
+#define START2 LOW
+#endif
+#ifndef START3
+#define START3 LOW
+#endif
+#ifndef START4
+#define START4 LOW
+#endif
+#ifndef START5
+#define START5 LOW
+#endif
+
+#ifndef END0
+#define END0 HIGH
+#endif
+#ifndef END1
+#define END1 HIGH
+#endif
+#ifndef END2
+#define END2 HIGH
+#endif
+#ifndef END3
+#define END3 HIGH
+#endif
+#ifndef END4
+#define END4 HIGH
+#endif
+#ifndef END5
+#define END5 HIGH
+#endif
+
+//------------------------------------------------------------------------------
 // EEPROM MEMORY MAP
 //------------------------------------------------------------------------------
 #define FIRMWARE_VERSION        9    // Increment when adding new variables
@@ -240,6 +242,10 @@
 #define CLOCK_MIN_STEP_FREQUENCY (CLOCK_FREQ/500000U)
 
 #define TIMEOUT_OK (1000)
+
+// convenience
+#define PENDING(NOW,SOON) ((long)(NOW-(SOON))<0)
+#define ELAPSED(NOW,SOON) (!PENDING(NOW,SOON))
 
 //------------------------------------------------------------------------------
 // STRUCTURES
