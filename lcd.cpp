@@ -267,7 +267,7 @@ void LCD_read() {
     next_lcd_read=now+30;
   }
   
-  // potentiometer uses grey code.  Pattern is 0 3
+  // potentiometer uses grey code.  Pattern is 0 3 1 2
   if (lcd_rot_old != buttons) {
     switch (buttons) {
       case ENCROT0:  switch( lcd_rot_old ) { case ENCROT3: lcd_turn++; break; case ENCROT1: lcd_turn--; break; } break;
