@@ -264,7 +264,7 @@ void LCD_read() {
     // detect potentiometer changes
     buttons = ((digitalRead(BTN_EN1) == LOW) << BLEN_A)
             | ((digitalRead(BTN_EN2) == LOW) << BLEN_B);
-    next_lcd_read=now+100;
+    next_lcd_read=now+30;
   }
   
   // potentiometer uses grey code.  Pattern is 0 3
