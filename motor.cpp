@@ -1044,9 +1044,12 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
   }
 
   float max_acceleration = acceleration;
-#if MACHINE_STYLE == POLARGRAPH && 0 // doesn't work.  WHY?!
+#if MACHINE_STYLE == POLARGRAPH
+#ifdef DYNAMIC_ACCELERATION // doesn't work.  WHY?!
   {
     // Adjust the maximum acceleration based on the plotter position to reduce wobble at the bottom of the picture.
+    // We only consider the XY plane.
+    
     // normal vectors pointing from plotter to motor
     float R1x = axies[0].limitMin - oldX;
     float R1y = axies[1].limitMax - oldY;
@@ -1071,7 +1074,7 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
       // solve cT = -gY + k1 R1 for c [and k1]
       // solve cT = -gY + k2 R2 for c [and k2]
 #define GRAVITYy   (1.0)
-#define GRAVITYmag (98.0)
+#define GRAVITYmag (980.0)
       float c1 = -GRAVITYy*GRAVITYmag * R1x / (Tx*R1y - Ty*R1x);
       float c2 = -GRAVITYy*GRAVITYmag * R2x / (Tx*R2y - Ty*R2x);
       
@@ -1081,7 +1084,7 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
       if( c1>0 && c2>0 ) {
         cT = ( c1 < c2 ) ? c1 : c2;
       } else if(c1>0) cT=c1;
-      else if(c2>0) cT=c2;
+      else cT=c2;
       
       // The maximum acceleration is given by cT.    
       if(cT>0 && max_acceleration>cT) {
@@ -1091,9 +1094,10 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
     //Serial.print(oldX);
     //Serial.print(',');  
     //Serial.print(oldY);
-    //Serial.print('=');  
+    //Serial.print('=');
     //Serial.println(max_acceleration);  
   }
+#endif  // DYNAMIC_ACCELERATION
 #endif  // MACHINE_STYLE == POLARGRAPH
 
   const float steps_per_mm = new_seg.steps_total * inverse_distance_mm;

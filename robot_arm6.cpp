@@ -40,8 +40,8 @@ void IK(const float *const axies, long *motorStepArray) {
   float J5 = axies[5];  // w hand
 
   // differential
-  J5 += J4+J3;
-  J4 += J3;
+  J5 += (J4/NEMA17_CYCLOID_GEARBOX_RATIO)+(J3/NEMA17_CYCLOID_GEARBOX_RATIO);
+  J4 += (J3/NEMA17_CYCLOID_GEARBOX_RATIO);
   
   motorStepArray[0] = J0 * MOTOR_0_STEPS_PER_TURN / 360.0;  // ANCHOR
   motorStepArray[1] = J1 * MOTOR_1_STEPS_PER_TURN / 360.0;  // SHOULDER
@@ -91,7 +91,7 @@ int FK(long *motorStepArray, float *axies) {
 
 void robot_findHome() {
   motor_engage();
-
+/*
   int homeDirections[NUM_MOTORS] = {HOME_DIR_0,HOME_DIR_1,HOME_DIR_2,HOME_DIR_3,HOME_DIR_4,HOME_DIR_5};
   
   uint8_t i;
@@ -143,19 +143,20 @@ void robot_findHome() {
 
   // these are temporary until IK is finished.
   float homeAxies[6] ={-45,0,188,0,-90,0};
-  
+
   //FK(homeSteps,homeAxies);
   teleport(homeAxies);
+  */
 }
 
 
-void robot_setup() {
+void robot_setup() {/*
   pinMode(MOTOR_0_LIMIT_SWITCH_PIN, INPUT);  digitalWrite(MOTOR_0_LIMIT_SWITCH_PIN, HIGH);
   pinMode(MOTOR_1_LIMIT_SWITCH_PIN, INPUT);  digitalWrite(MOTOR_1_LIMIT_SWITCH_PIN, HIGH);
   pinMode(MOTOR_2_LIMIT_SWITCH_PIN, INPUT);  digitalWrite(MOTOR_2_LIMIT_SWITCH_PIN, HIGH);
   pinMode(MOTOR_3_LIMIT_SWITCH_PIN, INPUT);  digitalWrite(MOTOR_3_LIMIT_SWITCH_PIN, HIGH);
   pinMode(MOTOR_4_LIMIT_SWITCH_PIN, INPUT);  digitalWrite(MOTOR_4_LIMIT_SWITCH_PIN, HIGH);
-  pinMode(MOTOR_5_LIMIT_SWITCH_PIN, INPUT);  digitalWrite(MOTOR_5_LIMIT_SWITCH_PIN, HIGH);
+  pinMode(MOTOR_5_LIMIT_SWITCH_PIN, INPUT);  digitalWrite(MOTOR_5_LIMIT_SWITCH_PIN, HIGH);*/
 }
 
 

@@ -37,13 +37,17 @@
 #define MAX_JERK             (10.0)
 #define MAX_Z_JERK           (0.3)
 
+// dynamically adjust acceleration based on pen position around the page.
+#define DYNAMIC_ACCELERATION
 
 #if MACHINE_HARDWARE_VERSION == 5
+#define MAX_SEGMENTS         (16)  // has LCD, needs more ram.
 #define USE_LIMIT_SWITCH
 #define HAS_SD
 #define HAS_LCD
 #endif
 #if MACHINE_HARDWARE_VERSION == 3
+#define MAX_SEGMENTS         (16)  // has LCD, needs more ram.
 #define HAS_SD
 #define HAS_LCD
 #endif

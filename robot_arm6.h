@@ -31,7 +31,7 @@
 #define DEFAULT_FEEDRATE     (25.0)
 #define DEFAULT_ACCELERATION (5)
 
-#define MAX_SEGMENTS         (8)  // override the default to save RAM
+#define MAX_SEGMENTS         (16)  // override the default to save RAM
 #define DEGREES_PER_STEP     (1.8)
 #define MICROSTEPS           (1.0)
 

@@ -15,43 +15,41 @@
 
 #define MAX_MOTORS                 (6)
 
-#define MOTOR_0_DIR_PIN           48//(16)
-#define MOTOR_0_STEP_PIN          50//(17)
-#define MOTOR_0_ENABLE_PIN        52//(48)
-#define MOTOR_0_LIMIT_SWITCH_PIN  51//(37)  // x-
+#define MOTOR_0_DIR_PIN           10//(16)
+#define MOTOR_0_STEP_PIN          11//(17)
+#define MOTOR_0_ENABLE_PIN        12//(48)
+#define MOTOR_0_LIMIT_SWITCH_PIN  9//(37)  // x-
 
-#define MOTOR_1_DIR_PIN           43//(47)
-#define MOTOR_1_STEP_PIN          45//(54)
-#define MOTOR_1_ENABLE_PIN        47//(55)
-#define MOTOR_1_LIMIT_SWITCH_PIN  51//(36)  // x+
+#define MOTOR_1_DIR_PIN           13//(47)
+#define MOTOR_1_STEP_PIN          22//(54)
+#define MOTOR_1_ENABLE_PIN        23//(55)
+#define MOTOR_1_LIMIT_SWITCH_PIN  9//(36)  // x+
 
-#define MOTOR_2_DIR_PIN           36//(56)
-#define MOTOR_2_STEP_PIN          38//(57)
-#define MOTOR_2_ENABLE_PIN        40//(62)
-#define MOTOR_2_LIMIT_SWITCH_PIN  51//(35)  // y-
+#define MOTOR_2_DIR_PIN           24//(56)
+#define MOTOR_2_STEP_PIN          25//(57)
+#define MOTOR_2_ENABLE_PIN        26//(62)
+#define MOTOR_2_LIMIT_SWITCH_PIN  9//(35)  // y-
 
-#define MOTOR_3_DIR_PIN           31//(22)
-#define MOTOR_3_STEP_PIN          33//(23)
-#define MOTOR_3_ENABLE_PIN        53//(24)
-#define MOTOR_3_LIMIT_SWITCH_PIN  51//(34)  // y+
+#define MOTOR_3_DIR_PIN           27//(22)
+#define MOTOR_3_STEP_PIN          28//(23)
+#define MOTOR_3_ENABLE_PIN        29//(24)#define MOTOR_3_LIMIT_SWITCH_PIN  9//(34)  // y+
+#define MOTOR_3_LIMIT_SWITCH_PIN  9//(33)  // z+
 
-#define MOTOR_4_DIR_PIN           26//(25)
-#define MOTOR_4_STEP_PIN          28//(26)
-#define MOTOR_4_ENABLE_PIN        53//(27)
-#define MOTOR_4_LIMIT_SWITCH_PIN  51//(33)  // z-
+#define MOTOR_4_DIR_PIN           30//(25)
+#define MOTOR_4_STEP_PIN          31//(26)
+#define MOTOR_4_ENABLE_PIN        32//(27)
+#define MOTOR_4_LIMIT_SWITCH_PIN  9//(33)  // z-
 
-#define MOTOR_5_DIR_PIN           23//(28)
-#define MOTOR_5_STEP_PIN          25//(29)
-#define MOTOR_5_ENABLE_PIN        53//(39)
-#define MOTOR_5_LIMIT_SWITCH_PIN  51//(32)  // z+
+#define MOTOR_5_DIR_PIN           33//(28)
+#define MOTOR_5_STEP_PIN          34//(29)
+#define MOTOR_5_ENABLE_PIN        35//(39)
+#define MOTOR_5_LIMIT_SWITCH_PIN  9//(32)  // z+
 
 #define MAX_BOARD_SERVOS          (1)
 #define SERVO0_PIN                (5)
 
-#define LIMIT_SWITCH_PIN_LEFT     (MOTOR_0_LIMIT_SWITCH_PIN)
-#define LIMIT_SWITCH_PIN_RIGHT    (MOTOR_1_LIMIT_SWITCH_PIN)
-
 #undef HAS_LCD
+#undef HAS_SD
 
 // LCD pins
 #ifdef LCD_IS_128X64
