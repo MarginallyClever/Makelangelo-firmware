@@ -63,12 +63,12 @@
 // Microcontrollers supported
 //------------------------------------------------------------------------------
 
-#define BOARD_RUMBA        1
-#define BOARD_RAMPS        2
-#define BOARD_SANGUINOLULU 3
-#define BOARD_TEENSYLU     4
-#define BOARD_WEMOS        5
-#define BOARD_SIXI_MEGA    6
+#define BOARD_RUMBA        1  // Reprap discount Rumba board
+#define BOARD_RAMPS        2  // Arduino Mega + Ramps 1.4
+#define BOARD_SANGUINOLULU 3  // Sanguinolulu
+#define BOARD_TEENSYLU     4  // Teensylu
+#define BOARD_WEMOS        5  // Wemos D1 R2 + cnc shield (see board_wemos.h)
+#define BOARD_SIXI_MEGA    6  // Arduino Mega + custom shield for Sixi 2 robot
 
 #ifndef MOTHERBOARD
 #define MOTHERBOARD BOARD_RUMBA  // change this
@@ -149,7 +149,7 @@
 #endif
 
 #if NUM_SERVOS + NUM_MOTORS != NUM_AXIES
-// not always the case!  Skycam has more motors than axies.  
+// not always the case!  Skycam has more motors than axies.
 //#error "NUM_SERVOS + NUM_MOTORS != NUM_AXIES"
 #endif
 
@@ -213,20 +213,20 @@
 
 #ifdef ESP8266
 
-  #define CLOCK_FREQ            (80000000L)
-  #define MAX_COUNTER           (4294967295L)  // 32 bits
-  #define CRITICAL_SECTION_START  noInterrupts();
-  #define CRITICAL_SECTION_END    interrupts();
+#define CLOCK_FREQ            (80000000L)
+#define MAX_COUNTER           (4294967295L)  // 32 bits
+#define CRITICAL_SECTION_START  noInterrupts();
+#define CRITICAL_SECTION_END    interrupts();
 
 #else  // ESP8266
 
-  // for timer interrupt control
-  #define CLOCK_FREQ            (16000000L)
-  #define MAX_COUNTER           (65536L)  // 16 bits
-  #ifndef CRITICAL_SECTION_START
-    #define CRITICAL_SECTION_START  unsigned char _sreg = SREG;  cli();
-    #define CRITICAL_SECTION_END    SREG = _sreg;
-  #endif //CRITICAL_SECTION_START
+// for timer interrupt control
+#define CLOCK_FREQ            (16000000L)
+#define MAX_COUNTER           (65536L)  // 16 bits
+#ifndef CRITICAL_SECTION_START
+#define CRITICAL_SECTION_START  unsigned char _sreg = SREG;  cli();
+#define CRITICAL_SECTION_END    SREG = _sreg;
+#endif //CRITICAL_SECTION_START
 
 #endif  // ESP8266
 
@@ -278,7 +278,7 @@ extern int sofar;                      // Serial buffer progress
 extern void pause(const long us);
 extern void findStepDelay();
 extern void IK(const float *const axies, long *motorStepArray);
-extern int FK(long *motorStepArray,float *axies);
+extern int FK(long *motorStepArray, float *axies);
 extern void robot_findHome();
 extern void robot_setup();
 extern void processCommand();
