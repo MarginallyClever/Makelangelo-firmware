@@ -743,8 +743,9 @@ void waitForPinState() {
   int pin = parseNumber('P', BTN_ENC);
 #else
   int pin = parseNumber('P', -1);
-  if (pin == -1) return; // no pin specified.
 #endif
+  if(pin == -1) return; // no pin specified.
+
   int oldState = parseNumber('S', -1);
   if (oldState == -1) {
     // default: assume the pin is not in the requested state
