@@ -91,62 +91,7 @@ int FK(long *motorStepArray, float *axies) {
 
 void robot_findHome() {
   motor_engage();
-/*
-  int homeDirections[NUM_MOTORS] = {HOME_DIR_0,HOME_DIR_1,HOME_DIR_2,HOME_DIR_3,HOME_DIR_4,HOME_DIR_5};
-  
-  uint8_t i;
-  // for each stepper,
-  for (i = 0; i < NUM_MOTORS; ++i) {
-    Serial.print("Homing ");
-    Serial.print(i,DEC);
-    Serial.print('(');
-    Serial.print(AxisNames[i]);
-    Serial.println(')');
-
-    // back up until switch is hit
-    digitalWrite(motors[i].dir_pin, homeDirections[i]);
-    while ( digitalRead(motors[i].limit_switch_pin) == HIGH ) {
-      // move "down"
-      digitalWrite(motors[i].step_pin, HIGH);
-      digitalWrite(motors[i].step_pin, LOW);
-      pause(STEP_DELAY);
-    }
-    // back off in case we started in hit position
-    digitalWrite(motors[i].dir_pin, homeDirections[i]==HIGH?LOW:HIGH);
-    while ( digitalRead(motors[i].limit_switch_pin) == LOW ) {
-      // move "down"
-      digitalWrite(motors[i].step_pin, HIGH);
-      digitalWrite(motors[i].step_pin, LOW);
-      pause(STEP_DELAY);
-    }
-    // back up until switch is hit
-    digitalWrite(motors[i].dir_pin, homeDirections[i]);
-    while ( digitalRead(motors[i].limit_switch_pin) == HIGH ) {
-      // move "down"
-      digitalWrite(motors[i].step_pin, HIGH);
-      digitalWrite(motors[i].step_pin, LOW);
-      pause(STEP_DELAY);
-    }
-  }
-  // set robot to home position
-  float homeSteps[6] = {
-    -45  / MOTOR_0_STEPS_PER_TURN,
-    0    / MOTOR_1_STEPS_PER_TURN,
-    188  / MOTOR_2_STEPS_PER_TURN,
-    0    / MOTOR_3_STEPS_PER_TURN,
-    -90  / MOTOR_4_STEPS_PER_TURN,
-    0    / MOTOR_5_STEPS_PER_TURN
-    };
-
-  // these are the correct angles in the computer model
-  //float homeAxies[6] ={ -43.414, 0, 17.358, 0, 0, 172 };
-
-  // these are temporary until IK is finished.
-  float homeAxies[6] ={-45,0,188,0,-90,0};
-
-  //FK(homeSteps,homeAxies);
-  teleport(homeAxies);
-  */
+  // arm6 always knows where it is.
 }
 
 

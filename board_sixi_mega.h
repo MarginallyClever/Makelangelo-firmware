@@ -15,34 +15,34 @@
 
 #define MAX_MOTORS                 (6)
 
-#define MOTOR_0_DIR_PIN           10//(16)
-#define MOTOR_0_STEP_PIN          11//(17)
-#define MOTOR_0_ENABLE_PIN        12//(48)
+#define MOTOR_0_DIR_PIN           22//(16)
+#define MOTOR_0_STEP_PIN          24//(17)
+#define MOTOR_0_ENABLE_PIN        26//(48)
 #define MOTOR_0_LIMIT_SWITCH_PIN  9//(37)  // x-
 
-#define MOTOR_1_DIR_PIN           13//(47)
-#define MOTOR_1_STEP_PIN          22//(54)
-#define MOTOR_1_ENABLE_PIN        23//(55)
+#define MOTOR_1_DIR_PIN           28//(47)
+#define MOTOR_1_STEP_PIN          30//(54)
+#define MOTOR_1_ENABLE_PIN        32//(55)
 #define MOTOR_1_LIMIT_SWITCH_PIN  9//(36)  // x+
 
-#define MOTOR_2_DIR_PIN           24//(56)
-#define MOTOR_2_STEP_PIN          25//(57)
-#define MOTOR_2_ENABLE_PIN        26//(62)
+#define MOTOR_2_DIR_PIN           34//(56)
+#define MOTOR_2_STEP_PIN          36//(57)
+#define MOTOR_2_ENABLE_PIN        38//(62)
 #define MOTOR_2_LIMIT_SWITCH_PIN  9//(35)  // y-
 
-#define MOTOR_3_DIR_PIN           27//(22)
-#define MOTOR_3_STEP_PIN          28//(23)
-#define MOTOR_3_ENABLE_PIN        29//(24)#define MOTOR_3_LIMIT_SWITCH_PIN  9//(34)  // y+
-#define MOTOR_3_LIMIT_SWITCH_PIN  9//(33)  // z+
+#define MOTOR_3_DIR_PIN           40//(22)
+#define MOTOR_3_STEP_PIN          42//(23)
+#define MOTOR_3_ENABLE_PIN        41//(24
+)#define MOTOR_3_LIMIT_SWITCH_PIN  9//(34)  // y+
 
-#define MOTOR_4_DIR_PIN           30//(25)
-#define MOTOR_4_STEP_PIN          31//(26)
-#define MOTOR_4_ENABLE_PIN        32//(27)
+#define MOTOR_4_DIR_PIN           44//(25)
+#define MOTOR_4_STEP_PIN          46//(26)
+#define MOTOR_4_ENABLE_PIN        45//(27)
 #define MOTOR_4_LIMIT_SWITCH_PIN  9//(33)  // z-
 
-#define MOTOR_5_DIR_PIN           33//(28)
-#define MOTOR_5_STEP_PIN          34//(29)
-#define MOTOR_5_ENABLE_PIN        35//(39)
+#define MOTOR_5_DIR_PIN           48//(28)
+#define MOTOR_5_STEP_PIN          50//(29)
+#define MOTOR_5_ENABLE_PIN        49//(39)
 #define MOTOR_5_LIMIT_SWITCH_PIN  9//(32)  // z+
 
 #define MAX_BOARD_SERVOS          (1)
