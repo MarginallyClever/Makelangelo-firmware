@@ -77,6 +77,8 @@
 #define END4 LOW
 #define END5 LOW
 
+extern float sensorAngles[6];
+
 extern void reportAllAngleValues();
 
 #endif  // #ifdef ARM6
