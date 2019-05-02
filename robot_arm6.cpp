@@ -112,13 +112,6 @@ void robot_setup() {/*
   }
 }
 
-void updateSensors() {
-  for(int i=0;i<6;++i) {
-    uint32_t rawValue = readEncoder(i);
-    sensorAngles[i] = sensorAngle(rawValue);
-  }
-}
-
 /**
  * @param i the index of the sensor to read
  * @return success value
@@ -127,10 +120,11 @@ uint32_t readEncoder(int i) {
   uint32_t data = 0, inputStream;
   int x;
 
+  int csel = PIN_SENSOR_CSEL_0+(i*3);
   // 10ns since last read
-  digitalWrite(PIN_SENSOR_CSEL_0+(i*3), HIGH);
+  digitalWrite(csel, HIGH);
   // 500ns wait
-  digitalWrite(PIN_SENSOR_CSEL_0+(i*3), LOW);
+  digitalWrite(csel, LOW);
 
   int clk = PIN_SENSOR_CLK_0+(i*3);
   int d0 = PIN_SENSOR_D0_0+(i*3);
@@ -145,8 +139,8 @@ uint32_t readEncoder(int i) {
     data = ((data << 1) + inputStream); // left-shift summing variable, add pin value
   }
   
-  digitalWrite(PIN_SENSOR_CSEL, LOW);
-  digitalWrite(PIN_SENSOR_CLK, HIGH);
+  digitalWrite(csel, LOW);
+  digitalWrite(clk, HIGH);
   
   return data;
 }
@@ -156,10 +150,17 @@ uint32_t readEncoder(int i) {
    @input data the raw sensor reading
    @return the angle in degrees
 */
-float sensorAngle(uint32_t data) {
+float sensorRawToAngle(uint32_t data) {
   data >>= SENSOR_TOTAL_BITS-SENSOR_ANGLE_BITS;
   // it might be better to say (360*angle)/(2^16) instead of angle*(360.0/2^16) because of rounding errors
   return (data * SENSOR_ANGLE_PER_BIT);
+}
+
+void updateSensors() {
+  for(int i=0;i<6;++i) {
+    uint32_t rawValue = readEncoder(i);
+    sensorAngles[i] = sensorRawToAngle(rawValue);
+  }
 }
 
 #endif

@@ -933,7 +933,7 @@ void setFeedratePerAxis() {
 /**
  * D17 report the 6 axis sensor values from the Sixi robot arm.
  */
-void reportAllAngleValues() {
+void reportAllAngleValues() {  
   Serial.println("D17");
   for(int i=0;i<6;++i) {
     Serial.print(' ');
@@ -1211,21 +1211,6 @@ void loop() {
   }
 
 #if MACHINE_STYLE == ARM6
-  /*
-    static int switchState=LOW;
-    if(digitalRead(MOTOR_5_LIMIT_SWITCH_PIN)!=switchState) {
-      switchState = !switchState;
-      Serial.println(switchState?"ON":"OFF");
-    }
-  */
-  /*
-    Serial.print( digitalRead(MOTOR_0_LIMIT_SWITCH_PIN)==HIGH ? "1 " : "0 ");
-    Serial.print( digitalRead(MOTOR_1_LIMIT_SWITCH_PIN)==HIGH ? "1 " : "0 ");
-    Serial.print( digitalRead(MOTOR_2_LIMIT_SWITCH_PIN)==HIGH ? "1 " : "0 ");
-    Serial.print( digitalRead(MOTOR_3_LIMIT_SWITCH_PIN)==HIGH ? "1 " : "0 ");
-    Serial.print( digitalRead(MOTOR_4_LIMIT_SWITCH_PIN)==HIGH ? "1 " : "0 ");
-    Serial.print( digitalRead(MOTOR_5_LIMIT_SWITCH_PIN)==HIGH ? "1 " : "0 ");
-    Serial.println();*/
-
+  sensorUpdate();
 #endif
 }

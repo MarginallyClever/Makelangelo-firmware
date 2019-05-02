@@ -79,7 +79,7 @@
 
 extern float sensorAngles[6];
 
-extern void reportAllAngleValues();
+extern void sensorUpdate();
 
 #endif  // #ifdef ARM6
 
