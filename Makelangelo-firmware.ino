@@ -891,6 +891,7 @@ void processCommand() {
 #endif
 #if MACHINE_STYLE == ARM6
     case 16:  setFeedratePerAxis();  break;
+    case 17:  reportAllAngleValues();  break;
 #endif
     default:  break;
   }
@@ -927,6 +928,20 @@ void setFeedratePerAxis() {
   Serial.print(" V");  Serial.print(max_feedrate_mm_s[4]);
   Serial.print(" W");  Serial.println(max_feedrate_mm_s[5]);
 }
+
+#if MACHINE_STYLE == ARM6
+/**
+ * D17 report the 6 axis sensor values from the Sixi robot arm.
+ */
+void reportAllAngleValues() {
+  Serial.println("D17");
+  for(int i=0;i<6;++i) {
+    Serial.print(' ');
+    Serial.print(sensorAngles[i],5);
+  }
+  Serial.println();
+}
+#endif
 
 #if MACHINE_STYLE == POLARGRAPH
 /**

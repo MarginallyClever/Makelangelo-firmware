@@ -11,6 +11,8 @@
 
 #include "Vector3.h"
 
+float sensorAngles[6];
+
 /**
    Inverse Kinematics turns XY coordinates into step counts from each motor
    This code is a duplicate of https://github.com/MarginallyClever/Robot-Overlord-App/blob/master/src/main/java/com/marginallyclever/robotOverlord/sixiRobot/java inverseKinematics()
@@ -102,7 +104,65 @@ void robot_setup() {/*
   pinMode(MOTOR_3_LIMIT_SWITCH_PIN, INPUT);  digitalWrite(MOTOR_3_LIMIT_SWITCH_PIN, HIGH);
   pinMode(MOTOR_4_LIMIT_SWITCH_PIN, INPUT);  digitalWrite(MOTOR_4_LIMIT_SWITCH_PIN, HIGH);
   pinMode(MOTOR_5_LIMIT_SWITCH_PIN, INPUT);  digitalWrite(MOTOR_5_LIMIT_SWITCH_PIN, HIGH);*/
+
+  for(int i=0;i<6;++i) {
+    pinMode(PIN_SENSOR_CSEL_0+(i*3),OUTPUT);
+    pinMode(PIN_SENSOR_CLK_0 +(i*3),OUTPUT);
+    pinMode(PIN_SENSOR_D0_0  +(i*3),INPUT);
+  }
+}
+
+void updateSensors() {
+  for(int i=0;i<6;++i) {
+    uint32_t rawValue = readEncoder(i);
+    sensorAngles[i] = sensorAngle(rawValue);
+  }
+}
+
+/**
+ * @param i the index of the sensor to read
+ * @return success value
+ */
+uint32_t readEncoder(int i) {
+  uint32_t data = 0, inputStream;
+  int x;
+
+  // 10ns since last read
+  digitalWrite(PIN_SENSOR_CSEL_0+(i*3), HIGH);
+  // 500ns wait
+  digitalWrite(PIN_SENSOR_CSEL_0+(i*3), LOW);
+
+  int clk = PIN_SENSOR_CLK_0+(i*3);
+  int d0 = PIN_SENSOR_D0_0+(i*3);
+  for (x = 0; x < SENSOR_TOTAL_BITS; x++) {
+    // Set the clock low.  On the next high sensor will start to deliver data.
+    digitalWrite(clk, LOW);
+    // 50ns typical wait
+    digitalWrite(clk, HIGH);
+    inputStream = digitalRead(d0);
+    //delayMicroseconds(1);
+    // one bit of data is now waiting on sensor pin
+    data = ((data << 1) + inputStream); // left-shift summing variable, add pin value
+  }
+  
+  digitalWrite(PIN_SENSOR_CSEL, LOW);
+  digitalWrite(PIN_SENSOR_CLK, HIGH);
+  
+  return data;
 }
 
 
+/**
+   @input data the raw sensor reading
+   @return the angle in degrees
+*/
+float sensorAngle(uint32_t data) {
+  data >>= SENSOR_TOTAL_BITS-SENSOR_ANGLE_BITS;
+  // it might be better to say (360*angle)/(2^16) instead of angle*(360.0/2^16) because of rounding errors
+  return (data * SENSOR_ANGLE_PER_BIT);
+}
+
 #endif
+
+
+void reportAllAngleValues() {}
