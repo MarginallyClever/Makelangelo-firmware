@@ -39,6 +39,8 @@
 #define PEN_UP_ANGLE         (50)
 #define PEN_DOWN_ANGLE       (90)  // Some steppers don't like 0 degrees
 
+#define MAX_SEGMENTS         (16)  // override the default to save RAM
+
 #endif  // ZARPLOTTER
 
 

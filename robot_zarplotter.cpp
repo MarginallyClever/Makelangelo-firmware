@@ -72,6 +72,8 @@ int FK(long *motorStepArray, float *cartesian) {
   cartesian[0] = theta * a + limit_xmin;
   cartesian[1] = limit_ymax - (sqrt( 1.0 - theta * theta ) * a);
   cartesian[2] = motorStepArray[NUM_MOTORS];
+
+  return 0;
 }
 
 
