@@ -36,6 +36,10 @@
 #define SEGMENT_PER_CM_LINE  (1)  // lines are subdivided.  How long are the divisions?
 #define SEGMENT_PER_CM_ARC   (3)  // Arcs are subdivided.  How long are the divisions?
 
+// alter these two values to equal gear ratio * motor steps * microstepping for each axis.
+// by default they are set the same as all other robots in the system.
+#define THREAD_PER_STEP_X    THREAD_PER_STEP
+#define THREAD_PER_STEP_Y    THREAD_PER_STEP
 
 #endif  // #ifdef TRADITIONALXY
 
