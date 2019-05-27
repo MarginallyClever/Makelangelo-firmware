@@ -934,7 +934,7 @@ void setFeedratePerAxis() {
  * D17 report the 6 axis sensor values from the Sixi robot arm.
  */
 void reportAllAngleValues() {  
-  Serial.println("D17");
+  Serial.print("D17");
   for(int i=0;i<6;++i) {
     Serial.print(' ');
     Serial.print(sensorAngles[i],5);
@@ -1212,5 +1212,6 @@ void loop() {
 
 #if MACHINE_STYLE == ARM6
   sensorUpdate();
+  reportAllAngleValues();
 #endif
 }

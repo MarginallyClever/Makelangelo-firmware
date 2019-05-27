@@ -97,35 +97,45 @@
 // SENSORS
 
 // sensor bits, flags, and masks
-#define SENSOR_TOTAL_BITS    (16)  // 18 bits of data
-#define SENSOR_ANGLE_BITS    (10)
+#define BOTTOM_14_MASK       (0x3FFF)
+#define SENSOR_TOTAL_BITS    (16)
+#define SENSOR_DATA_BITS     (15)
+#define SENSOR_ANGLE_BITS    (14)
 #define SENSOR_ANGLE_PER_BIT (360.0/(float)((long)1<<SENSOR_ANGLE_BITS))  // 0.00549316406
 
 // pins
+#define PIN_SENSOR_CSEL_0   11
+#define  PIN_SENSOR_CLK_0   10
+#define PIN_SENSOR_MOSI_0   9
+#define PIN_SENSOR_MISO_0   8
 
-#define PIN_SENSOR_CSEL_0   36
-#define PIN_SENSOR_CLK_0    37
-#define PIN_SENSOR_D0_0     38
+#define PIN_SENSOR_CSEL_1   5
+#define  PIN_SENSOR_CLK_1   4
+#define PIN_SENSOR_MOSI_1   3
+#define PIN_SENSOR_MISO_1   2
 
-#define PIN_SENSOR_CSEL_1   39
-#define PIN_SENSOR_CLK_1    40
-#define PIN_SENSOR_D0_1     41
+#define PIN_SENSOR_CSEL_2   14
+#define  PIN_SENSOR_CLK_2   15
+#define PIN_SENSOR_MOSI_2   16
+#define PIN_SENSOR_MISO_2   17
 
-#define PIN_SENSOR_CSEL_2   42
-#define PIN_SENSOR_CLK_2    43
-#define PIN_SENSOR_D0_2     44
+#define PIN_SENSOR_CSEL_3   18
+#define  PIN_SENSOR_CLK_3   19
+#define PIN_SENSOR_MOSI_3   20
+#define PIN_SENSOR_MISO_3   21
 
-#define PIN_SENSOR_CSEL_3   45
-#define PIN_SENSOR_CLK_3    46
-#define PIN_SENSOR_D0_3     47
+#define PIN_SENSOR_CSEL_4   45
+#define  PIN_SENSOR_CLK_4   43
+#define PIN_SENSOR_MOSI_4   41
+#define PIN_SENSOR_MISO_4   39
 
-#define PIN_SENSOR_CSEL_4   48
-#define PIN_SENSOR_CLK_4    49
-#define PIN_SENSOR_D0_4     50
+#define PIN_SENSOR_CSEL_5   29
+#define  PIN_SENSOR_CLK_5   27
+#define PIN_SENSOR_MOSI_5   25
+#define PIN_SENSOR_MISO_5   23
 
-#define PIN_SENSOR_CSEL_5   51
-#define PIN_SENSOR_CLK_5    52
-#define PIN_SENSOR_D0_5     53
+
+
 
 #endif  // MOTHERBOARD == BOARD_SIXI_MEGA 
 

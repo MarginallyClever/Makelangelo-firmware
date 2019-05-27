@@ -11,6 +11,8 @@
 
 #include "Vector3.h"
 
+char sensorPins[4*6];
+
 float sensorAngles[6];
 
 /**
@@ -97,73 +99,109 @@ void robot_findHome() {
 }
 
 
-void robot_setup() {/*
-  pinMode(MOTOR_0_LIMIT_SWITCH_PIN, INPUT);  digitalWrite(MOTOR_0_LIMIT_SWITCH_PIN, HIGH);
-  pinMode(MOTOR_1_LIMIT_SWITCH_PIN, INPUT);  digitalWrite(MOTOR_1_LIMIT_SWITCH_PIN, HIGH);
-  pinMode(MOTOR_2_LIMIT_SWITCH_PIN, INPUT);  digitalWrite(MOTOR_2_LIMIT_SWITCH_PIN, HIGH);
-  pinMode(MOTOR_3_LIMIT_SWITCH_PIN, INPUT);  digitalWrite(MOTOR_3_LIMIT_SWITCH_PIN, HIGH);
-  pinMode(MOTOR_4_LIMIT_SWITCH_PIN, INPUT);  digitalWrite(MOTOR_4_LIMIT_SWITCH_PIN, HIGH);
-  pinMode(MOTOR_5_LIMIT_SWITCH_PIN, INPUT);  digitalWrite(MOTOR_5_LIMIT_SWITCH_PIN, HIGH);*/
+void robot_setup() {
+  int i=0;
 
-  for(int i=0;i<6;++i) {
-    pinMode(PIN_SENSOR_CSEL_0+(i*3),OUTPUT);
-    pinMode(PIN_SENSOR_CLK_0 +(i*3),OUTPUT);
-    pinMode(PIN_SENSOR_D0_0  +(i*3),INPUT);
+  sensorPins[i++]=PIN_SENSOR_CSEL_0;
+  sensorPins[i++]=PIN_SENSOR_CLK_0;
+  sensorPins[i++]=PIN_SENSOR_MISO_0;
+  sensorPins[i++]=PIN_SENSOR_MOSI_0;
+  
+  sensorPins[i++]=PIN_SENSOR_CSEL_1;
+  sensorPins[i++]=PIN_SENSOR_CLK_1;
+  sensorPins[i++]=PIN_SENSOR_MISO_1;
+  sensorPins[i++]=PIN_SENSOR_MOSI_1;
+  
+  sensorPins[i++]=PIN_SENSOR_CSEL_2;
+  sensorPins[i++]=PIN_SENSOR_CLK_2;
+  sensorPins[i++]=PIN_SENSOR_MISO_2;
+  sensorPins[i++]=PIN_SENSOR_MOSI_2;
+  
+  sensorPins[i++]=PIN_SENSOR_CSEL_3;
+  sensorPins[i++]=PIN_SENSOR_CLK_3;
+  sensorPins[i++]=PIN_SENSOR_MISO_3;
+  sensorPins[i++]=PIN_SENSOR_MOSI_3;
+  
+  sensorPins[i++]=PIN_SENSOR_CSEL_4;
+  sensorPins[i++]=PIN_SENSOR_CLK_4;
+  sensorPins[i++]=PIN_SENSOR_MISO_4;
+  sensorPins[i++]=PIN_SENSOR_MOSI_4;
+  
+  sensorPins[i++]=PIN_SENSOR_CSEL_5;
+  sensorPins[i++]=PIN_SENSOR_CLK_5;
+  sensorPins[i++]=PIN_SENSOR_MISO_5;
+  sensorPins[i++]=PIN_SENSOR_MOSI_5;
+
+  for(i=0;i<6;++i) {
+    pinMode(sensorPins[(i*4)+0],OUTPUT);  // csel
+    pinMode(sensorPins[(i*4)+1],OUTPUT);  // clk
+    pinMode(sensorPins[(i*4)+2],INPUT);  // miso
+    pinMode(sensorPins[(i*4)+3],OUTPUT);  // mosi
+
+    digitalWrite(sensorPins[(i*4)+0],HIGH);  // csel
+    digitalWrite(sensorPins[(i*4)+3],HIGH);  // mosi
   }
 }
 
 /**
- * @param i the index of the sensor to read
- * @return success value
+ * @param index the sensor to read
+ * @param result where to store the returned value.  may be changed even if method fails.
+ * @return 0 on fail, 1 on success.
+// @see https://ams.com/documents/20143/36005/AS5147_DS000307_2-00.pdf
  */
-uint32_t readEncoder(int i) {
-  uint32_t data = 0, inputStream;
-  int x;
+boolean getSensorRawValue(int index, uint16_t &result) {
+  result=0;
+  uint8_t input,parity=0;
 
-  int csel = PIN_SENSOR_CSEL_0+(i*3);
-  // 10ns since last read
-  digitalWrite(csel, HIGH);
-  // 500ns wait
-  digitalWrite(csel, LOW);
+  index*=4;
+  
+  // Send the request for the angle value (command 0xFFFF)
+  // at the same time as receiving an angle.
 
-  int clk = PIN_SENSOR_CLK_0+(i*3);
-  int d0 = PIN_SENSOR_D0_0+(i*3);
-  for (x = 0; x < SENSOR_TOTAL_BITS; x++) {
-    // Set the clock low.  On the next high sensor will start to deliver data.
-    digitalWrite(clk, LOW);
-    // 50ns typical wait
-    digitalWrite(clk, HIGH);
-    inputStream = digitalRead(d0);
-    //delayMicroseconds(1);
-    // one bit of data is now waiting on sensor pin
-    data = ((data << 1) + inputStream); // left-shift summing variable, add pin value
+  // Collect the 16 bits of data from the sensor
+  digitalWrite(sensorPins[index+0],LOW);  // csel
+  
+  for(int i=0;i<SENSOR_TOTAL_BITS;++i) {
+    digitalWrite(sensorPins[index+1],HIGH);  // clk
+    // this is here to give a little more time to the clock going high.
+    // only needed if the arduino is *very* fast.  I'm feeling generous.
+    result <<= 1;
+    digitalWrite(sensorPins[index+1],LOW);  // clk
+    
+    input = digitalRead(sensorPins[index+2]);  // miso
+#ifdef VERBOSE
+    Serial.print(input,DEC);
+#endif
+    result |= input;
+    parity ^= (i>0) & input;
   }
+
+  digitalWrite(sensorPins[index+0],HIGH);  // csel
   
-  digitalWrite(csel, LOW);
-  digitalWrite(clk, HIGH);
-  
-  return data;
+  // check the parity bit
+  return ( parity != (result>>SENSOR_DATA_BITS) );
 }
 
 
 /**
-   @input data the raw sensor reading
-   @return the angle in degrees
-*/
-float sensorRawToAngle(uint32_t data) {
-  data >>= SENSOR_TOTAL_BITS-SENSOR_ANGLE_BITS;
-  // it might be better to say (360*angle)/(2^16) instead of angle*(360.0/2^16) because of rounding errors
-  return (data * SENSOR_ANGLE_PER_BIT);
+ * @param rawValue 16 bit value from as4157 sensor, including parity and EF bit
+ * @return degrees calculated from bottom 14 bits.
+ */
+float extractAngleFromRawValue(uint16_t rawValue) {
+  return (float)(rawValue & BOTTOM_14_MASK) * 360.0 / (float)(1<<SENSOR_ANGLE_BITS);
 }
 
-void updateSensors() {
+void sensorUpdate() {
+  uint16_t rawValue;
   for(int i=0;i<6;++i) {
-    uint32_t rawValue = readEncoder(i);
-    sensorAngles[i] = sensorRawToAngle(rawValue);
+    if(!getSensorRawValue(i,rawValue)) {
+      sensorAngles[i] = extractAngleFromRawValue(rawValue);
+    }
   }
 }
 
-#endif
-
+#else // MACHINE_STYLE == ARM6
 
 void reportAllAngleValues() {}
+
+#endif
