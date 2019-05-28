@@ -48,11 +48,11 @@
 #define MOTOR_5_LIMIT_SWITCH_PIN  9//(32)  // z+
 
 #define MAX_BOARD_SERVOS          (1)
-#define SERVO0_PIN                (5)
+#define SERVO0_PIN                (6)
 
 #undef HAS_LCD
 #undef HAS_SD
-
+/*
 // LCD pins
 #ifdef LCD_IS_128X64
 #define BEEPER             44
@@ -93,7 +93,7 @@
 #define SDSS               53
 #define SDCARDDETECT       49
 #endif  // LCD_IS_SMART
-
+*/
 // SENSORS
 
 // sensor bits, flags, and masks
