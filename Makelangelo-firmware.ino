@@ -937,25 +937,37 @@ void setFeedratePerAxis() {
 void reportAllAngleValues() {  
   Serial.print("D17");
   for(int i=0;i<6;++i) {
-    Serial.print(' ');
+    Serial.print('\t');
     Serial.print(sensorAngles[i],3);
   }
   Serial.println();
 }
 
+
 /**
  * D18 copy sensor values to motor step positions.
  */
 void copySensorsToMotorPositions() {
-  long steps[NUM_MOTORS+NUM_SERVOS], i;
-
   wait_for_empty_segment_buffer();
+  float a[NUM_AXIES];
+  int i,j;
+  int numSamples=10;
   
-  IK(sensorAngles,steps);
-  Segment *current = get_current_segment();
-  for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
-    current->a[i].step_count = steps[i];
+  for(j=0;j<NUM_AXIES;++j) a[j]=0;
+
+  // assert(NUM_SENSORS <= NUM_AXIES);
+  
+  for(i=0;i<numSamples;++i) {
+    sensorUpdate();
+    for(j=0;j<NUM_SENSORS;++j) {
+      a[j]+=sensorAngles[j];
+    }
   }
+  for(j=0;j<NUM_SENSORS;++j) {
+    a[j]/=(float)numSamples;
+  }
+  
+  teleport(a);
 }
 #endif
 
@@ -1167,6 +1179,12 @@ void setup() {
 
   robot_setup();
 
+#if MACHINE_STYLE == ARM6
+  sensorUpdate();
+  sensorUpdate();
+  copySensorsToMotorPositions();
+#endif
+
   // display the help at startup.
   help();
 
@@ -1175,8 +1193,8 @@ void setup() {
 
 
 /**
-   See: http://www.marginallyclever.com/2011/10/controlling-your-arduino-through-the-serial-monitor/
-*/
+ * See: http://www.marginallyclever.com/2011/10/controlling-your-arduino-through-the-serial-monitor/
+ */
 void Serial_listen() {
   // listen for serial commands
   while (Serial.available() > 0) {
@@ -1211,9 +1229,10 @@ void Serial_listen() {
 }
 
 
+uint32_t reportDelay=0;
 /**
-   main loop
-*/
+ * main loop
+ */
 void loop() {
   Serial_listen();
   SD_check();
@@ -1227,7 +1246,10 @@ void loop() {
   }
 
 #if MACHINE_STYLE == ARM6
-  sensorUpdate();
-  reportAllAngleValues();
+  if(millis()>reportDelay) {
+    reportDelay=millis()+50;
+    sensorUpdate();
+    reportAllAngleValues();
+  }
 #endif
 }

@@ -13,9 +13,9 @@
 
 //#define DEBUG_IK
 
-char sensorPins[4*6];
+char sensorPins[4*NUM_SENSORS];
 
-float sensorAngles[6];
+float sensorAngles[NUM_SENSORS];
 
 /**
    Inverse Kinematics turns XY coordinates into step counts from each motor
@@ -135,7 +135,7 @@ void robot_setup() {
   sensorPins[i++]=PIN_SENSOR_MISO_5;
   sensorPins[i++]=PIN_SENSOR_MOSI_5;
 
-  for(i=0;i<6;++i) {
+  for(i=0;i<NUM_SENSORS;++i) {
     pinMode(sensorPins[(i*4)+0],OUTPUT);  // csel
     pinMode(sensorPins[(i*4)+1],OUTPUT);  // clk
     pinMode(sensorPins[(i*4)+2],INPUT);  // miso
@@ -196,7 +196,7 @@ float extractAngleFromRawValue(uint16_t rawValue) {
 
 void sensorUpdate() {
   uint16_t rawValue;
-  for(int i=0;i<6;++i) {
+  for(int i=0;i<NUM_SENSORS;++i) {
     if(!getSensorRawValue(i,rawValue)) {
       sensorAngles[i] = extractAngleFromRawValue(rawValue);
     }

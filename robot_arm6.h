@@ -24,6 +24,7 @@
 #define NUM_MOTORS           (6)
 #define NUM_SERVOS           (1)
 #define NUM_TOOLS            (1)
+#define NUM_SENSORS          (6)
 
 #define MAX_FEEDRATE         (900.0)  // depends on timer interrupt & hardware
 #define MIN_FEEDRATE         (0)
@@ -31,7 +32,7 @@
 #define DEFAULT_FEEDRATE     (25.0)
 #define DEFAULT_ACCELERATION (5)
 
-#define MAX_SEGMENTS         (16)  // override the default to save RAM
+#define MAX_SEGMENTS         (8)  // override the default to save RAM
 #define DEGREES_PER_STEP     (1.8)
 #define MICROSTEPS           (1.0)
 
@@ -43,8 +44,8 @@
 #define MOTOR_STEPS_PER_TURN          (200.0)  // motor full steps * microstepping setting
 
 #define NEMA17_CYCLOID_GEARBOX_RATIO  (20.0)
-#define NEMA23_CYCLOID_GEARBOX_RATIO  (25.0)
-#define NEMA24_CYCLOID_GEARBOX_RATIO  (26.0)
+#define NEMA23_CYCLOID_GEARBOX_RATIO  (35.0)
+#define NEMA24_CYCLOID_GEARBOX_RATIO  (40.0)
 
 #define DM322T_MICROSTEP              (2.0)
 
@@ -77,7 +78,7 @@
 #define END4 LOW
 #define END5 LOW
 
-extern float sensorAngles[6];
+extern float sensorAngles[NUM_SENSORS];
 
 extern void sensorUpdate();
 
