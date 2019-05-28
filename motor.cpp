@@ -113,17 +113,6 @@ const int movesPlanned() {
   return SEGMOD( last_segment - current_segment );
 }
 
-// for reasons I don't understand... if i put this method in the .h file i get compile errors.
-// so I put it here, which forces the externs.
-FORCE_INLINE Segment *get_current_segment() {
-  if (current_segment == last_segment ) return NULL;
-  if (first_segment_delay > 0) {
-    --first_segment_delay;
-    if (movesPlanned() > 3) first_segment_delay = 0;
-    return NULL;
-  }
-  return &line_segments[current_segment];
-}
 
 
 FORCE_INLINE int get_next_segment(int i) {

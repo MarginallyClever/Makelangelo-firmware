@@ -65,6 +65,7 @@ extern Segment line_segments[MAX_SEGMENTS];
 extern Segment *working_seg;
 extern volatile int current_segment;
 extern volatile int last_segment;
+extern int first_segment_delay;
 extern Motor motors[NUM_MOTORS+NUM_SERVOS];
 extern const char *AxisNames;
 extern const char *MotorNames;
@@ -80,5 +81,20 @@ extern void motor_engage();
 extern void motor_disengage();
 extern void motor_setup();
 extern void setPenAngle(int arg0);
+
+extern const int movesPlanned();
+
+//extern FORCE_INLINE Segment *get_current_segment();
+// for reasons I don't understand... if i put this method in the .h file i get compile errors.
+// so I put it here, which forces the externs.
+FORCE_INLINE Segment *get_current_segment() {
+  if (current_segment == last_segment ) return NULL;
+  if (first_segment_delay > 0) {
+    --first_segment_delay;
+    if (movesPlanned() > 3) first_segment_delay = 0;
+    return NULL;
+  }
+  return &line_segments[current_segment];
+}
 
 #endif // MOTOR_H
