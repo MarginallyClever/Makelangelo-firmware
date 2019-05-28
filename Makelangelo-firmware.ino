@@ -892,6 +892,7 @@ void processCommand() {
 #if MACHINE_STYLE == ARM6
     case 16:  setFeedratePerAxis();  break;
     case 17:  reportAllAngleValues();  break;
+    case 18:  copySensorsToMotorPositions();  break;
 #endif
     default:  break;
   }
@@ -937,9 +938,24 @@ void reportAllAngleValues() {
   Serial.print("D17");
   for(int i=0;i<6;++i) {
     Serial.print(' ');
-    Serial.print(sensorAngles[i],5);
+    Serial.print(sensorAngles[i],3);
   }
   Serial.println();
+}
+
+/**
+ * D18 copy sensor values to motor step positions.
+ */
+void copySensorsToMotorPositions() {
+  long steps[NUM_MOTORS+NUM_SERVOS], i;
+
+  wait_for_empty_segment_buffer();
+  
+  IK(sensorAngles,steps);
+  Segment *current = get_current_segment();
+  for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
+    current->a[i].step_count = steps[i];
+  }
 }
 #endif
 

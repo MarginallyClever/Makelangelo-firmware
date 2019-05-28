@@ -11,6 +11,8 @@
 
 #include "Vector3.h"
 
+//#define DEBUG_IK
+
 char sensorPins[4*6];
 
 float sensorAngles[6];
@@ -54,7 +56,7 @@ void IK(const float *const axies, long *motorStepArray) {
   motorStepArray[4] = J4 * MOTOR_4_STEPS_PER_TURN / 360.0;  // WRIST
   motorStepArray[5] = J5 * MOTOR_5_STEPS_PER_TURN / 360.0;  // HAND
   motorStepArray[NUM_MOTORS] = axies[6];
-
+#ifdef DEBUG_IK
   Serial.print("J=");  Serial.print(J0);
   Serial.print('\t');  Serial.print(J1);
   Serial.print('\t');  Serial.print(J2);
@@ -62,6 +64,7 @@ void IK(const float *const axies, long *motorStepArray) {
   Serial.print('\t');  Serial.print(J4);
   Serial.print('\t');  Serial.print(J5);
   Serial.print('\n');
+#endif
 }
 
 #define CAP_LIMIT 360
