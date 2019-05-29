@@ -50,6 +50,10 @@ long line_number = 0;           // make sure commands arrive in order
 float tool_offset[NUM_TOOLS][NUM_AXIES];
 int current_tool = 0;
 
+uint32_t reportDelay=0;
+char firstPositionError=1;
+char continuousReporting=1;
+
 #ifdef HAS_WIFI
 
 #include <ESP8266WiFi.h>
@@ -893,6 +897,7 @@ void processCommand() {
     case 16:  setFeedratePerAxis();  break;
     case 17:  reportAllAngleValues();  break;
     case 18:  copySensorsToMotorPositions();  break;
+    case 19:  continuousReporting^=1;  break;
 #endif
     default:  break;
   }
@@ -1229,7 +1234,6 @@ void Serial_listen() {
 }
 
 
-uint32_t reportDelay=0;
 /**
  * main loop
  */
@@ -1246,10 +1250,22 @@ void loop() {
   }
 
 #if MACHINE_STYLE == ARM6
-  if(millis()>reportDelay) {
-    reportDelay=millis()+50;
-    sensorUpdate();
-    reportAllAngleValues();
+  if(positionError==1) {
+    if(firstPositionError==1) {
+      Serial.println(F("\n\n** POSITION ERROR **\n"));
+      firstPositionError=0;
+    }
+  } else {
+    if(firstPositionError==0)
+      firstPositionError=1;
+  }
+
+  if(continuousReporting==1) {
+    if(millis()>reportDelay) {
+      reportDelay=millis()+50;
+      sensorUpdate();
+      reportAllAngleValues();
+    }
   }
 #endif
 }
