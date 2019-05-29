@@ -100,6 +100,7 @@ const char *MotorNames = "LRUVWT";
 const char *AxisNames = "XYZUVWT";
 float maxFeedRate[NUM_MOTORS];
 
+char positionError;
 
 //------------------------------------------------------------------------------
 // METHODS
@@ -227,16 +228,13 @@ void motor_setup() {
   current_segment = 0;
   last_segment = 0;
   Segment &old_seg = line_segments[get_prev_segment(last_segment)];
-  for(i=0;i<NUM_MOTORS;++i) {
+  for(i=0;i<NUM_MOTORS+NUM_SERVOS;++i) {
     old_seg.a[i].step_count = 0;
   }
 
-#if NUM_SERVOS>0
-  old_seg.a[NUM_MOTORS].step_count = 0;
-#endif
-
   working_seg = NULL;
   first_segment_delay = 0;
+  positionError=0;
 
   // disable global interrupts
   noInterrupts();
@@ -544,25 +542,9 @@ void motor_set_step_count(long *a) {
   }
 
   Segment &old_seg = line_segments[get_prev_segment(last_segment)];
-  old_seg.a[0].step_count = a[0];
-#if NUM_MOTORS>1
-  old_seg.a[1].step_count = a[1];
-#endif
-#if NUM_MOTORS>2
-  old_seg.a[2].step_count = a[2];
-#endif
-#if NUM_MOTORS>3
-  old_seg.a[3].step_count = a[3];
-#endif
-#if NUM_MOTORS>4
-  old_seg.a[4].step_count = a[4];
-#endif
-#if NUM_MOTORS>5
-  old_seg.a[5].step_count = a[5];
-#endif
-#if NUM_SERVOS>0
-  old_seg.a[NUM_MOTORS].step_count = a[NUM_MOTORS];
-#endif
+  for (int i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
+    old_seg.a[i].step_count = a[i];
+  }
 
   global_steps_0 = 0;
 #if NUM_MOTORS>1
@@ -784,8 +766,25 @@ ISR(TIMER1_COMPA_vect) {
 
 
   if ( working_seg != NULL ) {
+    uint8_t i;
+
+#if MACHINE_STYLE == ARM6
+    // check if the sensor position differs from the estimated position.
+    float sum=0;
+    for (i = 0; i < NUM_SENSORS; ++i) {
+      sum+=abs(working_seg->a[i].livePosition - sensorAngles[i]);
+    }
+    #define POSITION_EPSILON 2 // mm?
+    if(sum>POSITION_EPSILON) {
+      // do nothing while the margin is too big.  
+      // Only end this condition is stopping the ISR, either via software disable or hardware reset.
+      positionError=1;
+      return;
+    }
+#endif
+
     // move each axis
-    for (uint8_t i = 0; i < isr_step_multiplier; ++i) {
+    for (i = 0; i < isr_step_multiplier; ++i) {
       over0 += delta0;
       if (over0 > 0) digitalWrite(MOTOR_0_STEP_PIN, START0);
 #if NUM_MOTORS>1
@@ -814,6 +813,7 @@ ISR(TIMER1_COMPA_vect) {
         over0 -= steps_total;
         global_steps_0 += global_step_dir_0;
         digitalWrite(MOTOR_0_STEP_PIN, END0);
+        working_seg->a[0].livePosition+=working_seg->a[0].distancePerStep;
       }
 #if NUM_MOTORS>1
       // M1
@@ -821,6 +821,7 @@ ISR(TIMER1_COMPA_vect) {
         over1 -= steps_total;
         global_steps_1 += global_step_dir_1;
         digitalWrite(MOTOR_1_STEP_PIN, END1);
+        working_seg->a[1].livePosition+=working_seg->a[1].distancePerStep;
       }
 #endif
 #if NUM_MOTORS>2
@@ -829,6 +830,7 @@ ISR(TIMER1_COMPA_vect) {
         over2 -= steps_total;
         global_steps_2 += global_step_dir_2;
         digitalWrite(MOTOR_2_STEP_PIN, END2);
+        working_seg->a[2].livePosition+=working_seg->a[2].distancePerStep;
       }
 #endif
 #if NUM_MOTORS>3
@@ -837,6 +839,7 @@ ISR(TIMER1_COMPA_vect) {
         over3 -= steps_total;
         global_steps_3 += global_step_dir_3;
         digitalWrite(MOTOR_3_STEP_PIN, END3);
+        working_seg->a[3].livePosition+=working_seg->a[3].distancePerStep;
       }
 #endif
 #if NUM_MOTORS>4
@@ -845,6 +848,7 @@ ISR(TIMER1_COMPA_vect) {
         over4 -= steps_total;
         global_steps_4 += global_step_dir_4;
         digitalWrite(MOTOR_4_STEP_PIN, END4);
+        working_seg->a[4].livePosition+=working_seg->a[4].distancePerStep;
       }
 #endif
 #if NUM_MOTORS>5
@@ -853,6 +857,7 @@ ISR(TIMER1_COMPA_vect) {
         over5 -= steps_total;
         global_steps_5 += global_step_dir_5;
         digitalWrite(MOTOR_5_STEP_PIN, END5);
+        working_seg->a[5].livePosition+=working_seg->a[5].distancePerStep;
       }
 #endif
 
@@ -971,7 +976,6 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
   int i;
   for (i = 0; i < NUM_AXIES; ++i) {
     distance_mm += sq(target_position[i] - axies[i].pos);
-    axies[i].pos = target_position[i];
   }
   distance_mm = sqrt( distance_mm );
   feed_rate = fr_mm_s;
@@ -980,7 +984,12 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
   int next_segment = get_next_segment(last_segment);
   while ( next_segment == current_segment ) {
     // the segment buffer is full, we are way ahead of the motion system.  wait here.
+    // TODO perform idle time activities.
+#if MACHINE_STYLE == ARM6
+    sensorUpdate();
+#else
     delay(1);
+#endif
   }
 
   int prev_segment = get_prev_segment(last_segment);
@@ -996,13 +1005,33 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
   new_seg.distance = distance_mm;
   float inverse_distance_mm = 1.0 / new_seg.distance;
   float inverse_secs = fr_mm_s * inverse_distance_mm;
-
+  
   // The axis that has the most steps will control the overall acceleration as per bresenham's algorithm.
   new_seg.steps_total = 0;
   for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
+#if MACHINE_STYLE == ARM6
+    // save the current position and the distance per step
+    new_seg.a[i].livePosition = axies[i].pos;
+    
+    switch(i) {
+    case  0: new_seg.a[i].distancePerStep = STEPS_PER_TURN_0;  break;
+    case  1: new_seg.a[i].distancePerStep = STEPS_PER_TURN_1;  break;
+    case  2: new_seg.a[i].distancePerStep = STEPS_PER_TURN_2;  break;
+    case  3: new_seg.a[i].distancePerStep = STEPS_PER_TURN_3;  break;
+    case  4: new_seg.a[i].distancePerStep = STEPS_PER_TURN_4;  break;
+    case  5: new_seg.a[i].distancePerStep = STEPS_PER_TURN_5;  break;
+    default: new_seg.a[i].distancePerStep = THREAD_PER_STEP;  break;
+    }
+    if(axies[i].pos>target_position[i]) new_seg.a[i].distancePerStep *= -1;
+#endif
     new_seg.a[i].step_count = steps[i];
     new_seg.a[i].delta_steps = steps[i] - old_seg.a[i].step_count;
+    
+#if MACHINE_STYLE == ARM6
+    new_seg.a[i].delta_mm = new_seg.a[i].delta_steps * new_seg.a[i].distancePerStep;
+#else
     new_seg.a[i].delta_mm = new_seg.a[i].delta_steps * THREAD_PER_STEP;
+#endif
     new_seg.a[i].dir = ( new_seg.a[i].delta_steps < 0 ? HIGH : LOW );
     new_seg.a[i].absdelta = abs(new_seg.a[i].delta_steps);
     if ( new_seg.steps_total < new_seg.a[i].absdelta ) {
@@ -1010,6 +1039,10 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
     }
   }
 
+  for (i = 0; i < NUM_AXIES; ++i) {
+    axies[i].pos = target_position[i];
+  }
+  
   // No steps?  No work!  Stop now.
   if ( new_seg.steps_total == 0 ) return;
 

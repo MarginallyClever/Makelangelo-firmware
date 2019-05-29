@@ -28,6 +28,10 @@ typedef struct {
   int32_t delta_mm;  // mm
   uint32_t absdelta;
   int dir;
+#if MACHINE_STYLE == ARM6
+  float distancePerStep;
+  float livePosition;
+#endif
 } SegmentAxis;
 
 
@@ -39,7 +43,7 @@ typedef struct {
   float entry_speed;      // mm/s
   float entry_speed_max;  // mm/s
   float acceleration;     // mm/sec^2
-
+  
   uint32_t steps_total;    // steps
   uint32_t steps_taken;    // steps
   uint32_t accel_until;    // steps
@@ -72,6 +76,7 @@ extern const char *MotorNames;
 extern float maxFeedRate[NUM_MOTORS];
 extern float max_jerk[NUM_MOTORS+NUM_SERVOS];
 extern float max_feedrate_mm_s[NUM_MOTORS+NUM_SERVOS];
+extern char positionError;
 
 extern void motor_set_step_count(long *a);
 extern void wait_for_empty_segment_buffer();
