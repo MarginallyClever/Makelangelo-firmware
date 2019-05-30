@@ -13,7 +13,7 @@
 
 #define STEP_DELAY           (1000)  // delay between steps, in milliseconds, when doing fixed tasks like homing
 
-#define MAX_ACCELERATION     (500)
+#define MAX_ACCELERATION     (50)
 #define MIN_ACCELERATION     (0)
 
 //#define SUBDIVIDE_LINES
@@ -26,7 +26,7 @@
 #define NUM_TOOLS            (1)
 #define NUM_SENSORS          (6)
 
-#define MAX_FEEDRATE         (900.0)  // depends on timer interrupt & hardware
+#define MAX_FEEDRATE         (80.0)  // depends on timer interrupt & hardware
 #define MIN_FEEDRATE         (0)
 #define MAX_JERK             (5.0)
 #define DEFAULT_FEEDRATE     (25.0)
@@ -43,31 +43,35 @@
 
 #define MOTOR_STEPS_PER_TURN          (200.0)  // motor full steps * microstepping setting
 
-#define NEMA17_CYCLOID_GEARBOX_RATIO  (20.0)
-#define NEMA23_CYCLOID_GEARBOX_RATIO  (35.0)
-#define NEMA24_CYCLOID_GEARBOX_RATIO  (40.0)
+#define NEMA17_CYCLOID_GEARBOX_RATIO        (20.0)
+#define NEMA23_CYCLOID_GEARBOX_RATIO_ELBOW  (35.0)
+#define NEMA23_CYCLOID_GEARBOX_RATIO_ANCHOR (30.0)
+#define NEMA24_CYCLOID_GEARBOX_RATIO        (40.0)
 
 #define DM322T_MICROSTEP              (2.0)
 
 #define ELBOW_DOWNGEAR_RATIO          (30.0/20.0)
 #define NEMA17_RATIO                  (DM322T_MICROSTEP*NEMA17_CYCLOID_GEARBOX_RATIO*ELBOW_DOWNGEAR_RATIO)
-#define NEMA23_RATIO                  (NEMA23_CYCLOID_GEARBOX_RATIO)
+#define NEMA23_RATIO_ELBOW            (NEMA23_CYCLOID_GEARBOX_RATIO_ELBOW)
+#define NEMA23_RATIO_ANCHOR           (NEMA23_CYCLOID_GEARBOX_RATIO_ANCHOR)
 #define NEMA24_RATIO                  (NEMA24_CYCLOID_GEARBOX_RATIO)
 
 // Motors are numbered 0 (base) to 5 (hand)
-#define MOTOR_0_STEPS_PER_TURN    (MOTOR_STEPS_PER_TURN*NEMA23_RATIO)  // anchor
+#define MOTOR_0_STEPS_PER_TURN    (MOTOR_STEPS_PER_TURN*NEMA23_RATIO_ANCHOR)  // anchor
 #define MOTOR_1_STEPS_PER_TURN    (MOTOR_STEPS_PER_TURN*NEMA24_RATIO)  // shoulder
-#define MOTOR_2_STEPS_PER_TURN    (MOTOR_STEPS_PER_TURN*NEMA23_RATIO)  // elbow
+#define MOTOR_2_STEPS_PER_TURN    (MOTOR_STEPS_PER_TURN*NEMA23_RATIO_ELBOW)  // elbow
 #define MOTOR_3_STEPS_PER_TURN    (MOTOR_STEPS_PER_TURN*NEMA17_RATIO)  // ulna
 #define MOTOR_4_STEPS_PER_TURN    (MOTOR_STEPS_PER_TURN*NEMA17_RATIO)  // wrist
 #define MOTOR_5_STEPS_PER_TURN    (MOTOR_STEPS_PER_TURN*NEMA17_RATIO)  // hand
 
-#define STEPS_PER_TURN_0 (360.0/MOTOR_0_STEPS_PER_TURN)
-#define STEPS_PER_TURN_1 (360.0/MOTOR_1_STEPS_PER_TURN)
-#define STEPS_PER_TURN_2 (360.0/MOTOR_2_STEPS_PER_TURN)
-#define STEPS_PER_TURN_3 (360.0/MOTOR_3_STEPS_PER_TURN)
-#define STEPS_PER_TURN_4 (360.0/MOTOR_4_STEPS_PER_TURN)
-#define STEPS_PER_TURN_5 (360.0/MOTOR_5_STEPS_PER_TURN)
+#define DEGREES_PER_STEP_0 (360.0/MOTOR_0_STEPS_PER_TURN)
+#define DEGREES_PER_STEP_1 (360.0/MOTOR_1_STEPS_PER_TURN)
+#define DEGREES_PER_STEP_2 (360.0/MOTOR_2_STEPS_PER_TURN)
+#define DEGREES_PER_STEP_3 (360.0/MOTOR_3_STEPS_PER_TURN)
+#define DEGREES_PER_STEP_4 (360.0/MOTOR_4_STEPS_PER_TURN)
+#define DEGREES_PER_STEP_5 (360.0/MOTOR_5_STEPS_PER_TURN)
+
+#define POSITION_EPSILON (1.5) // degrees
 
 // step signal start
 #define START0 LOW
