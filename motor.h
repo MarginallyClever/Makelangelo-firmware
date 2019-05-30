@@ -11,7 +11,14 @@
 //------------------------------------------------------------------------------
 // CONSTANTS
 //------------------------------------------------------------------------------
+#if MACHINE_STYLE == ARM6
 
+#define POSITION_ERROR_FLAG_CONTINUOUS   (1<<0)  // report position (d17) continuously?
+#define POSITION_ERROR_FLAG_ERROR        (1<<1)  // has error occurred?
+#define POSITION_ERROR_FLAG_FIRSTERROR   (1<<2)  // report the error once per occurrence
+#define POSITION_ERROR_FLAG_ESTOP        (1<<3)  // check for error at all?
+
+#endif
 
 typedef struct {
   int step_pin;
@@ -78,7 +85,8 @@ extern const char *MotorNames;
 extern float maxFeedRate[NUM_MOTORS];
 extern float max_jerk[NUM_MOTORS+NUM_SERVOS];
 extern float max_feedrate_mm_s[NUM_MOTORS+NUM_SERVOS];
-extern char positionError;
+
+extern uint8_t positionErrorFlags;
 
 extern void motor_set_step_count(long *a);
 extern void wait_for_empty_segment_buffer();
