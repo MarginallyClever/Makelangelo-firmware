@@ -31,6 +31,8 @@ typedef struct {
 #if MACHINE_STYLE == ARM6
   float distancePerStep;
   float livePosition;
+  float positionStart;
+  float positionEnd;
 #endif
 } SegmentAxis;
 
