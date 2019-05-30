@@ -100,7 +100,7 @@ const char *MotorNames = "LRUVWT";
 const char *AxisNames = "XYZUVWT";
 float maxFeedRate[NUM_MOTORS];
 
-char positionError;
+uint8_t positionErrorFlags = POSITION_ERROR_FLAG_CONTINUOUS | POSITION_ERROR_FLAG_ESTOP;
 
 //------------------------------------------------------------------------------
 // METHODS
@@ -234,7 +234,7 @@ void motor_setup() {
 
   working_seg = NULL;
   first_segment_delay = 0;
-  positionError=0;
+  positionErrorFlags = 0;
 
   // disable global interrupts
   noInterrupts();
@@ -679,9 +679,8 @@ static FORCE_INLINE uint16_t MultiU24X32toH16(uint32_t longIn1, uint32_t longIn2
 }
 
 /**
-   Process all line segments in the ring buffer.  Uses bresenham's line algorithm to move all motors.
-*/
-
+ * Process all line segments in the ring buffer.  Uses bresenham's line algorithm to move all motors.
+ */
 #ifdef ESP8266
 void itr() {
 #else
@@ -769,17 +768,23 @@ ISR(TIMER1_COMPA_vect) {
     uint8_t i;
 
 #if MACHINE_STYLE == ARM6
-    // check if the sensor position differs from the estimated position.
-    float sum=0;
-    for (i = 0; i < NUM_SENSORS; ++i) {
-      sum+=abs(working_seg->a[i].livePosition - sensorAngles[i]);
-    }
-    #define POSITION_EPSILON 2 // mm?
-    if(sum>POSITION_EPSILON) {
-      // do nothing while the margin is too big.  
-      // Only end this condition is stopping the ISR, either via software disable or hardware reset.
-      positionError=1;
-      return;
+    if((positionErrorFlags & POSITION_ERROR_FLAG_ESTOP)!=0) {
+      // check if the sensor position differs from the estimated position.
+      float fraction = (float)steps_taken / (float)steps_total;
+      
+      for (i = 0; i < NUM_SENSORS; ++i) {
+        // interpolate live = (b-a)*f + a
+        working_seg->a[i].livePosition = 
+          (working_seg->a[i].positionEnd - working_seg->a[i].positionStart) * fraction + working_seg->a[i].positionStart;
+        
+        float diff = abs(working_seg->a[i].livePosition - sensorAngles[i]);
+        if(diff>POSITION_EPSILON) {
+          // do nothing while the margin is too big.  
+          // Only end this condition is stopping the ISR, either via software disable or hardware reset.
+          positionErrorFlags|=POSITION_ERROR_FLAG_ERROR;
+          return;
+        }
+      }
     }
 #endif
 
@@ -813,7 +818,6 @@ ISR(TIMER1_COMPA_vect) {
         over0 -= steps_total;
         global_steps_0 += global_step_dir_0;
         digitalWrite(MOTOR_0_STEP_PIN, END0);
-        working_seg->a[0].livePosition+=working_seg->a[0].distancePerStep;
       }
 #if NUM_MOTORS>1
       // M1
@@ -821,7 +825,6 @@ ISR(TIMER1_COMPA_vect) {
         over1 -= steps_total;
         global_steps_1 += global_step_dir_1;
         digitalWrite(MOTOR_1_STEP_PIN, END1);
-        working_seg->a[1].livePosition+=working_seg->a[1].distancePerStep;
       }
 #endif
 #if NUM_MOTORS>2
@@ -830,7 +833,6 @@ ISR(TIMER1_COMPA_vect) {
         over2 -= steps_total;
         global_steps_2 += global_step_dir_2;
         digitalWrite(MOTOR_2_STEP_PIN, END2);
-        working_seg->a[2].livePosition+=working_seg->a[2].distancePerStep;
       }
 #endif
 #if NUM_MOTORS>3
@@ -839,7 +841,6 @@ ISR(TIMER1_COMPA_vect) {
         over3 -= steps_total;
         global_steps_3 += global_step_dir_3;
         digitalWrite(MOTOR_3_STEP_PIN, END3);
-        working_seg->a[3].livePosition+=working_seg->a[3].distancePerStep;
       }
 #endif
 #if NUM_MOTORS>4
@@ -848,7 +849,6 @@ ISR(TIMER1_COMPA_vect) {
         over4 -= steps_total;
         global_steps_4 += global_step_dir_4;
         digitalWrite(MOTOR_4_STEP_PIN, END4);
-        working_seg->a[4].livePosition+=working_seg->a[4].distancePerStep;
       }
 #endif
 #if NUM_MOTORS>5
@@ -857,7 +857,6 @@ ISR(TIMER1_COMPA_vect) {
         over5 -= steps_total;
         global_steps_5 += global_step_dir_5;
         digitalWrite(MOTOR_5_STEP_PIN, END5);
-        working_seg->a[5].livePosition+=working_seg->a[5].distancePerStep;
       }
 #endif
 
@@ -1010,29 +1009,30 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
   new_seg.steps_total = 0;
   for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
 #if MACHINE_STYLE == ARM6
-    // save the current position and the distance per step
-    new_seg.a[i].livePosition = axies[i].pos;
+    new_seg.a[i].positionStart = axies[i].pos;
+    new_seg.a[i].positionEnd   = target_position[i];
     
     switch(i) {
-    case  0: new_seg.a[i].distancePerStep = STEPS_PER_TURN_0;  break;
-    case  1: new_seg.a[i].distancePerStep = STEPS_PER_TURN_1;  break;
-    case  2: new_seg.a[i].distancePerStep = STEPS_PER_TURN_2;  break;
-    case  3: new_seg.a[i].distancePerStep = STEPS_PER_TURN_3;  break;
-    case  4: new_seg.a[i].distancePerStep = STEPS_PER_TURN_4;  break;
-    case  5: new_seg.a[i].distancePerStep = STEPS_PER_TURN_5;  break;
-    default: new_seg.a[i].distancePerStep = THREAD_PER_STEP;  break;
+    case  0: new_seg.a[i].distancePerStep = DEGREES_PER_STEP_0;  break;
+    case  1: new_seg.a[i].distancePerStep = DEGREES_PER_STEP_1;  break;
+    case  2: new_seg.a[i].distancePerStep = DEGREES_PER_STEP_2;  break;
+    case  3: new_seg.a[i].distancePerStep = DEGREES_PER_STEP_3;  break;
+    case  4: new_seg.a[i].distancePerStep = DEGREES_PER_STEP_4;  break;
+    case  5: new_seg.a[i].distancePerStep = DEGREES_PER_STEP_5;  break;
+    default: new_seg.a[i].distancePerStep = THREAD_PER_STEP;   break;
     }
-    if(axies[i].pos>target_position[i]) new_seg.a[i].distancePerStep *= -1;
 #endif
     new_seg.a[i].step_count = steps[i];
     new_seg.a[i].delta_steps = steps[i] - old_seg.a[i].step_count;
     
+    new_seg.a[i].dir = ( new_seg.a[i].delta_steps < 0 ? HIGH : LOW );
 #if MACHINE_STYLE == ARM6
     new_seg.a[i].delta_mm = new_seg.a[i].delta_steps * new_seg.a[i].distancePerStep;
+    if(i==4) new_seg.a[i].dir = ( new_seg.a[i].delta_steps < 0 ? LOW : HIGH );  // reversed only on V (picassobox)
+    if(i==5) new_seg.a[i].dir = ( new_seg.a[i].delta_steps < 0 ? LOW : HIGH );  // reversed only on W (hand)
 #else
     new_seg.a[i].delta_mm = new_seg.a[i].delta_steps * THREAD_PER_STEP;
 #endif
-    new_seg.a[i].dir = ( new_seg.a[i].delta_steps < 0 ? HIGH : LOW );
     new_seg.a[i].absdelta = abs(new_seg.a[i].delta_steps);
     if ( new_seg.steps_total < new_seg.a[i].absdelta ) {
       new_seg.steps_total = new_seg.a[i].absdelta;
