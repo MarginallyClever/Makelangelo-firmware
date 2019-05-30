@@ -50,9 +50,9 @@ long line_number = 0;           // make sure commands arrive in order
 float tool_offset[NUM_TOOLS][NUM_AXIES];
 int current_tool = 0;
 
+#if MACHINE_STYLE == ARM6
 uint32_t reportDelay=0;
-char firstPositionError=1;
-char continuousReporting=1;
+#endif
 
 #ifdef HAS_WIFI
 
@@ -897,8 +897,9 @@ void processCommand() {
     case 16:  setFeedratePerAxis();  break;
     case 17:  reportAllAngleValues();  break;
     case 18:  copySensorsToMotorPositions();  break;
-    case 19:  continuousReporting^=1;  break;
-    case 20:  positionError=firstPositionError=0;  break;
+    case 19:  positionErrorFlags^=POSITION_ERROR_FLAG_CONTINUOUS;  break;  // toggle
+    case 20:  positionErrorFlags&=0xffff^(POSITION_ERROR_FLAG_ERROR|POSITION_ERROR_FLAG_FIRSTERROR);  break;  // off
+    case 21:  positionErrorFlags^=POSITION_ERROR_FLAG_ESTOP;  break;  // toggle ESTOP
 #endif
     default:  break;
   }
@@ -1235,6 +1236,24 @@ void Serial_listen() {
 }
 
 
+void compareExpectedAndSensedPosition() {
+  // Compare estimated position to sensor readings, make sure they turn the correct direction.
+  if(current_segment==last_segment) return;
+  
+  working_seg = get_current_segment();
+  for (uint8_t i = 0; i < NUM_SENSORS; ++i) {
+    //float diff = working_seg->a[i].livePosition - sensorAngles[i];
+    //Serial.print('\t');
+    //Serial.print(abs(diff),3);
+    Serial.print('\t');
+    Serial.print(working_seg->a[i].livePosition,3);
+    Serial.print('\t');
+    Serial.print(sensorAngles[i],3);
+  }
+  Serial.println();
+}
+
+
 /**
  * main loop
  */
@@ -1253,32 +1272,19 @@ void loop() {
 #if MACHINE_STYLE == ARM6
   sensorUpdate();
   
-  if(positionError==1) {
-    if(firstPositionError==1) {
+  if((positionErrorFlags&POSITION_ERROR_FLAG_ERROR)!=0) {
+    if((positionErrorFlags&POSITION_ERROR_FLAG_FIRSTERROR)!=0) {
       Serial.println(F("\n\n** POSITION ERROR **\n"));
-      firstPositionError=0;
+      positionErrorFlags&=0xffff^POSITION_ERROR_FLAG_FIRSTERROR;  // turn off
     }
   } else {
-    if(firstPositionError==0)
-      firstPositionError=1;
-/*
-    // Compare estimated position to sensor readings, make sure they turn the correct direction.
-    if(current_segment!=last_segment) {
-      working_seg = get_current_segment();
-      for (uint8_t i = 0; i < NUM_SENSORS; ++i) {
-        //float diff = working_seg->a[i].livePosition - sensorAngles[i];
-        //Serial.print('\t');
-        //Serial.print(abs(diff),3);
-        Serial.print('\t');
-        Serial.print(working_seg->a[i].livePosition,3);
-        Serial.print('\t');
-        Serial.print(sensorAngles[i],3);
-      }
-      Serial.println();
-    }*/
+    if((positionErrorFlags&POSITION_ERROR_FLAG_FIRSTERROR)==0) {
+      positionErrorFlags|=POSITION_ERROR_FLAG_FIRSTERROR;  // turn on
+    }
+    compareExpectedAndSensedPosition();
   }
   
-  if(continuousReporting==1) {
+  if((positionErrorFlags&POSITION_ERROR_FLAG_CONTINUOUS)!=0) {
     if(millis()>reportDelay) {
       reportDelay=millis()+50;
       reportAllAngleValues();
