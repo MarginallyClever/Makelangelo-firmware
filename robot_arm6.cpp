@@ -33,17 +33,12 @@ void IK(const float *const axies, long *motorStepArray) {
   // so for three axis,
   // for any axis N subtract the other two axies from this axis.
 
-  float J0=axies[0];  // hand (G0 X*)
-  float J1=axies[1];  // wrist (G0 Y*)
-  float J2=axies[2];  // ulna (G0 Z*)
-
-  /*
-  float x = a;//+b+c;  // supposed to move hand
-  float y = b;//+c;  // supposed to move wrist
-  float z = c;  // supposed to move ulna*/
-  float J3 = axies[3];  // u ulna
-  float J4 = axies[4];  // v wrist
-  float J5 = axies[5];  // w hand
+  float J0 = axies[0];  // hand  (G0 X*)
+  float J1 = axies[1];  // wrist (G0 Y*)
+  float J2 = axies[2];  // elbow (G0 Z*)
+  float J3 = axies[3];  // ulna  (G0 U*)
+  float J4 = axies[4];  // wrist (G0 V*)
+  float J5 = -axies[5];  // hand  (G0 W*)
 
   // differential
   J5 += (J4/NEMA17_CYCLOID_GEARBOX_RATIO)+(J3/NEMA17_CYCLOID_GEARBOX_RATIO);
