@@ -937,46 +937,6 @@ void setFeedratePerAxis() {
   Serial.print(" W");  Serial.println(max_feedrate_mm_s[5]);
 }
 
-#if MACHINE_STYLE == ARM6
-/**
- * D17 report the 6 axis sensor values from the Sixi robot arm.
- */
-void reportAllAngleValues() {  
-  Serial.print("D17");
-  for(int i=0;i<6;++i) {
-    Serial.print('\t');
-    Serial.print(sensorAngles[i],3);
-  }
-  Serial.println();
-}
-
-
-/**
- * D18 copy sensor values to motor step positions.
- */
-void copySensorsToMotorPositions() {
-  wait_for_empty_segment_buffer();
-  float a[NUM_AXIES];
-  int i,j;
-  int numSamples=10;
-  
-  for(j=0;j<NUM_AXIES;++j) a[j]=0;
-
-  // assert(NUM_SENSORS <= NUM_AXIES);
-  
-  for(i=0;i<numSamples;++i) {
-    sensorUpdate();
-    for(j=0;j<NUM_SENSORS;++j) {
-      a[j]+=sensorAngles[j];
-    }
-  }
-  for(j=0;j<NUM_SENSORS;++j) {
-    a[j]/=(float)numSamples;
-  }
-  
-  teleport(a);
-}
-#endif
 
 #if MACHINE_STYLE == POLARGRAPH
 /**
@@ -1236,22 +1196,90 @@ void Serial_listen() {
 }
 
 
-void compareExpectedAndSensedPosition() {
-  // Compare estimated position to sensor readings, make sure they turn the correct direction.
-  if(current_segment==last_segment) return;
-  
-  working_seg = get_current_segment();
-  for (uint8_t i = 0; i < NUM_SENSORS; ++i) {
-    //float diff = working_seg->a[i].livePosition - sensorAngles[i];
-    //Serial.print('\t');
-    //Serial.print(abs(diff),3);
+#if MACHINE_STYLE == ARM6
+/**
+ * D17 report the 6 axis sensor values from the Sixi robot arm.
+ */
+void reportAllAngleValues() {  
+  Serial.print(F("D17"));
+  for(int i=0;i<6;++i) {
     Serial.print('\t');
-    Serial.print(working_seg->a[i].livePosition,3);
+    Serial.print(sensorAngles[i],2);
+  }
+  
+  if(current_segment==last_segment) {
+    // report estimated position
+    Serial.print(F("\t-\t"));
+    
+    working_seg = get_current_segment();
+    for (uint8_t i = 0; i < NUM_SENSORS; ++i) {
+      //float diff = working_seg->a[i].expectedPosition - sensorAngles[i];
+      //Serial.print('\t');
+      //Serial.print(abs(diff),3);
+      Serial.print('\t');
+      Serial.print(working_seg->a[i].expectedPosition,2);
+    }
+  }
+  
+  Serial.print('\t');
+  Serial.print(((positionErrorFlags&POSITION_ERROR_FLAG_CONTINUOUS)!=0)?'+':'-');
+  Serial.print(((positionErrorFlags&POSITION_ERROR_FLAG_ERROR)!=0)?'+':'-');
+  Serial.print(((positionErrorFlags&POSITION_ERROR_FLAG_FIRSTERROR)!=0)?'+':'-');
+  Serial.print(((positionErrorFlags&POSITION_ERROR_FLAG_ESTOP)!=0)?'+':'-');
+  Serial.println();
+}
+
+
+/**
+ * D18 copy sensor values to motor step positions.
+ */
+void copySensorsToMotorPositions() {
+  wait_for_empty_segment_buffer();
+  float a[NUM_AXIES];
+  int i,j;
+  int numSamples=10;
+  
+  for(j=0;j<NUM_AXIES;++j) a[j]=0;
+
+  // assert(NUM_SENSORS <= NUM_AXIES);
+  
+  for(i=0;i<numSamples;++i) {
+    sensorUpdate();
+    for(j=0;j<NUM_SENSORS;++j) {
+      a[j]+=sensorAngles[j];
+    }
+  }
+  for(j=0;j<NUM_SENSORS;++j) {
+    a[j]/=(float)numSamples;
+  }
+  
+  teleport(a);
+}
+
+
+void compareExpectedAndSensedPosition() {
+  Serial.print(F("D17"));
+  
+  for (uint8_t i = 0; i < NUM_SENSORS; ++i) {
     Serial.print('\t');
     Serial.print(sensorAngles[i],3);
   }
+  // Compare estimated position to sensor readings, make sure they turn the correct direction.
+  if(current_segment==last_segment) return;
+  
+  Serial.print(F("\t-\t"));
+  
+  working_seg = get_current_segment();
+  for (uint8_t i = 0; i < NUM_SENSORS; ++i) {
+    //float diff = working_seg->a[i].expectedPosition - sensorAngles[i];
+    //Serial.print('\t');
+    //Serial.print(abs(diff),3);
+    Serial.print('\t');
+    Serial.print(working_seg->a[i].expectedPosition,3);
+  }
   Serial.println();
 }
+#endif
 
 
 /**
@@ -1281,7 +1309,6 @@ void loop() {
     if((positionErrorFlags&POSITION_ERROR_FLAG_FIRSTERROR)==0) {
       positionErrorFlags|=POSITION_ERROR_FLAG_FIRSTERROR;  // turn on
     }
-    compareExpectedAndSensedPosition();
   }
   
   if((positionErrorFlags&POSITION_ERROR_FLAG_CONTINUOUS)!=0) {

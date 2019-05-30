@@ -37,7 +37,7 @@ typedef struct {
   int dir;
 #if MACHINE_STYLE == ARM6
   float distancePerStep;
-  float livePosition;
+  float expectedPosition;
   float positionStart;
   float positionEnd;
 #endif

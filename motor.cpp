@@ -100,7 +100,7 @@ const char *MotorNames = "LRUVWT";
 const char *AxisNames = "XYZUVWT";
 float maxFeedRate[NUM_MOTORS];
 
-uint8_t positionErrorFlags = POSITION_ERROR_FLAG_CONTINUOUS | POSITION_ERROR_FLAG_ESTOP;
+uint8_t positionErrorFlags;
 
 //------------------------------------------------------------------------------
 // METHODS
@@ -234,7 +234,7 @@ void motor_setup() {
 
   working_seg = NULL;
   first_segment_delay = 0;
-  positionErrorFlags = 0;
+  positionErrorFlags = POSITION_ERROR_FLAG_CONTINUOUS | POSITION_ERROR_FLAG_ESTOP;
 
   // disable global interrupts
   noInterrupts();
@@ -774,10 +774,10 @@ ISR(TIMER1_COMPA_vect) {
       
       for (i = 0; i < NUM_SENSORS; ++i) {
         // interpolate live = (b-a)*f + a
-        working_seg->a[i].livePosition = 
+        working_seg->a[i].expectedPosition = 
           (working_seg->a[i].positionEnd - working_seg->a[i].positionStart) * fraction + working_seg->a[i].positionStart;
         
-        float diff = abs(working_seg->a[i].livePosition - sensorAngles[i]);
+        float diff = abs(working_seg->a[i].expectedPosition - sensorAngles[i]);
         if(diff>POSITION_EPSILON) {
           // do nothing while the margin is too big.  
           // Only end this condition is stopping the ISR, either via software disable or hardware reset.

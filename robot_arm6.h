@@ -71,7 +71,7 @@
 #define DEGREES_PER_STEP_4 (360.0/MOTOR_4_STEPS_PER_TURN)
 #define DEGREES_PER_STEP_5 (360.0/MOTOR_5_STEPS_PER_TURN)
 
-#define POSITION_EPSILON (1.5) // degrees
+#define POSITION_EPSILON (1.9) // degrees
 
 // step signal start
 #define START0 LOW
