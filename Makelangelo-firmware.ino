@@ -10,7 +10,7 @@
 //------------------------------------------------------------------------------
 #include "configure.h"
 #include "motor.h"
-#include "SD.h"
+#include "SDcard.h"
 #include "LCD.h"
 #include "eeprom.h"
 
@@ -356,6 +356,9 @@ void help() {
   Serial.print(localPort);
   Serial.println('/');
 #endif  // HAS_WIFI
+#ifdef HAS_LCD
+  Serial.println(F("Has LCD"));
+#endif
 }
 
 
@@ -677,21 +680,26 @@ void parseMessage() {
     return;
   }
 
-  // preserve message for display
-  uint16_t top = min(LCD_MESSAGE_LENGTH, MAX_BUF);
-
   char *buf = serialBuffer + i;
   while (*buf == ' ') ++buf; // eat whitespace
 
   i = LCD_MESSAGE_LENGTH / 2;
-  while (isPrintable(*buf) && (*buf) != '\r' && (*buf) != '\n' && i < top) {
+  while (isPrintable(*buf) && (*buf) != '\r' && (*buf) != '\n' && i < LCD_MESSAGE_LENGTH) {
     lcd_message[i] = *buf;
     ++i;
     buf++;
   }
-
-  //Serial.print("message found: ");
-  //Serial.println(lcd_message);
+/*
+  Serial.println(F("message found: "));
+  i=0;
+  for(int y=0;y<LCD_HEIGHT;++y) {
+    for(int x=0;x<LCD_WIDTH;++x) {
+      Serial.print(lcd_message[i]);
+      ++i;
+    }
+    Serial.println();
+  }
+*/
 #endif  // HAS_LCD
 }
 
@@ -765,8 +773,8 @@ void waitForPinState() {
 
   // while pin is in oldState (opposite of state for which we are waiting)
   while (digitalRead(pin) == oldState) {
-    SD_check();
-    LCD_update();
+    //SD_check();
+    //LCD_update();  // causes menu to change when we don't want it to change.
     //Serial.print(".");
   }
 
@@ -1206,7 +1214,7 @@ void reportAllAngleValues() {
     Serial.print('\t');
     Serial.print(sensorAngles[i],2);
   }
-  
+  /*
   if(current_segment==last_segment) {
     // report estimated position
     Serial.print(F("\t-\t"));
@@ -1219,13 +1227,13 @@ void reportAllAngleValues() {
       Serial.print('\t');
       Serial.print(working_seg->a[i].expectedPosition,2);
     }
-  }
+  }*/
   
   Serial.print('\t');
-  Serial.print(((positionErrorFlags&POSITION_ERROR_FLAG_CONTINUOUS)!=0)?'+':'-');
+  //Serial.print(((positionErrorFlags&POSITION_ERROR_FLAG_CONTINUOUS)!=0)?'+':'-');
   Serial.print(((positionErrorFlags&POSITION_ERROR_FLAG_ERROR)!=0)?'+':'-');
-  Serial.print(((positionErrorFlags&POSITION_ERROR_FLAG_FIRSTERROR)!=0)?'+':'-');
-  Serial.print(((positionErrorFlags&POSITION_ERROR_FLAG_ESTOP)!=0)?'+':'-');
+  //Serial.print(((positionErrorFlags&POSITION_ERROR_FLAG_FIRSTERROR)!=0)?'+':'-');
+  //Serial.print(((positionErrorFlags&POSITION_ERROR_FLAG_ESTOP)!=0)?'+':'-');
   Serial.println();
 }
 
@@ -1254,30 +1262,6 @@ void copySensorsToMotorPositions() {
   }
   
   teleport(a);
-}
-
-
-void compareExpectedAndSensedPosition() {
-  Serial.print(F("D17"));
-  
-  for (uint8_t i = 0; i < NUM_SENSORS; ++i) {
-    Serial.print('\t');
-    Serial.print(sensorAngles[i],3);
-  }
-  // Compare estimated position to sensor readings, make sure they turn the correct direction.
-  if(current_segment==last_segment) return;
-  
-  Serial.print(F("\t-\t"));
-  
-  working_seg = get_current_segment();
-  for (uint8_t i = 0; i < NUM_SENSORS; ++i) {
-    //float diff = working_seg->a[i].expectedPosition - sensorAngles[i];
-    //Serial.print('\t');
-    //Serial.print(abs(diff),3);
-    Serial.print('\t');
-    Serial.print(working_seg->a[i].expectedPosition,3);
-  }
-  Serial.println();
 }
 #endif
 
@@ -1313,7 +1297,7 @@ void loop() {
   
   if((positionErrorFlags&POSITION_ERROR_FLAG_CONTINUOUS)!=0) {
     if(millis()>reportDelay) {
-      reportDelay=millis()+50;
+      reportDelay=millis()+100;
       reportAllAngleValues();
     }
   }
