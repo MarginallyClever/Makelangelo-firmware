@@ -291,6 +291,7 @@ void LCD_read() {
   // find click state
   int btn = digitalRead(BTN_ENC);
   if ( btn != lcd_click_old && btn == HIGH ) {
+    // when button is released
     lcd_click_now = true;
   }
   lcd_click_old = btn;
