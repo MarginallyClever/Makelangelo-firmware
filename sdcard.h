@@ -6,11 +6,11 @@
 // Please see http://www.github.com/MarginallyClever/makelangeloFirmware for more information.
 //------------------------------------------------------------------------------
 
+#ifdef HAS_SD
 
 #include <SPI.h>
 #include <SD.h>
 
-#ifdef HAS_SD
 
 extern File root;
 extern char sd_inserted;
