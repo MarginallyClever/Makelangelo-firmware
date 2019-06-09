@@ -18,18 +18,20 @@
 #define NUM_SERVOS           (1)
 #define NUM_TOOLS            (1)
 
-#define MAX_FEEDRATE         (15000.0)  // depends on timer interrupt & hardware
-#define MIN_FEEDRATE         (100)
-#define MAX_JERK             (15.0)
-#define DEFAULT_FEEDRATE     (10000.0)
-#define DEFAULT_ACCELERATION (3500)
+#define MAX_FEEDRATE         (200.0)  // depends on timer interrupt & hardware
+#define MIN_FEEDRATE         (0.0)
+#define DEFAULT_FEEDRATE     (90.0)
 
-#define ZARPLOTTER_MOTOR_SIZE   (4.5f)
-#define ZARPLOTTER_PLOTTER_SIZE (6.0f)
+#define MAX_ACCELERATION     (500.0)
+#define MIN_ACCELERATION     (0.0)
+#define DEFAULT_ACCELERATION (180.0)
+
+#define MAX_JERK             (10.0)
+#define MAX_Z_JERK           (0.3)
+
+#define ZARPLOTTER_MOTOR_SIZE   (45.0f) // mm
+#define ZARPLOTTER_PLOTTER_SIZE (60.0f) // mm
 #define ZARPLOTTER_COMPENSATION (ZARPLOTTER_PLOTTER_SIZE/2.0f + ZARPLOTTER_MOTOR_SIZE)
-
-#define MAX_ACCELERATION     (5000)
-#define MIN_ACCELERATION     (100)
 
 #define SUBDIVIDE_LINES
 #define SEGMENT_PER_CM_LINE  (2)  // lines are split into segments.  How long are the segments?
@@ -39,7 +41,7 @@
 #define PEN_UP_ANGLE         (50)
 #define PEN_DOWN_ANGLE       (90)  // Some steppers don't like 0 degrees
 
-#define MAX_SEGMENTS         (16)  // override the default to save RAM
+#define MAX_SEGMENTS         (8)  // override the default to save RAM
 
 #endif  // ZARPLOTTER
 

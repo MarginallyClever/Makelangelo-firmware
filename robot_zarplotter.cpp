@@ -15,30 +15,29 @@
  * @param motorStepArray a measure of each belt to that plotter position
  */
 void IK(const float *const cartesian, long *motorStepArray) {
-  float limit_xmin = axies[0].limitMin;
-  float limit_xmax = axies[0].limitMax;
-  float limit_ymin = axies[1].limitMin;
-  float limit_ymax = axies[1].limitMax;
-  
+  float left   = axies[0].limitMin;
+  float right  = axies[0].limitMax;
+  float top    = axies[1].limitMax;
+  float bottom = axies[1].limitMin;
   float x = cartesian[0];
   float y = cartesian[1];
-  float z = cartesian[2];
   
   float L,R,U,V,dy,dx;
-  dy = abs(y - limit_ymax)-ZARPLOTTER_COMPENSATION;  dx = abs(x - limit_xmin)-ZARPLOTTER_COMPENSATION;  L = sqrt(dx*dx+dy*dy);  motorStepArray[0] = lround( L / THREAD_PER_STEP );  // M0 (top left)
-  dy = abs(y - limit_ymax)-ZARPLOTTER_COMPENSATION;  dx = abs(x - limit_xmax)-ZARPLOTTER_COMPENSATION;  R = sqrt(dx*dx+dy*dy);  motorStepArray[1] = lround( R / THREAD_PER_STEP );  // M1 (top right)
-  dy = abs(y - limit_ymin)-ZARPLOTTER_COMPENSATION;  dx = abs(x - limit_xmin)-ZARPLOTTER_COMPENSATION;  U = sqrt(dx*dx+dy*dy);  motorStepArray[2] = lround( U / THREAD_PER_STEP );  // M2 (bottom left)
-  dy = abs(y - limit_ymin)-ZARPLOTTER_COMPENSATION;  dx = abs(x - limit_xmax)-ZARPLOTTER_COMPENSATION;  V = sqrt(dx*dx+dy*dy);  motorStepArray[3] = lround( V / THREAD_PER_STEP );  // M3 (bottom right)
-/*
-  Serial.print(x);  Serial.print(' ');
-  Serial.print(y);  Serial.print(' ');
-  Serial.print(L);  Serial.print(' ');
-  Serial.print(R);  Serial.print(' ');
-  Serial.print(U);  Serial.print(' ');
-  Serial.print(V);  Serial.print('\n');
-*/
+  
+  dy = abs(x-left )-ZARPLOTTER_COMPENSATION;  dx = abs(y-top   )-ZARPLOTTER_COMPENSATION;  L = sqrt(dx*dx+dy*dy);  motorStepArray[0] = lround( L / THREAD_PER_STEP );  // M0 (top left)
+  dy = abs(x-right)-ZARPLOTTER_COMPENSATION;  dx = abs(y-top   )-ZARPLOTTER_COMPENSATION;  R = sqrt(dx*dx+dy*dy);  motorStepArray[1] = lround( R / THREAD_PER_STEP );  // M1 (top right)
+  dy = abs(x-left )-ZARPLOTTER_COMPENSATION;  dx = abs(y-bottom)-ZARPLOTTER_COMPENSATION;  U = sqrt(dx*dx+dy*dy);  motorStepArray[2] = lround( U / THREAD_PER_STEP );  // M2 (bottom left)
+  dy = abs(x-right)-ZARPLOTTER_COMPENSATION;  dx = abs(y-bottom)-ZARPLOTTER_COMPENSATION;  V = sqrt(dx*dx+dy*dy);  motorStepArray[3] = lround( V / THREAD_PER_STEP );  // M3 (bottom right)
 
-  motorStepArray[NUM_MOTORS] = z;
+  Serial.print(cartesian[0]);  Serial.print('\t');
+  Serial.print(cartesian[1]);  Serial.print('\t');
+  Serial.print(L);  Serial.print('\t');
+  Serial.print(R);  Serial.print('\t');
+  Serial.print(U);  Serial.print('\t');
+  Serial.print(V);  Serial.println();
+
+
+  motorStepArray[NUM_MOTORS] = cartesian[2];
 }
 
 
