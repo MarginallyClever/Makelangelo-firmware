@@ -100,7 +100,10 @@ const char *MotorNames = "LRUVWT";
 const char *AxisNames = "XYZUVWT";
 float maxFeedRate[NUM_MOTORS];
 
+#if MACHINE_STYLE == ARM6
 uint8_t positionErrorFlags;
+#endif
+
 
 //------------------------------------------------------------------------------
 // METHODS
@@ -234,7 +237,9 @@ void motor_setup() {
 
   working_seg = NULL;
   first_segment_delay = 0;
-  positionErrorFlags = POSITION_ERROR_FLAG_CONTINUOUS | POSITION_ERROR_FLAG_ESTOP;
+#if MACHINE_STYLE == ARM6
+  positionErrorFlags = POSITION_ERROR_FLAG_CONTINUOUS;// | POSITION_ERROR_FLAG_ESTOP;
+#endif
 
   // disable global interrupts
   noInterrupts();
@@ -1110,7 +1115,7 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
       
       // The maximum acceleration is given by cT.    
       if(cT>0 && max_acceleration>cT) {
-        max_acceleration = max(cT,MIN_ACCELERATION);
+        max_acceleration = max(cT,(float)MIN_ACCELERATION);
       }
     }
     //Serial.print(oldX);
