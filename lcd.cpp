@@ -444,6 +444,7 @@ void LCD_start_menu() {
   if(lcd_turn!=0 || lcd_click_now==1) lcd_dirty=1;
 
   if(lcd_dirty==1) {
+    //Serial.println(millis());
     //long t0=micros();
     
     MENU_START
@@ -664,7 +665,6 @@ void LCD_update() {
   LCD_read();
   
   if (millis() >= lcd_draw_delay ) {
-  
     lcd_draw_delay = millis() + LCD_DRAW_DELAY;
 
     //Serial.print(lcd_turn,DEC);
@@ -676,16 +676,16 @@ void LCD_update() {
     //Serial.print('\n');
 
     // update the menu position
-    if ( lcd_turn && num_menu_items > 1 ) {
+    if ( lcd_turn!=0 && num_menu_items > 1 ) {
       int originalPosition = menu_position_sum / LCD_TURN_PER_MENU;
-      menu_position_sum += lcd_turn;
+      int upperBound = num_menu_items * LCD_TURN_PER_MENU;
+      menu_position_sum = ( menu_position_sum + upperBound + lcd_turn ) % upperBound;
 
       menu_position = menu_position_sum / LCD_TURN_PER_MENU;
-      if (menu_position > num_menu_items - 1) menu_position = num_menu_items - 1;
-      if (menu_position < 0) menu_position = 0;
 
       if (originalPosition != menu_position) {
-        LCD_clear();
+        lcd_dirty=1;
+        //LCD_clear();
       }
 
       //Serial.println(menu_position);
