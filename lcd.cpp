@@ -677,15 +677,20 @@ void LCD_update() {
 
     // update the menu position
     if ( lcd_turn!=0 && num_menu_items > 1 ) {
-      int originalPosition = menu_position_sum / LCD_TURN_PER_MENU;
-      int upperBound = num_menu_items * LCD_TURN_PER_MENU;
-      menu_position_sum = ( menu_position_sum + upperBound + lcd_turn ) % upperBound;
+      uint8_t originalPosition = menu_position_sum / LCD_TURN_PER_MENU;
+      uint8_t upperBound = num_menu_items * LCD_TURN_PER_MENU;
 
+      // potentially change the menu item
+      menu_position_sum += lcd_turn;
+      // bounding
+      if(menu_position_sum < 0) menu_position_sum=0;
+      if(menu_position_sum >= upperBound) menu_position_sum = upperBound-1;
+      
       menu_position = menu_position_sum / LCD_TURN_PER_MENU;
-
+      // check for change
       if (originalPosition != menu_position) {
         lcd_dirty=1;
-        //LCD_clear();
+        LCD_clear();
       }
 
       //Serial.println(menu_position);
