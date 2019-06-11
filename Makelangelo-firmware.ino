@@ -130,33 +130,24 @@ void pause(const long us) {
 */
 void parseLimits() {
   int axisNumber = parseNumber('A', -1);
-  if (axisNumber == -1) return;
-  if (axisNumber >= NUM_AXIES) return;
-
-  float newT = parseNumber('T', axies[axisNumber].limitMax);
-  float newB = parseNumber('B', axies[axisNumber].limitMin);
-  boolean changed = false;
-
-  if (!equalEpsilon(axies[axisNumber].limitMax, newT)) {
-    axies[axisNumber].limitMax = newT;
-    changed = true;
-  }
-  if (!equalEpsilon(axies[axisNumber].limitMin, newB)) {
-    axies[axisNumber].limitMin = newB;
-    changed = true;
-  }
-  if (changed == true) {
-    saveLimits();
-  }
-
-  printConfig();
-  /*
-    float pos[NUM_AXIES];
-    int i;
-    for(i=0;i<NUM_AXIES;++i) {
-    pos[i]=axies[i].pos;
+  if (axisNumber >= 0 && axisNumber < NUM_AXIES) {
+    float newT = parseNumber('T', axies[axisNumber].limitMax);
+    float newB = parseNumber('B', axies[axisNumber].limitMin);
+    boolean changed = false;
+  
+    if (!equalEpsilon(axies[axisNumber].limitMax, newT)) {
+      axies[axisNumber].limitMax = newT;
+      changed = true;
     }
-    teleport(pos);*/
+    if (!equalEpsilon(axies[axisNumber].limitMin, newB)) {
+      axies[axisNumber].limitMin = newB;
+      changed = true;
+    }
+    if (changed == true) {
+      saveLimits();
+    }
+  }  
+  printConfig();
 }
 
 
@@ -414,9 +405,8 @@ void where() {
 
 
 /**
-   M102
-   Print the machine limits to serial.
-*/
+ * Print the machine limits to serial.
+ */
 void printConfig() {
   int i;
 
@@ -838,7 +828,6 @@ void processCommand() {
     case  42:  adjustPinState();  break;
     case 100:  help();  break;
     case 101:  parseLimits();  break;
-    case 102:  printConfig();  break;
     case 110:  line_number = parseNumber('N', line_number);  break;
     case 114:  where();  break;
     case 117:  parseMessage();  break;
