@@ -692,7 +692,7 @@ void LCD_update() {
         lcd_dirty=1;
         LCD_clear();
       }
-
+      
       //Serial.println(menu_position);
 
       if (screen_position > menu_position) screen_position = menu_position;
