@@ -24,20 +24,20 @@ void IK(const float *const cartesian, long *motorStepArray) {
   
   float L,R,U,V,dy,dx;
   
-  dy = abs(x-left )-ZARPLOTTER_COMPENSATION;  dx = abs(y-top   )-ZARPLOTTER_COMPENSATION;  L = sqrt(dx*dx+dy*dy);  motorStepArray[0] = lround( L / THREAD_PER_STEP );  // M0 (top left)
-  dy = abs(x-right)-ZARPLOTTER_COMPENSATION;  dx = abs(y-top   )-ZARPLOTTER_COMPENSATION;  R = sqrt(dx*dx+dy*dy);  motorStepArray[1] = lround( R / THREAD_PER_STEP );  // M1 (top right)
-  dy = abs(x-left )-ZARPLOTTER_COMPENSATION;  dx = abs(y-bottom)-ZARPLOTTER_COMPENSATION;  U = sqrt(dx*dx+dy*dy);  motorStepArray[2] = lround( U / THREAD_PER_STEP );  // M2 (bottom left)
-  dy = abs(x-right)-ZARPLOTTER_COMPENSATION;  dx = abs(y-bottom)-ZARPLOTTER_COMPENSATION;  V = sqrt(dx*dx+dy*dy);  motorStepArray[3] = lround( V / THREAD_PER_STEP );  // M3 (bottom right)
-
+  dx = abs(x-left )-ZARPLOTTER_COMPENSATION;  dy = abs(y-top   )-ZARPLOTTER_COMPENSATION;  L = sqrt(dx*dx+dy*dy);  motorStepArray[0] = lround( L / THREAD_PER_STEP );  // M0 (top left)
+  dx = abs(x-right)-ZARPLOTTER_COMPENSATION;  dy = abs(y-top   )-ZARPLOTTER_COMPENSATION;  R = sqrt(dx*dx+dy*dy);  motorStepArray[1] = lround( R / THREAD_PER_STEP );  // M1 (top right)
+  dx = abs(x-left )-ZARPLOTTER_COMPENSATION;  dy = abs(y-bottom)-ZARPLOTTER_COMPENSATION;  U = sqrt(dx*dx+dy*dy);  motorStepArray[2] = lround( U / THREAD_PER_STEP );  // M2 (bottom left)
+  dx = abs(x-right)-ZARPLOTTER_COMPENSATION;  dy = abs(y-bottom)-ZARPLOTTER_COMPENSATION;  V = sqrt(dx*dx+dy*dy);  motorStepArray[3] = lround( V / THREAD_PER_STEP );  // M3 (bottom right)
+  
+  motorStepArray[NUM_MOTORS] = cartesian[2];
+/*
   Serial.print(cartesian[0]);  Serial.print('\t');
   Serial.print(cartesian[1]);  Serial.print('\t');
   Serial.print(L);  Serial.print('\t');
   Serial.print(R);  Serial.print('\t');
   Serial.print(U);  Serial.print('\t');
   Serial.print(V);  Serial.println();
-
-
-  motorStepArray[NUM_MOTORS] = cartesian[2];
+*/
 }
 
 
