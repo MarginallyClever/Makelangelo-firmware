@@ -14,8 +14,6 @@
 
 #define STEP_DELAY           (50)  // delay between steps, in milliseconds, when doing fixed tasks like homing
 
-#define MAX_ACCELERATION     (5000)
-#define MIN_ACCELERATION     (100)
 // servo angles for pen control
 #define PEN_UP_ANGLE         (90)
 #define PEN_DOWN_ANGLE       (50)  // Some steppers don't like 0 degrees
@@ -26,15 +24,19 @@
 #define NUM_SERVOS           (1)
 #define NUM_TOOLS            (1)
 
-#define MAX_FEEDRATE         (9000.0)  // depends on timer interrupt & hardware
-#define MIN_FEEDRATE         (100)
-#define MAX_JERK             (5.0)
-#define DEFAULT_FEEDRATE     (7000.0)
-#define DEFAULT_ACCELERATION (2500)
+#define MAX_FEEDRATE         (100.0)  // depends on timer interrupt & hardware
+#define MIN_FEEDRATE         (0.0)
+#define DEFAULT_FEEDRATE     (90.0)
+
+#define MAX_ACCELERATION     (500.0)
+#define MIN_ACCELERATION     (0.0)
+#define DEFAULT_ACCELERATION (180.0)
+
+#define MAX_JERK             (10.0)
+#define MAX_Z_JERK           (0.3)
 
 
 #endif  // #ifdef COREXY
 
 
 #endif  // #ifndef ROBOT_COREXY_H
-

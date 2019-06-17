@@ -23,14 +23,16 @@
 #define NUM_SERVOS           (1)
 #define NUM_TOOLS            (1)
 
-#define MAX_FEEDRATE         (1500.0)  // depends on timer interrupt & hardware
+#define MAX_FEEDRATE         (100.0)  // depends on timer interrupt & hardware
 #define MIN_FEEDRATE         (0.0)
-#define DEFAULT_FEEDRATE     (200.0)
+#define DEFAULT_FEEDRATE     (90.0)
 
-#define MAX_ACCELERATION     (2000.0)
+#define MAX_ACCELERATION     (500.0)
 #define MIN_ACCELERATION     (0.0)
-#define DEFAULT_ACCELERATION (1000.0)
-#define MAX_JERK             (5.0)
+#define DEFAULT_ACCELERATION (180.0)
+
+#define MAX_JERK             (10.0)
+#define MAX_Z_JERK           (0.3)
 
 #define SUBDIVIDE_LINES
 #define SEGMENT_PER_CM_LINE  (1)  // lines are subdivided.  How long are the divisions?

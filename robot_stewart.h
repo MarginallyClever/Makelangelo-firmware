@@ -24,7 +24,7 @@
 #define NUM_MOTORS           (6)
 #define NUM_SERVOS           (0)
 
-#define MAX_FEEDRATE         (2000.0)  // depends on timer interrupt & hardware
+#define MAX_FEEDRATE         (200.0)  // depends on timer interrupt & hardware
 #define MIN_FEEDRATE         (0)
 #define DEFAULT_FEEDRATE     (60.0)
 

@@ -20,9 +20,6 @@
 
 #define STEP_DELAY           (50)  // delay between steps, in milliseconds, when doing fixed tasks like homing
 
-#define MAX_ACCELERATION     (5000)
-#define MIN_ACCELERATION     (100)
-
 #define SUBDIVIDE_LINES
 #define SEGMENT_PER_CM_LINE  (2)  // lines are split into segments.  How long are the segments?
 #define SEGMENT_PER_CM_ARC   (3)  // Arcs are split into segments.  How long are the segments?
@@ -34,11 +31,16 @@
 
 #define NUM_TOOLS            (1)
 
-#define MAX_FEEDRATE         (9000.0)  // depends on timer interrupt & hardware
-#define MIN_FEEDRATE         (100)
-#define MAX_JERK             (5.0)
-#define DEFAULT_FEEDRATE     (7000.0)
-#define DEFAULT_ACCELERATION (2500)
+#define MAX_FEEDRATE         (100.0)  // depends on timer interrupt & hardware
+#define MIN_FEEDRATE         (0.0)
+#define DEFAULT_FEEDRATE     (90.0)
+
+#define MAX_ACCELERATION     (500.0)
+#define MIN_ACCELERATION     (0.0)
+#define DEFAULT_ACCELERATION (180.0)
+
+#define MAX_JERK             (10.0)
+#define MAX_Z_JERK           (0.3)
 
 
 
@@ -76,4 +78,3 @@
 
 
 #endif  // #ifndef ROBOT_DELTA_H
-
