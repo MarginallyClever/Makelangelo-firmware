@@ -82,7 +82,6 @@ extern int first_segment_delay;
 extern Motor motors[NUM_MOTORS+NUM_SERVOS];
 extern const char *AxisNames;
 extern const char *MotorNames;
-extern float maxFeedRate[NUM_MOTORS];
 extern float max_jerk[NUM_MOTORS+NUM_SERVOS];
 extern float max_feedrate_mm_s[NUM_MOTORS+NUM_SERVOS];
 

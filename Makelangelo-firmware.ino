@@ -46,9 +46,10 @@ char serialBuffer[MAX_BUF + 1]; // Serial buffer
 int sofar;                      // Serial buffer progress
 long last_cmd_time;             // prevent timeouts
 long line_number = 0;           // make sure commands arrive in order
+uint8_t lastGcommand=-1;
 
 float tool_offset[NUM_TOOLS][NUM_AXIES];
-int current_tool = 0;
+uint8_t current_tool = 0;
 
 #if MACHINE_STYLE == ARM6
 uint32_t reportDelay=0;
@@ -699,9 +700,14 @@ void parseMessage() {
 */
 void adjustMaxFeedRates() {
   int i;
-  for (i = 0; i < NUM_MOTORS; ++i) {
-    maxFeedRate[i] = parseNumber(MotorNames[i], maxFeedRate[i]);
+  Serial.print(F("M203 "));
+  for (i = 0; i < NUM_MOTORS+NUM_SERVOS; ++i) {
+    max_feedrate_mm_s[i] = parseNumber(MotorNames[i], max_feedrate_mm_s[i]);
+    Serial.print(MotorNames[i]);
+    Serial.print(max_feedrate_mm_s[i]);
+    Serial.print(' ');
   }
+  Serial.println();
 }
 
 /**
@@ -831,35 +837,13 @@ void processCommand() {
     case 110:  line_number = parseNumber('N', line_number);  break;
     case 114:  where();  break;
     case 117:  parseMessage();  break;
+    case 203:  adjustMaxFeedRates();  break;
     case 205:  parseAdvancedSettings();  break;
     case 226:  waitForPinState();  break;
     case 300:  parseBeep();  break;
     default:   break;
   }
-
-  // G codes
-  cmd = parseNumber('G', -1);
-  switch (cmd) {
-    case  0:
-    case  1:  parseLine();  break;
-    case  2:  parseArc(1);  break;  // clockwise
-    case  3:  parseArc(0);  break;  // counter-clockwise
-    case  4:  parseDwell();  break;
-    case 28:  robot_findHome();  break;
-#if MACHINE_STYLE == POLARGRAPH
-    case 29:  calibrateBelts();  break;
-#endif
-    case 54:
-    case 55:
-    case 56:
-    case 57:
-    case 58:
-    case 59:  parseToolOffset(cmd - 54);  break;
-    case 90:  absolute_mode = 1;  break; // absolute mode
-    case 91:  absolute_mode = 0;  break; // relative mode
-    case 92:  parseTeleport();  break;
-    default:  break;
-  }
+  if(cmd!=-1) return;  // M command processed, stop.
 
   // machine style-specific codes
   cmd = parseNumber('D', -1);
@@ -898,6 +882,33 @@ void processCommand() {
     case 20:  positionErrorFlags&=0xffff^(POSITION_ERROR_FLAG_ERROR|POSITION_ERROR_FLAG_FIRSTERROR);  break;  // off
     case 21:  positionErrorFlags^=POSITION_ERROR_FLAG_ESTOP;  break;  // toggle ESTOP
 #endif
+    default:  break;
+  }
+  if(cmd!=-1) return;  // D command processed, stop.
+
+  // no M or D commands were found.  This is probably a G-command.
+  // G codes
+  cmd = parseNumber('G', lastGcommand);
+  lastGcommand=cmd;
+  switch (cmd) {
+    case  0:
+    case  1:  parseLine();  break;
+    case  2:  parseArc(1);  break;  // clockwise
+    case  3:  parseArc(0);  break;  // counter-clockwise
+    case  4:  parseDwell();  break;
+    case 28:  robot_findHome();  break;
+#if MACHINE_STYLE == POLARGRAPH
+    case 29:  calibrateBelts();  break;
+#endif
+    case 54:
+    case 55:
+    case 56:
+    case 57:
+    case 58:
+    case 59:  parseToolOffset(cmd - 54);  break;
+    case 90:  absolute_mode = 1;  break; // absolute mode
+    case 91:  absolute_mode = 0;  break; // relative mode
+    case 92:  parseTeleport();  break;
     default:  break;
   }
 }

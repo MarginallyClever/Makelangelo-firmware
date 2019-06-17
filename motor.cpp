@@ -98,7 +98,6 @@ float previous_speed[NUM_MOTORS + NUM_SERVOS];
 
 const char *MotorNames = "LRUVWT";
 const char *AxisNames = "XYZUVWT";
-float maxFeedRate[NUM_MOTORS];
 
 #if MACHINE_STYLE == ARM6
 uint8_t positionErrorFlags;
