@@ -229,7 +229,7 @@ void lineSafe(float *pos, float new_feed_rate) {
 #endif
 
   len = sqrt(len);  //mm
-  int pieces = ceil(len / SEGMENT_MAX_LEN_CM );
+  int pieces = ceil(len / SEGMENT_MAX_LENGTH_CM );
   float a;
   long j;
 
@@ -282,7 +282,7 @@ void arc(float cx, float cy, float *destination, char clockwise, float new_feed_
   float len1 = abs(da) * sr;
   float len = sqrt( len1 * len1 + dr * dr ); // mm
 
-  int i, segments = ceil( len / SEGMENT_MAX_LEN_CM );
+  int i, segments = ceil( len / SEGMENT_MAX_LENGTH_CM );
 
   float n[NUM_AXIES], scale;
   float a, r;
