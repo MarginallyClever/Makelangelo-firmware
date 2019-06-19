@@ -11,10 +11,6 @@
 #define MACHINE_STYLE_NAME           "STEWART"
 #define MACHINE_HARDWARE_VERSION     5
 
-#define SUBDIVIDE_LINES
-#define SEGMENT_PER_CM_LINE  (2)  // lines are split into segments.  How long are the segments?
-#define SEGMENT_PER_CM_ARC   (3)  // Arcs are split into segments.  How long are the segments?
-
 // servo angles for pen control
 #define PEN_UP_ANGLE         (90)
 #define PEN_DOWN_ANGLE       (50)  // Some steppers don't like 0 degrees
@@ -35,6 +31,11 @@
 #define MAX_JERK             (5.0)
 
 #define MAX_SEGMENTS         (16)
+
+// plan long moves as a set of submoves to increase accuracy.  Uncomment to turn this off.
+#define SUBDIVIDE_LINES
+// what is the maximum length of a subdivided line?
+#define SEGMENT_MAX_LENGTH_CM  (1)
 
 #define BICEP_LENGTH         ( 5.000)
 #define FOREARM_LENGTH       (16.750)

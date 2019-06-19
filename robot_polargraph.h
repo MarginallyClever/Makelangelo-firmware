@@ -13,9 +13,10 @@
 #define MACHINE_HARDWARE_VERSION 5  // If you have a makelangelo 5+
 #define MACHINE_HAS_LIFTABLE_PEN
 
+// plan long moves as a set of submoves to increase accuracy.  Uncomment to turn this off.
 #define SUBDIVIDE_LINES
-#define SEGMENT_PER_CM_LINE  (0.5)  // lines are subdivided.  How long are the divisions?
-#define SEGMENT_PER_CM_ARC   (3)  // Arcs are subdivided.  How long are the divisions?
+// what is the maximum length of a subdivided line?
+#define SEGMENT_MAX_LENGTH_CM  (2)
 
 // servo angles for pen control
 #define PEN_UP_ANGLE         (90)

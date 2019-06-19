@@ -16,9 +16,10 @@
 #define MAX_ACCELERATION     (50)
 #define MIN_ACCELERATION     (0)
 
+// plan long moves as a set of submoves to increase accuracy.  Uncomment to turn this off.
 //#define SUBDIVIDE_LINES
-#define SEGMENT_PER_CM_LINE  (2)  // lines are split into segments.  How long are the segments?
-#define SEGMENT_PER_CM_ARC   (3)  // Arcs are split into segments.  How long are the segments?
+// what is the maximum length of a subdivided line?
+#define SEGMENT_MAX_LENGTH_CM  (1)
 
 #define NUM_AXIES            (7)
 #define NUM_MOTORS           (6)

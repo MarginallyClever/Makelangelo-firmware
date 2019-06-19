@@ -34,9 +34,10 @@
 #define MAX_JERK             (10.0)
 #define MAX_Z_JERK           (0.3)
 
-#define SUBDIVIDE_LINES
-#define SEGMENT_PER_CM_LINE  (1)  // lines are subdivided.  How long are the divisions?
-#define SEGMENT_PER_CM_ARC   (3)  // Arcs are subdivided.  How long are the divisions?
+// plan long moves as a set of submoves to increase accuracy.  Uncomment to turn this off.
+//#define SUBDIVIDE_LINES
+// what is the maximum length of a subdivided line?
+#define SEGMENT_MAX_LENGTH_CM  (2)
 
 // alter these two values to equal gear ratio * motor steps * microstepping for each axis.
 // by default they are set the same as all other robots in the system.

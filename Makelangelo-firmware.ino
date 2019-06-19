@@ -221,6 +221,7 @@ void lineSafe(float *pos, float new_feed_rate) {
   }
   
 #if MACHINE_STYLE == POLARGRAPH
+  // What if some axies don't need subdividing?  like z axis on polargraph.
   // often SEGMENT_PER_CM_LINE is 10mm or 20mm.  but a servo movement can be 90-160=70, or 7 segments.  This is pretty nuts.
   // discount the z movement from the subdivision to use less segments and (I hope) move the servo faster.
   len -= sq(delta[2]);
@@ -228,8 +229,7 @@ void lineSafe(float *pos, float new_feed_rate) {
 #endif
 
   len = sqrt(len);  //mm
-  // @TODO what if some axies don't need subdividing?  like z axis on polargraph.
-  int pieces = ceil(len * (float)SEGMENT_PER_CM_LINE / 10.0 );
+  int pieces = ceil(len / SEGMENT_MAX_LEN_CM );
   float a;
   long j;
 
@@ -282,7 +282,7 @@ void arc(float cx, float cy, float *destination, char clockwise, float new_feed_
   float len1 = abs(da) * sr;
   float len = sqrt( len1 * len1 + dr * dr ); // mm
 
-  int i, segments = ceil( len * SEGMENT_PER_CM_ARC / 10 );
+  int i, segments = ceil( len / SEGMENT_MAX_LEN_CM );
 
   float n[NUM_AXIES], scale;
   float a, r;
