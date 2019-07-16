@@ -11,6 +11,7 @@
 #define MACHINE_STYLE_NAME       "POLARGRAPH"
 //#define MACHINE_HARDWARE_VERSION 3  // If you have a makelangelo 3+
 #define MACHINE_HARDWARE_VERSION 5  // If you have a makelangelo 5+
+//#define MACHINE_HARDWARE_VERSION 3_3  // If you have a makelangelo 3.3+
 #define MACHINE_HAS_LIFTABLE_PEN
 
 // plan long moves as a set of submoves to increase accuracy.  Uncomment to turn this off.
@@ -52,7 +53,12 @@
 #define HAS_SD
 #define HAS_LCD
 #endif
-
+#if MACHINE_HARDWARE_VERSION == 3_3
+#define MAX_SEGMENTS         (16)  // has LCD, needs more ram.
+#define USE_LIMIT_SWITCH
+#define HAS_SD
+#define HAS_LCD
+#endif
 
 extern void calibrateBelts();
 extern void recordHome();

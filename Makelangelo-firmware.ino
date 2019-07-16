@@ -882,6 +882,9 @@ void processCommand() {
     case 20:  positionErrorFlags&=0xffff^(POSITION_ERROR_FLAG_ERROR|POSITION_ERROR_FLAG_FIRSTERROR);  break;  // off
     case 21:  positionErrorFlags^=POSITION_ERROR_FLAG_ESTOP;  break;  // toggle ESTOP
 #endif
+#if MACHINE_STYLE == POLARGRAPH
+    case 22:  makelangelo33Setup();  break;
+#endif
     default:  break;
   }
   if(cmd!=-1) return;  // D command processed, stop.
@@ -971,6 +974,31 @@ void makelangelo5Setup() {
   homePos[2] = 50;
   setHome(homePos);
 
+}
+
+
+/**
+   D13 makelangelo 3.3 specific setup call
+*/
+void makelangelo33Setup() {
+  float limits[NUM_AXIES * 2];
+  limits[0] = 325.0;
+  limits[1] = -325.0;
+  limits[2] = 500;
+  limits[3] = -500;
+  limits[4] = PEN_UP_ANGLE;
+  limits[5] = PEN_DOWN_ANGLE;
+  adjustDimensions(limits);
+
+  calibrateLeft = 2022;
+  calibrateRight = 2022;
+  saveCalibration();
+
+  float homePos[NUM_AXIES];
+  homePos[0] = 0;
+  homePos[1] = limits[2] - 217.0;
+  homePos[2] = 50;
+  setHome(homePos);
 }
 #endif
 
