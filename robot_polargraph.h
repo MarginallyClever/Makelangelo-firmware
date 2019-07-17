@@ -9,9 +9,15 @@
 #if MACHINE_STYLE == POLARGRAPH
 
 #define MACHINE_STYLE_NAME       "POLARGRAPH"
-//#define MACHINE_HARDWARE_VERSION 3  // If you have a makelangelo 3+
-#define MACHINE_HARDWARE_VERSION 5  // If you have a makelangelo 5+
-//#define MACHINE_HARDWARE_VERSION 3_3  // If you have a makelangelo 3.3+
+
+// supported versions of makelangelo polargraph robot
+#define MAKELANGELO_3    3
+#define MAKELANGELO_3_3  4
+#define MAKELANGELO_5    5
+
+// change this line for your version
+#define MACHINE_HARDWARE_VERSION   MAKELANGELO_5
+
 #define MACHINE_HAS_LIFTABLE_PEN
 
 // plan long moves as a set of submoves to increase accuracy.  Uncomment to turn this off.
@@ -42,18 +48,18 @@
 // dynamically adjust acceleration based on pen position around the page.
 #define DYNAMIC_ACCELERATION
 
-#if MACHINE_HARDWARE_VERSION == 5
+#if MACHINE_HARDWARE_VERSION == MAKELANGELO_5
 #define MAX_SEGMENTS         (16)  // has LCD, needs more ram.
 #define USE_LIMIT_SWITCH
 #define HAS_SD
 #define HAS_LCD
 #endif
-#if MACHINE_HARDWARE_VERSION == 3
+#if MACHINE_HARDWARE_VERSION == MAKELANGELO_3
 #define MAX_SEGMENTS         (16)  // has LCD, needs more ram.
 #define HAS_SD
 #define HAS_LCD
 #endif
-#if MACHINE_HARDWARE_VERSION == 3_3
+#if MACHINE_HARDWARE_VERSION == MAKELANGELO_3_3
 #define MAX_SEGMENTS         (16)  // has LCD, needs more ram.
 #define USE_LIMIT_SWITCH
 #define HAS_SD
