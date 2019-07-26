@@ -743,7 +743,7 @@ void LCD_main_menu() {
 #ifdef HAS_SD
   if (!sd_printing_now) {
 #endif
-#if MACHINE_HARDWARE_VERSION  == 5
+#ifdef USE_LIMIT_SWITCH
     MENU_ACTION("Find home", LCD_find_home);
 #else
     MENU_ACTION("This is home", LCD_this_is_home);
