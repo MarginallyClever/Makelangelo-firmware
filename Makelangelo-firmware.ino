@@ -982,10 +982,10 @@ void makelangelo5Setup() {
 */
 void makelangelo33Setup() {
   float limits[NUM_AXIES * 2];
-  limits[0] = 325.0;
-  limits[1] = -325.0;
-  limits[2] = 500;
-  limits[3] = -500;
+  limits[0] = 1000.0;
+  limits[1] = -1000.0;
+  limits[2] = 800;
+  limits[3] = -800;
   limits[4] = PEN_UP_ANGLE;
   limits[5] = PEN_DOWN_ANGLE;
   adjustDimensions(limits);
@@ -996,8 +996,8 @@ void makelangelo33Setup() {
 
   float homePos[NUM_AXIES];
   homePos[0] = 0;
-  homePos[1] = limits[2] - 217.0;
-  homePos[2] = 50;
+  homePos[1] = 0;
+  homePos[2] = 90;
   setHome(homePos);
 }
 #endif
