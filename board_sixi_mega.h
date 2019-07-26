@@ -15,29 +15,29 @@
 
 #define MAX_MOTORS                 (6)
 
-#define MOTOR_0_DIR_PIN           22//(16)
-#define MOTOR_0_STEP_PIN          24//(17)
-#define MOTOR_0_ENABLE_PIN        26//(48)
+#define MOTOR_0_DIR_PIN           46
+#define MOTOR_0_STEP_PIN          45
+#define MOTOR_0_ENABLE_PIN        47
 
-#define MOTOR_1_DIR_PIN           28//(47)
-#define MOTOR_1_STEP_PIN          30//(54)
-#define MOTOR_1_ENABLE_PIN        32//(55)
+#define MOTOR_1_DIR_PIN           43
+#define MOTOR_1_STEP_PIN          42
+#define MOTOR_1_ENABLE_PIN        44
 
-#define MOTOR_2_DIR_PIN           34//(56)
-#define MOTOR_2_STEP_PIN          36//(57)
-#define MOTOR_2_ENABLE_PIN        38//(62)
+#define MOTOR_2_DIR_PIN           40
+#define MOTOR_2_STEP_PIN          39
+#define MOTOR_2_ENABLE_PIN        41
 
-#define MOTOR_3_DIR_PIN           40//(22)
-#define MOTOR_3_STEP_PIN          42//(23)
-#define MOTOR_3_ENABLE_PIN        41//(24)
+#define MOTOR_3_DIR_PIN           37
+#define MOTOR_3_STEP_PIN          36
+#define MOTOR_3_ENABLE_PIN        38
 
-#define MOTOR_4_DIR_PIN           44//(25)
-#define MOTOR_4_STEP_PIN          46//(26)
-#define MOTOR_4_ENABLE_PIN        45//(27)
+#define MOTOR_4_DIR_PIN           34
+#define MOTOR_4_STEP_PIN          33
+#define MOTOR_4_ENABLE_PIN        35
 
-#define MOTOR_5_DIR_PIN           48//(28)
-#define MOTOR_5_STEP_PIN          50//(29)
-#define MOTOR_5_ENABLE_PIN        49//(39)
+#define MOTOR_5_DIR_PIN           31
+#define MOTOR_5_STEP_PIN          30
+#define MOTOR_5_ENABLE_PIN        32
 
 // These are dummy placeholders because it's easier than rewriting the rest of the code.
 #define MOTOR_0_LIMIT_SWITCH_PIN  9//(37)  // x-
@@ -104,30 +104,30 @@
 #define SENSOR_ANGLE_PER_BIT (360.0/(float)((long)1<<SENSOR_ANGLE_BITS))  // 0.00549316406
 
 // pins
-#define PIN_SENSOR_CSEL_0   11
-#define  PIN_SENSOR_CLK_0   10
-#define PIN_SENSOR_MOSI_0   9
-#define PIN_SENSOR_MISO_0   8
+#define PIN_SENSOR_CSEL_0   8
+#define  PIN_SENSOR_CLK_0   9
+#define PIN_SENSOR_MOSI_0   10
+#define PIN_SENSOR_MISO_0   11
 
-#define PIN_SENSOR_CSEL_1   5
-#define  PIN_SENSOR_CLK_1   4
-#define PIN_SENSOR_MOSI_1   3
-#define PIN_SENSOR_MISO_1   2
+#define PIN_SENSOR_CSEL_1   2
+#define  PIN_SENSOR_CLK_1   3
+#define PIN_SENSOR_MOSI_1   4
+#define PIN_SENSOR_MISO_1   5
 
-#define PIN_SENSOR_CSEL_2   14
-#define  PIN_SENSOR_CLK_2   15
-#define PIN_SENSOR_MOSI_2   16
-#define PIN_SENSOR_MISO_2   17
+#define PIN_SENSOR_CSEL_2   17
+#define  PIN_SENSOR_CLK_2   16
+#define PIN_SENSOR_MOSI_2   15
+#define PIN_SENSOR_MISO_2   14
 
-#define PIN_SENSOR_CSEL_3   18
-#define  PIN_SENSOR_CLK_3   19
-#define PIN_SENSOR_MOSI_3   20
-#define PIN_SENSOR_MISO_3   21
+#define PIN_SENSOR_CSEL_3   21
+#define  PIN_SENSOR_CLK_3   20
+#define PIN_SENSOR_MOSI_3   19
+#define PIN_SENSOR_MISO_3   18
 
-#define PIN_SENSOR_CSEL_4   45
-#define  PIN_SENSOR_CLK_4   43
-#define PIN_SENSOR_MOSI_4   41
-#define PIN_SENSOR_MISO_4   39
+#define PIN_SENSOR_CSEL_4   22
+#define  PIN_SENSOR_CLK_4   24
+#define PIN_SENSOR_MOSI_4   26
+#define PIN_SENSOR_MISO_4   28
 
 #define PIN_SENSOR_CSEL_5   29
 #define  PIN_SENSOR_CLK_5   27
