@@ -232,7 +232,7 @@ inline void LCD_print(const char x) {
 
 #define MENU_FLOAT(key,value) \
   MENU_ITEM_START(key) \
-  LCD_print_float(value); \
+  LCD_print_float(value,LCD_WIDTH-1-strlen(key)); \
   if(menu_position==ty && lcd_click_now) LCD_update_float(key,value); \
   MENU_ITEM_END()
 
@@ -248,7 +248,7 @@ void LCD_driveX();
 void LCD_driveY();
 void LCD_driveZ();
 void LCD_driveF();
-void LCD_print_float(float);
+void LCD_print_float(float v,int padding=0,int precision=2);
 void LCD_print_long(long);
 void LCD_refresh_display();
 void LCD_draw_border();
@@ -350,7 +350,7 @@ void LCD_go_home() {
 
 void LCD_drive_menu() {
   MENU_START
-  MENU_SUBMENU("Back", LCD_main_menu);
+  MENU_SUBMENU("Main ", LCD_main_menu);
   MENU_ACTION("Disable motors", LCD_disable_motors);
   MENU_ACTION("Enable motors", LCD_enable_motors);
   MENU_SUBMENU("X", LCD_driveX);
@@ -448,7 +448,7 @@ void LCD_start_menu() {
     //long t0=micros();
     
     MENU_START
-    MENU_SUBMENU("Back", LCD_main_menu);
+    MENU_SUBMENU("Main ", LCD_main_menu);
     
     root.rewindDirectory();
     while ( true ) {
@@ -580,7 +580,7 @@ void draw_USlegal_landscape() {
 
 void LCD_draw_border() {
   MENU_START
-  MENU_SUBMENU("Back", LCD_main_menu);
+  MENU_SUBMENU("Main ", LCD_main_menu);
   MENU_ACTION("A2 portrait", draw_A2_portrait);
   MENU_ACTION("A3 portrait", draw_A3_portrait);
   MENU_ACTION("A4 portrait", draw_A4_portrait);
@@ -598,7 +598,7 @@ void LCD_draw_border() {
 }
 
 
-void LCD_update_long(char *label, long &value) {
+void LCD_update_long(const char *label, long &value) {
   LCD_clear();
   do {
     LCD_read();
@@ -614,7 +614,7 @@ void LCD_update_long(char *label, long &value) {
 }
 
 
-void LCD_update_float(char *label, float &value, float stepSize = 0.01) {
+void LCD_update_float(const char *label, float &value, float stepSize = 0.01) {
   LCD_clear();
   do {
     LCD_read();
@@ -624,36 +624,66 @@ void LCD_update_float(char *label, float &value, float stepSize = 0.01) {
     }
     LCD_setCursor(0, 0);
     LCD_print(label);
+    //LCD_print_float(value,LCD_WIDTH-1-strlen(label));
     LCD_setCursor(0, 1);
     LCD_print_float(value);
   } while ( !lcd_click_now );
 }
 
 
+// right-justified long
 void LCD_print_long(long v) {
-  long av = abs(v);
-  int x = 1000;
-  while (x > av && x > 1) {
+  char buf[10];
+  itoa(v,buf,10);
+  char *e = buf;
+  while(*e!=0) ++e;
+  int x = e-buf;
+  while(x<4) {
     LCD_print(' ');
-    x /= 10;
-  };
-  if (v > 0) LCD_print(' ');
-  LCD_print(v);
+    x++;
+  }
+  LCD_print(buf);
 }
 
 
+// right justified float
+// @param v value to display
+// @param padding right justify so that the total width is padding characters
+// @param precision number of places right of the decimal
+void LCD_print_float(float v,int padding,int precision) {
+  char buf[10];
+  // do the whole part
+  int wholePart = (int)v;
+  itoa(wholePart,buf,10);
 
-void LCD_print_float(float v) {
-  int left = abs(v);
-  int right = abs((int)(v * 100) % 100);
+  // do the faction part.
+  v-=wholePart;
+  if(v<0) {
+    v=-v;
+  }
+  
+  char *e = buf;
+  
+  if(precision>0) {
+    while(*e!=0) ++e;
+    // add decimal
+    *e++='.';
+    while(precision>0) {
+      v*=10;
+      wholePart = (int)v;
+      *e++ = '0'+wholePart;
+      v-=wholePart;
+      --precision;
+    }
+    *e=0;
+  }
 
-  if (left < 1000) LCD_print(' ');
-  if (left < 100) LCD_print(' ');
-  if (left < 10) LCD_print(' ');
-
-  LCD_print(left);
-  LCD_print('.');
-  LCD_print(right);
+  int x = e-buf;
+  while(x<padding) {
+    LCD_print(' ');
+    x++;
+  }
+  LCD_print(buf);
 }
 #endif  // HAS_LCD
 
@@ -709,10 +739,10 @@ void LCD_update() {
     #ifdef LCD_IS_128X64
     } while(u8g.nextPage());
     #endif
+    LCD_refresh_display();
 
     lcd_turn = 0;  // reset.  must come after (*current_menu)() because it might be used there.  (damn globals...)
   }
-  LCD_refresh_display();
 #endif  // HAS_LCD
 }
 
@@ -733,13 +763,33 @@ void LCD_refresh_display() {
 }
 
 
+void LCD_settings_menu() {
+#ifdef HAS_LCD
+  MENU_START
+  MENU_SUBMENU("Main ", LCD_main_menu);
+  
+#if MACHINE_STYLE == POLARGRAPH
+  MENU_FLOAT("Left",   axies[0].limitMin);
+  MENU_FLOAT("Right",  axies[0].limitMax);
+  MENU_FLOAT("Top",    axies[1].limitMax);
+  MENU_FLOAT("Bottom", axies[1].limitMin);
+  MENU_FLOAT("BLeft",  calibrateLeft);
+  MENU_FLOAT("BRight", calibrateRight);
+  MENU_FLOAT("Home X", axies[0].homePos);
+  MENU_FLOAT("Home Y", axies[1].homePos);
+#endif
+  MENU_END
+#endif
+}
+
+
 void LCD_main_menu() {
 #ifdef HAS_LCD
   lcd_dirty=1;
   
   MENU_START
 
-  MENU_SUBMENU("Back", LCD_status_menu);
+  MENU_SUBMENU("Info screen", LCD_status_menu);
 #ifdef HAS_SD
   if (!sd_printing_now) {
 #endif
@@ -770,6 +820,7 @@ void LCD_main_menu() {
     MENU_ACTION("Stop", LCD_stop);
   }
 #endif
+  MENU_ACTION("Settings", LCD_settings_menu);
   MENU_END
 #endif  // HAS_LCD
 }
@@ -792,13 +843,13 @@ void LCD_status_menu() {
   float offset[NUM_AXIES];
   get_end_plus_offset(offset);
 
-  LCD_setCursor(0, 0);  LCD_print('X');  LCD_print_float(offset[0]);
-  LCD_setCursor(9, 0);  LCD_print('Z');  LCD_print_float(offset[2]);
+  LCD_setCursor(0, 0);  LCD_print('X');  LCD_print_float(offset[0],6);
+  LCD_setCursor(9, 0);  LCD_print('Z');  LCD_print_float(offset[2],6);
 #if MACHINE_STYLE == POLARGRAPH && defined(USE_LIMIT_SWITCH)
   LCD_setCursor(8, 0);  LCD_print(( digitalRead(LIMIT_SWITCH_PIN_LEFT) == LOW ) ? '*' : ' ');
 #endif
 
-  LCD_setCursor(0, 1);  LCD_print('Y');  LCD_print_float(offset[1]);
+  LCD_setCursor(0, 1);  LCD_print('Y');  LCD_print_float(offset[1],6);
   LCD_setCursor(9, 1);  LCD_print('F');  LCD_print_long(speed_adjust);  LCD_print('%');
 #if MACHINE_STYLE == POLARGRAPH && defined(USE_LIMIT_SWITCH)
   LCD_setCursor(8, 1);  LCD_print(( digitalRead(LIMIT_SWITCH_PIN_RIGHT) == LOW ) ? '*' : ' ');
