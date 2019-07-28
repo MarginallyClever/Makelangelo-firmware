@@ -34,7 +34,7 @@
 #define MOTOR_1_LIMIT_SWITCH_PIN  (8)  /* Y min */
 
 #define MAX_BOARD_SERVOS          (1)
-#define SERVO0_PIN                (14)   /* Servo 1 */
+#define SERVO0_PIN                (23)   /* Servo 1 */
 
 #define LIMIT_SWITCH_PIN_LEFT     (MOTOR_0_LIMIT_SWITCH_PIN)
 #define LIMIT_SWITCH_PIN_RIGHT    (MOTOR_1_LIMIT_SWITCH_PIN)
