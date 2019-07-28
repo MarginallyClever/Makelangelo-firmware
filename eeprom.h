@@ -29,7 +29,7 @@ void loadLimits();
 /**
  * @param limits NUM_AXIES pairs of floats.  each pair is one float for max limit and one for min limit.
  */
-void adjustDimensions(float *limits);
+void adjustLimits(float *limits);
 
 /**
  * 

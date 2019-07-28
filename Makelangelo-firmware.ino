@@ -31,8 +31,8 @@ int robot_uid = 0;
 Axis axies[NUM_AXIES];
 
 // length of belt when weights hit limit switch
-float calibrateRight  = 101.1;
-float calibrateLeft   = 101.1;
+float calibrateRight  = 1011.0;
+float calibrateLeft   = 1011.0;
 
 // plotter position.
 float feed_rate = DEFAULT_FEEDRATE;
@@ -962,7 +962,7 @@ void makelangelo5Setup() {
   limits[3] = -500;
   limits[4] = PEN_UP_ANGLE;
   limits[5] = PEN_DOWN_ANGLE;
-  adjustDimensions(limits);
+  adjustLimits(limits);
 
   calibrateLeft = 1011;
   calibrateRight = 1011;
@@ -988,7 +988,7 @@ void makelangelo33Setup() {
   limits[3] = -800;
   limits[4] = PEN_UP_ANGLE;
   limits[5] = PEN_DOWN_ANGLE;
-  adjustDimensions(limits);
+  adjustLimits(limits);
 
   calibrateLeft = 2022;
   calibrateRight = 2022;

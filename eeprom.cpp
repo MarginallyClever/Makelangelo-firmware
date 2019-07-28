@@ -88,9 +88,10 @@ void loadLimits() {
 
 
 /**
- * @param limits NUM_AXIES pairs of floats.  each pair is one float for max limit and one for min limit.
+ * @param limits NUM_AXIES*2 floats.  Each pair is one float for max limit and one for min limit.
  */
-void adjustDimensions(float *limits) {
+void adjustLimits(float *limits) {
+  Serial.println(F("Adjusting limits."));
   int i,j=0;
   int changed=0;
   float v;
@@ -124,7 +125,7 @@ void saveHome() {
   Serial.println(F("Saving home."));
   int i,j=ADDR_HOME;
   for(i=0;i<NUM_AXIES;++i) {
-    EEPROM_writeLong(j,axies[i].homePos*100);
+    EEPROM_writeLong(j,(long)(axies[i].homePos*100.0f));
     j+=4;
   }
 }
