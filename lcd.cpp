@@ -242,6 +242,7 @@ inline void LCD_print(const char x) {
 //------------------------------------------------------------------------------
 
 void LCD_status_menu();
+void LCD_settings_menu();
 void LCD_main_menu();
 void LCD_drawSplash();
 void LCD_driveX();
@@ -610,6 +611,7 @@ void LCD_update_long(const char *label, long &value) {
     LCD_print(label);
     LCD_setCursor(0, 1);
     LCD_print_long(value);
+    LCD_refresh_display();
   } while ( !lcd_click_now );
 }
 
