@@ -227,13 +227,21 @@ inline void LCD_print(const char x) {
 #define MENU_LONG(key,value) \
   MENU_ITEM_START(key) \
   LCD_print_long(value); \
-  if(menu_position==ty && lcd_click_now) LCD_update_long(key,value); \
+  if(menu_position==ty && lcd_click_now) { \
+    update_key = key; \
+    update_val = (void *)&(value); \
+    MENU_GOTO(LCD_update_long); \
+  } \
   MENU_ITEM_END()
 
 #define MENU_FLOAT(key,value) \
   MENU_ITEM_START(key) \
   LCD_print_float(value,LCD_WIDTH-1-strlen(key)); \
-  if(menu_position==ty && lcd_click_now) LCD_update_float(key,value); \
+  if(menu_position==ty && lcd_click_now) { \
+    update_key = key; \
+    update_val = (void *)&(value); \
+    MENU_GOTO(LCD_update_float); \
+  } \
   MENU_ITEM_END()
 
 
@@ -250,12 +258,14 @@ void LCD_driveY();
 void LCD_driveZ();
 void LCD_driveF();
 void LCD_print_float(float v,int padding=0,int precision=2);
-void LCD_print_long(long);
+void LCD_print_long(long v,int padding=0);
 void LCD_refresh_display();
 void LCD_draw_border();
 
 int buttons=0;
 unsigned long next_lcd_read=0;
+const char *update_key;
+void *update_val;
 
 
 void LCD_read() {
@@ -599,48 +609,45 @@ void LCD_draw_border() {
 }
 
 
-void LCD_update_long(const char *label, long &value) {
-  LCD_clear();
-  do {
-    LCD_read();
-    if ( lcd_turn ) {
-      value += lcd_turn > 0 ? 1 : -1;
-      lcd_turn = 0;
-    }
-    LCD_setCursor(0, 0);
-    LCD_print(label);
-    LCD_setCursor(0, 1);
-    LCD_print_long(value);
-    LCD_refresh_display();
-  } while ( !lcd_click_now );
+void LCD_update_long() {
+  if (lcd_click_now) MENU_GOTO(LCD_settings_menu);
+  
+  if (lcd_turn) {
+    long *f=(long*)update_val;
+    // protect servo, don't drive beyond physical limits
+    *f = lcd_turn > 0 ? 1 : -1;
+  }
+  
+  LCD_setCursor( 0, 0);
+  LCD_print(update_key);
+  LCD_print_long(*(long*)update_val,LCD_WIDTH-1-strlen(update_key));
 }
 
 
-void LCD_update_float(const char *label, float &value, float stepSize = 0.01) {
-  LCD_clear();
-  do {
-    LCD_read();
-    if ( lcd_turn ) {
-      value += lcd_turn > 0 ? stepSize : -stepSize;
-      lcd_turn = 0;
-    }
-    LCD_setCursor(0, 0);
-    LCD_print(label);
-    //LCD_print_float(value,LCD_WIDTH-1-strlen(label));
-    LCD_setCursor(0, 1);
-    LCD_print_float(value);
-  } while ( !lcd_click_now );
+void LCD_update_float() {
+  if (lcd_click_now) MENU_GOTO(LCD_settings_menu);
+  
+  if (lcd_turn) {
+    float *f=(float*)update_val;
+    // protect servo, don't drive beyond physical limits
+    *f += lcd_turn > 0 ? 0.01 : -0.01;
+  }
+  
+  LCD_setCursor( 0, 0);
+  LCD_print(update_key);
+  LCD_print_float(*(float*)update_val,LCD_WIDTH-1-strlen(update_key));
 }
 
 
 // right-justified long
-void LCD_print_long(long v) {
+void LCD_print_long(long v,int padding) {
   char buf[10];
   itoa(v,buf,10);
   char *e = buf;
   while(*e!=0) ++e;
+  
   int x = e-buf;
-  while(x<4) {
+  while(x<padding) {
     LCD_print(' ');
     x++;
   }
