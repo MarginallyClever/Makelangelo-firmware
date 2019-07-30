@@ -42,7 +42,7 @@ int lcd_rot_old  = 0;
 int lcd_turn     = 0;
 int lcd_posx = 0, lcd_posy = 0;
 char lcd_click_old = HIGH;
-char lcd_click_now = false;
+char lcd_click_now = 0;
 uint8_t speed_adjust = 100;
 char lcd_message[LCD_MESSAGE_LENGTH + 1];
 char lcd_dirty=0;
@@ -206,8 +206,7 @@ inline void LCD_print(const char x) {
   ++ty;
 
 #define MENU_GOTO(new_menu) {  \
-    lcd_click_now=false;  \
-    LCD_clear();  \
+    lcd_click_now=0;  \
     num_menu_items=screen_position=menu_position=menu_position_sum=0;  \
     screen_end = screen_position + LCD_HEIGHT;  \
     current_menu=new_menu;  \
@@ -216,6 +215,7 @@ inline void LCD_print(const char x) {
 
 #define MENU_LABEL(menu_label) \
   MENU_ITEM_START(menu_label) \
+  if(menu_position==ty && lcd_click_now) lcd_click_now=0;\
   MENU_ITEM_END()
 
 #define MENU_SUBMENU(menu_label,menu_method) \
@@ -478,8 +478,8 @@ void LCD_start_menu() {
       //Serial.println(filename);
       if (!entry.isDirectory() && filename[0] != '_') {
         MENU_ITEM_START(filename)
-        if (menu_position == ty && lcd_click_now) {
-          lcd_click_now = false;
+        if (menu_position == ty && lcd_click_now==1) {
+          lcd_click_now = 0;
           SD_StartPrintingFile(filename);
           MENU_GOTO(LCD_status_menu);
         }
