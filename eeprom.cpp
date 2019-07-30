@@ -25,7 +25,7 @@ void EEPROM_writeLong(int ee, long value) {
 /** 
  * from http://www.arduino.cc/cgi-bin/yabb2/YaBB.pl?num=1234477290/3
  */
-float EEPROM_readLong(int ee) {
+long EEPROM_readLong(int ee) {
   long value = 0;
   byte* p = (byte*)(void*)&value;
   for (uint16_t i = 0; i < sizeof(value); i++)
