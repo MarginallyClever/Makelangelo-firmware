@@ -189,6 +189,7 @@ inline void LCD_print(const char x) {
 // Convenience macros that make it easier to generate menus
 
 #define MENU_START \
+  LCD_clear(); \
   ty=0;
 
 #define MENU_END \
