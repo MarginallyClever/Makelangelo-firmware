@@ -33,14 +33,14 @@ void IK(const float *const axies, long *motorStepArray) {
   // so for three axis,
   // for any axis N subtract the other two axies from this axis.
 
-  float J0 = axies[0];  // hand  (G0 X*)
-  float J1 = axies[1];  // wrist (G0 Y*)
+  float J0 = -axies[0];  // anchor  (G0 X*)
+  float J1 = axies[1];  // shoulder (G0 Y*)
   float J2 = axies[2];  // elbow (G0 Z*)
-  float J3 = axies[3];  // ulna  (G0 U*)
+  float J3 = -axies[3];  // ulna  (G0 U*)
   float J4 = axies[4];  // wrist (G0 V*)
-  float J5 = -axies[5];  // hand  (G0 W*)
+  float J5 = -Gaxies[5];  // hand  (G0 W*)
 
-  // differential
+  // adjust for the wrist differential
   J5 += (J4/NEMA17_CYCLOID_GEARBOX_RATIO)+(J3/NEMA17_CYCLOID_GEARBOX_RATIO);
   J4 += (J3/NEMA17_CYCLOID_GEARBOX_RATIO);
   
@@ -193,7 +193,15 @@ void sensorUpdate() {
   uint16_t rawValue;
   for(int i=0;i<NUM_SENSORS;++i) {
     if(!getSensorRawValue(i,rawValue)) {
-      sensorAngles[i] = extractAngleFromRawValue(rawValue);
+      float v;
+      if(i==0 || i==3 || i==4 || i==5) {
+        v = -extractAngleFromRawValue(rawValue) - axies[i].homePos;
+      } else {
+        v = extractAngleFromRawValue(rawValue) - axies[i].homePos;
+      }
+      while(v<-180) v+=360;
+      while(v> 180) v-=360;
+      sensorAngles[i] = v;
     }
   }
 }
