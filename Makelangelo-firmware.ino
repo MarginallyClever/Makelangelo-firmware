@@ -75,7 +75,7 @@ unsigned int localPort = 9999;
 
 
 void findStepDelay() {
-  step_delay = 1000000.0f / (DEFAULT_FEEDRATE / THREAD_PER_STEP);
+  step_delay = 1000000.0f / (DEFAULT_FEEDRATE / MM_PER_STEP);
 }
 
 

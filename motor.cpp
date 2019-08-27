@@ -194,16 +194,16 @@ void motor_setup() {
   long steps[NUM_MOTORS + NUM_SERVOS];
   memset(steps, 0, (NUM_MOTORS + NUM_SERVOS)*sizeof(long));
 
-  for (i = 0; i < NUM_MOTORS+NUM_SERVOS; ++i) {
+  for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
     max_jerk[i] = MAX_JERK;
     max_feedrate_mm_s[i] = MAX_FEEDRATE;
   }
 
 #if MACHINE_STYLE == POLARGRAPH
-    max_jerk[2] = MAX_Z_JERK;
+  max_jerk[2] = MAX_Z_JERK;
 #endif
 
-   motor_set_step_count(steps);
+  motor_set_step_count(steps);
 
   // setup servos
 #if NUM_SERVOS>0
@@ -230,7 +230,7 @@ void motor_setup() {
   current_segment = 0;
   last_segment = 0;
   Segment &old_seg = line_segments[get_prev_segment(last_segment)];
-  for(i=0;i<NUM_MOTORS+NUM_SERVOS;++i) {
+  for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
     old_seg.a[i].step_count = 0;
   }
 
@@ -304,12 +304,12 @@ void setPenAngle(int arg0) {
 #endif  // NUM_AXIES>=3
 
 #if NUM_SERVOS>0
-// this is commented out because compiler segfault for unknown reasons.
-//#ifndef ESP8266
-//  servos[0].write(arg0);
-//#else
+  // this is commented out because compiler segfault for unknown reasons.
+  //#ifndef ESP8266
+  //  servos[0].write(arg0);
+  //#else
   analogWrite(SERVO0_PIN, arg0);
-//#endif  // ESP8266
+  //#endif  // ESP8266
 #endif // NUM_SERVOS>0
 }
 
@@ -384,12 +384,13 @@ void recalculate_forward() {
 
 
 float estimate_acceleration_distance(const float &initial_rate, const float &target_rate, const float &accel) {
-  if (accel == 0) return 0; // accel was 0, set acceleration distance to 0
+  if (accel == 0) return 0;
   return (sq(target_rate) - sq(initial_rate)) / (accel * 2);
 }
 
 
 int intersection_distance(const float &start_rate, const float &end_rate, const float &accel, const float &distance) {
+  if (accel == 0) return 0;
   return ( 2.0 * accel * distance - sq(start_rate) + sq(end_rate) ) / (4.0 * accel);
 }
 
@@ -683,8 +684,8 @@ static FORCE_INLINE uint16_t MultiU24X32toH16(uint32_t longIn1, uint32_t longIn2
 }
 
 /**
- * Process all line segments in the ring buffer.  Uses bresenham's line algorithm to move all motors.
- */
+   Process all line segments in the ring buffer.  Uses bresenham's line algorithm to move all motors.
+*/
 #ifdef ESP8266
 void itr() {
 #else
@@ -772,20 +773,20 @@ ISR(TIMER1_COMPA_vect) {
     uint8_t i;
 
 #if MACHINE_STYLE == ARM6
-    if((positionErrorFlags & POSITION_ERROR_FLAG_ESTOP)!=0) {
+    if ((positionErrorFlags & POSITION_ERROR_FLAG_ESTOP) != 0) {
       // check if the sensor position differs from the estimated position.
       float fraction = (float)steps_taken / (float)steps_total;
-      
+
       for (i = 0; i < NUM_SENSORS; ++i) {
         // interpolate live = (b-a)*f + a
-        working_seg->a[i].expectedPosition = 
+        working_seg->a[i].expectedPosition =
           (working_seg->a[i].positionEnd - working_seg->a[i].positionStart) * fraction + working_seg->a[i].positionStart;
-        
+
         float diff = abs(working_seg->a[i].expectedPosition - sensorAngles[i]);
-        if(diff>POSITION_EPSILON) {
-          // do nothing while the margin is too big.  
+        if (diff > POSITION_EPSILON) {
+          // do nothing while the margin is too big.
           // Only end this condition is stopping the ISR, either via software disable or hardware reset.
-          positionErrorFlags|=POSITION_ERROR_FLAG_ERROR;
+          positionErrorFlags |= POSITION_ERROR_FLAG_ERROR;
           return;
         }
       }
@@ -940,6 +941,7 @@ ISR(TIMER1_COMPA_vect) {
         Serial.println();//*/
     }
 #ifndef ESP8266
+    // TODO this line needs explaining.  Is it even needed?
     OCR1A = (OCR1A < (TCNT1 + 16)) ? (TCNT1 + 16) : OCR1A;
 #endif // ESP8266
   }
@@ -1008,34 +1010,34 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
   new_seg.distance = distance_mm;
   float inverse_distance_mm = 1.0 / new_seg.distance;
   float inverse_secs = fr_mm_s * inverse_distance_mm;
-  
+
   // The axis that has the most steps will control the overall acceleration as per bresenham's algorithm.
   new_seg.steps_total = 0;
   for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
 #if MACHINE_STYLE == ARM6
     new_seg.a[i].positionStart = axies[i].pos;
     new_seg.a[i].positionEnd   = target_position[i];
-    
-    switch(i) {
-    case  0: new_seg.a[i].distancePerStep = DEGREES_PER_STEP_0;  break;
-    case  1: new_seg.a[i].distancePerStep = DEGREES_PER_STEP_1;  break;
-    case  2: new_seg.a[i].distancePerStep = DEGREES_PER_STEP_2;  break;
-    case  3: new_seg.a[i].distancePerStep = DEGREES_PER_STEP_3;  break;
-    case  4: new_seg.a[i].distancePerStep = DEGREES_PER_STEP_4;  break;
-    case  5: new_seg.a[i].distancePerStep = DEGREES_PER_STEP_5;  break;
-    default: new_seg.a[i].distancePerStep = THREAD_PER_STEP;   break;
+
+    switch (i) {
+      case  0: new_seg.a[i].distancePerStep = DEGREES_PER_STEP_0;  break;
+      case  1: new_seg.a[i].distancePerStep = DEGREES_PER_STEP_1;  break;
+      case  2: new_seg.a[i].distancePerStep = DEGREES_PER_STEP_2;  break;
+      case  3: new_seg.a[i].distancePerStep = DEGREES_PER_STEP_3;  break;
+      case  4: new_seg.a[i].distancePerStep = DEGREES_PER_STEP_4;  break;
+      case  5: new_seg.a[i].distancePerStep = DEGREES_PER_STEP_5;  break;
+      default: new_seg.a[i].distancePerStep = MM_PER_STEP;   break;
     }
 #endif
     new_seg.a[i].step_count = steps[i];
     new_seg.a[i].delta_steps = steps[i] - old_seg.a[i].step_count;
-    
+
     new_seg.a[i].dir = ( new_seg.a[i].delta_steps < 0 ? HIGH : LOW );
 #if MACHINE_STYLE == ARM6
     new_seg.a[i].delta_mm = new_seg.a[i].delta_steps * new_seg.a[i].distancePerStep;
-    if(i==4) new_seg.a[i].dir = ( new_seg.a[i].delta_steps < 0 ? LOW : HIGH );  // reversed only on V (picassobox)
-    if(i==5) new_seg.a[i].dir = ( new_seg.a[i].delta_steps < 0 ? LOW : HIGH );  // reversed only on W (hand)
+    //if (i == 0) new_seg.a[i].dir = ( new_seg.a[i].delta_steps < 0 ? LOW : HIGH ); // reversed J0
+    //if (i == 3) new_seg.a[i].dir = ( new_seg.a[i].delta_steps < 0 ? LOW : HIGH ); // reversed J3
 #else
-    new_seg.a[i].delta_mm = new_seg.a[i].delta_steps * THREAD_PER_STEP;
+    new_seg.a[i].delta_mm = new_seg.a[i].delta_steps * MM_PER_STEP;
 #endif
     new_seg.a[i].absdelta = abs(new_seg.a[i].delta_steps);
     if ( new_seg.steps_total < new_seg.a[i].absdelta ) {
@@ -1046,7 +1048,7 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
   for (i = 0; i < NUM_AXIES; ++i) {
     axies[i].pos = target_position[i];
   }
-  
+
   // No steps?  No work!  Stop now.
   if ( new_seg.steps_total == 0 ) return;
 
@@ -1075,53 +1077,53 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
   {
     // Adjust the maximum acceleration based on the plotter position to reduce wobble at the bottom of the picture.
     // We only consider the XY plane.
-    
+
     // normal vectors pointing from plotter to motor
     float R1x = axies[0].limitMin - oldX;
     float R1y = axies[1].limitMax - oldY;
-    float Rlen = sqrt(sq(R1x)+sq(R1y));
-    R1x/=Rlen;
-    R1y/=Rlen;
-    
+    float Rlen = sqrt(sq(R1x) + sq(R1y));
+    R1x /= Rlen;
+    R1y /= Rlen;
+
     float R2x = axies[0].limitMax - oldX;
     float R2y = axies[1].limitMax - oldY;
-    Rlen = sqrt(sq(R2x)+sq(R2y));
-    R2x/=Rlen;
-    R2y/=Rlen;
-    
+    Rlen = sqrt(sq(R2x) + sq(R2y));
+    R2x /= Rlen;
+    R2y /= Rlen;
+
     // if T is your target direction unit vector,
-    float Tx=target_position[0]-oldX;
-    float Ty=target_position[1]-oldY;
-    Rlen = sqrt(sq(Tx)+sq(Ty));
-    if(Rlen>0) {
+    float Tx = target_position[0] - oldX;
+    float Ty = target_position[1] - oldY;
+    Rlen = sqrt(sq(Tx) + sq(Ty));
+    if (Rlen > 0) {
       // only affects XY non-zero movement.  Servo is not touched.
-      Tx/=Rlen;
-      Ty/=Rlen;
+      Tx /= Rlen;
+      Ty /= Rlen;
       // solve cT = -gY + k1 R1 for c [and k1]
       // solve cT = -gY + k2 R2 for c [and k2]
 #define GRAVITYy   (1.0)
 #define GRAVITYmag (980.0)
-      float c1 = -GRAVITYy*GRAVITYmag * R1x / (Tx*R1y - Ty*R1x);
-      float c2 = -GRAVITYy*GRAVITYmag * R2x / (Tx*R2y - Ty*R2x);
-      
+      float c1 = -GRAVITYy * GRAVITYmag * R1x / (Tx * R1y - Ty * R1x);
+      float c2 = -GRAVITYy * GRAVITYmag * R2x / (Tx * R2y - Ty * R2x);
+
       // If c is negative, that means that that support rope doesn't limit the acceleration; discard that c.
-      float cT=0;
+      float cT = 0;
       // If c is positive in both cases, take the smaller one.
-      if( c1>0 && c2>0 ) {
+      if ( c1 > 0 && c2 > 0 ) {
         cT = ( c1 < c2 ) ? c1 : c2;
-      } else if(c1>0) cT=c1;
-      else cT=c2;
-      
-      // The maximum acceleration is given by cT.    
-      if(cT>0 && max_acceleration>cT) {
-        max_acceleration = max(cT,(float)MIN_ACCELERATION);
+      } else if (c1 > 0) cT = c1;
+      else cT = c2;
+
+      // The maximum acceleration is given by cT.
+      if (cT > 0 && max_acceleration > cT) {
+        max_acceleration = max(cT, (float)MIN_ACCELERATION);
       }
     }
     //Serial.print(oldX);
-    //Serial.print(',');  
+    //Serial.print(',');
     //Serial.print(oldY);
     //Serial.print('=');
-    //Serial.println(max_acceleration);  
+    //Serial.println(max_acceleration);
   }
 #endif  // DYNAMIC_ACCELERATION
 #endif  // MACHINE_STYLE == POLARGRAPH
@@ -1138,7 +1140,7 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
       }
     }
   }
-  
+
   new_seg.acceleration_steps_per_s2 = accel;
   new_seg.acceleration = accel / steps_per_mm;
   new_seg.acceleration_rate = (uint32_t)(accel * (4096.0f * 4096.0f / (TIMER_RATE)));
@@ -1194,7 +1196,7 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
                          : // v_exit <= v_entry          coasting             axis reversal
                          ( (v_entry < 0 || v_exit > 0) ? (v_entry - v_exit) : max(-v_exit, v_entry) );
 
-      if(jerk > max_jerk[i]) {
+      if (jerk > max_jerk[i]) {
         v_factor *= max_jerk[i] / jerk;
         ++limited;
       }

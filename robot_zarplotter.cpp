@@ -24,10 +24,10 @@ void IK(const float *const cartesian, long *motorStepArray) {
   
   float L,R,U,V,dy,dx;
   
-  dx = abs(x-left )-ZARPLOTTER_COMPENSATION;  dy = abs(y-top   )-ZARPLOTTER_COMPENSATION;  L = sqrt(dx*dx+dy*dy);  motorStepArray[0] = lround( L / THREAD_PER_STEP );  // M0 (top left)
-  dx = abs(x-right)-ZARPLOTTER_COMPENSATION;  dy = abs(y-top   )-ZARPLOTTER_COMPENSATION;  R = sqrt(dx*dx+dy*dy);  motorStepArray[1] = lround( R / THREAD_PER_STEP );  // M1 (top right)
-  dx = abs(x-left )-ZARPLOTTER_COMPENSATION;  dy = abs(y-bottom)-ZARPLOTTER_COMPENSATION;  U = sqrt(dx*dx+dy*dy);  motorStepArray[2] = lround( U / THREAD_PER_STEP );  // M2 (bottom left)
-  dx = abs(x-right)-ZARPLOTTER_COMPENSATION;  dy = abs(y-bottom)-ZARPLOTTER_COMPENSATION;  V = sqrt(dx*dx+dy*dy);  motorStepArray[3] = lround( V / THREAD_PER_STEP );  // M3 (bottom right)
+  dx = abs(x-left )-ZARPLOTTER_COMPENSATION;  dy = abs(y-top   )-ZARPLOTTER_COMPENSATION;  L = sqrt(dx*dx+dy*dy);  motorStepArray[0] = lround( L / MM_PER_STEP );  // M0 (top left)
+  dx = abs(x-right)-ZARPLOTTER_COMPENSATION;  dy = abs(y-top   )-ZARPLOTTER_COMPENSATION;  R = sqrt(dx*dx+dy*dy);  motorStepArray[1] = lround( R / MM_PER_STEP );  // M1 (top right)
+  dx = abs(x-left )-ZARPLOTTER_COMPENSATION;  dy = abs(y-bottom)-ZARPLOTTER_COMPENSATION;  U = sqrt(dx*dx+dy*dy);  motorStepArray[2] = lround( U / MM_PER_STEP );  // M2 (bottom left)
+  dx = abs(x-right)-ZARPLOTTER_COMPENSATION;  dy = abs(y-bottom)-ZARPLOTTER_COMPENSATION;  V = sqrt(dx*dx+dy*dy);  motorStepArray[3] = lround( V / MM_PER_STEP );  // M3 (bottom right)
   
   motorStepArray[NUM_MOTORS] = cartesian[2];
 /*
@@ -53,9 +53,9 @@ int FK(long *motorStepArray, float *cartesian) {
   float limit_ymax = axies[1].limitMax;
   
   // use law of cosines: theta = acos((a*a+b*b-c*c)/(2*a*b));
-  float a = (float)motorStepArray[0] * THREAD_PER_STEP;
+  float a = (float)motorStepArray[0] * MM_PER_STEP;
   float b = (limit_xmax-limit_xmin);
-  float c = (float)motorStepArray[1] * THREAD_PER_STEP;
+  float c = (float)motorStepArray[1] * MM_PER_STEP;
 
   // slow, uses trig
   // we know law of cosines:   cc = aa + bb -2ab * cos( theta )

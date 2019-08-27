@@ -24,10 +24,10 @@ void IK(const float *const cartesian, long *motorStepArray) {
   
   dy = cartesian[1] - limit_ymax;
   dx = cartesian[0] - limit_xmin;
-  motorStepArray[0] = lround( sqrt(dx*dx+dy*dy) / THREAD_PER_STEP );
+  motorStepArray[0] = lround( sqrt(dx*dx+dy*dy) / MM_PER_STEP );
   // find length to M2
   dx = limit_xmax - cartesian[0];
-  motorStepArray[1] = lround( sqrt(dx*dx+dy*dy) / THREAD_PER_STEP );
+  motorStepArray[1] = lround( sqrt(dx*dx+dy*dy) / MM_PER_STEP );
   
   motorStepArray[2] = cartesian[2];
 }
@@ -45,9 +45,9 @@ int FK(long *motorStepArray,float *cartesian) {
   float limit_ymax = axies[1].limitMax;
   
   // use law of cosines: theta = acos((a*a+b*b-c*c)/(2*a*b));
-  float a = (float)motorStepArray[0] * THREAD_PER_STEP;
+  float a = (float)motorStepArray[0] * MM_PER_STEP;
   float b = (limit_xmax-limit_xmin);
-  float c = (float)motorStepArray[1] * THREAD_PER_STEP;
+  float c = (float)motorStepArray[1] * MM_PER_STEP;
 
   // slow, uses trig
   // we know law of cosines:   cc = aa + bb -2ab * cos( theta )
@@ -237,12 +237,12 @@ void robot_findHome() {
 
   Serial.println(F("Estimating position..."));
   long count[NUM_MOTORS+NUM_SERVOS];
-  count[0] = calibrateLeft/THREAD_PER_STEP;
-  count[1] = calibrateRight/THREAD_PER_STEP;
+  count[0] = calibrateLeft/MM_PER_STEP;
+  count[1] = calibrateRight/MM_PER_STEP;
   count[2] = axies[2].pos;
   Serial.print("cl=");        Serial.println(calibrateLeft);
   Serial.print("cr=");        Serial.println(calibrateRight);
-  Serial.print("t*1000=");    Serial.println(THREAD_PER_STEP*1000);
+  Serial.print("t*1000=");    Serial.println(MM_PER_STEP*1000);
 
   // current position is...
   float offset[NUM_AXIES];
@@ -316,8 +316,8 @@ void calibrateBelts() {
   delay(500);
 
   Serial.println(F("Estimating position..."));
-  calibrateLeft  = (float)steps[0] * THREAD_PER_STEP;
-  calibrateRight = (float)steps[1] * THREAD_PER_STEP;
+  calibrateLeft  = (float)steps[0] * MM_PER_STEP;
+  calibrateRight = (float)steps[1] * MM_PER_STEP;
 
   reportCalibration();
 

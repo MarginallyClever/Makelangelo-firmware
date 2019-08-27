@@ -19,8 +19,8 @@ void IK(const float *const axies, long *motorStepArray) {
   float y = axies[1];
   float z = axies[2];
 
-  motorStepArray[0] = lround((x+y) / THREAD_PER_STEP);
-  motorStepArray[1] = lround((x-y) / THREAD_PER_STEP);
+  motorStepArray[0] = lround((x+y) / MM_PER_STEP);
+  motorStepArray[1] = lround((x-y) / MM_PER_STEP);
 
   motorStepArray[NUM_MOTORS] = z;
 }
@@ -33,8 +33,8 @@ void IK(const float *const axies, long *motorStepArray) {
  * @return 0 if no problem, 1 on failure.
  */
 int FK(long *motorStepArray,float *axies) {
-  float a = motorStepArray[0] * THREAD_PER_STEP;
-  float b = motorStepArray[1] * THREAD_PER_STEP;
+  float a = motorStepArray[0] * MM_PER_STEP;
+  float b = motorStepArray[1] * MM_PER_STEP;
 
   float x = (float)( a + b ) / 2.0;
   float y = x - (float)b;
