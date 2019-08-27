@@ -394,9 +394,15 @@ void where() {
 
   Serial.print(F(" A"  ));
   Serial.println(acceleration);
+}
 
-  for (i = 0; i < NUM_AXIES; ++i) {
-    Serial.print('H');
+
+/**
+ * D23 report home values
+ */
+void reportHome() {
+  Serial.print(F("D23 "));
+  for (int i = 0; i < NUM_AXIES; ++i) {
     Serial.print(AxisNames[i]);
     Serial.print(axies[i].homePos);
     Serial.print(' ');
@@ -885,6 +891,7 @@ void processCommand() {
 #if MACHINE_STYLE == POLARGRAPH
     case 22:  makelangelo33Setup();  break;
 #endif
+    case 23:  reportHome();  break;
     default:  break;
   }
   if(cmd!=-1) return;  // D command processed, stop.

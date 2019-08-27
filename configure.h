@@ -89,7 +89,7 @@
 // 200 step-per-turn motors move 1.8 degrees per step.  (360/200=1.8)
 // see your stepper motor data sheet for more info.
 #ifndef DEGREES_PER_STEP
-#define DEGREES_PER_STEP     ( 0.9)
+#define DEGREES_PER_STEP     ( 1.8)
 #endif
 
 // stepper motor drivers can use microstepping to split steps into fractions of steps for greater precision.
@@ -111,7 +111,7 @@
 // These numbers are calculated from the above.  No need to change these.
 #define NORMAL_MOTOR_STEPS   (360.0/DEGREES_PER_STEP)
 #define STEPS_PER_TURN       (NORMAL_MOTOR_STEPS * MICROSTEPS)
-#define THREAD_PER_STEP      (PULLEY_PITCH/STEPS_PER_TURN)
+#define MM_PER_STEP          (PULLEY_PITCH/STEPS_PER_TURN)
 #define MICROSTEP_PER_DEGREE (STEPS_PER_TURN/360.0)
 
 
@@ -194,17 +194,6 @@
 #ifndef END5
 #define END5 HIGH
 #endif
-
-//------------------------------------------------------------------------------
-// EEPROM MEMORY MAP
-//------------------------------------------------------------------------------
-#define FIRMWARE_VERSION        9    // Increment when adding new variables
-#define ADDR_VERSION            0                          // 0..255 (1 byte)
-#define ADDR_UUID               (ADDR_VERSION+1)           // long - 4 bytes
-#define ADDR_LIMITS             (ADDR_UUID+4)              // float - 4 bytes
-#define ADDR_HOME               (ADDR_LIMITS+4*NUM_AXIES)  // float - 4 bytes * NUM_AXIES
-#define ADDR_CALIBRATION_LEFT   (ADDR_HOME+4*NUM_AXIES)    // float - 4 bytes * NUM_AXIES
-#define ADDR_CALIBRATION_RIGHT  (ADDR_CALIBRATION_LEFT+4)  // float - 4 bytes
 
 
 //------------------------------------------------------------------------------
