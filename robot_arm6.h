@@ -13,9 +13,6 @@
 
 #define STEP_DELAY           (1000)  // delay between steps, in milliseconds, when doing fixed tasks like homing
 
-#define MAX_ACCELERATION     (50)
-#define MIN_ACCELERATION     (0)
-
 // plan long moves as a set of submoves to increase accuracy.  Uncomment to turn this off.
 //#define SUBDIVIDE_LINES
 // what is the maximum length of a subdivided line?
@@ -29,9 +26,13 @@
 
 #define MAX_FEEDRATE         (80.0)  // depends on timer interrupt & hardware
 #define MIN_FEEDRATE         (0)
-#define MAX_JERK             (5.0)
 #define DEFAULT_FEEDRATE     (25.0)
+
+#define MAX_ACCELERATION     (50)
+#define MIN_ACCELERATION     (0)
 #define DEFAULT_ACCELERATION (5)
+
+#define MAX_JERK             (5.0)
 
 #define MAX_SEGMENTS         (8)  // override the default to save RAM
 #define DEGREES_PER_STEP     (1.8)
