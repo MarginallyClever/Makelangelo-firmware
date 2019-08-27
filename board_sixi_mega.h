@@ -48,7 +48,7 @@
 #define MOTOR_5_LIMIT_SWITCH_PIN  9//(32)  // z+
 
 #define MAX_BOARD_SERVOS          (1)
-#define SERVO0_PIN                (6)
+#define SERVO0_PIN                (13)
 
 #undef HAS_LCD
 #undef HAS_SD
@@ -124,15 +124,15 @@
 #define PIN_SENSOR_MOSI_3   19
 #define PIN_SENSOR_MISO_3   18
 
-#define PIN_SENSOR_CSEL_4   22
-#define  PIN_SENSOR_CLK_4   24
-#define PIN_SENSOR_MOSI_4   26
-#define PIN_SENSOR_MISO_4   28
+#define PIN_SENSOR_CSEL_4   29
+#define  PIN_SENSOR_CLK_4   27
+#define PIN_SENSOR_MOSI_4   25
+#define PIN_SENSOR_MISO_4   23
 
-#define PIN_SENSOR_CSEL_5   29
-#define  PIN_SENSOR_CLK_5   27
-#define PIN_SENSOR_MOSI_5   25
-#define PIN_SENSOR_MISO_5   23
+#define PIN_SENSOR_CSEL_5   22
+#define  PIN_SENSOR_CLK_5   24
+#define PIN_SENSOR_MOSI_5   26
+#define PIN_SENSOR_MISO_5   28
 
 
 
