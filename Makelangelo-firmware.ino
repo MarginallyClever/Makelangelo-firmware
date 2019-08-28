@@ -392,7 +392,7 @@ void where() {
   Serial.print(feed_rate);
   Serial.print(F("mm/s"));
 
-  Serial.print(F(" A"  ));
+  Serial.print(F(" A"));
   Serial.println(acceleration);
 }
 
@@ -480,11 +480,12 @@ void toolChange(int tool_id) {
 */
 float parseNumber(char code, float val) {
   char *ptr = serialBuffer; // start at the beginning of buffer
-  while ((long)ptr > 1 && (*ptr) && (long)ptr < (long)serialBuffer + sofar) { // walk to the end
-    if (*ptr == code) { // if you find code on your walk,
+  char *finale = serialBuffer+sofar;
+  for(ptr=serialBuffer; ptr<finale; ++ptr) {  // walk to the end
+    if(*ptr==';') break;
+    if(*ptr == code) { // if you find code on your walk,
       return atof(ptr + 1); // convert the digits that follow into a float and return it
     }
-    ptr = strchr(ptr, ' ') + 1; // take a step from here to the letter after the next space
   }
   return val;  // end reached, nothing found, return default val.
 }
@@ -495,11 +496,12 @@ float parseNumber(char code, float val) {
 */
 char hasGCode(char code) {
   char *ptr = serialBuffer; // start at the beginning of buffer
-  while ((long)ptr > 1 && (*ptr) && (long)ptr < (long)serialBuffer + sofar) { // walk to the end
+  char *finale = serialBuffer+sofar;
+  for(ptr=serialBuffer; ptr<finale; ++ptr) {  // walk to the end
+    if(*ptr==';') break;
     if (*ptr == code) { // if you find code on your walk,
       return 1;  // found
     }
-    ptr = strchr(ptr, ' ') + 1; // take a step from here to the letter after the next space
   }
   return 0;  // not found
 }
