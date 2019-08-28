@@ -901,12 +901,12 @@ void processCommand() {
   // no M or D commands were found.  This is probably a G-command.
   // G codes
   cmd = parseNumber('G', lastGcommand);
-  lastGcommand=cmd;
+  lastGcommand=-1;
   switch (cmd) {
     case  0:
-    case  1:  parseLine();  break;
-    case  2:  parseArc(1);  break;  // clockwise
-    case  3:  parseArc(0);  break;  // counter-clockwise
+    case  1:  parseLine();  lastGcommand=cmd;  break;
+    case  2:  parseArc(1);  lastGcommand=cmd;  break;  // clockwise
+    case  3:  parseArc(0);  lastGcommand=cmd;  break;  // counter-clockwise
     case  4:  parseDwell();  break;
     case 28:  robot_findHome();  break;
 #if MACHINE_STYLE == POLARGRAPH
