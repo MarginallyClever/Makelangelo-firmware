@@ -41,6 +41,7 @@
 #define MAX_ACCELERATION     (500.0)
 #define MIN_ACCELERATION     (0.0)
 #define DEFAULT_ACCELERATION (180.0)
+#define DYNAMIC_ACCELERATION  // uncomment this line to adjust acceleration based on pen position
 
 #define MAX_JERK             (10.0)
 #define MAX_Z_JERK           (0.3)
