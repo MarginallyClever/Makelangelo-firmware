@@ -32,7 +32,7 @@
 #define MIN_ACCELERATION     (0)
 #define DEFAULT_ACCELERATION (5)
 
-#define MAX_JERK             (5.0)
+#define MAX_JERK             (0.0)
 
 #define MAX_SEGMENTS         (8)  // override the default to save RAM
 #define DEGREES_PER_STEP     (1.8)

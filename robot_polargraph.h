@@ -43,8 +43,8 @@
 #define DEFAULT_ACCELERATION (180.0)
 #define DYNAMIC_ACCELERATION  // uncomment this line to adjust acceleration based on pen position
 
-#define MAX_JERK             (10.0)
-#define MAX_Z_JERK           (0.3)
+#define MAX_JERK             (0.0)
+#define MAX_Z_JERK           (0.0)
 
 // dynamically adjust acceleration based on pen position around the page.
 #define DYNAMIC_ACCELERATION

@@ -1034,8 +1034,6 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
     new_seg.a[i].dir = ( new_seg.a[i].delta_steps < 0 ? HIGH : LOW );
 #if MACHINE_STYLE == ARM6
     new_seg.a[i].delta_mm = new_seg.a[i].delta_steps * new_seg.a[i].distancePerStep;
-    //if (i == 0) new_seg.a[i].dir = ( new_seg.a[i].delta_steps < 0 ? LOW : HIGH ); // reversed J0
-    //if (i == 3) new_seg.a[i].dir = ( new_seg.a[i].delta_steps < 0 ? LOW : HIGH ); // reversed J3
 #else
     new_seg.a[i].delta_mm = new_seg.a[i].delta_steps * MM_PER_STEP;
 #endif
@@ -1073,7 +1071,7 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
 
   float max_acceleration = acceleration;
 #if MACHINE_STYLE == POLARGRAPH
-#ifdef DYNAMIC_ACCELERATION // doesn't work.  WHY?!
+#ifdef DYNAMIC_ACCELERATION
   {
     // Adjust the maximum acceleration based on the plotter position to reduce wobble at the bottom of the picture.
     // We only consider the XY plane.
@@ -1101,8 +1099,8 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
       Ty /= Rlen;
       // solve cT = -gY + k1 R1 for c [and k1]
       // solve cT = -gY + k2 R2 for c [and k2]
-#define GRAVITYy   (1.0)
-#define GRAVITYmag (980.0)
+#define GRAVITYy   (0.25)  // was 1.0
+#define GRAVITYmag (980.0)  // what are the units here?  mm?
       float c1 = -GRAVITYy * GRAVITYmag * R1x / (Tx * R1y - Ty * R1x);
       float c2 = -GRAVITYy * GRAVITYmag * R2x / (Tx * R2y - Ty * R2x);
 
