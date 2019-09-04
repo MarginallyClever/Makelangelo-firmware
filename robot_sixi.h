@@ -24,13 +24,13 @@
 #define NUM_TOOLS            (1)
 #define NUM_SENSORS          (6)
 
-#define MAX_FEEDRATE         (50.0)  // depends on timer interrupt & hardware
+#define MAX_FEEDRATE         (80.0)  // depends on timer interrupt & hardware
 #define MIN_FEEDRATE         (0)
 #define DEFAULT_FEEDRATE     (45.0)
 
-#define MAX_ACCELERATION     (50)
+#define MAX_ACCELERATION     (3000)
 #define MIN_ACCELERATION     (0)
-#define DEFAULT_ACCELERATION (5)
+#define DEFAULT_ACCELERATION (1800)
 
 #define MAX_JERK             (0.0)
 
