@@ -15,15 +15,22 @@
 #define MAKELANGELO_3_3  4
 #define MAKELANGELO_5    5
 
+/// -------------- change here ----------------
 // change this line for your version
 #define MACHINE_HARDWARE_VERSION   MAKELANGELO_5
+
+// choose one of the following
+#define NORMAL_MOTOR_STEPS   200
+//#define NORMAL_MOTOR_STEPS   400
+/// -------------- change here ----------------
+
 
 #define MACHINE_HAS_LIFTABLE_PEN
 
 // plan long moves as a set of submoves to increase accuracy.  Uncomment to turn this off.
 #define SUBDIVIDE_LINES
 // what is the maximum length of a subdivided line?
-#define SEGMENT_MAX_LENGTH_CM  (2)
+#define SEGMENT_MAX_LENGTH_CM  (1)
 
 // servo angles for pen control
 #define PEN_UP_ANGLE         (90)
@@ -36,18 +43,28 @@
 
 #define MAX_FEEDRATE         (100.0)  // depends on timer interrupt & hardware
 #define MIN_FEEDRATE         (0.0)
-#define DEFAULT_FEEDRATE     (90.0)
 
-#define MAX_ACCELERATION     (500.0)
+#define MAX_ACCELERATION     (2000.0)
 #define MIN_ACCELERATION     (0.0)
-#define DEFAULT_ACCELERATION (180.0)
+
+#if NORMAL_MOTOR_STEPS == 200
+#define DEFAULT_FEEDRATE     (110.0)
+#define DEFAULT_ACCELERATION (1800.0)
+#define DEGREES_PER_STEP     (1.8)
+#endif
+#if NORMAL_MOTOR_STEPS == 400
+#define DEFAULT_FEEDRATE     (60.0)
+#define DEFAULT_ACCELERATION (900.0)
+#define DEGREES_PER_STEP     (0.9)
+#endif
+
 #define DYNAMIC_ACCELERATION  // uncomment this line to adjust acceleration based on pen position
 
-#define MAX_JERK             (0.0)
-#define MAX_Z_JERK           (0.0)
+#define SLOWDOWN  // uncomment this to slow the machine and smooth movement if the segment buffer is running low.
+#define MIN_SEGMENT_TIME_US  (20000)
 
-// dynamically adjust acceleration based on pen position around the page.
-#define DYNAMIC_ACCELERATION
+#define MAX_JERK             (5.0)
+#define MAX_Z_JERK           (0.3)
 
 #if MACHINE_HARDWARE_VERSION == MAKELANGELO_5
 #define MAX_SEGMENTS         (16)  // has LCD, needs more ram.

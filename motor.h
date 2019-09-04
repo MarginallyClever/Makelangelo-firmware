@@ -11,7 +11,7 @@
 //------------------------------------------------------------------------------
 // CONSTANTS
 //------------------------------------------------------------------------------
-#if MACHINE_STYLE == ARM6
+#if MACHINE_STYLE == SIXI
 
 #define POSITION_ERROR_FLAG_CONTINUOUS   (1<<0)  // report position (d17) continuously?
 #define POSITION_ERROR_FLAG_ERROR        (1<<1)  // has error occurred?
@@ -35,7 +35,7 @@ typedef struct {
   int32_t delta_mm;  // mm
   uint32_t absdelta;
   int dir;
-#if MACHINE_STYLE == ARM6
+#if MACHINE_STYLE == SIXI
   float distancePerStep;
   float expectedPosition;
   float positionStart;
@@ -86,6 +86,7 @@ extern float max_jerk[NUM_MOTORS+NUM_SERVOS];
 extern float max_feedrate_mm_s[NUM_MOTORS+NUM_SERVOS];
 
 extern uint8_t positionErrorFlags;
+extern uint32_t min_segment_time_us;
 
 extern void motor_set_step_count(long *a);
 extern void wait_for_empty_segment_buffer();

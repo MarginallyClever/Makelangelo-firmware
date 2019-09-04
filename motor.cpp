@@ -56,6 +56,7 @@ uint32_t time_accelerating, time_decelerating;
 float max_jerk[NUM_MOTORS + NUM_SERVOS];
 float max_feedrate_mm_s[NUM_MOTORS + NUM_SERVOS];
 uint8_t isr_step_multiplier = 1;
+uint32_t min_segment_time_us=MIN_SEGMENT_TIME_US;
 
 int delta0;
 int over0;
@@ -99,7 +100,7 @@ float previous_speed[NUM_MOTORS + NUM_SERVOS];
 const char *MotorNames = "LRUVWT";
 const char *AxisNames = "XYZUVWT";
 
-#if MACHINE_STYLE == ARM6
+#if MACHINE_STYLE == SIXI
 uint8_t positionErrorFlags;
 #endif
 
@@ -236,7 +237,7 @@ void motor_setup() {
 
   working_seg = NULL;
   first_segment_delay = 0;
-#if MACHINE_STYLE == ARM6
+#if MACHINE_STYLE == SIXI
   positionErrorFlags = POSITION_ERROR_FLAG_CONTINUOUS;// | POSITION_ERROR_FLAG_ESTOP;
 #endif
 
@@ -272,7 +273,7 @@ void motor_engage() {
     digitalWrite(motors[i].enable_pin, LOW);
   }
   /*
-    #if MACHINE_STYLE == ARM6
+    #if MACHINE_STYLE == SIXI
     // DM320T drivers want high for enabled
     digitalWrite(motors[4].enable_pin,HIGH);
     digitalWrite(motors[5].enable_pin,HIGH);
@@ -286,7 +287,7 @@ void motor_disengage() {
   for (i = 0; i < NUM_MOTORS; ++i) {
     digitalWrite(motors[i].enable_pin, HIGH);
   }/*
-  #if MACHINE_STYLE == ARM6
+  #if MACHINE_STYLE == SIXI
   // DM320T drivers want low for disabled
   digitalWrite(motors[4].enable_pin,LOW);
   digitalWrite(motors[5].enable_pin,LOW);
@@ -772,7 +773,7 @@ ISR(TIMER1_COMPA_vect) {
   if ( working_seg != NULL ) {
     uint8_t i;
 
-#if MACHINE_STYLE == ARM6
+#if MACHINE_STYLE == SIXI
     if ((positionErrorFlags & POSITION_ERROR_FLAG_ESTOP) != 0) {
       // check if the sensor position differs from the estimated position.
       float fraction = (float)steps_taken / (float)steps_total;
@@ -990,7 +991,7 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
   while ( next_segment == current_segment ) {
     // the segment buffer is full, we are way ahead of the motion system.  wait here.
     // TODO perform idle time activities.
-#if MACHINE_STYLE == ARM6
+#if MACHINE_STYLE == SIXI
     sensorUpdate();
 #else
     delay(1);
@@ -1005,16 +1006,27 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
 #ifdef HAS_LCD
   fr_mm_s *= (float)speed_adjust * 0.01f;
 #endif
-
+  
   new_seg.busy = false;
   new_seg.distance = distance_mm;
   float inverse_distance_mm = 1.0 / new_seg.distance;
   float inverse_secs = fr_mm_s * inverse_distance_mm;
 
+#ifdef SLOWDOWN
+  int moves_queued = SEGMOD(prev_segment - get_next_segment(current_segment));
+  if(moves_queued >= 2 && moves_queued <= (MAX_SEGMENTS/2)-1) {
+    uint32_t segment_time_us = lroundf(1000000.0f / inverse_secs);
+    if(segment_time_us < min_segment_time_us) {
+      const uint32_t nst = segment_time_us + lroundf(2 * (min_segment_time_us - segment_time_us) / moves_queued);
+      inverse_secs = 1000000.0f / nst;
+    }
+  }
+#endif
+
   // The axis that has the most steps will control the overall acceleration as per bresenham's algorithm.
   new_seg.steps_total = 0;
   for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
-#if MACHINE_STYLE == ARM6
+#if MACHINE_STYLE == SIXI
     new_seg.a[i].positionStart = axies[i].pos;
     new_seg.a[i].positionEnd   = target_position[i];
 
@@ -1032,7 +1044,7 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
     new_seg.a[i].delta_steps = steps[i] - old_seg.a[i].step_count;
 
     new_seg.a[i].dir = ( new_seg.a[i].delta_steps < 0 ? HIGH : LOW );
-#if MACHINE_STYLE == ARM6
+#if MACHINE_STYLE == SIXI
     new_seg.a[i].delta_mm = new_seg.a[i].delta_steps * new_seg.a[i].distancePerStep;
 #else
     new_seg.a[i].delta_mm = new_seg.a[i].delta_steps * MM_PER_STEP;
@@ -1075,17 +1087,18 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
   {
     // Adjust the maximum acceleration based on the plotter position to reduce wobble at the bottom of the picture.
     // We only consider the XY plane.
+    // Special thanks to https://www.reddit.com/user/zebediah49 for his math help.
 
     // normal vectors pointing from plotter to motor
     float R1x = axies[0].limitMin - oldX;
     float R1y = axies[1].limitMax - oldY;
-    float Rlen = sqrt(sq(R1x) + sq(R1y));
+    float Rlen = old_seg.a[0].step_count * MM_PER_STEP;//sqrt(sq(R1x) + sq(R1y));
     R1x /= Rlen;
     R1y /= Rlen;
 
     float R2x = axies[0].limitMax - oldX;
     float R2y = axies[1].limitMax - oldY;
-    Rlen = sqrt(sq(R2x) + sq(R2y));
+    Rlen = old_seg.a[1].step_count * MM_PER_STEP;//sqrt(sq(R2x) + sq(R2y));
     R2x /= Rlen;
     R2y /= Rlen;
 
@@ -1099,7 +1112,7 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
       Ty /= Rlen;
       // solve cT = -gY + k1 R1 for c [and k1]
       // solve cT = -gY + k2 R2 for c [and k2]
-#define GRAVITYy   (0.25)  // was 1.0
+#define GRAVITYy   (1.00)  // was 1.0
 #define GRAVITYmag (980.0)  // what are the units here?  mm?
       float c1 = -GRAVITYy * GRAVITYmag * R1x / (Tx * R1y - Ty * R1x);
       float c2 = -GRAVITYy * GRAVITYmag * R2x / (Tx * R2y - Ty * R2x);
@@ -1117,11 +1130,6 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
         max_acceleration = max(cT, (float)MIN_ACCELERATION);
       }
     }
-    //Serial.print(oldX);
-    //Serial.print(',');
-    //Serial.print(oldY);
-    //Serial.print('=');
-    //Serial.println(max_acceleration);
   }
 #endif  // DYNAMIC_ACCELERATION
 #endif  // MACHINE_STYLE == POLARGRAPH
@@ -1144,14 +1152,12 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
   new_seg.acceleration_rate = (uint32_t)(accel * (4096.0f * 4096.0f / (TIMER_RATE)));
   new_seg.steps_taken = 0;
 
-  // TODO explain this
   float safe_speed = new_seg.nominal_speed;
   char limited = 0;
   for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
     const float jerk = fabs(current_speed[i]), maxj = max_jerk[i];
     if (jerk > maxj) {
       if (limited) {
-        // TODO explain this
         const float mjerk = maxj * new_seg.nominal_speed;
         if (jerk * safe_speed > mjerk) safe_speed = mjerk / jerk;
       } else {
@@ -1168,7 +1174,8 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
   if (movesQueued > 0 && previous_safe_speed > 0.0001) {
 #if MACHINE_STYLE == POLARGRAPH
     // if starting or ending a servo move then the safe speed is MIN_FEEDRATE.
-    if(previous_speed[NUM_MOTORS]==0 || current_speed[NUM_MOTORS]!=0) {
+    //if(previous_speed[NUM_MOTORS]!=0 || current_speed[NUM_MOTORS]!=0) 
+    {
 #endif
       // Estimate a maximum velocity allowed at a joint of two successive segments.
       // If this maximum velocity allowed is lower than the minimum of the entry / exit safe velocities,
