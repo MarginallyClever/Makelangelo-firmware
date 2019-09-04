@@ -51,7 +51,7 @@ uint8_t lastGcommand=-1;
 float tool_offset[NUM_TOOLS][NUM_AXIES];
 uint8_t current_tool = 0;
 
-#if MACHINE_STYLE == ARM6
+#if MACHINE_STYLE == SIXI
 uint32_t reportDelay=0;
 #endif
 
@@ -719,7 +719,7 @@ void adjustMaxFeedRates() {
 }
 
 /**
-   M205 X<jerk> Y<jerk> Z<jerk> U<jerk> V<jerk> W<jerk>
+   M205 X<jerk> Y<jerk> Z<jerk> U<jerk> V<jerk> W<jerk> B<us>
    adjust max jerk
 */
 void parseAdvancedSettings() {
@@ -740,12 +740,14 @@ void parseAdvancedSettings() {
 #if NUM_AXIES>5
   f = parseNumber('W', max_jerk[5]);  max_jerk[5] = max(min(f, (float)MAX_JERK), (float)0);
 #endif
+  f = parseNumber('B', min_segment_time_us);  min_segment_time_us = max(min(f, 1000000), (float)0);
   Serial.print("M205 X");  Serial.print(max_jerk[0]);
   Serial.print(" Y");  Serial.print(max_jerk[1]);
   Serial.print(" Z");  Serial.print(max_jerk[2]);
   Serial.print(" U");  Serial.print(max_jerk[3]);
   Serial.print(" V");  Serial.print(max_jerk[4]);
-  Serial.print(" W");  Serial.println(max_jerk[5]);
+  Serial.print(" W");  Serial.print(max_jerk[5]);
+  Serial.print(" B");  Serial.println(min_segment_time_us);
 }
 
 /**
@@ -882,7 +884,7 @@ void processCommand() {
 #if MACHINE_STYLE == STEWART
     case 15:  stewartDemo();  break;
 #endif
-#if MACHINE_STYLE == ARM6
+#if MACHINE_STYLE == SIXI
     case 16:  setFeedratePerAxis();  break;
     case 17:  reportAllAngleValues();  break;
     case 18:  copySensorsToMotorPositions();  break;
@@ -1191,7 +1193,7 @@ void setup() {
 
   robot_setup();
 
-#if MACHINE_STYLE == ARM6
+#if MACHINE_STYLE == SIXI
   sensorUpdate();
   sensorUpdate();
   copySensorsToMotorPositions();
@@ -1241,7 +1243,7 @@ void Serial_listen() {
 }
 
 
-#if MACHINE_STYLE == ARM6
+#if MACHINE_STYLE == SIXI
 /**
  * D17 report the 6 axis sensor values from the Sixi robot arm.
  */
@@ -1318,7 +1320,7 @@ void loop() {
     parser_ready();
   }
 
-#if MACHINE_STYLE == ARM6
+#if MACHINE_STYLE == SIXI
   sensorUpdate();
   
   if((positionErrorFlags&POSITION_ERROR_FLAG_ERROR)!=0) {

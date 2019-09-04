@@ -29,7 +29,7 @@
 #define ARM3             10
 //#define ARM4             11
 //#define ARM5             12
-#define ARM6             13
+#define SIXI             13
 
 #define MACHINE_STYLE POLARGRAPH  // Change this
 
@@ -45,7 +45,7 @@
 #include "robot_arm3.h"
 //#include "robot_arm4.h"
 //#include "robot_arm5.h"
-#include "robot_arm6.h"
+#include "robot_sixi.h"
 
 //------------------------------------------------------------------------------
 // LCD panels supported
@@ -89,7 +89,7 @@
 // 200 step-per-turn motors move 1.8 degrees per step.  (360/200=1.8)
 // see your stepper motor data sheet for more info.
 #ifndef DEGREES_PER_STEP
-#define DEGREES_PER_STEP     ( 1.8)
+#define DEGREES_PER_STEP     (1.8)
 #endif
 
 // stepper motor drivers can use microstepping to split steps into fractions of steps for greater precision.
@@ -109,7 +109,9 @@
 #define PULLEY_PITCH         (40.0)
 
 // These numbers are calculated from the above.  No need to change these.
+#ifndef NORMAL_MOTOR_STEPS
 #define NORMAL_MOTOR_STEPS   (360.0/DEGREES_PER_STEP)
+#endif
 #define STEPS_PER_TURN       (NORMAL_MOTOR_STEPS * MICROSTEPS)
 #define MM_PER_STEP          (PULLEY_PITCH/STEPS_PER_TURN)
 #define MICROSTEP_PER_DEGREE (STEPS_PER_TURN/360.0)
