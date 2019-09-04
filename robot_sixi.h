@@ -1,17 +1,17 @@
-#ifndef ROBOT_ARM6_H
-#define ROBOT_ARM6_H
+#ifndef ROBOT_SIXI_H
+#define ROBOT_SIXI_H
 //------------------------------------------------------------------------------
 // Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
 // Please see http://www.github.com/MarginallyClever/makelangeloFirmware for more information.
 //------------------------------------------------------------------------------
 
-#if MACHINE_STYLE == ARM6
+#if MACHINE_STYLE == SIXI
 
-#define MACHINE_STYLE_NAME           "ARM6"
+#define MACHINE_STYLE_NAME           "SIXI"
 #define MACHINE_HARDWARE_VERSION     6  // yellow sixi 2019
 
-#define STEP_DELAY           (1000)  // delay between steps, in milliseconds, when doing fixed tasks like homing
+#define STEP_DELAY           (50)  // delay between steps, in milliseconds, when doing fixed tasks like homing
 
 // plan long moves as a set of submoves to increase accuracy.  Uncomment to turn this off.
 //#define SUBDIVIDE_LINES
@@ -24,9 +24,9 @@
 #define NUM_TOOLS            (1)
 #define NUM_SENSORS          (6)
 
-#define MAX_FEEDRATE         (80.0)  // depends on timer interrupt & hardware
+#define MAX_FEEDRATE         (50.0)  // depends on timer interrupt & hardware
 #define MIN_FEEDRATE         (0)
-#define DEFAULT_FEEDRATE     (25.0)
+#define DEFAULT_FEEDRATE     (45.0)
 
 #define MAX_ACCELERATION     (50)
 #define MIN_ACCELERATION     (0)
@@ -95,7 +95,7 @@ extern float sensorAngles[NUM_SENSORS];
 
 extern void sensorUpdate();
 
-#endif  // #ifdef ARM6
+#endif  // #ifdef SIXI
 
 
-#endif  // #ifndef ROBOT_ARM6_H
+#endif  // #ifndef ROBOT_SIXI_H

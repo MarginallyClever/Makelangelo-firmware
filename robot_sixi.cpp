@@ -5,16 +5,15 @@
 //------------------------------------------------------------------------------
 
 #include "configure.h"
-#include "robot_arm6.h"
+#include "robot_sixi.h"
 
-#if MACHINE_STYLE == ARM6
+#if MACHINE_STYLE == SIXI
 
 #include "Vector3.h"
 
 //#define DEBUG_IK
 
 char sensorPins[4*NUM_SENSORS];
-
 float sensorAngles[NUM_SENSORS];
 
 /**
@@ -33,6 +32,9 @@ void IK(const float *const axies, long *motorStepArray) {
   // so for three axis,
   // for any axis N subtract the other two axies from this axis.
 
+  // Some of these are negative because the motor is wired to turn the opposite direction from the Robot Overlord simulation.
+  // Robot Overlord has the final say, so these are flipped to match the simulation.
+  // This is the only place motor direction should ever be inverted.
   float J0 = -axies[0];  // anchor  (G0 X*)
   float J1 =  axies[1];  // shoulder (G0 Y*)
   float J2 =  axies[2];  // elbow (G0 Z*)
@@ -62,12 +64,6 @@ void IK(const float *const axies, long *motorStepArray) {
 #endif
 }
 
-#define CAP_LIMIT 360
-float capRotationDegrees(double arg0) {
-  while(arg0<0        ) arg0 += CAP_LIMIT;
-  while(arg0>CAP_LIMIT) arg0 -= CAP_LIMIT;
-  return arg0;
-}
 
 /**
    Forward Kinematics - turns step counts into XY coordinates.  
@@ -77,14 +73,6 @@ float capRotationDegrees(double arg0) {
    @return 0 if no problem, 1 on failure.
 */
 int FK(long *motorStepArray, float *axies) {
-  /*
-  float angle0rad = motorStepArray[0] * PI*2.0 / MOTOR_0_STEPS_PER_TURN;
-  float angle1rad = motorStepArray[1] * PI*2.0 / MOTOR_1_STEPS_PER_TURN;
-  float angle2rad = motorStepArray[2] * PI*2.0 / MOTOR_2_STEPS_PER_TURN;
-  float angle3rad = motorStepArray[3] * PI*2.0 / MOTOR_3_STEPS_PER_TURN;
-  float angle4rad = motorStepArray[4] * PI*2.0 / MOTOR_4_STEPS_PER_TURN;
-  float angle5rad = motorStepArray[5] * PI*2.0 / MOTOR_5_STEPS_PER_TURN;*/
-
   // TODO fill me in!
 
   return 0;
@@ -93,7 +81,7 @@ int FK(long *motorStepArray, float *axies) {
 
 void robot_findHome() {
   motor_engage();
-  // arm6 always knows where it is.
+  // sixi always knows where it is.
 }
 
 
@@ -191,22 +179,22 @@ float extractAngleFromRawValue(uint16_t rawValue) {
 
 void sensorUpdate() {
   uint16_t rawValue;
+  float v;
   for(int i=0;i<NUM_SENSORS;++i) {
-    if(!getSensorRawValue(i,rawValue)) {
-      float v;
-      if(i==0 || i==3 || i==4 || i==5) {
-        v = -extractAngleFromRawValue(rawValue) - axies[i].homePos;
-      } else {
-        v = extractAngleFromRawValue(rawValue) - axies[i].homePos;
-      }
-      while(v<-180) v+=360;
-      while(v> 180) v-=360;
-      sensorAngles[i] = v;
-    }
+    if(getSensorRawValue(i,rawValue)) continue;
+    v = extractAngleFromRawValue(rawValue);
+    // Some of these are negative because the sensor is reading the opposite rotation from the Robot Overlord simulation.
+    // Robot Overlord has the final say, so these are flipped to match the simulation.
+    // This is the only place motor direction should ever be inverted.
+    if(i!=1 && i!=2) v=-v;
+    v -= axies[i].homePos;
+    while(v<-180) v+=360;
+    while(v> 180) v-=360;
+    sensorAngles[i] = v;
   }
 }
 
-#else // MACHINE_STYLE == ARM6
+#else // MACHINE_STYLE == SIXI
 
 void reportAllAngleValues() {}
 
