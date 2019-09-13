@@ -895,6 +895,9 @@ void processCommand() {
 #if MACHINE_STYLE == POLARGRAPH
     case 22:  makelangelo33Setup();  break;
 #endif
+#if MACHINE_STYLE == SIXI
+    case 22:  sixiResetSensorOffsets();  break;
+#endif
     case 23:  reportHome();  break;
     default:  break;
   }
@@ -1081,9 +1084,9 @@ void setCalibration() {
 
 
 /**
-   D8
-   Report calibration values for left and right belts
-*/
+ * D8
+ * Report calibration values for left and right belts
+ */
 void reportCalibration() {
   Serial.print(F("D8 L"));
   Serial.print(calibrateLeft);
@@ -1091,6 +1094,27 @@ void reportCalibration() {
   Serial.println(calibrateRight);
 }
 
+#if MACHINE_STYLE == SIXI
+/**
+ * D22
+ * reset home position to the current angle values.
+ */
+void sixiResetSensorOffsets() {
+  int i;
+  // cancel the current home offsets
+  for (i = 0; i < NUM_SENSORS; ++i) {
+    axies[i].homePos=0;
+  }
+  // read the sensor
+  sensorUpdate();
+  // apply the new offsets
+  float homePos[NUM_AXIES];
+  for (i = 0; i < NUM_SENSORS; ++i) {
+    homePos[i] = sensorAngles[i];
+  }
+  setHome(homePos);
+}
+#endif
 
 /**
    Compare two floats to the first decimal place.

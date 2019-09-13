@@ -238,6 +238,10 @@
 #define PENDING(NOW,SOON) ((long)(NOW-(SOON))<0)
 #define ELAPSED(NOW,SOON) (!PENDING(NOW,SOON))
 
+// uncomment this to slow the machine and smooth movement if the segment buffer is running low.
+#define SLOWDOWN
+#define MIN_SEGMENT_TIME_US  (25000)
+
 //------------------------------------------------------------------------------
 // STRUCTURES
 //------------------------------------------------------------------------------

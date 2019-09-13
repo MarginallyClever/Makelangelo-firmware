@@ -127,6 +127,10 @@ void robot_setup() {
     digitalWrite(sensorPins[(i*4)+0],HIGH);  // csel
     digitalWrite(sensorPins[(i*4)+3],HIGH);  // mosi
   }
+
+  // slow the servo on pin D13 down to 61.04Hz
+  // see https://arduinoinfo.mywikis.net/wiki/Arduino-PWM-Frequency
+  //TCCR0B = (TCCR0B & B11111000) | B00000101;
 }
 
 /**

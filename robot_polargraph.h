@@ -60,9 +60,6 @@
 
 #define DYNAMIC_ACCELERATION  // uncomment this line to adjust acceleration based on pen position
 
-#define SLOWDOWN  // uncomment this to slow the machine and smooth movement if the segment buffer is running low.
-#define MIN_SEGMENT_TIME_US  (20000)
-
 #define MAX_JERK             (5.0)
 #define MAX_Z_JERK           (0.3)
 

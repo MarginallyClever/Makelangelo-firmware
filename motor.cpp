@@ -684,14 +684,11 @@ static FORCE_INLINE uint16_t MultiU24X32toH16(uint32_t longIn1, uint32_t longIn2
   return intRes;
 }
 
+
 /**
-   Process all line segments in the ring buffer.  Uses bresenham's line algorithm to move all motors.
-*/
-#ifdef ESP8266
-void itr() {
-#else
-ISR(TIMER1_COMPA_vect) {
-#endif
+ *  Process all line segments in the ring buffer.  Uses bresenham's line algorithm to move all motors.
+ */
+inline void isr_internal() {
   // segment buffer empty? do nothing
   if ( working_seg == NULL ) {
     working_seg = get_current_segment();
@@ -949,6 +946,20 @@ ISR(TIMER1_COMPA_vect) {
 }
 
 
+#ifdef ESP8266
+void itr() {
+#else
+ISR(TIMER1_COMPA_vect) {
+  CRITICAL_SECTION_START
+#endif
+  isr_internal();
+
+#ifndef ESP8266
+  CRITICAL_SECTION_END
+#endif
+}
+
+
 /**
    @return 1 if buffer is full, 0 if it is not.
 */
@@ -1184,6 +1195,7 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
       // The junction velocity will be shared between successive segments. Limit the junction velocity to their minimum.
       // Pick the smaller of the nominal speeds. Higher speed shall not be achieved at the junction during coasting.
       vmax_junction = min(new_seg.nominal_speed, previous_nominal_speed);
+#if MACHINE_STYLE != SIXI
       const float smaller_speed_factor = vmax_junction / previous_nominal_speed;
       // Factor to multiply the previous / current nominal velocities to get componentwise limited velocities.
       float v_factor = 1.0f;
@@ -1217,9 +1229,9 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
       if (previous_safe_speed > vmax_junction_threshold && safe_speed > vmax_junction_threshold) {
         // Not coasting. The machine will stop and start the movements anyway,
         // better to start the segment from start.
-        //SBI(new_seg.flag, BLOCK_BIT_START_FROM_FULL_HALT);
         vmax_junction = safe_speed;
       }
+#endif  // MACHINE_STYLE != SIXI
 #if MACHINE_STYLE == POLARGRAPH
     }
 #endif
@@ -1227,10 +1239,6 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
 
   float allowable_speed = max_speed_allowed(-new_seg.acceleration, MIN_FEEDRATE, new_seg.distance);
 
-#if NUM_SERVOS>0
-  // come to a stop for entering or exiting a Z move
-  //if( new_seg.a[NUM_SERVOS].delta_steps != 0 || old_seg.a[NUM_SERVOS].delta_steps != 0 ) allowable_speed = MIN_FEEDRATE;
-#endif
 
   new_seg.entry_speed_max = vmax_junction;
   new_seg.entry_speed = min(vmax_junction, allowable_speed);
@@ -1253,6 +1261,7 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
 
   recalculate_acceleration();
   /*
+    Serial.print("q=");  Serial.print(moves_queued);
     Serial.print("distance=");  Serial.println(new_seg.distance);
     Serial.print("acceleration original=");  Serial.println(acceleration);
     Serial.print("nominal_speed=");  Serial.println(new_seg.nominal_speed);
