@@ -21,10 +21,10 @@
 #endif
 
 typedef struct {
-  int step_pin;
-  int dir_pin;
-  int enable_pin;
-  int limit_switch_pin;
+  uint8_t step_pin;
+  uint8_t dir_pin;
+  uint8_t enable_pin;
+  uint8_t limit_switch_pin;
 } Motor;
 
 
