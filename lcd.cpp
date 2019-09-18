@@ -359,6 +359,14 @@ void LCD_go_home() {
   MENU_GOTO(LCD_main_menu);
 }
 
+// polargraph only - move pen up or down (toggle)
+void LCD_togglePenUp() {
+  float offset[NUM_AXIES];
+  get_end_plus_offset(offset);
+  
+  offset[2] = (offset[2]==PEN_UP_ANGLE) ? PEN_DOWN_ANGLE : PEN_UP_ANGLE;
+  lineSafe(offset, feed_rate);
+}
 
 void LCD_drive_menu() {
   MENU_START
@@ -779,14 +787,14 @@ void LCD_settings_menu() {
   MENU_SUBMENU("Main ", LCD_main_menu);
   
 #if MACHINE_STYLE == POLARGRAPH
+  MENU_FLOAT("Home X", axies[0].homePos);
+  MENU_FLOAT("Home Y", axies[1].homePos);
   MENU_FLOAT("Left",   axies[0].limitMin);
   MENU_FLOAT("Right",  axies[0].limitMax);
   MENU_FLOAT("Top",    axies[1].limitMax);
   MENU_FLOAT("Bottom", axies[1].limitMin);
-  MENU_FLOAT("BLeft",  calibrateLeft);
-  MENU_FLOAT("BRight", calibrateRight);
-  MENU_FLOAT("Home X", axies[0].homePos);
-  MENU_FLOAT("Home Y", axies[1].homePos);
+  MENU_FLOAT("Belt L", calibrateLeft);
+  MENU_FLOAT("Belt R", calibrateRight);
 #endif
   MENU_END
 #endif
@@ -815,6 +823,9 @@ void LCD_main_menu() {
     } else {
       MENU_LABEL("No SD card");
     }
+#endif
+#if MACHINE_STYLE == POLARGRAPH
+    MENU_ACTION("Pen up/down",LCD_togglePenUp);
 #endif
 #if NUM_AXIES == 3
     MENU_SUBMENU("Draw border", LCD_draw_border);
