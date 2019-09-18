@@ -1123,18 +1123,17 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
       Ty /= Rlen;
       // solve cT = -gY + k1 R1 for c [and k1]
       // solve cT = -gY + k2 R2 for c [and k2]
-#define GRAVITYy   (1.00)  // was 1.0
 #define GRAVITYmag (980.0)  // what are the units here?  mm?
-      float c1 = -GRAVITYy * GRAVITYmag * R1x / (Tx * R1y - Ty * R1x);
-      float c2 = -GRAVITYy * GRAVITYmag * R2x / (Tx * R2y - Ty * R2x);
+      float c1 = -GRAVITYmag * R1x / (Tx * R1y - Ty * R1x);
+      float c2 = -GRAVITYmag * R2x / (Tx * R2y - Ty * R2x);
 
       // If c is negative, that means that that support rope doesn't limit the acceleration; discard that c.
       float cT = 0;
-      // If c is positive in both cases, take the smaller one.
       if ( c1 > 0 && c2 > 0 ) {
+        // If c is positive in both cases, take the smaller one.
         cT = ( c1 < c2 ) ? c1 : c2;
       } else if (c1 > 0) cT = c1;
-      else cT = c2;
+      else if(c2 > 0) cT = c2;
 
       // The maximum acceleration is given by cT.
       if (cT > 0 && max_acceleration > cT) {
