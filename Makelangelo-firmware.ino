@@ -229,7 +229,7 @@ void lineSafe(float *pos, float new_feed_rate) {
 #endif
 
   len = sqrt(len);  //mm
-  int pieces = ceil(len / SEGMENT_MAX_LENGTH_CM );
+  int pieces = ceil(len / SEGMENT_MAX_LENGTH_MM );
   float a;
   long j;
 
@@ -282,7 +282,7 @@ void arc(float cx, float cy, float *destination, char clockwise, float new_feed_
   float len1 = abs(da) * sr;
   float len = sqrt( len1 * len1 + dr * dr ); // mm
 
-  int i, segments = ceil( len / SEGMENT_MAX_LENGTH_CM );
+  int i, segments = ceil( len / SEGMENT_MAX_LENGTH_MM );
 
   float n[NUM_AXIES], scale;
   float a, r;
@@ -978,8 +978,8 @@ void makelangelo5Setup() {
   limits[5] = PEN_DOWN_ANGLE;
   adjustLimits(limits);
 
-  calibrateLeft = 1011;
-  calibrateRight = 1011;
+  calibrateLeft = 1021;
+  calibrateRight = 1021;
   saveCalibration();
 
   float homePos[NUM_AXIES];
