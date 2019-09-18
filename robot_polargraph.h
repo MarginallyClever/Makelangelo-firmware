@@ -30,18 +30,18 @@
 // plan long moves as a set of submoves to increase accuracy.  Uncomment to turn this off.
 #define SUBDIVIDE_LINES
 // what is the maximum length of a subdivided line?
-#define SEGMENT_MAX_LENGTH_CM  (1)
+#define SEGMENT_MAX_LENGTH_MM  (20)
 
 // servo angles for pen control
 #define PEN_UP_ANGLE         (90)
-#define PEN_DOWN_ANGLE       (50)  // Some steppers don't like 0 degrees
+#define PEN_DOWN_ANGLE       (30)  // Some steppers don't like 0 degrees
 
 #define NUM_AXIES            (3)
 #define NUM_MOTORS           (2)
 #define NUM_SERVOS           (1)
 #define NUM_TOOLS            (1)
 
-#define MAX_FEEDRATE         (100.0)  // depends on timer interrupt & hardware
+#define MAX_FEEDRATE         (500.0)  // depends on timer interrupt & hardware
 #define MIN_FEEDRATE         (0.0)
 
 #define MAX_ACCELERATION     (2000.0)

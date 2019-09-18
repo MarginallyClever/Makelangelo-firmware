@@ -35,7 +35,7 @@
 // plan long moves as a set of submoves to increase accuracy.  Uncomment to turn this off.
 #define SUBDIVIDE_LINES
 // what is the maximum length of a subdivided line?
-#define SEGMENT_MAX_LENGTH_CM  (1)
+#define SEGMENT_MAX_LENGTH_MM  (1)
 
 #define BICEP_LENGTH         ( 5.000)
 #define FOREARM_LENGTH       (16.750)
