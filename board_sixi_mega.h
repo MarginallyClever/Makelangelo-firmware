@@ -52,50 +52,8 @@
 
 #undef HAS_LCD
 #undef HAS_SD
-/*
-// LCD pins
-#ifdef LCD_IS_128X64
-#define BEEPER             44
-#define LCD_PINS_RS        19
-#define LCD_PINS_ENABLE    42
-#define LCD_PINS_D4        18
-#define LCD_PINS_D5        38
-#define LCD_PINS_D6        41
-#define LCD_PINS_D7        40
 
-// Encoder rotation values
-#define BTN_EN1            11
-#define BTN_EN2            12
-#define BTN_ENC            43
-
-// SD card settings
-#define SDPOWER            -1
-#define SDSS               53
-#define SDCARDDETECT       49
-#endif  // LCD_IS_128x64
-
-#ifdef LCD_IS_SMART
-#define BEEPER             44
-#define LCD_PINS_RS        19
-#define LCD_PINS_ENABLE    42
-#define LCD_PINS_D4        18
-#define LCD_PINS_D5        38
-#define LCD_PINS_D6        41
-#define LCD_PINS_D7        40
-
-// Encoder rotation values
-#define BTN_EN1            11
-#define BTN_EN2            12
-#define BTN_ENC            43
-
-// SD card settings
-#define SDPOWER            -1
-#define SDSS               53
-#define SDCARDDETECT       49
-#endif  // LCD_IS_SMART
-*/
 // SENSORS
-
 // sensor bits, flags, and masks
 #define BOTTOM_14_MASK       (0x3FFF)
 #define SENSOR_TOTAL_BITS    (16)
