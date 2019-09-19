@@ -978,8 +978,8 @@ void makelangelo5Setup() {
   limits[5] = PEN_DOWN_ANGLE;
   adjustLimits(limits);
 
-  calibrateLeft = 1021;
-  calibrateRight = 1021;
+  calibrateLeft = 1025;
+  calibrateRight = 1025;
   saveCalibration();
 
   float homePos[NUM_AXIES];
