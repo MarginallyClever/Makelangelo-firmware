@@ -7,13 +7,18 @@
 //------------------------------------------------------------------------------
 
 
-#define FIRMWARE_VERSION        9    // Increment when adding new variables
+#define FIRMWARE_VERSION        10    // Increment when adding new variables
+#define SIZEOF_FLOAT_BYTES      (4)
+#define SIZEOF_LONG_BYTES       (4)
 #define ADDR_VERSION            0                          // 0..255 (1 byte)
-#define ADDR_UUID               (ADDR_VERSION+1)           // long - 4 bytes
-#define ADDR_LIMITS             (ADDR_UUID+4*NUM_AXIES)    // float - 4 bytes * NUM_AXIES
-#define ADDR_HOME               (ADDR_LIMITS+4*NUM_AXIES)  // float - 4 bytes * NUM_AXIES
-#define ADDR_CALIBRATION_LEFT   (ADDR_HOME+4*NUM_AXIES)    // float - 4 bytes * NUM_AXIES
-#define ADDR_CALIBRATION_RIGHT  (ADDR_CALIBRATION_LEFT+4)  // float - 4 bytes
+#define ADDR_UUID               (ADDR_VERSION+1)
+#define EEPROM_UUID_LENGTH      (SIZEOF_LONG_BYTES)
+#define ADDR_LIMITS             (ADDR_UUID+EEPROM_UUID_LENGTH)
+#define EEPROM_LIMITS_LENGTH    (2*NUM_AXIES*SIZEOF_FLOAT_BYTES)
+#define ADDR_HOME               (ADDR_LIMITS+EEPROM_LIMITS_LENGTH)
+#define EEPROM_LIMITS_HOME      (NUM_AXIES*SIZEOF_FLOAT_BYTES)
+#define ADDR_CALIBRATION_LEFT   (ADDR_HOME+EEPROM_LIMITS_HOME)
+#define ADDR_CALIBRATION_RIGHT  (ADDR_CALIBRATION_LEFT+SIZEOF_FLOAT_BYTES)
 
 
 

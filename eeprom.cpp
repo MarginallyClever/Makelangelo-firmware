@@ -56,7 +56,7 @@ void saveUID() {
  * 
  */
 void saveLimits() {
-  Serial.println(F("Saving dimensions."));
+  Serial.println(F("Saving limits."));
   int i,j=ADDR_LIMITS;
   for(i=0;i<NUM_AXIES;++i) {
     EEPROM_writeLong(j,axies[i].limitMax*100);

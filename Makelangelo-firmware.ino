@@ -1175,6 +1175,8 @@ void tools_setup() {
 void setup() {
   // start communications
   Serial.begin(BAUD);
+
+  loadConfig();
   
 #ifdef HAS_WIFI
   // Start WIFI
@@ -1191,8 +1193,6 @@ void setup() {
     
   SD_setup();
   LCD_setup();
-
-  loadConfig();
 
   motor_setup();
   motor_engage();
