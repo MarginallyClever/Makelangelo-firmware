@@ -26,6 +26,18 @@
 #endif
 
 //------------------------------------------------------------------------------
+// STRUCTURES
+//------------------------------------------------------------------------------
+typedef struct {
+  // number of clicks of the dial
+  uint8_t menu_position_sum;
+  // number of clicks / LCD_TURN_PER_MENU
+  uint8_t menu_position;
+  // menu being used
+  void (*menu)();
+} MenuState;
+
+//------------------------------------------------------------------------------
 // GLOBALS
 //------------------------------------------------------------------------------
 #ifdef LCD_IS_SMART
@@ -47,7 +59,18 @@ uint8_t speed_adjust = 100;
 char lcd_message[LCD_MESSAGE_LENGTH + 1];
 char lcd_dirty=0;
 
-int menu_position_sum = 0, menu_position = 0, screen_position = 0, num_menu_items = 0, ty, screen_end;
+#define MENU_STACK_DEPTH   (5)
+MenuState menuStack[MENU_STACK_DEPTH];
+uint8_t menuStackDepth=0;
+
+// first line of menu visible on the LCD
+uint8_t screen_position = 0;
+// last line of menu visible on the LCD
+uint8_t screen_end;
+// total menu items in this menu
+uint8_t num_menu_items = 0;
+// counter used when drawing menus
+uint8_t ty;
 
 
 void (*current_menu)();
@@ -198,29 +221,48 @@ inline void LCD_print(const char x) {
 #define MENU_ITEM_START(key) \
   if(ty>=screen_position && ty<screen_end) { \
     LCD_setCursor(0,ty-screen_position); \
-    LCD_print((menu_position==ty)?'>':' '); \
+    LCD_print((menuStack[menuStackDepth].menu_position==ty)?'>':' '); \
     LCD_print(key); \
 
 #define MENU_ITEM_END() \
   } \
   ++ty;
 
-#define MENU_GOTO(new_menu) {  \
+#define MENU_PUSH(new_menu) {  \
     lcd_click_now=0;  \
-    num_menu_items=screen_position=menu_position=menu_position_sum=0;  \
+    num_menu_items=0;  \
+    screen_position=0;  \
     screen_end = screen_position + LCD_HEIGHT;  \
+    menuStackDepth++;  \
+    menuStack[menuStackDepth].menu_position=0;  \
+    menuStack[menuStackDepth].menu_position_sum=0;  \
+    menuStack[menuStackDepth].menu = new_menu;  \
     current_menu=new_menu;  \
     return;  \
   }
 
+#define MENU_POP() {  \
+    lcd_click_now=0;  \
+    num_menu_items=0;  \
+    screen_position=0;  \
+    screen_end = screen_position + LCD_HEIGHT;  \
+    menuStackDepth--;  \
+    current_menu=menuStack[menuStackDepth].menu;  \
+}
+
 #define MENU_LABEL(menu_label) \
   MENU_ITEM_START(menu_label) \
-  if(menu_position==ty && lcd_click_now) lcd_click_now=0;\
+  if(menuStack[menuStackDepth].menu_position==ty && lcd_click_now) lcd_click_now=0;\
   MENU_ITEM_END()
 
 #define MENU_SUBMENU(menu_label,menu_method) \
   MENU_ITEM_START(menu_label) \
-  if(menu_position==ty && lcd_click_now) MENU_GOTO(menu_method); \
+  if(menuStack[menuStackDepth].menu_position==ty && lcd_click_now) MENU_PUSH(menu_method); \
+  MENU_ITEM_END()
+
+#define MENU_BACK(menu_label) \
+  MENU_ITEM_START(menu_label) \
+  if(menuStack[menuStackDepth].menu_position==ty && lcd_click_now) MENU_POP(); \
   MENU_ITEM_END()
 
 #define MENU_ACTION(menu_label,menu_method) MENU_SUBMENU(menu_label,menu_method)
@@ -228,20 +270,20 @@ inline void LCD_print(const char x) {
 #define MENU_LONG(key,value) \
   MENU_ITEM_START(key) \
   LCD_print_long(value); \
-  if(menu_position==ty && lcd_click_now) { \
+  if(menuStack[menuStackDepth].menu_position==ty && lcd_click_now) { \
     update_key = key; \
     update_val = (void *)&(value); \
-    MENU_GOTO(LCD_update_long); \
+    MENU_PUSH(LCD_update_long); \
   } \
   MENU_ITEM_END()
 
 #define MENU_FLOAT(key,value) \
   MENU_ITEM_START(key) \
   LCD_print_float(value,LCD_WIDTH-1-strlen(key)); \
-  if(menu_position==ty && lcd_click_now) { \
+  if(menuStack[menuStackDepth].menu_position==ty && lcd_click_now) { \
     update_key = key; \
     update_val = (void *)&(value); \
-    MENU_GOTO(LCD_update_float); \
+    MENU_PUSH(LCD_update_float); \
   } \
   MENU_ITEM_END()
 
@@ -291,10 +333,10 @@ void LCD_read() {
     {
       //if(lcd_turn !=0) Serial.print(lcd_turn>0?'+':'-');
       //else Serial.print(' ');
-      Serial.print(millis());     Serial.print('\t');
-      Serial.print(lcd_rot_old);  Serial.print('\t');
-      Serial.print(buttons);      Serial.print('\t');
-      Serial.print(lcd_turn);     Serial.print('\n');
+      //Serial.print(millis());     Serial.print('\t');
+      //Serial.print(lcd_rot_old);  Serial.print('\t');
+      //Serial.print(buttons);      Serial.print('\t');
+      //Serial.print(lcd_turn);     Serial.print('\n');
     }
     
     lcd_rot_old = buttons;
@@ -316,7 +358,7 @@ void LCD_pause() {
 #ifdef HAS_SD
   sd_printing_paused = (sd_printing_paused == true ? false : true);
 #endif
-  MENU_GOTO(LCD_main_menu);
+  MENU_POP();
 }
 
 
@@ -324,23 +366,23 @@ void LCD_stop() {
 #ifdef HAS_SD
   sd_printing_now = false;
 #endif
-  MENU_GOTO(LCD_main_menu);
+  MENU_POP();
 }
 
 void LCD_disable_motors() {
   motor_disengage();
-  MENU_GOTO(LCD_main_menu);
+  MENU_POP();
 }
 
 void LCD_enable_motors() {
   motor_engage();
-  MENU_GOTO(LCD_main_menu);
+  MENU_POP();
 }
 
 
 void LCD_find_home() {
   robot_findHome();
-  MENU_GOTO(LCD_main_menu);
+  MENU_POP();
 }
 
 
@@ -348,7 +390,7 @@ void LCD_this_is_home() {
   float offset[NUM_AXIES];
   for (int i = 0; i < NUM_AXIES; ++i) offset[i] = axies[i].homePos;
   teleport(offset);
-  MENU_GOTO(LCD_main_menu);
+  MENU_POP();
 }
 
 
@@ -356,7 +398,7 @@ void LCD_go_home() {
   float homes[NUM_AXIES];
   for (int i = 0; i < NUM_AXIES; ++i) homes[i] = axies[i].homePos;
   lineSafe( homes, DEFAULT_FEEDRATE );
-  MENU_GOTO(LCD_main_menu);
+  MENU_POP();
 }
 
 // polargraph only - move pen up or down (toggle)
@@ -366,11 +408,12 @@ void LCD_togglePenUp() {
   
   offset[2] = (offset[2]==PEN_UP_ANGLE) ? PEN_DOWN_ANGLE : PEN_UP_ANGLE;
   lineSafe(offset, feed_rate);
+  MENU_POP();
 }
 
 void LCD_drive_menu() {
   MENU_START
-  MENU_SUBMENU("Main ", LCD_main_menu);
+  MENU_BACK("Main");
   MENU_ACTION("Disable motors", LCD_disable_motors);
   MENU_ACTION("Enable motors", LCD_enable_motors);
   MENU_SUBMENU("X", LCD_driveX);
@@ -382,7 +425,7 @@ void LCD_drive_menu() {
 
 
 void LCD_driveX() {
-  if (lcd_click_now) MENU_GOTO(LCD_drive_menu);
+  if (lcd_click_now) MENU_POP();
 
   float offset[NUM_AXIES];
   get_end_plus_offset(offset);
@@ -399,7 +442,7 @@ void LCD_driveX() {
 
 
 void LCD_driveY() {
-  if (lcd_click_now) MENU_GOTO(LCD_drive_menu);
+  if (lcd_click_now) MENU_POP();
 
   float offset[NUM_AXIES];
   get_end_plus_offset(offset);
@@ -416,7 +459,7 @@ void LCD_driveY() {
 
 
 void LCD_driveZ() {
-  if (lcd_click_now) MENU_GOTO(LCD_drive_menu);
+  if (lcd_click_now) MENU_POP();
 
   float offset[NUM_AXIES];
   get_end_plus_offset(offset);
@@ -434,7 +477,7 @@ void LCD_driveZ() {
 
 
 void LCD_driveF() {
-  if (lcd_click_now) MENU_GOTO(LCD_drive_menu);
+  if (lcd_click_now) MENU_POP();
 
   if (lcd_turn) {
     // protect servo, don't drive beyond physical limits
@@ -453,11 +496,11 @@ void LCD_driveF() {
 
 void LCD_start_menu() {
 #ifdef HAS_SD
-  if (!sd_inserted) MENU_GOTO(LCD_main_menu);
+  if (!sd_inserted) MENU_POP();
 
   /*
-    Serial.print(menu_position    );  Serial.print("\t");  // 0
-    Serial.print(menu_position_sum);  Serial.print("\t");  // 1
+    Serial.print(menuStack[menuStackDepth].menu_position    );  Serial.print("\t");  // 0
+    Serial.print(menuStack[menuStackDepth].menu_position_sum);  Serial.print("\t");  // 1
     Serial.print(screen_position  );  Serial.print("\t");  // 0
     Serial.print(num_menu_items   );  Serial.print("\n");  // 8
   */
@@ -468,7 +511,7 @@ void LCD_start_menu() {
     //long t0=micros();
     
     MENU_START
-    MENU_SUBMENU("Main ", LCD_main_menu);
+    MENU_BACK("Main");
     
     root.rewindDirectory();
     while ( true ) {
@@ -486,10 +529,10 @@ void LCD_start_menu() {
       //Serial.println(filename);
       if (!entry.isDirectory() && filename[0] != '_') {
         MENU_ITEM_START(filename)
-        if (menu_position == ty && lcd_click_now==1) {
+        if (menuStack[menuStackDepth].menu_position == ty && lcd_click_now==1) {
           lcd_click_now = 0;
           SD_StartPrintingFile(filename);
-          MENU_GOTO(LCD_status_menu);
+          MENU_PUSH(LCD_status_menu);
         }
         MENU_ITEM_END()
       }
@@ -498,7 +541,7 @@ void LCD_start_menu() {
     MENU_END
     
     //long t1=micros();
-    //Serial.print(menu_position,DEC);
+    //Serial.print(menuStack[menuStackDepth].menu_position,DEC);
     //Serial.print(' ');
     //Serial.print(num_menu_items,DEC);
     //Serial.print(' ');
@@ -510,7 +553,7 @@ void LCD_start_menu() {
 #else
   // i don't know how you got here surfing the LCD panel.
   // someone messed up in the logic.  Go back to the main menu.
-  MENU_GOTO(LCD_main_menu);
+  MENU_POP();
 #endif
 }
 
@@ -557,7 +600,7 @@ void draw_border(int width, int height, int landscape) {
   // return to start position
   lineSafe( start, feed_rate );
 #endif // NUM_AXIES
-  MENU_GOTO(LCD_draw_border);
+  MENU_POP();
 }
 
 void draw_A2_portrait() {
@@ -600,7 +643,7 @@ void draw_USlegal_landscape() {
 
 void LCD_draw_border() {
   MENU_START
-  MENU_SUBMENU("Main ", LCD_main_menu);
+  MENU_BACK("Main");
   MENU_ACTION("A2 portrait", draw_A2_portrait);
   MENU_ACTION("A3 portrait", draw_A3_portrait);
   MENU_ACTION("A4 portrait", draw_A4_portrait);
@@ -619,7 +662,7 @@ void LCD_draw_border() {
 
 
 void LCD_update_long() {
-  if (lcd_click_now) MENU_GOTO(LCD_settings_menu);
+  if (lcd_click_now) MENU_POP();
   
   if (lcd_turn) {
     long *f=(long*)update_val;
@@ -634,7 +677,7 @@ void LCD_update_long() {
 
 
 void LCD_update_float() {
-  if (lcd_click_now) MENU_GOTO(LCD_settings_menu);
+  if (lcd_click_now) MENU_POP();
   
   if (lcd_turn) {
     float *f=(float*)update_val;
@@ -716,8 +759,8 @@ void LCD_update() {
     lcd_draw_delay = millis() + LCD_DRAW_DELAY;
 
     //Serial.print(lcd_turn,DEC);
-    //Serial.print('\t');  Serial.print(menu_position,DEC);
-    //Serial.print('\t');  Serial.print(menu_position_sum,DEC);
+    //Serial.print('\t');  Serial.print(menuStack[menuStackDepth].menu_position,DEC);
+    //Serial.print('\t');  Serial.print(menuStack[menuStackDepth].menu_position_sum,DEC);
     //Serial.print('\t');  Serial.print(screen_position,DEC);
     //Serial.print('\t');  Serial.print(screen_end,DEC);
     //Serial.print('\t');  Serial.print(num_menu_items,DEC);
@@ -725,16 +768,16 @@ void LCD_update() {
 
     // update the menu position
     if ( lcd_turn!=0 && num_menu_items > 1 ) {
-      uint8_t originalPosition = menu_position_sum / LCD_TURN_PER_MENU;
+      uint8_t originalPosition = menuStack[menuStackDepth].menu_position_sum / LCD_TURN_PER_MENU;
       uint8_t upperBound = num_menu_items * LCD_TURN_PER_MENU;
 
       // potentially change the menu item
-      menu_position_sum += lcd_turn;
+      menuStack[menuStackDepth].menu_position_sum += lcd_turn;
       // bounding
-      if(menu_position_sum < 0) menu_position_sum=0;
-      if(menu_position_sum >= upperBound) menu_position_sum = upperBound-1;
+      if(menuStack[menuStackDepth].menu_position_sum < 0) menuStack[menuStackDepth].menu_position_sum=0;
+      if(menuStack[menuStackDepth].menu_position_sum >= upperBound) menuStack[menuStackDepth].menu_position_sum = upperBound-1;
       
-      menu_position = menu_position_sum / LCD_TURN_PER_MENU;
+      uint8_t menu_position = menuStack[menuStackDepth].menu_position_sum / LCD_TURN_PER_MENU;
       // check for change
       if (originalPosition != menu_position) {
         lcd_dirty=1;
@@ -746,6 +789,8 @@ void LCD_update() {
       if (screen_position > menu_position) screen_position = menu_position;
       if (screen_position < menu_position - (LCD_HEIGHT - 1)) screen_position = menu_position - (LCD_HEIGHT - 1);
       screen_end = screen_position + LCD_HEIGHT;
+
+      menuStack[menuStackDepth].menu_position = menu_position;
     }
     
     // draw the new screen contents
@@ -784,7 +829,7 @@ void LCD_refresh_display() {
 void LCD_settings_menu() {
 #ifdef HAS_LCD
   MENU_START
-  MENU_SUBMENU("Main ", LCD_main_menu);
+  MENU_BACK("Main");
   
 #if MACHINE_STYLE == POLARGRAPH
   MENU_FLOAT("Home X", axies[0].homePos);
@@ -807,7 +852,7 @@ void LCD_main_menu() {
   
   MENU_START
 
-  MENU_SUBMENU("Info screen", LCD_status_menu);
+  MENU_BACK("Info screen");
 #ifdef HAS_SD
   if (!sd_printing_now) {
 #endif
@@ -825,7 +870,13 @@ void LCD_main_menu() {
     }
 #endif
 #if MACHINE_STYLE == POLARGRAPH
-    MENU_ACTION("Pen up/down",LCD_togglePenUp);
+    float offset[NUM_AXIES];
+    get_end_plus_offset(offset);
+    if(offset[2]==PEN_UP_ANGLE) {
+      MENU_ACTION("Pen down",LCD_togglePenUp);
+    } else {
+      MENU_ACTION("Pen up",LCD_togglePenUp);
+    }
 #endif
 #if NUM_AXIES == 3
     MENU_SUBMENU("Draw border", LCD_draw_border);
@@ -853,7 +904,7 @@ void LCD_status_menu() {
   MENU_START
 
   // on click go to the main menu
-  if (lcd_click_now) MENU_GOTO(LCD_main_menu);
+  if (lcd_click_now) MENU_PUSH(LCD_main_menu);
 
   if (lcd_turn) {
     speed_adjust += lcd_turn;
@@ -912,7 +963,7 @@ void LCD_setup() {
   digitalWrite(BTN_EN2, HIGH);
   digitalWrite(BTN_ENC, HIGH);
   current_menu = LCD_status_menu;
-  menu_position_sum = 1;  /* 20160313-NM-Added so the clicking without any movement will display a menu */
+  menuStack[menuStackDepth].menu_position_sum = 1;  /* 20160313-NM-Added so the clicking without any movement will display a menu */
 
   LCD_drawSplash();
   
