@@ -1123,7 +1123,7 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
       Ty /= Rlen;
       // solve cT = -gY + k1 R1 for c [and k1]
       // solve cT = -gY + k2 R2 for c [and k2]
-#define GRAVITYmag (980.0)  // what are the units here?  mm?
+#define GRAVITYmag (98.0)  // what are the units here?  mm?
       float c1 = -GRAVITYmag * R1x / (Tx * R1y - Ty * R1x);
       float c2 = -GRAVITYmag * R2x / (Tx * R2y - Ty * R2x);
 
