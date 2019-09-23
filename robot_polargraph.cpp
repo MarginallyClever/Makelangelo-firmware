@@ -235,14 +235,14 @@ void robot_findHome() {
   // make sure there's no momentum to skip the belt on the pulley.
   delay(500);
 
-  Serial.println(F("Estimating position..."));
+  //Serial.println(F("Estimating position..."));
   long count[NUM_MOTORS+NUM_SERVOS];
   count[0] = calibrateLeft/MM_PER_STEP;
   count[1] = calibrateRight/MM_PER_STEP;
   count[2] = axies[2].pos;
-  Serial.print("cl=");        Serial.println(calibrateLeft);
-  Serial.print("cr=");        Serial.println(calibrateRight);
-  Serial.print("t*1000=");    Serial.println(MM_PER_STEP*1000);
+  //Serial.print("cl=");        Serial.println(calibrateLeft);
+  //Serial.print("cr=");        Serial.println(calibrateRight);
+  //Serial.print("t*1000=");    Serial.println(MM_PER_STEP*1000);
 
   // current position is...
   float offset[NUM_AXIES];
