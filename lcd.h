@@ -69,7 +69,11 @@
 #define LCD_TURN_PER_MENU  (3)  // was 5
 
 extern char lcd_message[LCD_MESSAGE_LENGTH+1];
+extern char lcd_message_m117[LCD_MESSAGE_LENGTH/2+1];
 extern uint8_t speed_adjust;
+
+
+extern inline void LCD_print(const char *x);
 
 #endif // HAS_LCD
 

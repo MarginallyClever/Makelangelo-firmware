@@ -20,8 +20,8 @@
 #define MACHINE_HARDWARE_VERSION   MAKELANGELO_5
 
 // choose one of the following
-#define NORMAL_MOTOR_STEPS   200
-//#define NORMAL_MOTOR_STEPS   400
+//#define NORMAL_MOTOR_STEPS   200  // 1.8 degrees per step
+#define NORMAL_MOTOR_STEPS   400  // 0.9 degrees per step
 /// -------------- change here ----------------
 
 
@@ -44,24 +44,27 @@
 #define MAX_FEEDRATE         (500.0)  // depends on timer interrupt & hardware
 #define MIN_FEEDRATE         (0.0)
 
+#define MAX_FEEDRATE_Z       (2000.0)  // depends on timer interrupt & hardware
+
 #define MAX_ACCELERATION     (2000.0)
 #define MIN_ACCELERATION     (0.0)
 
 #if NORMAL_MOTOR_STEPS == 200
-#define DEFAULT_FEEDRATE     (110.0)
-#define DEFAULT_ACCELERATION (1800.0)
+#define DEFAULT_FEEDRATE     (380.0)
+#define DEFAULT_ACCELERATION (150.0)
 #define DEGREES_PER_STEP     (1.8)
 #endif
 #if NORMAL_MOTOR_STEPS == 400
-#define DEFAULT_FEEDRATE     (60.0)
-#define DEFAULT_ACCELERATION (900.0)
+#define DEFAULT_FEEDRATE     (380.0/2)
+#define DEFAULT_ACCELERATION (150.0/2)
 #define DEGREES_PER_STEP     (0.9)
 #endif
 
-#define DYNAMIC_ACCELERATION  // uncomment this line to adjust acceleration based on pen position
-
 #define MAX_JERK             (5.0)
-#define MAX_Z_JERK           (0.3)
+#define MAX_JERK_Z           (0.3)
+
+// uncomment this line to adjust acceleration based on pen position
+#define DYNAMIC_ACCELERATION
 
 #if MACHINE_HARDWARE_VERSION == MAKELANGELO_5
 #define MAX_SEGMENTS         (16)  // has LCD, needs more ram.
