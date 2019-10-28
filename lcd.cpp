@@ -968,6 +968,7 @@ void LCD_setup() {
   digitalWrite(BTN_ENC, HIGH);
   current_menu = LCD_status_menu;
   menuStack[menuStackDepth].menu_position_sum = 1;  /* 20160313-NM-Added so the clicking without any movement will display a menu */
+  menuStack[menuStackDepth].menu = current_menu; 
 
   LCD_drawSplash();
   
