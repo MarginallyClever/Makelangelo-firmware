@@ -93,7 +93,18 @@
 #define SDCARDDETECT       49
 #endif
 
-#endif
+
+#ifdef HAS_TMC2130
+
+#define STALL_VALUE -20 // [-64..63]
+#define CS_PIN_0    53  //           17        64  //chip select
+#define CS_PIN_1    49  //           17        64  //chip select
+
+#include <Arduino.h>
+
+extern inline uint8_t tmc_transfer8(uint8_t val);
+extern inline uint32_t tmc_transfer16(uint32_t val);
+#endif  // HAS_TMC2130
 
 
 #endif  // BOARD_RUMBA_H

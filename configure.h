@@ -139,6 +139,7 @@
 #define ARC_CW               (1)
 #define ARC_CCW              (-1)
 
+
 //------------------------------------------------------------------------------
 // SANITY CHECKS
 //------------------------------------------------------------------------------
@@ -154,6 +155,11 @@
 // not always the case!  Skycam has more motors than axies.
 //#error "NUM_SERVOS + NUM_MOTORS != NUM_AXIES"
 #endif
+
+#if defined(USE_LIMIT_SWITCH) && defined(HAS_TMC2130)
+#error "Do not use HAS_TMC2130 and USE_LIMIT_SWITCH together."
+#endif
+
 
 //------------------------------------------------------------------------------
 // step direction

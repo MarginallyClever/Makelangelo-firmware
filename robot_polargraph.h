@@ -14,14 +14,16 @@
 #define MAKELANGELO_3    3
 #define MAKELANGELO_3_3  4
 #define MAKELANGELO_5    5
+#define MAKELANGELO_5_2  6  // for testing
+
 
 /// -------------- change here ----------------
 // change this line for your version
 #define MACHINE_HARDWARE_VERSION   MAKELANGELO_5
 
 // choose one of the following
-#define NORMAL_MOTOR_STEPS   200
-//#define NORMAL_MOTOR_STEPS   400
+#define NORMAL_MOTOR_STEPS   200  // 1.8 degrees per step
+//#define NORMAL_MOTOR_STEPS   400  // 0.9 degrees per step
 /// -------------- change here ----------------
 
 
@@ -63,12 +65,6 @@
 #define MAX_JERK             (5.0)
 #define MAX_Z_JERK           (0.3)
 
-#if MACHINE_HARDWARE_VERSION == MAKELANGELO_5
-#define MAX_SEGMENTS         (16)  // has LCD, needs more ram.
-#define USE_LIMIT_SWITCH
-#define HAS_SD
-#define HAS_LCD
-#endif
 #if MACHINE_HARDWARE_VERSION == MAKELANGELO_3
 #define MAX_SEGMENTS         (16)  // has LCD, needs more ram.
 #define HAS_SD
@@ -77,6 +73,18 @@
 #if MACHINE_HARDWARE_VERSION == MAKELANGELO_3_3
 #define MAX_SEGMENTS         (16)  // has LCD, needs more ram.
 #define USE_LIMIT_SWITCH
+#define HAS_SD
+#define HAS_LCD
+#endif
+#if MACHINE_HARDWARE_VERSION == MAKELANGELO_5
+#define MAX_SEGMENTS         (16)  // has LCD, needs more ram.
+#define USE_LIMIT_SWITCH
+#define HAS_SD
+#define HAS_LCD
+#endif
+#if MACHINE_HARDWARE_VERSION == MAKELANGELO_5_2
+#define MAX_SEGMENTS         (16)  // has LCD, needs more ram.
+#define HAS_TMC2130
 #define HAS_SD
 #define HAS_LCD
 #endif
