@@ -99,6 +99,12 @@ int over5;
 long global_steps_5;
 int global_step_dir_5;
 #endif
+#if NUM_SERVOS>0
+int servoDelta0;
+int servoOver0;
+long global_servoSteps_0;
+int global_servoStep_dir_0;
+#endif
 
 float previous_nominal_speed = 0;
 float previous_safe_speed = 0;
@@ -190,7 +196,6 @@ void motor_setup() {
   tmc_setup(driver_0);
   tmc_setup(driver_1);
   vsense = driver_0.vsense();
-#endif
 
   motors[0].step_pin        = MOTOR_0_STEP_PIN;
   motors[0].dir_pin         = MOTOR_0_DIR_PIN;
@@ -248,7 +253,10 @@ void motor_setup() {
   }
 
 #if MACHINE_STYLE == POLARGRAPH
-  max_jerk[2] = MAX_Z_JERK;
+#ifdef MAX_FEEDRATE_Z
+  max_feedrate_mm_s[NUM_MOTORS] = MAX_FEEDRATE_Z;
+#endif
+  max_jerk[NUM_MOTORS] = MAX_JERK_Z;
 #endif
 
   motor_set_step_count(steps);
@@ -615,6 +623,9 @@ void motor_set_step_count(long *a) {
 #if NUM_MOTORS>5
   global_steps_5 = 0;
 #endif
+#if NUM_SERVOS>0
+  global_servoSteps_0=0;
+#endif
 }
 
 
@@ -768,12 +779,15 @@ inline void isr_internal() {
       digitalWrite( MOTOR_5_DIR_PIN, working_seg->a[5].dir );
       global_step_dir_5 = (working_seg->a[5].dir == HIGH) ? 1 : -1;
 #endif
+#if NUM_SERVOS>0
+      global_servoStep_dir_0 = (working_seg->a[NUM_MOTORS].dir == HIGH) ? -1 : 1;
+#endif
 
 #if NUM_SERVOS>0
 #ifdef ESP8266
-      analogWrite(SERVO0_PIN, working_seg->a[NUM_MOTORS].step_count);
+      //analogWrite(SERVO0_PIN, working_seg->a[NUM_MOTORS].step_count);
 #else
-      servos[0].write(working_seg->a[NUM_MOTORS].step_count);
+      //servos[0].write(working_seg->a[NUM_MOTORS].step_count);
 #endif  // ESP8266
 #endif  // NUM_SERVOS>0
 
@@ -790,21 +804,33 @@ inline void isr_internal() {
       // defererencing some data so the loop runs faster.
       steps_total = working_seg->steps_total;
       steps_taken = 0;
-      delta0 = working_seg->a[0].absdelta;      over0 = -(steps_total >> 1);
+      delta0 = working_seg->a[0].absdelta;
+      over0 = -(steps_total >> 1);
 #if NUM_MOTORS>1
-      delta1 = working_seg->a[1].absdelta;      over1 = -(steps_total >> 1);
+      delta1 = working_seg->a[1].absdelta;
+      over1 = -(steps_total >> 1);
 #endif
 #if NUM_MOTORS>2
-      delta2 = working_seg->a[2].absdelta;      over2 = -(steps_total >> 1);
+      delta2 = working_seg->a[2].absdelta;
+      over2 = -(steps_total >> 1);
 #endif
 #if NUM_MOTORS>3
-      delta3 = working_seg->a[3].absdelta;      over3 = -(steps_total >> 1);
+      delta3 = working_seg->a[3].absdelta;
+      over3 = -(steps_total >> 1);
 #endif
 #if NUM_MOTORS>4
-      delta4 = working_seg->a[4].absdelta;      over4 = -(steps_total >> 1);
+      delta4 = working_seg->a[4].absdelta;
+      over4 = -(steps_total >> 1);
 #endif
 #if NUM_MOTORS>5
-      delta5 = working_seg->a[5].absdelta;      over5 = -(steps_total >> 1);
+      delta5 = working_seg->a[5].absdelta;
+      over5 = -(steps_total >> 1);
+#endif
+#if NUM_SERVOS>0
+      global_servoSteps_0 = working_seg->a[NUM_MOTORS].step_count - working_seg->a[NUM_MOTORS].delta_steps;
+      
+      servoDelta0 = working_seg->a[NUM_MOTORS].absdelta;
+      servoOver0 = -(steps_total >> 1);
 #endif
       return;
     } else {
@@ -862,6 +888,9 @@ inline void isr_internal() {
       over5 += delta5;
       if (over5 > 0) digitalWrite(MOTOR_5_STEP_PIN, START5);
 #endif
+#if NUM_SERVOS>0
+      servoOver0 += servoDelta0;
+#endif
       // now that the pins have had a moment to settle, do the second half of the steps.
       // M0
       if (over0 > 0) {
@@ -907,6 +936,18 @@ inline void isr_internal() {
         over5 -= steps_total;
         global_steps_5 += global_step_dir_5;
         digitalWrite(MOTOR_5_STEP_PIN, END5);
+      }
+#endif
+#if NUM_SERVOS>0
+      // servo 0
+      if(servoOver0>0) {
+        servoOver0 -= steps_total;
+        global_servoSteps_0 += global_servoStep_dir_0;
+#ifdef ESP8266
+        //analogWrite(SERVO0_PIN, global_servoSteps_0);
+#else
+        servos[0].write(global_servoSteps_0);
+#endif
       }
 #endif
 
@@ -1180,7 +1221,7 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
         // If c is positive in both cases, take the smaller one.
         cT = ( c1 < c2 ) ? c1 : c2;
       } else if (c1 > 0) cT = c1;
-      else if(c2 > 0) cT = c2;
+      else cT = c2;
 
       // The maximum acceleration is given by cT.
       if (cT > 0 && max_acceleration > cT) {

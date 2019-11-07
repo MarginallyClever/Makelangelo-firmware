@@ -116,7 +116,6 @@
 #define MM_PER_STEP          (PULLEY_PITCH/STEPS_PER_TURN)
 #define MICROSTEP_PER_DEGREE (STEPS_PER_TURN/360.0)
 
-
 //------------------------------------------------------------------------------
 // COMMUNICATION & BUFFERING
 //------------------------------------------------------------------------------

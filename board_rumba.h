@@ -7,10 +7,10 @@
 //------------------------------------------------------------------------------
 
 
-#if MOTHERBOARD == BOARD_RUMBA 
+#if MOTHERBOARD == BOARD_RUMBA
 // wrong board type set
 #ifndef __AVR_ATmega2560__
-  #error "Oops!  Make sure you have 'Arduino Mega 2560' selected from the 'Tools -> Boards' menu."
+#error "Oops!  Make sure you have 'Arduino Mega 2560' selected from the 'Tools -> Boards' menu."
 #endif
 
 #define MAX_MOTORS                 (6)
@@ -106,5 +106,7 @@ extern inline uint8_t tmc_transfer8(uint8_t val);
 extern inline uint32_t tmc_transfer16(uint32_t val);
 #endif  // HAS_TMC2130
 
+
+#endif
 
 #endif  // BOARD_RUMBA_H

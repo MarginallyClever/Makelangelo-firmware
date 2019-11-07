@@ -74,6 +74,39 @@ unsigned int localPort = 9999;
 //------------------------------------------------------------------------------
 
 
+
+#ifdef HAS_TMC2130
+
+inline uint8_t tmc_transfer8(uint8_t val) {
+  uint8_t returnVal=0;
+  
+  uint8_t v;
+  
+  for(uint8_t i=0;i<8;++i) {
+    digitalWrite(TMC_MOSI_PIN, ((val>>i)&1) ==0? HIGH:LOW );
+    digitalWrite(TMC_SCK_PIN,HIGH);
+    
+    v = digitalRead(TMC_MISO_PIN);
+    returnVal |= (v<<i);
+    digitalWrite(TMC_SCK_PIN,LOW);
+  }
+
+  return returnVal;
+}
+
+inline uint32_t tmc_transfer32(uint32_t val) {
+  uint32_t returnVal = 0;
+  returnVal |= (tmc_transfer8((val>>24)&0xFF) & 0xFF) << 24;
+  returnVal |= (tmc_transfer8((val>>16)&0xFF) & 0xFF) << 16;
+  returnVal |= (tmc_transfer8((val>> 8)&0xFF) & 0xFF) <<  8;
+  returnVal |= (tmc_transfer8((val    )&0xFF) & 0xFF)      ;
+
+  return returnVal;
+}
+
+#endif  // HAS_TMC2130
+
+
 void findStepDelay() {
   step_delay = 1000000.0f / (DEFAULT_FEEDRATE / MM_PER_STEP);
 }
@@ -668,8 +701,8 @@ void parseMessage() {
   }
 
   // wipe previous message
-  for (uint16_t j = LCD_MESSAGE_LENGTH / 2; j < LCD_MESSAGE_LENGTH; ++j) {
-    lcd_message[j] = ' ';
+  for (uint8_t j = 0; j < LCD_MESSAGE_LENGTH / 2; ++j) {
+    lcd_message_m117[j] = ' ';
   }
 
   i += 4;
@@ -682,14 +715,14 @@ void parseMessage() {
   char *buf = serialBuffer + i;
   while (*buf == ' ') ++buf; // eat whitespace
 
-  i = LCD_MESSAGE_LENGTH / 2;
-  while (isPrintable(*buf) && (*buf) != '\r' && (*buf) != '\n' && i < LCD_MESSAGE_LENGTH) {
-    lcd_message[i] = *buf;
+  i = 0;
+  while (isPrintable(*buf) && (*buf) != '\r' && (*buf) != '\n' && i < LCD_MESSAGE_LENGTH / 2) {
+    lcd_message_m117[i] = *buf;
     ++i;
     buf++;
   }
-/*
-  Serial.println(F("message found: "));
+//*
+  Serial.println(F("M117 "));
   i=0;
   for(int y=0;y<LCD_HEIGHT;++y) {
     for(int x=0;x<LCD_WIDTH;++x) {
@@ -698,7 +731,7 @@ void parseMessage() {
     }
     Serial.println();
   }
-*/
+//*/
 #endif  // HAS_LCD
 }
 
@@ -1227,6 +1260,18 @@ void setup() {
   help();
 
   parser_ready();
+
+#ifdef HAS_TMC2130
+  digitalWrite(TMC_CSL_PIN,HIGH);
+  tmc_transfer8(0x6F);
+  tmc_transfer32(0x00000000);
+  
+  uint8_t a  = tmc_transfer8(0x6F);
+  uint32_t b = tmc_transfer32(0x00000000);
+
+  Serial.print("a=");  Serial.println(a,HEX);
+  Serial.print("b=");  Serial.println(b,HEX);
+#endif
 }
 
 

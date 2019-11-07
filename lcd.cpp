@@ -57,6 +57,7 @@ char lcd_click_old = HIGH;
 char lcd_click_now = 0;
 uint8_t speed_adjust = 100;
 char lcd_message[LCD_MESSAGE_LENGTH + 1];
+char lcd_message_m117[LCD_MESSAGE_LENGTH/2+1];
 char lcd_dirty=0;
 
 #define MENU_STACK_DEPTH   (5)
@@ -935,6 +936,9 @@ void LCD_status_menu() {
   //} else {
     //LCD_print("          ");
   //}
+  
+  LCD_setCursor(0,2);  LCD_print(lcd_message_m117);
+
   MENU_END
 #endif  // HAS_LCD
 }
@@ -964,6 +968,7 @@ void LCD_setup() {
   digitalWrite(BTN_ENC, HIGH);
   current_menu = LCD_status_menu;
   menuStack[menuStackDepth].menu_position_sum = 1;  /* 20160313-NM-Added so the clicking without any movement will display a menu */
+  menuStack[menuStackDepth].menu = current_menu; 
 
   LCD_drawSplash();
   

@@ -62,7 +62,7 @@ typedef struct {
   uint32_t initial_rate;     // steps/s
   uint32_t final_rate;      // steps/s
   uint32_t acceleration_steps_per_s2;  // steps/s^2
-  uint32_t acceleration_rate;  // 
+  uint32_t acceleration_rate;  // ?
   
   char nominal_length_flag;
   char recalculate_flag;
