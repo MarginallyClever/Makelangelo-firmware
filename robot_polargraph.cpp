@@ -200,7 +200,6 @@ void recordHome() {
    If limit switches are installed, move to touch each switch so that the pen holder can move to home position.
 */
 void robot_findHome() {
-#ifdef USE_LIMIT_SWITCH
   wait_for_empty_segment_buffer();
   motor_engage();
 
@@ -214,7 +213,15 @@ void robot_findHome() {
   int left = 0, right = 0;
   do {
     if (left == 0) {
-      if ( digitalRead(LIMIT_SWITCH_PIN_LEFT) == LOW ) {
+#ifdef HAS_TMC2130
+      uint32_t drv_status = driver_0.DRV_STATUS();
+      uint32_t stallValue = (drv_status & SG_RESULT_bm)>>SG_RESULT_bp;
+      if(stallValue<80)
+#endif
+#ifdef USE_LIMIT_SWITCH
+      if ( digitalRead(LIMIT_SWITCH_PIN_LEFT) == LOW )
+#endif
+      {
         left = 1;
         Serial.println(F("Left..."));
       }
@@ -222,7 +229,15 @@ void robot_findHome() {
       digitalWrite(MOTOR_0_STEP_PIN, LOW);
     }
     if (right == 0) {
-      if ( digitalRead(LIMIT_SWITCH_PIN_RIGHT) == LOW ) {
+#ifdef HAS_TMC2130
+      uint32_t drv_status = driver_1.DRV_STATUS();
+      uint32_t stallValue = (drv_status & SG_RESULT_bm)>>SG_RESULT_bp;
+      if(stallValue<80)
+#endif
+#ifdef USE_LIMIT_SWITCH
+      if ( digitalRead(LIMIT_SWITCH_PIN_RIGHT) == LOW )
+#endif
+      {
         right = 1;
         Serial.println(F("Right..."));
       }
@@ -261,7 +276,6 @@ void robot_findHome() {
   lineSafe(offset, DEFAULT_FEEDRATE);
   
   Serial.println(F("Done."));
-#endif // USER_LIMIT_SWITCH
 }
 
 

@@ -39,6 +39,13 @@ Motor motors[NUM_MOTORS + NUM_SERVOS];
 Servo servos[NUM_SERVOS];
 #endif
 
+#ifdef HAS_TMC2130
+TMC2130Stepper driver_0 = TMC2130Stepper(CS_PIN_0);
+TMC2130Stepper driver_1 = TMC2130Stepper(CS_PIN_1);
+
+bool vsense;
+#endif
+
 Segment line_segments[MAX_SEGMENTS];
 Segment *working_seg = NULL;
 volatile int current_segment = 0;
@@ -119,6 +126,12 @@ void itr();
 #endif
 
 
+#ifdef HAS_TMC2130
+uint16_t rms_current(uint8_t CS, float Rsense = 0.11) {
+  return (float)(CS+1)/32.0 * (vsense?0.180:0.325)/(Rsense+0.02) / 1.41421 * 1000;
+}
+#endif
+
 const int movesPlanned() {
   return SEGMOD( last_segment - current_segment );
 }
@@ -146,18 +159,43 @@ float max_speed_allowed(const float &acc, const float &target_velocity, const fl
   return sqrt( sq(target_velocity) - 2 * acc * distance );
 }
 
+#ifdef HAS_TMC2130
+void tmc_setup(TMC2130Stepper &driver) {
+    driver.push();
+    driver.toff(3);
+    driver.tbl(1);
+    driver.hysteresis_start(4);
+    driver.hysteresis_end(-2);
+    driver.rms_current(465); // mA
+    driver.microsteps(16);
+    driver.diag1_stall(1);
+    driver.diag1_active_high(1);
+    driver.coolstep_min_speed(0xFFFFF); // 20bit max
+    driver.TCOOLTHRS(0xFFFFF);  // 20 bit max
+    driver.THIGH(0);
+    driver.semin(5);
+    driver.semax(2);
+    driver.sedn(0b01);
+    driver.sg_stall_value(STALL_VALUE);
+}
+#endif
 
 /**
    set up the pins for each motor
 */
 void motor_setup() {
 #ifdef HAS_TMC2130
-  pinMode(TMC_MISO_PIN,INPUT_PULLUP);
-  pinMode(TMC_MOSI_PIN,OUTPUT);
-  pinMode(TMC_SCK_PIN,OUTPUT);
-  pinMode(TMC_CSL_PIN,OUTPUT);
-  pinMode(TMC_CSR_PIN,OUTPUT);
-#endif
+  SPI.begin();
+  
+  pinMode(CS_PIN_0,OUTPUT);
+  pinMode(CS_PIN_1,OUTPUT);
+  digitalWrite(CS_PIN_0, HIGH);
+  digitalWrite(CS_PIN_1, HIGH);
+  pinMode(MISO, INPUT_PULLUP);
+
+  tmc_setup(driver_0);
+  tmc_setup(driver_1);
+  vsense = driver_0.vsense();
 
   motors[0].step_pin        = MOTOR_0_STEP_PIN;
   motors[0].dir_pin         = MOTOR_0_DIR_PIN;

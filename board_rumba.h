@@ -94,21 +94,17 @@
 #endif
 
 
-// uncomment this if you have TMC2130 drivers.
-//#define HAS_TMC2130
-
 #ifdef HAS_TMC2130
-#define TMC_MISO_PIN 22  // ISP1 1
-#define TMC_MOSI_PIN 21  // ISP1 5
-#define TMC_SCK_PIN  20  // ISP1 2
-#define TMC_CSL_PIN  30  // EXP3 left top
-#define TMC_CSR_PIN  31  // EXP3 left bottom
+
+#define STALL_VALUE -20 // [-64..63]
+#define CS_PIN_0    53  //           17        64  //chip select
+#define CS_PIN_1    49  //           17        64  //chip select
 
 #include <Arduino.h>
 
 extern inline uint8_t tmc_transfer8(uint8_t val);
 extern inline uint32_t tmc_transfer16(uint32_t val);
-#endif
+#endif  // HAS_TMC2130
 
 
 #endif
