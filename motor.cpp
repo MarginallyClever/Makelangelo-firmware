@@ -196,6 +196,7 @@ void motor_setup() {
   tmc_setup(driver_0);
   tmc_setup(driver_1);
   vsense = driver_0.vsense();
+#endif
 
   motors[0].step_pin        = MOTOR_0_STEP_PIN;
   motors[0].dir_pin         = MOTOR_0_DIR_PIN;
