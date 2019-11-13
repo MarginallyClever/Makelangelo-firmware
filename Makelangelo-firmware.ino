@@ -813,7 +813,8 @@ void parseBeep() {
    process commands in the serial receive buffer
 */
 void processCommand() {
-  if (serialBuffer[0] == ';') return;  // blank lines
+
+  if ((serialBuffer[0] == '\0') || (serialBuffer[0] == ';')) return;  // blank lines
   if (!checkLineNumberAndCRCisOK()) return; // message garbled
 
   if (!strncmp(serialBuffer, "UID", 3)) {
