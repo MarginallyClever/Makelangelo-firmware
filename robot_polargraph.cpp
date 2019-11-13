@@ -205,47 +205,59 @@ void robot_findHome() {
 
   Serial.println(F("Find Home..."));
 
-  findStepDelay();
+#ifdef HAS_TMC2130
+  // disable stealthchop
+  driver_0.coolstep_min_speed(0xFFFFF);
+  driver_1.coolstep_min_speed(0xFFFFF);
+  driver_0.diag1_stall(1);
+  driver_1.diag1_stall(1);
+  #ifdef STEALTHCHOP
+  driver_0.stealthChop(0);
+  driver_1.stealthChop(0);
+  #endif // STEALTHCHOP
+#endif
 
+  findStepDelay();
+  
   // reel in the left motor and the right motor out until contact is made.
-  digitalWrite(MOTOR_0_DIR_PIN, LOW);
-  digitalWrite(MOTOR_1_DIR_PIN, LOW);
+  digitalWrite(MOTOR_0_DIR_PIN, STEPPER_DIR_LOW);
+  digitalWrite(MOTOR_1_DIR_PIN, STEPPER_DIR_LOW);
   int left = 0, right = 0;
   do {
     if (left == 0) {
-#ifdef HAS_TMC2130
-      uint32_t drv_status = driver_0.DRV_STATUS();
-      uint32_t stallValue = (drv_status & SG_RESULT_bm)>>SG_RESULT_bp;
-      if(stallValue<80)
-#endif
+      digitalWrite(MOTOR_0_STEP_PIN, HIGH);
+      digitalWrite(MOTOR_0_STEP_PIN, LOW);
 #ifdef USE_LIMIT_SWITCH
       if ( digitalRead(LIMIT_SWITCH_PIN_LEFT) == LOW )
 #endif
       {
         left = 1;
-        Serial.println(F("Left..."));
       }
-      digitalWrite(MOTOR_0_STEP_PIN, HIGH);
-      digitalWrite(MOTOR_0_STEP_PIN, LOW);
     }
     if (right == 0) {
-#ifdef HAS_TMC2130
-      uint32_t drv_status = driver_1.DRV_STATUS();
-      uint32_t stallValue = (drv_status & SG_RESULT_bm)>>SG_RESULT_bp;
-      if(stallValue<80)
-#endif
+      digitalWrite(MOTOR_1_STEP_PIN, HIGH);
+      digitalWrite(MOTOR_1_STEP_PIN, LOW);
 #ifdef USE_LIMIT_SWITCH
       if ( digitalRead(LIMIT_SWITCH_PIN_RIGHT) == LOW )
 #endif
       {
         right = 1;
-        Serial.println(F("Right..."));
       }
-      digitalWrite(MOTOR_1_STEP_PIN, HIGH);
-      digitalWrite(MOTOR_1_STEP_PIN, LOW);
     }
     pause(step_delay);
   } while (left + right < 2);
+
+#ifdef HAS_TMC2130
+  // re-enable stealthchop
+  driver_0.coolstep_min_speed(0);
+  driver_1.coolstep_min_speed(0);
+  driver_0.diag1_stall(0);
+  driver_1.diag1_stall(0);
+  #ifdef STEALTHCHOP
+  driver_0.stealthChop(1);
+  driver_1.stealthChop(1);
+  #endif // STEALTHCHOP
+#endif
 
   // make sure there's no momentum to skip the belt on the pulley.
   delay(500);
@@ -273,7 +285,7 @@ void robot_findHome() {
   offset[2]=axies[2].pos;
   Serial.print(F("Homing to "));  Serial.print  (axies[0].homePos);
   Serial.print(',');              Serial.println(axies[1].homePos);
-  lineSafe(offset, DEFAULT_FEEDRATE);
+  //lineSafe(offset, DEFAULT_FEEDRATE);
   
   Serial.println(F("Done."));
 }

@@ -75,37 +75,6 @@ unsigned int localPort = 9999;
 
 
 
-#ifdef HAS_TMC2130
-
-inline uint8_t tmc_transfer8(uint8_t val) {
-  uint8_t returnVal=0;
-  
-  uint8_t v;
-  
-  for(uint8_t i=0;i<8;++i) {
-    digitalWrite(TMC_MOSI_PIN, ((val>>i)&1) ==0? HIGH:LOW );
-    digitalWrite(TMC_SCK_PIN,HIGH);
-    
-    v = digitalRead(TMC_MISO_PIN);
-    returnVal |= (v<<i);
-    digitalWrite(TMC_SCK_PIN,LOW);
-  }
-
-  return returnVal;
-}
-
-inline uint32_t tmc_transfer32(uint32_t val) {
-  uint32_t returnVal = 0;
-  returnVal |= (tmc_transfer8((val>>24)&0xFF) & 0xFF) << 24;
-  returnVal |= (tmc_transfer8((val>>16)&0xFF) & 0xFF) << 16;
-  returnVal |= (tmc_transfer8((val>> 8)&0xFF) & 0xFF) <<  8;
-  returnVal |= (tmc_transfer8((val    )&0xFF) & 0xFF)      ;
-
-  return returnVal;
-}
-
-#endif  // HAS_TMC2130
-
 
 void findStepDelay() {
   step_delay = 1000000.0f / (DEFAULT_FEEDRATE / MM_PER_STEP);
@@ -117,19 +86,6 @@ float atan3(float dy, float dx) {
   float a = atan2(dy, dx);
   if (a < 0) a = (PI * 2.0) + a;
   return a;
-}
-
-
-/**
-   @return switch state
-*/
-char readSwitches() {
-#ifdef USE_LIMIT_SWITCH
-  // get the current switch state
-  return ( (digitalRead(LIMIT_SWITCH_PIN_LEFT) == LOW) | (digitalRead(LIMIT_SWITCH_PIN_RIGHT) == LOW) );
-#else
-  return 0;
-#endif  // USE_LIMIT_SWITCH
 }
 
 
@@ -1091,7 +1047,7 @@ void jogMotors() {
       Serial.print(motors[i].step_pin);
       Serial.print('\n');
 
-      int x = amount < 0 ? HIGH  : LOW;
+      int x = amount < 0 ? STEPPER_DIR_HIGH  : STEPPER_DIR_LOW;
       digitalWrite(motors[i].dir_pin, x);
 
       amount = abs(amount);
@@ -1260,18 +1216,6 @@ void setup() {
   help();
 
   parser_ready();
-
-#ifdef HAS_TMC2130
-  digitalWrite(TMC_CSL_PIN,HIGH);
-  tmc_transfer8(0x6F);
-  tmc_transfer32(0x00000000);
-  
-  uint8_t a  = tmc_transfer8(0x6F);
-  uint32_t b = tmc_transfer32(0x00000000);
-
-  Serial.print("a=");  Serial.println(a,HEX);
-  Serial.print("b=");  Serial.println(b,HEX);
-#endif
 }
 
 
@@ -1386,6 +1330,19 @@ void loop() {
   // if Arduino hasn't received a new instruction in a while, send ready() again
   // just in case USB garbled ready and each half is waiting on the other.
   if ( !segment_buffer_full() && (millis() - last_cmd_time) > TIMEOUT_OK ) {
+#ifdef HAS_TMC2130
+{
+      uint32_t drv_status = driver_0.DRV_STATUS();
+      uint32_t stallValue = (drv_status & SG_RESULT_bm)>>SG_RESULT_bp;
+      Serial.print(stallValue,DEC);
+      Serial.print('\t');
+}
+{
+      uint32_t drv_status = driver_1.DRV_STATUS();
+      uint32_t stallValue = (drv_status & SG_RESULT_bm)>>SG_RESULT_bp;
+      Serial.println(stallValue,DEC);
+}
+#endif
     parser_ready();
   }
 

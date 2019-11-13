@@ -7,6 +7,14 @@
 //------------------------------------------------------------------------------
 
 #include <Arduino.h>
+#ifdef HAS_TMC2130
+#include <TMC2130Stepper.h>
+#include <TMC2130Stepper_REGDEFS.h>
+
+#if TMC2130STEPPER_VERSION < 0x020201
+  #error "Update TMC2130Stepper library to 2.2.1 or newer."
+#endif
+#endif
 
 //------------------------------------------------------------------------------
 // CONSTANTS
@@ -19,6 +27,20 @@
 #define POSITION_ERROR_FLAG_ESTOP        (1<<3)  // check for error at all?
 
 #endif
+
+#ifdef HAS_TMC2130
+#define STEPPER_DIR_HIGH   LOW
+#define STEPPER_DIR_LOW    HIGH
+#else
+// A4988
+#define STEPPER_DIR_HIGH   HIGH
+#define STEPPER_DIR_LOW    LOW
+#endif
+
+
+//------------------------------------------------------------------------------
+// STRUCTURES
+//------------------------------------------------------------------------------
 
 typedef struct {
   uint8_t step_pin;
@@ -87,6 +109,12 @@ extern float max_feedrate_mm_s[NUM_MOTORS+NUM_SERVOS];
 
 extern uint8_t positionErrorFlags;
 extern uint32_t min_segment_time_us;
+
+
+#ifdef HAS_TMC2130
+extern TMC2130Stepper driver_0;
+extern TMC2130Stepper driver_1;
+#endif
 
 extern void motor_set_step_count(long *a);
 extern void wait_for_empty_segment_buffer();
