@@ -114,6 +114,7 @@
 #endif
 #define STEPS_PER_TURN       (NORMAL_MOTOR_STEPS * MICROSTEPS)
 #define MM_PER_STEP          (PULLEY_PITCH/STEPS_PER_TURN)
+#define STEPS_PER_MM         (STEPS_PER_TURN/PULLEY_PITCH)
 #define MICROSTEP_PER_DEGREE (STEPS_PER_TURN/360.0)
 
 //------------------------------------------------------------------------------
@@ -153,10 +154,6 @@
 #if NUM_SERVOS + NUM_MOTORS != NUM_AXIES
 // not always the case!  Skycam has more motors than axies.
 //#error "NUM_SERVOS + NUM_MOTORS != NUM_AXIES"
-#endif
-
-#if defined(USE_LIMIT_SWITCH) && defined(HAS_TMC2130)
-#error "Do not use HAS_TMC2130 and USE_LIMIT_SWITCH together."
 #endif
 
 
