@@ -161,28 +161,42 @@ float max_speed_allowed(const float &acc, const float &target_velocity, const fl
 
 #ifdef HAS_TMC2130
 void tmc_setup(TMC2130Stepper &driver) {
-    driver.push();
-    driver.toff(3);
-    driver.tbl(1);
-    driver.hysteresis_start(4);
-    driver.hysteresis_end(-2);
-    driver.rms_current(465); // mA
-    driver.microsteps(16);
-    driver.diag1_stall(1);
-    driver.diag1_active_high(1);
-    driver.coolstep_min_speed(0xFFFFF); // 20bit max
-    driver.TCOOLTHRS(0xFFFFF);  // 20 bit max
-    driver.THIGH(0);
-    driver.semin(5);
-    driver.semax(2);
-    driver.sedn(0b01);
-    driver.sg_stall_value(STALL_VALUE);
+  #define R_SENSE            0.11
+  #define HOLD_MULTIPLIER    0.5
+  #define STALL_VALUE        -20
+  //#define HYBRID_THRESHOLD   100
+  
+  driver.begin();
+  driver.setCurrent(235,R_SENSE,HOLD_MULTIPLIER); // mA
+  driver.microsteps(MICROSTEPS);
+  driver.blank_time(24);
+  driver.off_time(5);
+  driver.interpolate(true);
+  driver.power_down_delay(128); // ~2s until driver lowers to hold current
+  driver.hysteresis_start(3);
+  driver.hysteresis_end(2);
+  driver.coolstep_min_speed(0);
+  driver.diag1_stall(1);
+  driver.diag1_active_high(0);  // active low
+  driver.sg_stall_value(STALL_VALUE);
+  
+  #if defined(STEALTHCHOP)
+    driver.stealth_freq(1); // f_pwm = 2/683 f_clk
+    driver.stealth_autoscale(1);
+    driver.stealth_gradient(5);
+    driver.stealth_amplitude(255);
+    driver.stealthChop(1);
+    //#if defined(HYBRID_THRESHOLD)
+    //  driver.stealth_max_speed(12650000UL*MICROSTEPS/(256*HYBRID_THRESHOLD*STEPS_PER_MM));
+    //#endif
+  #endif
+  driver.GSTAT(); // Clear GSTAT
 }
 #endif
 
 /**
-   set up the pins for each motor
-*/
+ * set up the pins for each motor
+ */
 void motor_setup() {
 #ifdef HAS_TMC2130
   SPI.begin();
@@ -196,7 +210,7 @@ void motor_setup() {
   tmc_setup(driver_0);
   tmc_setup(driver_1);
   vsense = driver_0.vsense();
-#endif
+#endif  // HAS_TMC2130
 
   motors[0].step_pin        = MOTOR_0_STEP_PIN;
   motors[0].dir_pin         = MOTOR_0_DIR_PIN;
@@ -758,30 +772,30 @@ inline void isr_internal() {
 
       // set the direction pins
       digitalWrite( MOTOR_0_DIR_PIN, working_seg->a[0].dir );
-      global_step_dir_0 = (working_seg->a[0].dir == HIGH) ? 1 : -1;
+      global_step_dir_0 = (working_seg->a[0].dir == STEPPER_DIR_HIGH) ? 1 : -1;
 
 #if NUM_MOTORS>1
       digitalWrite( MOTOR_1_DIR_PIN, working_seg->a[1].dir );
-      global_step_dir_1 = (working_seg->a[1].dir == HIGH) ? 1 : -1;
+      global_step_dir_1 = (working_seg->a[1].dir == STEPPER_DIR_HIGH) ? 1 : -1;
 #endif
 #if NUM_MOTORS>2
       digitalWrite( MOTOR_2_DIR_PIN, working_seg->a[2].dir );
-      global_step_dir_2 = (working_seg->a[2].dir == HIGH) ? 1 : -1;
+      global_step_dir_2 = (working_seg->a[2].dir == STEPPER_DIR_HIGH) ? 1 : -1;
 #endif
 #if NUM_MOTORS>3
       digitalWrite( MOTOR_3_DIR_PIN, working_seg->a[3].dir );
-      global_step_dir_3 = (working_seg->a[3].dir == HIGH) ? 1 : -1;
+      global_step_dir_3 = (working_seg->a[3].dir == STEPPER_DIR_HIGH) ? 1 : -1;
 #endif
 #if NUM_MOTORS>4
       digitalWrite( MOTOR_4_DIR_PIN, working_seg->a[4].dir );
-      global_step_dir_4 = (working_seg->a[4].dir == HIGH) ? 1 : -1;
+      global_step_dir_4 = (working_seg->a[4].dir == STEPPER_DIR_HIGH) ? 1 : -1;
 #endif
 #if NUM_MOTORS>5
       digitalWrite( MOTOR_5_DIR_PIN, working_seg->a[5].dir );
-      global_step_dir_5 = (working_seg->a[5].dir == HIGH) ? 1 : -1;
+      global_step_dir_5 = (working_seg->a[5].dir == STEPPER_DIR_HIGH) ? 1 : -1;
 #endif
 #if NUM_SERVOS>0
-      global_servoStep_dir_0 = (working_seg->a[NUM_MOTORS].dir == HIGH) ? -1 : 1;
+      global_servoStep_dir_0 = (working_seg->a[NUM_MOTORS].dir == STEPPER_DIR_HIGH) ? -1 : 1;
 #endif
 
 #if NUM_SERVOS>0
@@ -1143,7 +1157,7 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
     new_seg.a[i].step_count = steps[i];
     new_seg.a[i].delta_steps = steps[i] - old_seg.a[i].step_count;
 
-    new_seg.a[i].dir = ( new_seg.a[i].delta_steps < 0 ? HIGH : LOW );
+    new_seg.a[i].dir = ( new_seg.a[i].delta_steps < 0 ? STEPPER_DIR_HIGH : STEPPER_DIR_LOW );
 #if MACHINE_STYLE == SIXI
     new_seg.a[i].delta_mm = new_seg.a[i].delta_steps * new_seg.a[i].distancePerStep;
 #else

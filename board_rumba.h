@@ -97,8 +97,11 @@
 #ifdef HAS_TMC2130
 
 #define STALL_VALUE -20 // [-64..63]
-#define CS_PIN_0    53  //           17        64  //chip select
-#define CS_PIN_1    49  //           17        64  //chip select
+#define CS_PIN_0    30//53  //           17        64  //chip select
+#define CS_PIN_1    31//49  //           17        64  //chip select
+
+#define MOTOR_0_LIMIT_SWITCH_PIN  (11)
+#define MOTOR_1_LIMIT_SWITCH_PIN  (12)
 
 #include <Arduino.h>
 

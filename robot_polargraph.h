@@ -14,7 +14,7 @@
 #define MAKELANGELO_3    3
 #define MAKELANGELO_3_3  4
 #define MAKELANGELO_5    5
-#define MAKELANGELO_5_2  6  // for testing
+#define MAKELANGELO_6    6  // for testing
 
 
 /// -------------- change here ----------------
@@ -22,8 +22,8 @@
 #define MACHINE_HARDWARE_VERSION   MAKELANGELO_5
 
 // choose one of the following
-#define NORMAL_MOTOR_STEPS   200  // 1.8 degrees per step
-//#define NORMAL_MOTOR_STEPS   400  // 0.9 degrees per step
+//#define NORMAL_MOTOR_STEPS   200  // 1.8 degrees per step
+#define NORMAL_MOTOR_STEPS   400  // 0.9 degrees per step
 /// -------------- change here ----------------
 
 
@@ -52,13 +52,13 @@
 #define MIN_ACCELERATION     (0.0)
 
 #if NORMAL_MOTOR_STEPS == 200
-#define DEFAULT_FEEDRATE     (380.0)
-#define DEFAULT_ACCELERATION (150.0)
+#define DEFAULT_FEEDRATE     (180.0)
+#define DEFAULT_ACCELERATION (300.0)
 #define DEGREES_PER_STEP     (1.8)
 #endif
 #if NORMAL_MOTOR_STEPS == 400
-#define DEFAULT_FEEDRATE     (380.0/2)
-#define DEFAULT_ACCELERATION (150.0/2)
+#define DEFAULT_FEEDRATE     (100.0)
+#define DEFAULT_ACCELERATION (300.0)
 #define DEGREES_PER_STEP     (0.9)
 #endif
 
@@ -85,9 +85,11 @@
 #define HAS_SD
 #define HAS_LCD
 #endif
-#if MACHINE_HARDWARE_VERSION == MAKELANGELO_5_2
+#if MACHINE_HARDWARE_VERSION == MAKELANGELO_6
 #define MAX_SEGMENTS         (16)  // has LCD, needs more ram.
-#define HAS_TMC2130
+#define USE_LIMIT_SWITCH
+#define HAS_TMC2130  // driver type
+#define STEALTHCHOP  // quiet operation
 #define HAS_SD
 #define HAS_LCD
 #endif
