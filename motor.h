@@ -31,6 +31,8 @@
 #ifdef HAS_TMC2130
 #define STEPPER_DIR_HIGH   LOW
 #define STEPPER_DIR_LOW    HIGH
+
+#define HOMING_OCR1A 776
 #else
 // A4988
 #define STEPPER_DIR_HIGH   HIGH
@@ -121,6 +123,7 @@ extern void wait_for_empty_segment_buffer();
 extern char segment_buffer_full();
 extern void motor_line(const float * const target_position,float &fr_mm_s);
 extern void motor_engage();
+extern void motor_home();
 extern void motor_disengage();
 extern void motor_setup();
 extern void setPenAngle(int arg0);

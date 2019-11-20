@@ -7,6 +7,7 @@
 #include "configure.h"
 #include "robot_polargraph.h"
 #include "eeprom.h"
+#include "motor.h"
 
 #if MACHINE_STYLE == POLARGRAPH
 
@@ -206,16 +207,25 @@ void robot_findHome() {
   Serial.println(F("Find Home..."));
 
 #ifdef HAS_TMC2130
-  // disable stealthchop
-  driver_0.coolstep_min_speed(0xFFFFF);
-  driver_1.coolstep_min_speed(0xFFFFF);
-  driver_0.diag1_stall(1);
-  driver_1.diag1_stall(1);
-  #ifdef STEALTHCHOP
-  driver_0.stealthChop(0);
-  driver_1.stealthChop(0);
-  #endif // STEALTHCHOP
-#endif
+  digitalWrite(MOTOR_0_DIR_PIN, STEPPER_DIR_LOW);
+  digitalWrite(MOTOR_1_DIR_PIN, STEPPER_DIR_LOW);
+  //Backoff
+  for (uint32_t i = 0; i < STEPS_PER_MM * 50; ++i) {
+    digitalWrite(MOTOR_0_STEP_PIN, HIGH);
+    digitalWrite(MOTOR_1_STEP_PIN, HIGH);
+    digitalWrite(MOTOR_0_STEP_PIN, LOW);
+    digitalWrite(MOTOR_1_STEP_PIN, LOW);
+    delayMicroseconds(90);
+  }
+  
+  motor_disengage();
+  
+  digitalWrite(MOTOR_0_DIR_PIN, STEPPER_DIR_HIGH);
+  digitalWrite(MOTOR_1_DIR_PIN, STEPPER_DIR_HIGH);
+  
+  motor_home();
+
+#else
 
   findStepDelay();
   
@@ -247,18 +257,6 @@ void robot_findHome() {
     pause(step_delay);
   } while (left + right < 2);
 
-#ifdef HAS_TMC2130
-  // re-enable stealthchop
-  driver_0.coolstep_min_speed(0);
-  driver_1.coolstep_min_speed(0);
-  driver_0.diag1_stall(0);
-  driver_1.diag1_stall(0);
-  #ifdef STEALTHCHOP
-  driver_0.stealthChop(1);
-  driver_1.stealthChop(1);
-  #endif // STEALTHCHOP
-#endif
-
   // make sure there's no momentum to skip the belt on the pulley.
   delay(500);
 
@@ -286,7 +284,8 @@ void robot_findHome() {
   Serial.print(F("Homing to "));  Serial.print  (axies[0].homePos);
   Serial.print(',');              Serial.println(axies[1].homePos);
   //lineSafe(offset, DEFAULT_FEEDRATE);
-  
+#endif
+
   Serial.println(F("Done."));
 }
 

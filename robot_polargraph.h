@@ -19,7 +19,7 @@
 
 /// -------------- change here ----------------
 // change this line for your version
-#define MACHINE_HARDWARE_VERSION   MAKELANGELO_5
+#define MACHINE_HARDWARE_VERSION   MAKELANGELO_6
 
 // choose one of the following
 //#define NORMAL_MOTOR_STEPS   200  // 1.8 degrees per step
