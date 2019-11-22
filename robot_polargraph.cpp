@@ -207,23 +207,17 @@ void robot_findHome() {
   Serial.println(F("Find Home..."));
 
 #ifdef HAS_TMC2130
-  digitalWrite(MOTOR_0_DIR_PIN, STEPPER_DIR_LOW);
-  digitalWrite(MOTOR_1_DIR_PIN, STEPPER_DIR_LOW);
-  //Backoff
-  for (uint32_t i = 0; i < STEPS_PER_MM * 50; ++i) {
-    digitalWrite(MOTOR_0_STEP_PIN, HIGH);
-    digitalWrite(MOTOR_1_STEP_PIN, HIGH);
-    digitalWrite(MOTOR_0_STEP_PIN, LOW);
-    digitalWrite(MOTOR_1_STEP_PIN, LOW);
-    delayMicroseconds(90);
-  }
-  
-  motor_disengage();
-  
+	delay(1000);
   digitalWrite(MOTOR_0_DIR_PIN, STEPPER_DIR_HIGH);
   digitalWrite(MOTOR_1_DIR_PIN, STEPPER_DIR_HIGH);
-  
+
   motor_home();
+  
+  while(homing == true){
+	  Serial.println("still homing");
+  }
+  Serial.println("BOTH EN false");
+  enable_stealthChop();
 
 #else
 
@@ -260,6 +254,7 @@ void robot_findHome() {
   // make sure there's no momentum to skip the belt on the pulley.
   delay(500);
 
+  #endif
   //Serial.println(F("Estimating position..."));
   long count[NUM_MOTORS+NUM_SERVOS];
   count[0] = calibrateLeft/MM_PER_STEP;
@@ -284,7 +279,7 @@ void robot_findHome() {
   Serial.print(F("Homing to "));  Serial.print  (axies[0].homePos);
   Serial.print(',');              Serial.println(axies[1].homePos);
   //lineSafe(offset, DEFAULT_FEEDRATE);
-#endif
+
 
   Serial.println(F("Done."));
 }

@@ -362,33 +362,66 @@ void disable_stealthChop(){
   driver_0.diag1_stall(1);
   driver_1.diag1_stall(1);
   #ifdef STEALTHCHOP
+  Serial.println("Disabling StealthChop");
   driver_0.stealthChop(0);
   driver_1.stealthChop(0);
   #endif // STEALTHCHOP
 }
-void enable_stealthChop(){
-  // re-enable stealthchop
-  driver_0.coolstep_min_speed(0);
-  driver_1.coolstep_min_speed(0);
-  driver_0.diag1_stall(0);
-  driver_1.diag1_stall(0);
-  #ifdef STEALTHCHOP
-  driver_0.stealthChop(1);
-  driver_1.stealthChop(1);
-  #endif // STEALTHCHOP
+void enable_stealthChop(){	
+	cli();
+	TCCR1A = 0;		// set entire TCCR1A register to 0
+	TCNT1  = 0;		// set the overflow clock to 0
+	// set compare match register to desired timer count
+	OCR1A = 2000;  // 1ms
+	TCCR1B = (1 << WGM12);	// turn on CTC mode
+	TCCR1B = (TCCR1B & ~(0x07 << CS10)) | (2 << CS10);		// Set 8x prescaler
+	TIMSK1 |= (1 << OCIE1A);		// enable timer compare interrupt
+	sei();
+	
+	// re-enable stealthchop
+	driver_0.coolstep_min_speed(0);
+	driver_1.coolstep_min_speed(0);
+	driver_0.diag1_stall(0);
+	driver_1.diag1_stall(0);
+	#ifdef STEALTHCHOP
+		Serial.println("enabling StealthChop");
+		driver_0.stealthChop(1);
+		driver_1.stealthChop(1);
+	#endif // STEALTHCHOP
   
-  motor_engage();
+	motor_engage();
 }
 
 void motor_home(){
-	disable_stealthChop();
-	noInterrupts();
-	OCR1A = HOMING_OCR1A;
+	
+	cli();
+    TCCR1A = 0;// set entire TCCR1A register to 0
+    TCNT1  = 0;//initialize counter value to 0
+    OCR1A = HOMING_OCR1A; // = (16*10^6) / (1*1024) - 1 (must be <65536)
+    TCCR1B = (1 << WGM12);		// turn on CTC mode
+    TCCR1B |= (1 << CS11);		// Set CS11 bits for 8 prescaler
+    TIMSK1 |= (1 << OCIE1A);	// enable timer compare interrupt
+	
 	homing = true;
+	  //Backoff
+	for (uint32_t i = 0; i < STEPS_PER_MM * 50; ++i) {
+		digitalWrite(MOTOR_0_STEP_PIN, HIGH);
+		digitalWrite(MOTOR_1_STEP_PIN, HIGH);
+		digitalWrite(MOTOR_0_STEP_PIN, LOW);
+		digitalWrite(MOTOR_1_STEP_PIN, LOW);
+		delayMicroseconds(90);
+	}
+  
+	motor_disengage();
+	disable_stealthChop();
 	motor_engage();
+	
+	digitalWrite(MOTOR_0_DIR_PIN, STEPPER_DIR_LOW);
+	digitalWrite(MOTOR_1_DIR_PIN, STEPPER_DIR_LOW);
 	en1 = true;
 	en0 = true;
-	interrupts();
+	sei();
+	delay(1000);
 }
 #endif
 // turn on power to the motors (make them immobile)
@@ -1116,12 +1149,11 @@ inline void homing_sequence() {
     digitalWrite(MOTOR_1_STEP_PIN, LOW);
     if (digitalRead(MOTOR_1_LIMIT_SWITCH_PIN) == LOW) {
       digitalWrite( MOTOR_1_ENABLE_PIN,  HIGH );
-	  en0 = false;
+	  en1 = false;
     }
   }
   if (en1 == false && en0 == false){
 	  homing = false;
-	  enable_stealthChop();
   }
 }
 
@@ -1133,13 +1165,9 @@ ISR(TIMER1_COMPA_vect) {
   CRITICAL_SECTION_START
 #endif
 
-#ifndef HAS_TMC2130
-{
-#else
   if (homing == true){
 	  homing_sequence();
   }else{
-#endif
 	  isr_internal();
   }
 
