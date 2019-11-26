@@ -207,17 +207,23 @@ void robot_findHome() {
   Serial.println(F("Find Home..."));
 
 #ifdef HAS_TMC2130
-	delay(1000);
-  digitalWrite(MOTOR_0_DIR_PIN, STEPPER_DIR_HIGH);
-  digitalWrite(MOTOR_1_DIR_PIN, STEPPER_DIR_HIGH);
+	delay(500);
+	digitalWrite(MOTOR_0_DIR_PIN, STEPPER_DIR_HIGH);
+	digitalWrite(MOTOR_1_DIR_PIN, STEPPER_DIR_HIGH);
 
-  motor_home();
+	motor_home();
   
-  while(homing == true){
+	while(homing == true){
+		Serial.print(driver_0.TSTEP());
+		Serial.print("   ");
+		Serial.print(digitalRead(MOTOR_0_LIMIT_SWITCH_PIN));
+		Serial.print("   ");
+		Serial.print(digitalRead(MOTOR_1_LIMIT_SWITCH_PIN));
+		Serial.print("   ");
 	  Serial.println("still homing");
-  }
-  Serial.println("BOTH EN false");
-  enable_stealthChop();
+	}
+	Serial.println("BOTH EN false");
+	enable_stealthChop();
 
 #else
 
@@ -278,7 +284,7 @@ void robot_findHome() {
   offset[2]=axies[2].pos;
   Serial.print(F("Homing to "));  Serial.print  (axies[0].homePos);
   Serial.print(',');              Serial.println(axies[1].homePos);
-  //lineSafe(offset, DEFAULT_FEEDRATE);
+  lineSafe(offset, DEFAULT_FEEDRATE);
 
 
   Serial.println(F("Done."));
