@@ -11,7 +11,7 @@
 //------------------------------------------------------------------------------
 
 //#define VERBOSE           (1)  // add to get a lot more serial output.
-
+//#define DEBUG_STEPPING  // uncomment to debug stepper internal timer
 
 //------------------------------------------------------------------------------
 // Robot styles supported
