@@ -860,7 +860,7 @@ void processCommand() {
       Serial.println(MACHINE_HARDWARE_VERSION);
       break;
 #if MACHINE_STYLE == POLARGRAPH
-    case 11:  makelangelo5Setup();  break;
+    case 11:  makelangelo6Setup();  break;
     case 12:  recordHome();  break;
 #endif
 #ifdef MACHINE_HAS_LIFTABLE_PEN
@@ -953,6 +953,31 @@ void setFeedratePerAxis() {
 
 
 #if MACHINE_STYLE == POLARGRAPH
+/**
+   D11 makelangelo 6 specific setup call
+*/
+void makelangelo6Setup() {
+  // if you accidentally upload m3 firmware to an m5 then upload it ONCE with this line uncommented.
+  float limits[NUM_AXIES * 2];
+  limits[0] = 707.5/2;
+  limits[1] = -707.5/2;
+  limits[2] = 500;
+  limits[3] = -500;
+  limits[4] = PEN_UP_ANGLE;
+  limits[5] = PEN_DOWN_ANGLE;
+  adjustLimits(limits);
+
+  calibrateLeft = 1025;
+  calibrateRight = 1025;
+  saveCalibration();
+
+  float homePos[NUM_AXIES];
+  homePos[0] = 0;
+  homePos[1] = limits[2] - 217.0;
+  homePos[2] = 50;
+  setHome(homePos);
+
+}
 /**
    D11 makelangelo 5 specific setup call
 */

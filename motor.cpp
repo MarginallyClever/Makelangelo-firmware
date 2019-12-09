@@ -43,7 +43,9 @@ Servo servos[NUM_SERVOS];
 TMC2130Stepper driver_0 = TMC2130Stepper(CS_PIN_0);
 TMC2130Stepper driver_1 = TMC2130Stepper(CS_PIN_1);
 
-bool vsense;
+bool en0, en1 = false;
+bool homing = false;
+// bool vsense;
 #endif
 
 Segment line_segments[MAX_SEGMENTS];
@@ -125,23 +127,21 @@ uint8_t positionErrorFlags;
 void itr();
 #endif
 
-
+/* //not used anywhere so far
 #ifdef HAS_TMC2130
 uint16_t rms_current(uint8_t CS, float Rsense = 0.11) {
   return (float)(CS+1)/32.0 * (vsense?0.180:0.325)/(Rsense+0.02) / 1.41421 * 1000;
 }
 #endif
+*/
 
 const int movesPlanned() {
   return SEGMOD( last_segment - current_segment );
 }
 
-
-
 FORCE_INLINE int get_next_segment(int i) {
   return SEGMOD( i + 1 );
 }
-
 
 FORCE_INLINE int get_prev_segment(int i) {
   return SEGMOD( i - 1 );
@@ -161,24 +161,24 @@ float max_speed_allowed(const float &acc, const float &target_velocity, const fl
 
 #ifdef HAS_TMC2130
 void tmc_setup(TMC2130Stepper &driver) {
-  #define R_SENSE            0.11
-  #define HOLD_MULTIPLIER    0.5
-  #define STALL_VALUE        -20
-  //#define HYBRID_THRESHOLD   100
   
   driver.begin();
-  driver.setCurrent(235,R_SENSE,HOLD_MULTIPLIER); // mA
+  driver.setCurrent(CURRENT, R_SENSE, HOLD_MULTIPLIER);
   driver.microsteps(MICROSTEPS);
   driver.blank_time(24);
-  driver.off_time(5);
+  driver.off_time(2);
   driver.interpolate(true);
   driver.power_down_delay(128); // ~2s until driver lowers to hold current
-  driver.hysteresis_start(3);
+  driver.hysteresis_start(5);
   driver.hysteresis_end(2);
-  driver.coolstep_min_speed(0);
-  driver.diag1_stall(1);
-  driver.diag1_active_high(0);  // active low
+  
+  driver.diag1_stall(0);  // use diag1 to signal stall event
+  driver.diag1_active_high(0);  // I want active low
   driver.sg_stall_value(STALL_VALUE);
+  
+  driver.coolstep_min_speed(0);
+  driver.THIGH(0);
+  driver.vsense(CURRENT >= 540 ? 1 : 0);
   
   #if defined(STEALTHCHOP)
     driver.stealth_freq(1); // f_pwm = 2/683 f_clk
@@ -190,7 +190,7 @@ void tmc_setup(TMC2130Stepper &driver) {
     //  driver.stealth_max_speed(12650000UL*MICROSTEPS/(256*HYBRID_THRESHOLD*STEPS_PER_MM));
     //#endif
   #endif
-  driver.GSTAT(); // Clear GSTAT
+  driver.GSTAT(0); // Clear GSTAT
 }
 #endif
 
@@ -198,20 +198,7 @@ void tmc_setup(TMC2130Stepper &driver) {
  * set up the pins for each motor
  */
 void motor_setup() {
-#ifdef HAS_TMC2130
-  SPI.begin();
-  
-  pinMode(CS_PIN_0,OUTPUT);
-  pinMode(CS_PIN_1,OUTPUT);
-  digitalWrite(CS_PIN_0, HIGH);
-  digitalWrite(CS_PIN_1, HIGH);
-  pinMode(MISO, INPUT_PULLUP);
-
-  tmc_setup(driver_0);
-  tmc_setup(driver_1);
-  vsense = driver_0.vsense();
-#endif  // HAS_TMC2130
-
+	
   motors[0].step_pin        = MOTOR_0_STEP_PIN;
   motors[0].dir_pin         = MOTOR_0_DIR_PIN;
   motors[0].enable_pin      = MOTOR_0_ENABLE_PIN;
@@ -253,11 +240,28 @@ void motor_setup() {
     pinMode(motors[i].step_pin, OUTPUT);
     pinMode(motors[i].dir_pin, OUTPUT);
     pinMode(motors[i].enable_pin, OUTPUT);
-
     // set the switch pin
     pinMode(motors[i].limit_switch_pin, INPUT);
     digitalWrite(motors[i].limit_switch_pin, HIGH);
+	
+	#ifdef HAS_TMC2130
+	  digitalWrite(motors[i].enable_pin, HIGH); //deactivate driver (LOW active)
+	  digitalWrite(motors[i].step_pin, LOW);
+	#endif
+	
   }
+  #ifdef HAS_TMC2130
+    pinMode(CS_PIN_0,OUTPUT);
+    pinMode(CS_PIN_1,OUTPUT);
+    digitalWrite(CS_PIN_0, HIGH);
+    digitalWrite(CS_PIN_1, HIGH);
+	
+	SPI.begin();
+    pinMode(MISO, INPUT_PULLUP);
+
+    tmc_setup(driver_0);
+    tmc_setup(driver_1);
+  #endif  // HAS_TMC2130
 
   long steps[NUM_MOTORS + NUM_SERVOS];
   memset(steps, 0, (NUM_MOTORS + NUM_SERVOS)*sizeof(long));
@@ -337,7 +341,91 @@ void motor_setup() {
 #endif // DEBUG_STEPPING
 }
 
+#ifdef HAS_TMC2130
+void disable_stealthChop(){
+  // disable stealthchop
+  driver_0.coolstep_min_speed(0xFFFFF);
+  driver_1.coolstep_min_speed(0xFFFFF);
+  driver_0.diag1_stall(1);
+  driver_1.diag1_stall(1);
+  
+  #ifdef MEASURED_TSTEP
+	Serial.println("measured_tstep is inputting");
+    driver_0.TCOOLTHRS((float)MEASURED_TSTEP*(100+MEASURED_TSTEP_MARGIN_PCT)/100.0f);  // + margin %
+	driver_1.TCOOLTHRS((float)MEASURED_TSTEP*(100+MEASURED_TSTEP_MARGIN_PCT)/100.0f);  // + margin %
+    driver_0.THIGH    ((float)MEASURED_TSTEP*(100-MEASURED_TSTEP_MARGIN_PCT)/100.0f);  // - margin %
+    driver_1.THIGH    ((float)MEASURED_TSTEP*(100-MEASURED_TSTEP_MARGIN_PCT)/100.0f);  // - margin %
+  #endif MEASURED_TSTEP
+  
+  #ifdef STEALTHCHOP
+  Serial.println("Disabling StealthChop");
+  driver_0.stealthChop(0);
+  driver_1.stealthChop(0);
+  #endif // STEALTHCHOP
+}
+void enable_stealthChop(){	
+	cli();
+	TCCR1A = 0;		// set entire TCCR1A register to 0
+	TCNT1  = 0;		// set the overflow clock to 0
+	// set compare match register to desired timer count
+	OCR1A = 2000;  // 1ms
+	TCCR1B = (1 << WGM12);	// turn on CTC mode
+	TCCR1B = (TCCR1B & ~(0x07 << CS10)) | (2 << CS10);		// Set 8x prescaler
+	TIMSK1 |= (1 << OCIE1A);		// enable timer compare interrupt
+	sei();
+	
+	// re-enable stealthchop
+	driver_0.coolstep_min_speed(0);
+	driver_1.coolstep_min_speed(0);
+	driver_0.diag1_stall(0);
+	driver_1.diag1_stall(0);
+	
+	#ifdef MEASURED_TSTEP
+		driver_0.THIGH(0);
+		driver_1.THIGH(0);
+	#endif MEASURED_TSTEP
+	
+	#ifdef STEALTHCHOP
+		Serial.println("enabling StealthChop");
+		driver_0.stealthChop(1);
+		driver_1.stealthChop(1);
+	#endif // STEALTHCHOP
+  
+	motor_engage();
+}
 
+void motor_home(){
+	  
+	//Backoff
+	for (uint32_t i = 0; i < STEPS_PER_MM * 25; ++i) {
+		digitalWrite(MOTOR_0_STEP_PIN, HIGH);
+		digitalWrite(MOTOR_1_STEP_PIN, HIGH);
+		digitalWrite(MOTOR_0_STEP_PIN, LOW);
+		digitalWrite(MOTOR_1_STEP_PIN, LOW);
+		delayMicroseconds(45);
+	}
+	
+	cli();
+    TCCR1A = 0;// set entire TCCR1A register to 0
+    TCNT1  = 0;//initialize counter value to 0
+    OCR1A = HOMING_OCR1A; // = (16*10^6) / (1*1024) - 1 (must be <65536)
+    TCCR1B = (1 << WGM12);		// turn on CTC mode
+    TCCR1B |= (1 << CS11);		// Set CS11 bits for 8 prescaler
+    TIMSK1 |= (1 << OCIE1A);	// enable timer compare interrupt
+
+	homing = true;
+	
+	motor_disengage();
+	disable_stealthChop();
+	motor_engage();
+	
+	digitalWrite(MOTOR_0_DIR_PIN, STEPPER_DIR_LOW);
+	digitalWrite(MOTOR_1_DIR_PIN, STEPPER_DIR_LOW);
+	en1 = true;
+	en0 = true;
+	sei();	
+}
+#endif
 // turn on power to the motors (make them immobile)
 void motor_engage() {
   int i;
@@ -385,8 +473,6 @@ void setPenAngle(int arg0) {
   //#endif  // ESP8266
 #endif // NUM_SERVOS>0
 }
-
-
 
 
 void recalculate_reverse_kernel(Segment *const current, const Segment *next) {
@@ -1091,14 +1177,42 @@ void isr_internal() {
 }
 
 
+inline void homing_sequence() {
+  if (en0 == true) {
+	  
+	digitalWrite(MOTOR_0_STEP_PIN, HIGH);
+	digitalWrite(MOTOR_0_STEP_PIN, LOW);
+	if (digitalRead(MOTOR_0_LIMIT_SWITCH_PIN) == LOW) {
+		digitalWrite( MOTOR_0_ENABLE_PIN,  HIGH );
+		en0 = false;
+	}
+  }
+  if (en1 == true) {
+    digitalWrite(MOTOR_1_STEP_PIN, HIGH);
+    digitalWrite(MOTOR_1_STEP_PIN, LOW);
+    if (digitalRead(MOTOR_1_LIMIT_SWITCH_PIN) == LOW) {
+      digitalWrite( MOTOR_1_ENABLE_PIN,  HIGH );
+	  en1 = false;
+    }
+  }
+  if (en1 == false && en0 == false){
+	  homing = false;
+  }
+}
+
+
 #ifdef ESP8266
 void itr() {
 #else
 ISR(TIMER1_COMPA_vect) {
   CRITICAL_SECTION_START
 #endif
-#ifndef DEBUG_STEPPING
-  isr_internal();
+#ifndef DEBUG_STE
+  if (homing == true){
+	  homing_sequence();
+  }else{
+	  isr_internal();
+  }
 #endif // DEBUG_STEPPING
 
 #ifndef ESP8266
