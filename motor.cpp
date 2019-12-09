@@ -1176,7 +1176,7 @@ void isr_internal() {
   }
 }
 
-
+#ifdef HAS_TMC2130
 inline void homing_sequence() {
   if (en0 == true) {
 	  
@@ -1199,6 +1199,7 @@ inline void homing_sequence() {
 	  homing = false;
   }
 }
+#endif
 
 
 #ifdef ESP8266
@@ -1207,12 +1208,12 @@ void itr() {
 ISR(TIMER1_COMPA_vect) {
   CRITICAL_SECTION_START
 #endif
-#ifndef DEBUG_STE
-  if (homing == true){
-	  homing_sequence();
-  }else{
-	  isr_internal();
-  }
+#ifndef DEBUG_STEPPING
+#ifdef HAS_TMC2130
+  if (homing == true) homing_sequence();
+  else
+#endif
+	     isr_internal();
 #endif // DEBUG_STEPPING
 
 #ifndef ESP8266
