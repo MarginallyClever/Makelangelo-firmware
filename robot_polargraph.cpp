@@ -285,7 +285,7 @@ void robot_findHome() {
   offset[2]=axies[2].pos;
   Serial.print(F("Homing to "));  Serial.print  (axies[0].homePos);
   Serial.print(',');              Serial.println(axies[1].homePos);
-  //lineSafe(offset, DEFAULT_FEEDRATE);
+  lineSafe(offset, DEFAULT_FEEDRATE);
   
   Serial.println(F("Done."));
 }
