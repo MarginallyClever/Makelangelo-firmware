@@ -311,6 +311,7 @@ void motor_setup() {
   positionErrorFlags = POSITION_ERROR_FLAG_CONTINUOUS;// | POSITION_ERROR_FLAG_ESTOP;
 #endif
 
+#ifndef DEBUG_STEPPING
   // disable global interrupts
   noInterrupts();
 #ifdef ESP8266
@@ -333,6 +334,7 @@ void motor_setup() {
 #endif  // ESP8266
 
   interrupts();  // enable global interrupts
+#endif // DEBUG_STEPPING
 }
 
 
@@ -761,7 +763,10 @@ static FORCE_INLINE uint16_t MultiU24X32toH16(uint32_t longIn1, uint32_t longIn2
 /**
  *  Process all line segments in the ring buffer.  Uses bresenham's line algorithm to move all motors.
  */
-inline void isr_internal() {
+#ifndef DEBUG_STEPPING
+inline 
+#endif
+void isr_internal() {
   // segment buffer empty? do nothing
   if ( working_seg == NULL ) {
     working_seg = get_current_segment();
@@ -847,6 +852,31 @@ inline void isr_internal() {
       servoDelta0 = working_seg->a[NUM_MOTORS].absdelta;
       servoOver0 = -(steps_total >> 1);
 #endif
+
+#ifdef DEBUG_STEPPING
+      int decel = working_seg->steps_total - working_seg->decel_after;
+      Serial.print("seg: ");  Serial.println((long)working_seg,HEX);
+      Serial.print("  distance: ");  Serial.println(working_seg->distance);
+      Serial.print("  nominal_speed: ");  Serial.println(working_seg->nominal_speed);
+      Serial.print("  entry_speed: ");  Serial.println(working_seg->entry_speed);
+      Serial.print("  entry_speed_max: ");  Serial.println(working_seg->entry_speed_max);
+      Serial.print("  acceleration: ");  Serial.println(working_seg->acceleration);
+      Serial.print("  accel: ");  Serial.println(working_seg->accel_until);
+      Serial.print("  nominal: ");  Serial.println(working_seg->steps_total-working_seg->accel_until-decel);
+      Serial.print("  decel: ");  Serial.println(decel);
+      Serial.print("  initial_rate: ");  Serial.println(working_seg->initial_rate);
+      Serial.print("  nominal_rate: ");  Serial.println(working_seg->nominal_rate);
+      Serial.print("  final_rate: ");  Serial.println(working_seg->final_rate);
+      Serial.print("  acceleration_steps_per_s2: ");  Serial.println(working_seg->acceleration_steps_per_s2);
+      Serial.print("  acceleration_rate: ");  Serial.println(working_seg->acceleration_rate);
+      Serial.print("  nominal_length_flag: ");  Serial.println(working_seg->nominal_length_flag==0?"n":"y");
+      //Serial.print("  recalculate_flag: ");  Serial.println(working_seg->recalculate_flag==0?"n":"y");
+      //Serial.print("  dx: ");  Serial.println(working_seg->a[0].delta_mm);
+      //Serial.print("  dy: ");  Serial.println(working_seg->a[1].delta_mm);
+      //Serial.print("  dz: ");  Serial.println(working_seg->a[2].delta_mm);
+      
+#endif
+
       return;
     } else {
       CLOCK_ADJUST(2000); // wait 1ms
@@ -881,6 +911,9 @@ inline void isr_internal() {
 
     // move each axis
     for (i = 0; i < isr_step_multiplier; ++i) {
+#ifdef DEBUG_STEPPING
+      delayMicroseconds(150);
+#endif
       over0 += delta0;
       if (over0 > 0) digitalWrite(MOTOR_0_STEP_PIN, START0);
 #if NUM_MOTORS>1
@@ -983,6 +1016,9 @@ inline void isr_internal() {
     // accel
     uint32_t interval;
     if ( steps_taken <= accel_until ) {
+#ifdef DEBUG_STEPPING
+      //Serial.print("a");
+#endif
       current_feed_rate = start_feed_rate + MultiU24X32toH16( time_accelerating, current_acceleration );
       if (current_feed_rate > working_seg->nominal_rate) {
         current_feed_rate = working_seg->nominal_rate;
@@ -1004,6 +1040,9 @@ inline void isr_internal() {
         Serial.print(" * ");     Serial.print(time_accelerating);
         Serial.println();//*/
     } else if ( steps_taken > decel_after ) {
+#ifdef DEBUG_STEPPING
+      //Serial.print("d");
+#endif
       uint32_t end_feed_rate = current_feed_rate - MultiU24X32toH16( time_decelerating, current_acceleration );
       if ( end_feed_rate < working_seg->final_rate ) {
         end_feed_rate = working_seg->final_rate;
@@ -1025,6 +1064,9 @@ inline void isr_internal() {
         Serial.print(" * ");     Serial.print(time_decelerating);
         Serial.println();//*/
     } else {
+#ifdef DEBUG_STEPPING
+      //Serial.print("n");
+#endif
       if (isr_nominal_rate == 0) {
         isr_nominal_rate = calc_timer(working_seg->nominal_rate, &isr_step_multiplier);
       }
@@ -1055,7 +1097,9 @@ void itr() {
 ISR(TIMER1_COMPA_vect) {
   CRITICAL_SECTION_START
 #endif
+#ifndef DEBUG_STEPPING
   isr_internal();
+#endif // DEBUG_STEPPING
 
 #ifndef ESP8266
   CRITICAL_SECTION_END
@@ -1108,7 +1152,11 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
 #if MACHINE_STYLE == SIXI
     sensorUpdate();
 #else
+#ifdef DEBUG_STEPPING
+    isr_internal();
+#else
     delay(1);
+#endif
 #endif
   }
 
@@ -1137,6 +1185,7 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
   }
 #endif
 
+  // find the number of steps for each motor, the direction, and the absolute steps
   // The axis that has the most steps will control the overall acceleration as per bresenham's algorithm.
   new_seg.steps_total = 0;
   for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
@@ -1179,14 +1228,16 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
   new_seg.nominal_speed = new_seg.distance * inverse_secs;
   new_seg.nominal_rate = ceil(new_seg.steps_total * inverse_secs);
 
-  // Calculate the the speed limit for each axis
+
+  // Calculate the the speed limit for each axis.
+  // All speeds are connected so if one motor slows, they all have to slow the same amount.
   float current_speed[NUM_MOTORS + NUM_SERVOS], speed_factor = 1.0;
   for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
     current_speed[i] = new_seg.a[i].delta_mm * inverse_secs;
     const float cs = fabs(current_speed[i]);
     if (cs > max_feedrate_mm_s[i]) speed_factor = min (speed_factor, max_feedrate_mm_s[i] / cs);
   }
-
+  // apply the speed limit
   if (speed_factor < 1.0) {
     for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
       current_speed[i] *= speed_factor;
@@ -1195,6 +1246,7 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
     new_seg.nominal_rate *= speed_factor;
   }
 
+  // acceleration is a global set with "G0 A*"
   float max_acceleration = acceleration;
 #if MACHINE_STYLE == POLARGRAPH
 #ifdef DYNAMIC_ACCELERATION
@@ -1204,15 +1256,15 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
     // Special thanks to https://www.reddit.com/user/zebediah49 for his math help.
 
     // normal vectors pointing from plotter to motor
-    float R1x = axies[0].limitMin - oldX;
-    float R1y = axies[1].limitMax - oldY;
-    float Rlen = old_seg.a[0].step_count * MM_PER_STEP;//sqrt(sq(R1x) + sq(R1y));
+    float R1x = axies[0].limitMin - oldX;  // to left
+    float R1y = axies[1].limitMax - oldY;  // to top
+    float Rlen = sqrt(sq(R1x) + sq(R1y));//old_seg.a[0].step_count * MM_PER_STEP;
     R1x /= Rlen;
     R1y /= Rlen;
 
-    float R2x = axies[0].limitMax - oldX;
-    float R2y = axies[1].limitMax - oldY;
-    Rlen = old_seg.a[1].step_count * MM_PER_STEP;//sqrt(sq(R2x) + sq(R2y));
+    float R2x = axies[0].limitMax - oldX;  // to right
+    float R2y = axies[1].limitMax - oldY;  // to top
+    Rlen = sqrt(sq(R2x) + sq(R2y));//old_seg.a[1].step_count * MM_PER_STEP;
     R2x /= Rlen;
     R2y /= Rlen;
 
@@ -1226,22 +1278,16 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
       Ty /= Rlen;
       // solve cT = -gY + k1 R1 for c [and k1]
       // solve cT = -gY + k2 R2 for c [and k2]
-#define GRAVITYmag (98.0)  // what are the units here?  mm?
+#define GRAVITYmag (980.0)  // mm
       float c1 = -GRAVITYmag * R1x / (Tx * R1y - Ty * R1x);
       float c2 = -GRAVITYmag * R2x / (Tx * R2y - Ty * R2x);
 
       // If c is negative, that means that that support rope doesn't limit the acceleration; discard that c.
-      float cT = 0;
-      if ( c1 > 0 && c2 > 0 ) {
-        // If c is positive in both cases, take the smaller one.
-        cT = ( c1 < c2 ) ? c1 : c2;
-      } else if (c1 > 0) cT = c1;
-      else cT = c2;
-
+      float cT = max_acceleration;
+      if( c1>0 && cT>c1 ) cT=c1;
+      if( c2>0 && cT>c2 ) cT=c2;
       // The maximum acceleration is given by cT.
-      if (cT > 0 && max_acceleration > cT) {
-        max_acceleration = max(cT, (float)MIN_ACCELERATION);
-      }
+      max_acceleration = max(cT, (float)MIN_ACCELERATION);
     }
   }
 #endif  // DYNAMIC_ACCELERATION
@@ -1294,15 +1340,17 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
       // If this maximum velocity allowed is lower than the minimum of the entry / exit safe velocities,
       // then the machine is not coasting anymore and the safe entry / exit velocities shall be used.
   
-      // The junction velocity will be shared between successive segments. Limit the junction velocity to their minimum.
-      // Pick the smaller of the nominal speeds. Higher speed shall not be achieved at the junction during coasting.
-      vmax_junction = min(new_seg.nominal_speed, previous_nominal_speed);
 #if MACHINE_STYLE != SIXI
-      const float smaller_speed_factor = vmax_junction / previous_nominal_speed;
       // Factor to multiply the previous / current nominal velocities to get componentwise limited velocities.
       float v_factor = 1.0f;
       limited = 0;
+
+      // The junction velocity will be shared between successive segments. Limit the junction velocity to their minimum.
+      // Pick the smaller of the nominal speeds. Higher speed shall not be achieved at the junction during coasting.
+      vmax_junction = min(new_seg.nominal_speed, previous_nominal_speed);
+      
       // Now limit the jerk in all axes.
+      const float smaller_speed_factor = vmax_junction / previous_nominal_speed;
       for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
         // Limit an axis. We have to differentiate: coasting, reversal of an axis, full stop.
         float v_exit = previous_speed[i] * smaller_speed_factor;
@@ -1324,23 +1372,33 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
           ++limited;
         }
       }
-      if (limited) vmax_junction *= v_factor;
+      if (limited) {
+#ifdef DEBUG_STEPPING
+        Serial.print("  limited ");  Serial.print(v_factor);
+#endif
+        vmax_junction *= v_factor;
+      }
       // Now the transition velocity is known, which maximizes the shared exit / entry velocity while
       // respecting the jerk factors, it may be possible, that applying separate safe exit / entry velocities will achieve faster prints.
       const float vmax_junction_threshold = vmax_junction * 0.99f;
       if (previous_safe_speed > vmax_junction_threshold && safe_speed > vmax_junction_threshold) {
         // Not coasting. The machine will stop and start the movements anyway,
         // better to start the segment from start.
+#ifdef DEBUG_STEPPING
+        Serial.print("  vmax_junction=");  Serial.print(safe_speed);
+#endif
         vmax_junction = safe_speed;
       }
 #endif  // MACHINE_STYLE != SIXI
 #if MACHINE_STYLE == POLARGRAPH
     }
 #endif
+  } else {  // movesQueued <= 0 || previous_safe_speed <= 0.0001
+    vmax_junction = safe_speed;
   }
+  previous_safe_speed = safe_speed;
 
   float allowable_speed = max_speed_allowed(-new_seg.acceleration, MIN_FEEDRATE, new_seg.distance);
-
 
   new_seg.entry_speed_max = vmax_junction;
   new_seg.entry_speed = min(vmax_junction, allowable_speed);
@@ -1348,7 +1406,6 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
   new_seg.recalculate_flag = true;
 
   previous_nominal_speed = new_seg.nominal_speed;
-  previous_safe_speed = safe_speed;
   for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
     previous_speed[i] = current_speed[i];
   }

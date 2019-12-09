@@ -127,6 +127,10 @@ extern void setPenAngle(int arg0);
 
 extern const int movesPlanned();
 
+#ifdef DEBUG_STEPPING
+extern void isr_internal();
+#endif // DEBUG_STEPPING
+
 //extern FORCE_INLINE Segment *get_current_segment();
 // for reasons I don't understand... if i put this method in the .h file i get compile errors.
 // so I put it here, which forces the externs.

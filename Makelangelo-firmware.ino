@@ -218,13 +218,12 @@ void lineSafe(float *pos, float new_feed_rate) {
 #endif
 
   len = sqrt(len);  //mm
-  int pieces = ceil(len / SEGMENT_MAX_LENGTH_MM );
   float a;
-  long j;
+  float j;
 
   // draw everything up to (but not including) the destination.
-  for (j = 1; j < pieces; ++j) {
-    a = (float)j / (float)pieces;
+  for (j = SEGMENT_MAX_LENGTH_MM; j < len; j+=SEGMENT_MAX_LENGTH_MM) {
+    a = j / len;
     for (i = 0; i < NUM_AXIES; ++i) {
       temp[i] = delta[i] * a + startPos[i];
     }
@@ -1368,4 +1367,8 @@ void loop() {
     }
   }
 #endif
+
+#ifdef DEBUG_STEPPING
+  isr_internal();
+#endif  // DEBUG_STEPPING
 }
