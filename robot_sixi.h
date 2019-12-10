@@ -8,6 +8,8 @@
 
 #if MACHINE_STYLE == SIXI
 
+#define MOTHERBOARD BOARD_SIXI_MEGA  // forced
+
 #define MACHINE_STYLE_NAME           "SIXI"
 #define MACHINE_HARDWARE_VERSION     6  // yellow sixi 2019
 
