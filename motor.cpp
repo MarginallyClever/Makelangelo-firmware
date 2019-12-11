@@ -1441,76 +1441,74 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
     }
   }
 
+#ifdef DEBUG_STEPPING
+        Serial.print("  nominal_speed=");  Serial.println(new_seg.nominal_speed);
+        Serial.print("  safe_speed=");  Serial.println(safe_speed);
+#endif
+
   // what is the maximum starting speed for this segment?
   float vmax_junction = MIN_FEEDRATE;
 
   int movesQueued = movesPlanned();
-  if (movesQueued > 0 && previous_safe_speed > 0.0001) {
-#if MACHINE_STYLE == POLARGRAPH
-    // if starting or ending a servo move then the safe speed is MIN_FEEDRATE.
-    //if(previous_speed[NUM_MOTORS]!=0 || current_speed[NUM_MOTORS]!=0) 
-    {
-#endif
-      // Estimate a maximum velocity allowed at a joint of two successive segments.
-      // If this maximum velocity allowed is lower than the minimum of the entry / exit safe velocities,
-      // then the machine is not coasting anymore and the safe entry / exit velocities shall be used.
   
-#if MACHINE_STYLE != SIXI
-      // Factor to multiply the previous / current nominal velocities to get componentwise limited velocities.
-      float v_factor = 1.0f;
-      limited = 0;
-
-      // The junction velocity will be shared between successive segments. Limit the junction velocity to their minimum.
-      // Pick the smaller of the nominal speeds. Higher speed shall not be achieved at the junction during coasting.
-      vmax_junction = min(new_seg.nominal_speed, previous_nominal_speed);
-      
-      // Now limit the jerk in all axes.
-      const float smaller_speed_factor = vmax_junction / previous_nominal_speed;
-      for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
-        // Limit an axis. We have to differentiate: coasting, reversal of an axis, full stop.
-        float v_exit = previous_speed[i] * smaller_speed_factor;
-        float v_entry = current_speed[i];
-        if (limited) {
-          v_exit *= v_factor;
-          v_entry *= v_factor;
-        }
-  
-        // Calculate jerk depending on whether the axis is coasting in the same direction or reversing.
-        const float jerk = (v_exit > v_entry)
-                           ? //                            coasting             axis reversal
-                           ( (v_entry > 0 || v_exit < 0) ? (v_exit - v_entry) : max(v_exit, -v_entry) )
-                           : // v_exit <= v_entry          coasting             axis reversal
-                           ( (v_entry < 0 || v_exit > 0) ? (v_entry - v_exit) : max(-v_exit, v_entry) );
-  
-        if (jerk > max_jerk[i]) {
-          v_factor *= max_jerk[i] / jerk;
-          ++limited;
-        }
-      }
-      if (limited) {
-#ifdef DEBUG_STEPPING
-        Serial.print("  limited ");  Serial.print(v_factor);
-#endif
-        vmax_junction *= v_factor;
-      }
-      // Now the transition velocity is known, which maximizes the shared exit / entry velocity while
-      // respecting the jerk factors, it may be possible, that applying separate safe exit / entry velocities will achieve faster prints.
-      const float vmax_junction_threshold = vmax_junction * 0.99f;
-      if (previous_safe_speed > vmax_junction_threshold && safe_speed > vmax_junction_threshold) {
-        // Not coasting. The machine will stop and start the movements anyway,
-        // better to start the segment from start.
-#ifdef DEBUG_STEPPING
-        Serial.print("  vmax_junction=");  Serial.print(safe_speed);
-#endif
-        vmax_junction = safe_speed;
-      }
-#endif  // MACHINE_STYLE != SIXI
-#if MACHINE_STYLE == POLARGRAPH
-    }
-#endif
-  } else {  // movesQueued <= 0 || previous_safe_speed <= 0.0001
+  if (movesQueued <= 0 || previous_safe_speed <= 0.0001) {
     vmax_junction = safe_speed;
+  } else {  // 
+    // Estimate a maximum velocity allowed at a joint of two successive segments.
+    // If this maximum velocity allowed is lower than the minimum of the entry / exit safe velocities,
+    // then the machine is not coasting anymore and the safe entry / exit velocities shall be used.
+
+    // The junction velocity will be shared between successive segments. Limit the junction velocity to their minimum.
+    // Pick the smaller of the nominal speeds. Higher speed shall not be achieved at the junction during coasting.
+    vmax_junction = min(new_seg.nominal_speed, previous_nominal_speed);
+    
+    // Factor to multiply the previous / current nominal velocities to get componentwise limited velocities.
+    float v_factor = 1.0f;
+    limited = 0;
+
+    // Now limit the jerk in all axes.
+    const float smaller_speed_factor = vmax_junction / previous_nominal_speed;
+    for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
+      // Limit an axis. We have to differentiate: coasting, reversal of an axis, full stop.
+      float v_exit = previous_speed[i] * smaller_speed_factor;
+      float v_entry = current_speed[i];
+      if (limited) {
+        v_exit *= v_factor;
+        v_entry *= v_factor;
+      }
+
+      // Calculate jerk depending on whether the axis is coasting in the same direction or reversing.
+      const float jerk = (v_exit > v_entry)
+                         ? //                            coasting             axis reversal
+                         ( (v_entry > 0 || v_exit < 0) ? (v_exit - v_entry) : max(v_exit, -v_entry) )
+                         : // v_exit <= v_entry          coasting             axis reversal
+                         ( (v_entry < 0 || v_exit > 0) ? (v_entry - v_exit) : max(-v_exit, v_entry) );
+
+      if (jerk > max_jerk[i]) {
+        v_factor *= max_jerk[i] / jerk;
+        ++limited;
+      }
+    }
+    if (limited) {
+#ifdef DEBUG_STEPPING
+      Serial.print("  limited ");  Serial.print(v_factor);
+#endif
+      vmax_junction *= v_factor;
+    }
+    // Now the transition velocity is known, which maximizes the shared exit / entry velocity while
+    // respecting the jerk factors, it may be possible, that applying separate safe exit / entry velocities will achieve faster prints.
+    const float vmax_junction_threshold = vmax_junction * 0.99f;
+    if (previous_safe_speed > vmax_junction_threshold && safe_speed > vmax_junction_threshold) {
+      // Not coasting. The machine will stop and start the movements anyway,
+      // better to start the segment from start.
+      vmax_junction = safe_speed;
+    }
   }
+  
+#ifdef DEBUG_STEPPING
+        Serial.print("  vmax_junction 2=");  Serial.println(vmax_junction);
+#endif
+
   previous_safe_speed = safe_speed;
 
   float allowable_speed = max_speed_allowed(-new_seg.acceleration, MIN_FEEDRATE, new_seg.distance);
