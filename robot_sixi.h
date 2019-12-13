@@ -26,15 +26,15 @@
 #define NUM_TOOLS            (1)
 #define NUM_SENSORS          (6)
 
-#define MAX_FEEDRATE         (80.0)  // depends on timer interrupt & hardware
+#define MAX_FEEDRATE         (120.0)  // depends on timer interrupt & hardware
 #define MIN_FEEDRATE         (0)
 #define DEFAULT_FEEDRATE     (45.0)
 
-#define MAX_ACCELERATION     (2000)
+#define MAX_ACCELERATION     (202.5)
 #define MIN_ACCELERATION     (0)
-#define DEFAULT_ACCELERATION (10)
+#define DEFAULT_ACCELERATION (101.25)
 
-#define MAX_JERK             (5.0)
+#define MAX_JERK             (3.0)
 
 #define MAX_SEGMENTS         (16)  // override the default to save RAM
 #define DEGREES_PER_STEP     (1.8)
