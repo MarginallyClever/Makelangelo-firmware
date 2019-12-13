@@ -960,9 +960,7 @@ void isr_internal() {
       //Serial.print("  dx: ");  Serial.println(working_seg->a[0].delta_mm);
       //Serial.print("  dy: ");  Serial.println(working_seg->a[1].delta_mm);
       //Serial.print("  dz: ");  Serial.println(working_seg->a[2].delta_mm);
-      
 #endif
-
       return;
     } else {
       CLOCK_ADJUST(2000); // wait 1ms
@@ -1304,26 +1302,25 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
   // The axis that has the most steps will control the overall acceleration as per bresenham's algorithm.
   new_seg.steps_total = 0;
   for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
-#if MACHINE_STYLE == SIXI
-    new_seg.a[i].positionStart = axies[i].pos;
-    new_seg.a[i].positionEnd   = target_position[i];
-
-    switch (i) {
-      case  0: new_seg.a[i].distancePerStep = DEGREES_PER_STEP_0;  break;
-      case  1: new_seg.a[i].distancePerStep = DEGREES_PER_STEP_1;  break;
-      case  2: new_seg.a[i].distancePerStep = DEGREES_PER_STEP_2;  break;
-      case  3: new_seg.a[i].distancePerStep = DEGREES_PER_STEP_3;  break;
-      case  4: new_seg.a[i].distancePerStep = DEGREES_PER_STEP_4;  break;
-      case  5: new_seg.a[i].distancePerStep = DEGREES_PER_STEP_5;  break;
-      default: new_seg.a[i].distancePerStep = MM_PER_STEP;   break;
-    }
-#endif
     new_seg.a[i].step_count = steps[i];
     new_seg.a[i].delta_steps = steps[i] - old_seg.a[i].step_count;
 
     new_seg.a[i].dir = ( new_seg.a[i].delta_steps < 0 ? STEPPER_DIR_HIGH : STEPPER_DIR_LOW );
 #if MACHINE_STYLE == SIXI
-    new_seg.a[i].delta_mm = new_seg.a[i].delta_steps * new_seg.a[i].distancePerStep;
+    new_seg.a[i].positionStart = axies[i].pos;
+    new_seg.a[i].positionEnd   = target_position[i];
+    
+    float distancePerStep;
+    switch (i) {
+      case  0: distancePerStep = DEGREES_PER_STEP_0;  break;
+      case  1: distancePerStep = DEGREES_PER_STEP_1;  break;
+      case  2: distancePerStep = DEGREES_PER_STEP_2;  break;
+      case  3: distancePerStep = DEGREES_PER_STEP_3;  break;
+      case  4: distancePerStep = DEGREES_PER_STEP_4;  break;
+      case  5: distancePerStep = DEGREES_PER_STEP_5;  break;
+      default: distancePerStep = MM_PER_STEP;   break;
+    }
+    new_seg.a[i].delta_mm = new_seg.a[i].delta_steps * distancePerStep;
 #else
     new_seg.a[i].delta_mm = new_seg.a[i].delta_steps * MM_PER_STEP;
 #endif
@@ -1426,6 +1423,8 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
   new_seg.acceleration_rate = (uint32_t)(accel * (4096.0f * 4096.0f / (TIMER_RATE)));
   new_seg.steps_taken = 0;
 
+  // BEGIN JERK LIMITING
+  
   float safe_speed = new_seg.nominal_speed;
   char limited = 0;
   for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
@@ -1504,6 +1503,8 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
       vmax_junction = safe_speed;
     }
   }
+  
+  // END JERK LIMITING
   
 #ifdef DEBUG_STEPPING
         Serial.print("  vmax_junction 2=");  Serial.println(vmax_junction);

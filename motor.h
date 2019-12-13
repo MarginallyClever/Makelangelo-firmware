@@ -70,7 +70,6 @@ typedef struct {
   uint32_t absdelta;
   int dir;
 #if MACHINE_STYLE == SIXI
-  float distancePerStep;
   float expectedPosition;
   float positionStart;
   float positionEnd;
