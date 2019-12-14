@@ -62,7 +62,7 @@
 #define DEGREES_PER_STEP     (0.9)
 #endif
 
-#define MAX_JERK             (5.0)
+#define MAX_JERK             (8.0)
 #define MAX_JERK_Z           (0.3)
 
 // uncomment this line to adjust acceleration based on pen position

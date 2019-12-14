@@ -1395,9 +1395,12 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
       float c2 = -GRAVITYmag * R2x / (Tx * R2y - Ty * R2x);
 
       // If c is negative, that means that that support rope doesn't limit the acceleration; discard that c.
-      float cT = max_acceleration;
-      if( c1>0 && cT>c1 ) cT=c1;
-      if( c2>0 && cT>c2 ) cT=c2;
+      float cT = -1;
+      if( c1>0 && c2>0 ) {
+        cT = (c1<c2) ? c1:c2;
+      } else if(c1>0) cT=c1;
+      else if(c2>0) cT=c2;
+
       // The maximum acceleration is given by cT.
       max_acceleration = max(cT, (float)MIN_ACCELERATION);
     }
