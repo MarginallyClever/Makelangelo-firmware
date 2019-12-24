@@ -687,6 +687,7 @@ void parseMessage() {
     Serial.println();
   }
 //*/
+  menuStackDepth=0;  // return to main menu!
 #endif  // HAS_LCD
 }
 
@@ -812,7 +813,6 @@ void parseBeep() {
    process commands in the serial receive buffer
 */
 void processCommand() {
-
   if ((serialBuffer[0] == '\0') || (serialBuffer[0] == ';')) return;  // blank lines
   if (!checkLineNumberAndCRCisOK()) return; // message garbled
 

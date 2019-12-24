@@ -71,7 +71,7 @@
 extern char lcd_message[LCD_MESSAGE_LENGTH+1];
 extern char lcd_message_m117[LCD_MESSAGE_LENGTH/2+1];
 extern uint8_t speed_adjust;
-
+extern uint8_t menuStackDepth;
 
 extern inline void LCD_print(const char *x);
 
