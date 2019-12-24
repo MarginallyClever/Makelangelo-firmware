@@ -85,7 +85,7 @@ int FK(long *motorStepArray,float *cartesian) {
 
 
 void recordHome() {
-#ifdef USE_LIMIT_SWITCH
+#if defined(CAN_HOME)
   wait_for_empty_segment_buffer();
   motor_engage();
   findStepDelay();
@@ -193,7 +193,7 @@ void recordHome() {
   offset[1]=axies[1].homePos;
   lineSafe(offset, feed_rate);
   Serial.println(F("Done."));
-#endif // USER_LIMIT_SWITCH
+#endif // defined(CAN_HOME)
 }
 
 
@@ -201,6 +201,8 @@ void recordHome() {
    If limit switches are installed, move to touch each switch so that the pen holder can move to home position.
 */
 void robot_findHome() {
+#if defined(CAN_HOME)
+  // do not run this code unless you have the hardware to find home!
   wait_for_empty_segment_buffer();
   motor_engage();
 
@@ -287,6 +289,7 @@ void robot_findHome() {
   lineSafe(offset, DEFAULT_FEEDRATE);
 
   Serial.println(F("Done."));
+#endif // defined(CAN_HOME)
 }
 
 
@@ -295,7 +298,7 @@ void robot_findHome() {
  * Does not save the values, only reports them to serial.
  */
 void calibrateBelts() {
-#ifdef USE_LIMIT_SWITCH
+#ifdef defined(CAN_HOME)
   wait_for_empty_segment_buffer();
   motor_engage();
 
@@ -361,7 +364,7 @@ void calibrateBelts() {
   offset[1]=axies[1].homePos;
   lineSafe(offset, feed_rate);
   Serial.println(F("Done."));
-#endif // USE_LIMIT_SWITCH
+#endif // defined(CAN_HOME)
 }
 
 

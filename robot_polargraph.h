@@ -94,6 +94,10 @@
 #define HAS_LCD
 #endif
 
+#if defined(HAS_TMC2130) || defined(USE_LIMIT_SWITCH)
+#define CAN_HOME
+#endif
+
 extern void calibrateBelts();
 extern void recordHome();
 
