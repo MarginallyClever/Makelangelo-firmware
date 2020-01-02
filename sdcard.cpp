@@ -21,9 +21,10 @@ char sd_inserted;
 char sd_printing_now;
 char sd_printing_paused;
 File sd_print_file;
-float sd_percent_complete;
-long sd_file_size;
-long sd_bytes_read;
+
+//float sd_percent_complete;  // Deprecated
+//long sd_file_size;  // Deprecated
+//long sd_bytes_read;  // Deprecated
 
 #endif
 
@@ -42,7 +43,7 @@ void SD_setup() {
 
   sd_inserted = false;
   sd_printing_now=false;
-  sd_percent_complete=0;
+  //sd_percent_complete=0;
   SD_check();
 #endif  // HAS_SD
 }
@@ -86,7 +87,7 @@ void SD_check() {
     int c;
     while(sd_print_file.peek() != -1) {
       c=sd_print_file.read();
-      sd_bytes_read++;
+      //sd_bytes_read++;
       if(c=='\r') continue;
       if(sofar<MAX_BUF) {
         serialBuffer[sofar++]=c;
@@ -101,7 +102,7 @@ void SD_check() {
       }*/
       if(c=='\n') {
         // update the % visible on the LCD.
-        sd_percent_complete = (float)sd_bytes_read * 100.0 / (float)sd_file_size;
+        //sd_percent_complete = (float)sd_bytes_read * 100.0 / (float)sd_file_size;
 
         // end string
         serialBuffer[sofar-1]=0;
@@ -142,9 +143,9 @@ void SD_StartPrintingFile(const char *filename) {
   }
 
   // count the number of lines (\n characters) for displaying % complete.
-  sd_file_size=sd_print_file.size();
-  sd_bytes_read=0;
-  sd_percent_complete=0;
+  //sd_file_size=sd_print_file.size();
+  //sd_bytes_read=0;
+  //sd_percent_complete=0;
 
   // return to start
   sd_print_file.seek(0);
