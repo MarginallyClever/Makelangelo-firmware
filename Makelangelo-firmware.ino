@@ -676,7 +676,7 @@ void parseMessage() {
     ++i;
     buf++;
   }
-//*
+/*
   Serial.println(F("M117 "));
   i=0;
   for(int y=0;y<LCD_HEIGHT;++y) {
