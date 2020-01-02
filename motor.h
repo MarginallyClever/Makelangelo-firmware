@@ -32,17 +32,17 @@
 #define STEPPER_DIR_HIGH   LOW
 #define STEPPER_DIR_LOW    HIGH
 
-#define HOMING_OCR1A 				450 //776
+#define HOMING_OCR1A 			          450 //776
 // define this only after you have measured your desired TSTEP
 #define MEASURED_TSTEP            	169 //295
 #define MEASURED_TSTEP_MARGIN_PCT 	15  // +/-% for stall warning
   
-#define CURRENT			 			219  // 310ma / sqrt(2)
+#define CURRENT			 			      219  // 310ma / sqrt(2)
 #define R_SENSE            			0.11
 #define HOLD_MULTIPLIER    			0.5
   
 #define STALL_VALUE        			-64//-24
-//#define HYBRID_THRESHOLD   100
+//#define HYBRID_THRESHOLD        100
 #else
 // A4988
 #define STEPPER_DIR_HIGH   HIGH
@@ -131,7 +131,7 @@ extern TMC2130Stepper driver_1;
 extern void motor_set_step_count(long *a);
 extern void wait_for_empty_segment_buffer();
 extern char segment_buffer_full();
-extern void motor_line(const float * const target_position,float &fr_mm_s);
+extern void motor_line(const float * const target_position,float fr_mm_s);
 extern void motor_engage();
 extern void motor_home();
 extern void enable_stealthChop();

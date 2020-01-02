@@ -29,6 +29,7 @@
 
 #define BLOCK_DELAY_FOR_1ST_MOVE 100
 #define MIN_STEP_RATE 120
+#define GRAVITYmag (980.0)  // mm
 
 //------------------------------------------------------------------------------
 // GLOBALS
@@ -1235,28 +1236,7 @@ char segment_buffer_full() {
    @input pos NUM_AXIES floats describing destination coordinates
    @input new_feed_rate speed to travel along arc
 */
-void motor_line(const float * const target_position, float &fr_mm_s) {
-  long steps[NUM_MOTORS + NUM_SERVOS];
-
-  // convert from the cartesian position to the motor steps
-  IK(target_position, steps);
-
-  float distance_mm = 0;
-
-#if MACHINE_STYLE == POLARGRAPH
-  // see "adjust the maximum acceleration" further down.
-  float oldX = axies[0].pos;
-  float oldY = axies[1].pos;
-#endif
-
-  // record the new target position & feed rate for the next movement.
-  int i;
-  for (i = 0; i < NUM_AXIES; ++i) {
-    distance_mm += sq(target_position[i] - axies[i].pos);
-  }
-  distance_mm = sqrt( distance_mm );
-  feed_rate = fr_mm_s;
-
+void motor_line(const float * const target_position, float fr_mm_s) {
   // get the next available spot in the segment buffer
   int next_segment = get_next_segment(last_segment);
   while ( next_segment == current_segment ) {
@@ -1277,26 +1257,24 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
   Segment &new_seg = line_segments[last_segment];
   Segment &old_seg = line_segments[prev_segment];
 
-  // use LCD to adjust speed while drawing
-#ifdef HAS_LCD
-  fr_mm_s *= (float)speed_adjust * 0.01f;
-#endif
   
-  new_seg.busy = false;
-  new_seg.distance = distance_mm;
-  float inverse_distance_mm = 1.0 / new_seg.distance;
-  float inverse_secs = fr_mm_s * inverse_distance_mm;
+  // convert from the cartesian position to the motor steps
+  long steps[NUM_MOTORS + NUM_SERVOS];
+  IK(target_position, steps);
 
-#ifdef SLOWDOWN
-  int moves_queued = SEGMOD(prev_segment - get_next_segment(current_segment));
-  if(moves_queued >= 2 && moves_queued <= (MAX_SEGMENTS/2)-1) {
-    uint32_t segment_time_us = lroundf(1000000.0f / inverse_secs);
-    if(segment_time_us < min_segment_time_us) {
-      const uint32_t nst = segment_time_us + lroundf(2 * (min_segment_time_us - segment_time_us) / moves_queued);
-      inverse_secs = 1000000.0f / nst;
-    }
-  }
+  float distance_mm = 0;
+
+#if MACHINE_STYLE == POLARGRAPH && defined(DYNAMIC_ACCELERATION)
+  float oldX = axies[0].pos;
+  float oldY = axies[1].pos;
 #endif
+
+  // record the new target position & feed rate for the next movement.
+  int i;
+  for (i = 0; i < NUM_AXIES; ++i) {
+    distance_mm += sq(target_position[i] - axies[i].pos);
+  }
+  distance_mm = sqrt( distance_mm );
 
   // find the number of steps for each motor, the direction, and the absolute steps
   // The axis that has the most steps will control the overall acceleration as per bresenham's algorithm.
@@ -1337,6 +1315,30 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
   // No steps?  No work!  Stop now.
   if ( new_seg.steps_total == 0 ) return;
 
+  feed_rate = fr_mm_s;
+#ifdef HAS_LCD
+  // use LCD to adjust speed while drawing
+  fr_mm_s *= (float)speed_adjust * 0.01f;
+#endif
+  
+  new_seg.busy = false;
+  new_seg.distance = distance_mm;
+  float inverse_distance_mm = 1.0 / new_seg.distance;
+  float inverse_secs = fr_mm_s * inverse_distance_mm;
+
+#ifdef BUFFER_EMPTY_SLOWDOWN
+  int moves_queued = SEGMOD(prev_segment - get_next_segment(current_segment));
+  if(moves_queued >= 2 && moves_queued <= (MAX_SEGMENTS/2)-1) {
+    uint32_t segment_time_us = lroundf(1000000.0f / inverse_secs);
+    if(segment_time_us < min_segment_time_us) {
+      //Serial.print("was ");  Serial.print(inverse_secs);
+      const uint32_t nst = segment_time_us + lroundf(2 * (min_segment_time_us - segment_time_us) / moves_queued);
+      inverse_secs = 1000000.0f / nst;
+      //Serial.print(" now ");  Serial.println(inverse_secs);
+    }
+  }
+#endif
+
   new_seg.nominal_speed = new_seg.distance * inverse_secs;
   new_seg.nominal_rate = ceil(new_seg.steps_total * inverse_secs);
 
@@ -1360,8 +1362,7 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
 
   // acceleration is a global set with "G0 A*"
   float max_acceleration = acceleration;
-#if MACHINE_STYLE == POLARGRAPH
-#ifdef DYNAMIC_ACCELERATION
+#if MACHINE_STYLE == POLARGRAPH && defined(DYNAMIC_ACCELERATION)
   {
     // Adjust the maximum acceleration based on the plotter position to reduce wobble at the bottom of the picture.
     // We only consider the XY plane.
@@ -1390,9 +1391,8 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
       Ty /= Rlen;
       // solve cT = -gY + k1 R1 for c [and k1]
       // solve cT = -gY + k2 R2 for c [and k2]
-#define GRAVITYmag (980.0)  // mm
-      float c1 = -GRAVITYmag * R1x / (Tx * R1y - Ty * R1x);
-      float c2 = -GRAVITYmag * R2x / (Tx * R2y - Ty * R2x);
+      float c1 = GRAVITYmag * R1x / (Tx * R1y - Ty * R1x);
+      float c2 = GRAVITYmag * R2x / (Tx * R2y - Ty * R2x);
 
       // If c is negative, that means that that support rope doesn't limit the acceleration; discard that c.
       float cT = -1;
@@ -1405,8 +1405,7 @@ void motor_line(const float * const target_position, float &fr_mm_s) {
       max_acceleration = max(cT, (float)MIN_ACCELERATION);
     }
   }
-#endif  // DYNAMIC_ACCELERATION
-#endif  // MACHINE_STYLE == POLARGRAPH
+#endif  // MACHINE_STYLE == POLARGRAPH && defined(DYNAMIC_ACCELERATION)
 
   const float steps_per_mm = new_seg.steps_total * inverse_distance_mm;
   uint32_t accel = ceil( max_acceleration * steps_per_mm );
