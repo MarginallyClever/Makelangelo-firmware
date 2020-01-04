@@ -1391,8 +1391,8 @@ void motor_line(const float * const target_position, float fr_mm_s) {
       Ty /= Rlen;
       // solve cT = -gY + k1 R1 for c [and k1]
       // solve cT = -gY + k2 R2 for c [and k2]
-      float c1 = GRAVITYmag * R1x / (Tx * R1y - Ty * R1x);
-      float c2 = GRAVITYmag * R2x / (Tx * R2y - Ty * R2x);
+      float c1 = -GRAVITYmag * R1x / (Tx * R1y - Ty * R1x);
+      float c2 = -GRAVITYmag * R2x / (Tx * R2y - Ty * R2x);
 
       // If c is negative, that means that that support rope doesn't limit the acceleration; discard that c.
       float cT = -1;
@@ -1401,8 +1401,10 @@ void motor_line(const float * const target_position, float fr_mm_s) {
       } else if(c1>0) cT=c1;
       else if(c2>0) cT=c2;
 
-      // The maximum acceleration is given by cT.
-      max_acceleration = max(cT, (float)MIN_ACCELERATION);
+      // The maximum acceleration is given by cT if cT>0
+      if(cT>0) {
+        max_acceleration = max(min(max_acceleration,cT), (float)MIN_ACCELERATION);
+      }
     }
   }
 #endif  // MACHINE_STYLE == POLARGRAPH && defined(DYNAMIC_ACCELERATION)
