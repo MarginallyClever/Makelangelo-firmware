@@ -1,3 +1,4 @@
+
 //------------------------------------------------------------------------------
 // Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
@@ -46,13 +47,13 @@ char serialBuffer[MAX_BUF + 1]; // Serial buffer
 int sofar;                      // Serial buffer progress
 long last_cmd_time;             // prevent timeouts
 long line_number = 0;           // make sure commands arrive in order
-uint8_t lastGcommand=-1;
+uint8_t lastGcommand = -1;
 
 float tool_offset[NUM_TOOLS][NUM_AXIES];
 uint8_t current_tool = 0;
 
 #if MACHINE_STYLE == SIXI
-uint32_t reportDelay=0;
+uint32_t reportDelay = 0;
 #endif
 
 #ifdef HAS_WIFI
@@ -124,7 +125,7 @@ void parseLimits() {
     float newT = parseNumber('T', axies[axisNumber].limitMax);
     float newB = parseNumber('B', axies[axisNumber].limitMin);
     boolean changed = false;
-  
+
     if (!equalEpsilon(axies[axisNumber].limitMax, newT)) {
       axies[axisNumber].limitMax = newT;
       changed = true;
@@ -136,7 +137,7 @@ void parseLimits() {
     if (changed == true) {
       saveLimits();
     }
-  }  
+  }
   printConfig();
 }
 
@@ -208,7 +209,7 @@ void lineSafe(float *pos, float new_feed_rate) {
     delta[i] = destination[i] - startPos[i];
     len += sq(delta[i]);
   }
-  
+
 #if MACHINE_STYLE == POLARGRAPH
   // What if some axies don't need subdividing?  like z axis on polargraph.
   // often SEGMENT_PER_CM_LINE is 10mm or 20mm.  but a servo movement can be 90-160=70, or 7 segments.  This is pretty nuts.
@@ -222,7 +223,7 @@ void lineSafe(float *pos, float new_feed_rate) {
   float j;
 
   // draw everything up to (but not including) the destination.
-  for (j = SEGMENT_MAX_LENGTH_MM; j < len; j+=SEGMENT_MAX_LENGTH_MM) {
+  for (j = SEGMENT_MAX_LENGTH_MM; j < len; j += SEGMENT_MAX_LENGTH_MM) {
     a = j / len;
     for (i = 0; i < NUM_AXIES; ++i) {
       temp[i] = delta[i] * a + startPos[i];
@@ -386,8 +387,8 @@ void where() {
 
 
 /**
- * D23 report home values
- */
+   D23 report home values
+*/
 void reportHome() {
   Serial.print(F("D23 "));
   for (int i = 0; i < NUM_AXIES; ++i) {
@@ -400,8 +401,8 @@ void reportHome() {
 
 
 /**
- * Print the machine limits to serial.
- */
+   Print the machine limits to serial.
+*/
 void printConfig() {
   int i;
 
@@ -468,10 +469,10 @@ void toolChange(int tool_id) {
 */
 float parseNumber(char code, float val) {
   char *ptr = serialBuffer; // start at the beginning of buffer
-  char *finale = serialBuffer+sofar;
-  for(ptr=serialBuffer; ptr<finale; ++ptr) {  // walk to the end
-    if(*ptr==';') break;
-    if(*ptr == code) { // if you find code on your walk,
+  char *finale = serialBuffer + sofar;
+  for (ptr = serialBuffer; ptr < finale; ++ptr) { // walk to the end
+    if (*ptr == ';') break;
+    if (*ptr == code) { // if you find code on your walk,
       return atof(ptr + 1); // convert the digits that follow into a float and return it
     }
   }
@@ -484,9 +485,9 @@ float parseNumber(char code, float val) {
 */
 char hasGCode(char code) {
   char *ptr = serialBuffer; // start at the beginning of buffer
-  char *finale = serialBuffer+sofar;
-  for(ptr=serialBuffer; ptr<finale; ++ptr) {  // walk to the end
-    if(*ptr==';') break;
+  char *finale = serialBuffer + sofar;
+  for (ptr = serialBuffer; ptr < finale; ++ptr) { // walk to the end
+    if (*ptr == ';') break;
     if (*ptr == code) { // if you find code on your walk,
       return 1;  // found
     }
@@ -643,51 +644,27 @@ char checkLineNumberAndCRCisOK() {
 */
 void parseMessage() {
 #ifdef HAS_LCD
-  uint16_t i;
-  for (i = 0; i < strlen(serialBuffer); ++i) {
-    if ((serialBuffer[i] == 'M' || serialBuffer[i] == 'm') &&
-        serialBuffer[i + 1] == '1' &&
-        serialBuffer[i + 2] == '1' &&
-        serialBuffer[i + 3] == '7') {
-      //Serial.print("Found M117:");
-      //Serial.println(serialBuffer+i);
-      break;
-    }
-  }
-
   // wipe previous message
-  for (uint8_t j = 0; j < LCD_MESSAGE_LENGTH / 2; ++j) {
+  for (uint8_t j = 0; j < M117_MAX_LEN; ++j) {
     lcd_message_m117[j] = ' ';
   }
 
-  i += 4;
+  uint16_t i = 5; // skip "M117 "
   if (i >= strlen(serialBuffer)) {
     // no message
-    Serial.println("No message.");
     return;
   }
 
   char *buf = serialBuffer + i;
-  while (*buf == ' ') ++buf; // eat whitespace
-
   i = 0;
-  while (isPrintable(*buf) && (*buf) != '\r' && (*buf) != '\n' && i < LCD_MESSAGE_LENGTH / 2) {
+  while (isPrintable(*buf) && (*buf) != '\r' && (*buf) != '\n' && i < M117_MAX_LEN) {
     lcd_message_m117[i] = *buf;
     ++i;
     buf++;
   }
-/*
-  Serial.println(F("M117 "));
-  i=0;
-  for(int y=0;y<LCD_HEIGHT;++y) {
-    for(int x=0;x<LCD_WIDTH;++x) {
-      Serial.print(lcd_message[i]);
-      ++i;
-    }
-    Serial.println();
-  }
-//*/
-  menuStackDepth=0;  // return to main menu!
+
+  menuStackDepth = 0; // return to main menu!
+  LCD_update();
 #endif  // HAS_LCD
 }
 
@@ -698,7 +675,7 @@ void parseMessage() {
 void adjustMaxFeedRates() {
   int i;
   Serial.print(F("M203 "));
-  for (i = 0; i < NUM_MOTORS+NUM_SERVOS; ++i) {
+  for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
     max_feedrate_mm_s[i] = parseNumber(MotorNames[i], max_feedrate_mm_s[i]);
     Serial.print(MotorNames[i]);
     Serial.print(max_feedrate_mm_s[i]);
@@ -751,7 +728,7 @@ void waitForPinState() {
 #else
   int pin = parseNumber('P', -1);
 #endif
-  if(pin == -1) return; // no pin specified.
+  if (pin == -1) return; // no pin specified.
 
   int oldState = parseNumber('S', -1);
   if (oldState == -1) {
@@ -842,7 +819,7 @@ void processCommand() {
     case 300:  parseBeep();  break;
     default:   break;
   }
-  if(cmd!=-1) return;  // M command processed, stop.
+  if (cmd != -1) return; // M command processed, stop.
 
   // machine style-specific codes
   cmd = parseNumber('D', -1);
@@ -877,9 +854,9 @@ void processCommand() {
     case 16:  setFeedratePerAxis();  break;
     case 17:  reportAllAngleValues();  break;
     case 18:  copySensorsToMotorPositions();  break;
-    case 19:  positionErrorFlags^=POSITION_ERROR_FLAG_CONTINUOUS;  break;  // toggle
-    case 20:  positionErrorFlags&=0xffff^(POSITION_ERROR_FLAG_ERROR|POSITION_ERROR_FLAG_FIRSTERROR);  break;  // off
-    case 21:  positionErrorFlags^=POSITION_ERROR_FLAG_ESTOP;  break;  // toggle ESTOP
+    case 19:  positionErrorFlags ^= POSITION_ERROR_FLAG_CONTINUOUS;  break; // toggle
+    case 20:  positionErrorFlags &= 0xffff ^ (POSITION_ERROR_FLAG_ERROR | POSITION_ERROR_FLAG_FIRSTERROR);  break; // off
+    case 21:  positionErrorFlags ^= POSITION_ERROR_FLAG_ESTOP;  break; // toggle ESTOP
 #endif
 #if MACHINE_STYLE == POLARGRAPH
     case 22:  makelangelo33Setup();  break;
@@ -890,17 +867,17 @@ void processCommand() {
     case 23:  reportHome();  break;
     default:  break;
   }
-  if(cmd!=-1) return;  // D command processed, stop.
+  if (cmd != -1) return; // D command processed, stop.
 
   // no M or D commands were found.  This is probably a G-command.
   // G codes
   cmd = parseNumber('G', lastGcommand);
-  lastGcommand=-1;
+  lastGcommand = -1;
   switch (cmd) {
     case  0:
-    case  1:  parseLine();  lastGcommand=cmd;  break;
-    case  2:  parseArc(1);  lastGcommand=cmd;  break;  // clockwise
-    case  3:  parseArc(0);  lastGcommand=cmd;  break;  // counter-clockwise
+    case  1:  parseLine();  lastGcommand = cmd;  break;
+    case  2:  parseArc(1);  lastGcommand = cmd;  break; // clockwise
+    case  3:  parseArc(0);  lastGcommand = cmd;  break; // counter-clockwise
     case  4:  parseDwell();  break;
     case 28:  robot_findHome();  break;
 #if MACHINE_STYLE == POLARGRAPH
@@ -921,12 +898,12 @@ void processCommand() {
 
 
 /**
- * D16 X<jerk> Y<jerk> Z<jerk> U<jerk> V<jerk> W<jerk>
- * set axis n to feedrate m and jerk o.
- */
+   D16 X<jerk> Y<jerk> Z<jerk> U<jerk> V<jerk> W<jerk>
+   set axis n to feedrate m and jerk o.
+*/
 void setFeedratePerAxis() {
   float f;
-  
+
   f = parseNumber('X', max_feedrate_mm_s[0]);  max_feedrate_mm_s[0] = max(f, (float)MIN_FEEDRATE);
 #if NUM_AXIES > 1
   f = parseNumber('Y', max_feedrate_mm_s[1]);  max_feedrate_mm_s[1] = max(f, (float)MIN_FEEDRATE);
@@ -959,8 +936,8 @@ void setFeedratePerAxis() {
 void makelangelo6Setup() {
   // if you accidentally upload m3 firmware to an m5 then upload it ONCE with this line uncommented.
   float limits[NUM_AXIES * 2];
-  limits[0] = 707.5/2;
-  limits[1] = -707.5/2;
+  limits[0] = 707.5 / 2;
+  limits[1] = -707.5 / 2;
   limits[2] = 500;
   limits[3] = -500;
   limits[4] = PEN_UP_ANGLE;
@@ -1098,9 +1075,9 @@ void setCalibration() {
 
 
 /**
- * D8
- * Report calibration values for left and right belts
- */
+   D8
+   Report calibration values for left and right belts
+*/
 void reportCalibration() {
   Serial.print(F("D8 L"));
   Serial.print(calibrateLeft);
@@ -1110,14 +1087,14 @@ void reportCalibration() {
 
 #if MACHINE_STYLE == SIXI
 /**
- * D22
- * reset home position to the current angle values.
- */
+   D22
+   reset home position to the current angle values.
+*/
 void sixiResetSensorOffsets() {
   int i;
   // cancel the current home offsets
   for (i = 0; i < NUM_SENSORS; ++i) {
-    axies[i].homePos=0;
+    axies[i].homePos = 0;
   }
   // read the sensor
   sensorUpdate();
@@ -1191,11 +1168,11 @@ void setup() {
   Serial.begin(BAUD);
 
   loadConfig();
-  
+
 #ifdef HAS_WIFI
   // Start WIFI
   WiFi.mode(WIFI_AP);
-  Serial.println( WiFi.softAP(SSID_NAME, SSID_PASS) ? "WIFI OK":"WIFI FAILED" );
+  Serial.println( WiFi.softAP(SSID_NAME, SSID_PASS) ? "WIFI OK" : "WIFI FAILED" );
   Serial.println( port.begin(localPort) ? "UDP OK" : "UDP FAILED" );
   // Print the IP address
   Serial.print("Use this URL to connect: http://");
@@ -1204,7 +1181,7 @@ void setup() {
   Serial.print(localPort);
   Serial.println('/');
 #endif  // HAS_WIFI
-    
+
   SD_setup();
   LCD_setup();
 
@@ -1245,8 +1222,8 @@ void setup() {
 
 
 /**
- * See: http://www.marginallyclever.com/2011/10/controlling-your-arduino-through-the-serial-monitor/
- */
+   See: http://www.marginallyclever.com/2011/10/controlling-your-arduino-through-the-serial-monitor/
+*/
 void Serial_listen() {
   // listen for serial commands
   while (Serial.available() > 0) {
@@ -1283,19 +1260,19 @@ void Serial_listen() {
 
 #if MACHINE_STYLE == SIXI
 /**
- * D17 report the 6 axis sensor values from the Sixi robot arm.
- */
-void reportAllAngleValues() {  
+   D17 report the 6 axis sensor values from the Sixi robot arm.
+*/
+void reportAllAngleValues() {
   Serial.print(F("D17"));
-  for(int i=0;i<6;++i) {
+  for (int i = 0; i < 6; ++i) {
     Serial.print('\t');
-    Serial.print(sensorAngles[i],2);
+    Serial.print(sensorAngles[i], 2);
   }
   /*
-  if(current_segment==last_segment) {
+    if(current_segment==last_segment) {
     // report estimated position
     Serial.print(F("\t-\t"));
-    
+
     working_seg = get_current_segment();
     for (uint8_t i = 0; i < NUM_SENSORS; ++i) {
       //float diff = working_seg->a[i].expectedPosition - sensorAngles[i];
@@ -1304,11 +1281,11 @@ void reportAllAngleValues() {
       Serial.print('\t');
       Serial.print(working_seg->a[i].expectedPosition,2);
     }
-  }*/
-  
+    }*/
+
   Serial.print('\t');
   //Serial.print(((positionErrorFlags&POSITION_ERROR_FLAG_CONTINUOUS)!=0)?'+':'-');
-  Serial.print(((positionErrorFlags&POSITION_ERROR_FLAG_ERROR)!=0)?'+':'-');
+  Serial.print(((positionErrorFlags & POSITION_ERROR_FLAG_ERROR) != 0) ? '+' : '-');
   //Serial.print(((positionErrorFlags&POSITION_ERROR_FLAG_FIRSTERROR)!=0)?'+':'-');
   //Serial.print(((positionErrorFlags&POSITION_ERROR_FLAG_ESTOP)!=0)?'+':'-');
   Serial.println();
@@ -1316,36 +1293,36 @@ void reportAllAngleValues() {
 
 
 /**
- * D18 copy sensor values to motor step positions.
- */
+   D18 copy sensor values to motor step positions.
+*/
 void copySensorsToMotorPositions() {
   wait_for_empty_segment_buffer();
   float a[NUM_AXIES];
-  int i,j;
-  int numSamples=10;
-  
-  for(j=0;j<NUM_AXIES;++j) a[j]=0;
+  int i, j;
+  int numSamples = 10;
+
+  for (j = 0; j < NUM_AXIES; ++j) a[j] = 0;
 
   // assert(NUM_SENSORS <= NUM_AXIES);
-  
-  for(i=0;i<numSamples;++i) {
+
+  for (i = 0; i < numSamples; ++i) {
     sensorUpdate();
-    for(j=0;j<NUM_SENSORS;++j) {
-      a[j]+=sensorAngles[j];
+    for (j = 0; j < NUM_SENSORS; ++j) {
+      a[j] += sensorAngles[j];
     }
   }
-  for(j=0;j<NUM_SENSORS;++j) {
-    a[j]/=(float)numSamples;
+  for (j = 0; j < NUM_SENSORS; ++j) {
+    a[j] /= (float)numSamples;
   }
-  
+
   teleport(a);
 }
 #endif
 
 
 /**
- * main loop
- */
+   main loop
+*/
 void loop() {
   Serial_listen();
   SD_check();
@@ -1356,38 +1333,38 @@ void loop() {
   // just in case USB garbled ready and each half is waiting on the other.
   if ( !segment_buffer_full() && (millis() - last_cmd_time) > TIMEOUT_OK ) {
 #ifdef HAS_TMC2130
-{
+    {
       uint32_t drv_status = driver_0.DRV_STATUS();
-      uint32_t stallValue = (drv_status & SG_RESULT_bm)>>SG_RESULT_bp;
-      Serial.print(stallValue,DEC);
+      uint32_t stallValue = (drv_status & SG_RESULT_bm) >> SG_RESULT_bp;
+      Serial.print(stallValue, DEC);
       Serial.print('\t');
-}
-{
+    }
+    {
       uint32_t drv_status = driver_1.DRV_STATUS();
-      uint32_t stallValue = (drv_status & SG_RESULT_bm)>>SG_RESULT_bp;
-      Serial.println(stallValue,DEC);
-}
+      uint32_t stallValue = (drv_status & SG_RESULT_bm) >> SG_RESULT_bp;
+      Serial.println(stallValue, DEC);
+    }
 #endif
     parser_ready();
   }
 
 #if MACHINE_STYLE == SIXI
   sensorUpdate();
-  
-  if((positionErrorFlags&POSITION_ERROR_FLAG_ERROR)!=0) {
-    if((positionErrorFlags&POSITION_ERROR_FLAG_FIRSTERROR)!=0) {
+
+  if ((positionErrorFlags & POSITION_ERROR_FLAG_ERROR) != 0) {
+    if ((positionErrorFlags & POSITION_ERROR_FLAG_FIRSTERROR) != 0) {
       Serial.println(F("\n\n** POSITION ERROR **\n"));
-      positionErrorFlags&=0xffff^POSITION_ERROR_FLAG_FIRSTERROR;  // turn off
+      positionErrorFlags &= 0xffff ^ POSITION_ERROR_FLAG_FIRSTERROR; // turn off
     }
   } else {
-    if((positionErrorFlags&POSITION_ERROR_FLAG_FIRSTERROR)==0) {
-      positionErrorFlags|=POSITION_ERROR_FLAG_FIRSTERROR;  // turn on
+    if ((positionErrorFlags & POSITION_ERROR_FLAG_FIRSTERROR) == 0) {
+      positionErrorFlags |= POSITION_ERROR_FLAG_FIRSTERROR; // turn on
     }
   }
-  
-  if((positionErrorFlags&POSITION_ERROR_FLAG_CONTINUOUS)!=0) {
-    if(millis()>reportDelay) {
-      reportDelay=millis()+100;
+
+  if ((positionErrorFlags & POSITION_ERROR_FLAG_CONTINUOUS) != 0) {
+    if (millis() > reportDelay) {
+      reportDelay = millis() + 100;
       reportAllAngleValues();
     }
   }
