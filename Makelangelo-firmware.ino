@@ -644,10 +644,7 @@ char checkLineNumberAndCRCisOK() {
 */
 void parseMessage() {
 #ifdef HAS_LCD
-  // wipe previous message
-  for (uint8_t j = 0; j < M117_MAX_LEN; ++j) {
-    lcd_message_m117[j] = ' ';
-  }
+  LCD_setStatusMessage(0);  // empty string
 
   uint16_t i = 5; // skip "M117 "
   if (i >= strlen(serialBuffer)) {
@@ -655,16 +652,15 @@ void parseMessage() {
     return;
   }
 
+  char message[M117_MAX_LEN];
   char *buf = serialBuffer + i;
   i = 0;
   while (isPrintable(*buf) && (*buf) != '\r' && (*buf) != '\n' && i < M117_MAX_LEN) {
-    lcd_message_m117[i] = *buf;
-    ++i;
-    buf++;
+    message[i++] = *buf++;
   }
+  message[i]=0;
 
-  menuStackDepth = 0; // return to main menu!
-  LCD_update();
+  LCD_setStatusMessage(message);
 #endif  // HAS_LCD
 }
 

@@ -69,16 +69,13 @@
 #define LCD_TURN_PER_MENU  (3)  // was 5
 #define M117_MAX_LEN       (LCD_MESSAGE_LENGTH/2)
 
-extern char lcd_message[LCD_MESSAGE_LENGTH+1];
-extern char lcd_message_m117[M117_MAX_LEN+1];
-extern uint8_t speed_adjust;
+extern uint8_t speed_adjust;  // used by planner
 extern uint8_t menuStackDepth;
-
-//extern inline void LCD_print(const char *x);
-
-#endif // HAS_LCD
 
 extern void LCD_update();
 extern void LCD_setup();
+extern void LCD_setStatusMessage(char *message);
+
+#endif // HAS_LCD
 
 #endif // LCD_H
