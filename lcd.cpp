@@ -57,7 +57,7 @@ char lcd_click_old = HIGH;
 char lcd_click_now = 0;
 uint8_t speed_adjust = 100;
 char lcd_message[LCD_MESSAGE_LENGTH + 1];
-char lcd_message_m117[LCD_MESSAGE_LENGTH/2+1];
+char lcd_message_m117[M117_MAX_LEN+1];
 char lcd_dirty=0;
 
 #define MENU_STACK_DEPTH   (5)
@@ -247,7 +247,7 @@ inline void LCD_print(const char x) {
     num_menu_items=0;  \
     screen_position=0;  \
     screen_end = screen_position + LCD_HEIGHT;  \
-    menuStackDepth--;  \
+    if(menuStackDepth>0) menuStackDepth--;  \
     current_menu=menuStack[menuStackDepth].menu;  \
 }
 
