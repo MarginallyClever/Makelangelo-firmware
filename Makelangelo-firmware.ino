@@ -646,20 +646,26 @@ void parseMessage() {
 #ifdef HAS_LCD
   LCD_setStatusMessage(0);  // empty string
 
-  uint16_t i = 5; // skip "M117 "
+  // find M
+  uint16_t i = 0;
+  while(serialBuffer[i]!='M') ++i;
+  // skip "M117 "
+  i+=5;
   if (i >= strlen(serialBuffer)) {
     // no message
     return;
   }
-
+  // read in any remaining message
   char message[M117_MAX_LEN];
   char *buf = serialBuffer + i;
   i = 0;
   while (isPrintable(*buf) && (*buf) != '\r' && (*buf) != '\n' && i < M117_MAX_LEN) {
-    message[i++] = *buf++;
+    message[i++] = *buf;
+    buf++;
   }
+  // make sure the message is properly terminated
   message[i]=0;
-
+  // update the LCD.
   LCD_setStatusMessage(message);
 #endif  // HAS_LCD
 }
@@ -834,7 +840,7 @@ void processCommand() {
       break;
 #if MACHINE_STYLE == POLARGRAPH
     case 11:  makelangelo6Setup();  break;
-    case 12:  recordHome();  break;
+    //case 12:  recordHome();  break;
 #endif
 #ifdef MACHINE_HAS_LIFTABLE_PEN
     case 13:  setPenAngle(parseNumber('Z', axies[2].pos));  break;
@@ -877,7 +883,7 @@ void processCommand() {
     case  4:  parseDwell();  break;
     case 28:  robot_findHome();  break;
 #if MACHINE_STYLE == POLARGRAPH
-    case 29:  calibrateBelts();  break;
+    //case 29:  calibrateBelts();  break;
 #endif
     case 54:
     case 55:
@@ -926,6 +932,22 @@ void setFeedratePerAxis() {
 
 
 #if MACHINE_STYLE == POLARGRAPH
+// convert belt length to cartesian position, save that as home pos.
+void calibrationToHomePosition() {
+  float axies2[NUM_AXIES];
+  long steps[3];
+  steps[0]=calibrateLeft;
+  steps[1]=calibrateRight;
+  steps[2]=axies[2].pos;
+  FK(steps, axies2);
+  
+  float homePos[NUM_AXIES];
+  homePos[0] = axies2[0];
+  homePos[1] = axies2[1];
+  homePos[2] = axies2[2];
+  setHome(homePos);
+}
+
 /**
    D11 makelangelo 6 specific setup call
 */
@@ -943,13 +965,7 @@ void makelangelo6Setup() {
   calibrateLeft = 1025;
   calibrateRight = 1025;
   saveCalibration();
-
-  float homePos[NUM_AXIES];
-  homePos[0] = 0;
-  homePos[1] = limits[2] - 217.0;
-  homePos[2] = 50;
-  setHome(homePos);
-
+  calibrationToHomePosition();
 }
 /**
    D11 makelangelo 5 specific setup call
@@ -968,13 +984,7 @@ void makelangelo5Setup() {
   calibrateLeft = 1025;
   calibrateRight = 1025;
   saveCalibration();
-
-  float homePos[NUM_AXIES];
-  homePos[0] = 0;
-  homePos[1] = limits[2] - 217.0;
-  homePos[2] = 50;
-  setHome(homePos);
-
+  calibrationToHomePosition();
 }
 
 
@@ -994,12 +1004,7 @@ void makelangelo33Setup() {
   calibrateLeft = 2022;
   calibrateRight = 2022;
   saveCalibration();
-
-  float homePos[NUM_AXIES];
-  homePos[0] = 0;
-  homePos[1] = 0;
-  homePos[2] = 90;
-  setHome(homePos);
+  calibrationToHomePosition();
 }
 #endif
 

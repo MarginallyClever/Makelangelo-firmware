@@ -179,24 +179,43 @@ void recordHome() {
   reportCalibration();
 
   // current position is...
-  float axies2[NUM_AXIES];
-  FK(count, axies2);
-  teleport(axies2);
-  where();
-
-  // go home.
-  Serial.println(F("Homing..."));
-
   float offset[NUM_AXIES];
-  get_end_plus_offset(offset);
-  offset[0]=axies[0].homePos;
-  offset[1]=axies[1].homePos;
-  lineSafe(offset, feed_rate);
+  FK(count, offset);
+  teleport(offset);
+  where();
   Serial.println(F("Done."));
 #endif // defined(CAN_HOME)
 }
 
-
+void polargraph_homeAtSpeed(int delayTime) {
+  // reel in the left motor and the right motor out until contact is made.
+  digitalWrite(MOTOR_0_DIR_PIN, STEPPER_DIR_LOW);
+  digitalWrite(MOTOR_1_DIR_PIN, STEPPER_DIR_LOW);
+  int left = 0, right = 0;
+  do {
+    if (left == 0) {
+      digitalWrite(MOTOR_0_STEP_PIN, HIGH);
+      digitalWrite(MOTOR_0_STEP_PIN, LOW);
+#ifdef USE_LIMIT_SWITCH
+      if ( digitalRead(LIMIT_SWITCH_PIN_LEFT) == LOW )
+#endif
+      {
+        left = 1;
+      }
+    }
+    if (right == 0) {
+      digitalWrite(MOTOR_1_STEP_PIN, HIGH);
+      digitalWrite(MOTOR_1_STEP_PIN, LOW);
+#ifdef USE_LIMIT_SWITCH
+      if ( digitalRead(LIMIT_SWITCH_PIN_RIGHT) == LOW )
+#endif
+      {
+        right = 1;
+      }
+    }
+    pause(delayTime);
+  } while (left + right < 2);
+}
 /**
    If limit switches are installed, move to touch each switch so that the pen holder can move to home position.
 */
@@ -230,37 +249,23 @@ void robot_findHome() {
 #else
 
   findStepDelay();
-  
-  // reel in the left motor and the right motor out until contact is made.
-  digitalWrite(MOTOR_0_DIR_PIN, STEPPER_DIR_LOW);
-  digitalWrite(MOTOR_1_DIR_PIN, STEPPER_DIR_LOW);
-  int left = 0, right = 0;
-  do {
-    if (left == 0) {
-      digitalWrite(MOTOR_0_STEP_PIN, HIGH);
-      digitalWrite(MOTOR_0_STEP_PIN, LOW);
-#ifdef USE_LIMIT_SWITCH
-      if ( digitalRead(LIMIT_SWITCH_PIN_LEFT) == LOW )
-#endif
-      {
-        left = 1;
-      }
-    }
-    if (right == 0) {
-      digitalWrite(MOTOR_1_STEP_PIN, HIGH);
-      digitalWrite(MOTOR_1_STEP_PIN, LOW);
-#ifdef USE_LIMIT_SWITCH
-      if ( digitalRead(LIMIT_SWITCH_PIN_RIGHT) == LOW )
-#endif
-      {
-        right = 1;
-      }
-    }
-    pause(step_delay);
-  } while (left + right < 2);
-
+  polargraph_homeAtSpeed(step_delay);
   // make sure there's no momentum to skip the belt on the pulley.
   delay(500);
+  // back off a bit
+  digitalWrite(MOTOR_0_DIR_PIN, STEPPER_DIR_HIGH);
+  digitalWrite(MOTOR_1_DIR_PIN, STEPPER_DIR_HIGH);
+  for(int i=0;i<1500;++i) {
+      digitalWrite(MOTOR_0_STEP_PIN, HIGH);
+      digitalWrite(MOTOR_0_STEP_PIN, LOW);
+    
+      digitalWrite(MOTOR_1_STEP_PIN, HIGH);
+      digitalWrite(MOTOR_1_STEP_PIN, LOW);
+      pause(step_delay*5);
+  }
+  // find it again, but slower
+  polargraph_homeAtSpeed(step_delay*10);
+  
 
   #endif
   //Serial.println(F("Estimating position..."));
@@ -276,18 +281,7 @@ void robot_findHome() {
   float offset[NUM_AXIES];
   FK(count, offset);
   teleport(offset);
-
   where();
-  get_end_plus_offset(offset);
-
-  // go home.
-  offset[0]=axies[0].homePos;
-  offset[1]=axies[1].homePos;
-  offset[2]=axies[2].pos;
-  Serial.print(F("Homing to "));  Serial.print  (axies[0].homePos);
-  Serial.print(',');              Serial.println(axies[1].homePos);
-  lineSafe(offset, DEFAULT_FEEDRATE);
-
   Serial.println(F("Done."));
 #endif // defined(CAN_HOME)
 }
@@ -296,6 +290,7 @@ void robot_findHome() {
 /**
  * Starting from the home position, bump the switches and measure the length of each belt.
  * Does not save the values, only reports them to serial.
+ * @Deprecated
  */
 void calibrateBelts() {
 #ifdef defined(CAN_HOME)
