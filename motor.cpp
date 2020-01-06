@@ -755,19 +755,16 @@ void motor_onestep(int motor) {
    To calculate the timer frequency (for example 2Hz using timer1) you will need:
 */
 FORCE_INLINE unsigned short calc_timer(uint32_t desired_freq_hz, uint8_t*loops) {
-  if ( desired_freq_hz > CLOCK_MAX_STEP_FREQUENCY ) desired_freq_hz = CLOCK_MAX_STEP_FREQUENCY;
-  if ( desired_freq_hz < CLOCK_MIN_STEP_FREQUENCY ) desired_freq_hz = CLOCK_MIN_STEP_FREQUENCY;
-  //desired_freq_hz-=CLOCK_MIN_STEP_FREQUENCY;
-
   uint8_t step_multiplier = 1;
-  if ( desired_freq_hz > 20000 ) {
-    step_multiplier = 4;
-    desired_freq_hz >>= 2;
-  } else if ( desired_freq_hz > 10000 ) {
-    step_multiplier = 2;
+  int idx=0;
+  while( idx<7 && desired_freq_hz > 10000 ) {
+    step_multiplier <<= 1;
     desired_freq_hz >>= 1;
+    idx++;
   }
   *loops = step_multiplier;
+  
+  if ( desired_freq_hz < CLOCK_MIN_STEP_FREQUENCY ) desired_freq_hz = CLOCK_MIN_STEP_FREQUENCY;
 
   long counter_value = ( CLOCK_FREQ >> 3 ) / desired_freq_hz;
   if ( counter_value >= MAX_COUNTER ) {
@@ -1128,7 +1125,7 @@ void isr_internal() {
 #ifdef DEBUG_STEPPING
       //Serial.print("d");
 #endif
-      uint32_t end_feed_rate = current_feed_rate - MultiU24X32toH16( time_decelerating, current_acceleration );
+      uint32_t end_feed_rate = working_seg->nominal_rate - MultiU24X32toH16( time_decelerating, current_acceleration );
       if ( end_feed_rate < working_seg->final_rate ) {
         end_feed_rate = working_seg->final_rate;
       }
@@ -1312,10 +1309,12 @@ void motor_line(const float * const target_position, float fr_mm_s) {
     axies[i].pos = target_position[i];
   }
 
+  // even if there is no work, remember the new feedrate.
+  feed_rate = fr_mm_s;
+
   // No steps?  No work!  Stop now.
   if ( new_seg.steps_total == 0 ) return;
 
-  feed_rate = fr_mm_s;
 #ifdef HAS_LCD
   // use LCD to adjust speed while drawing
   fr_mm_s *= (float)speed_adjust * 0.01f;
