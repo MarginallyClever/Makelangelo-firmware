@@ -140,22 +140,7 @@
 #define ARC_CCW              (-1)
 
 
-//------------------------------------------------------------------------------
-// SANITY CHECKS
-//------------------------------------------------------------------------------
-
-#if NUM_MOTORS > MAX_MOTORS
-#error "The number of motors needed is more than this board supports."
-#endif
-#if NUM_SERVOS > MAX_BOARD_SERVOS
-#error "The number of servos needed is more than this board supports."
-#endif
-
-#if NUM_SERVOS + NUM_MOTORS != NUM_AXIES
-// not always the case!  Skycam has more motors than axies.
-//#error "NUM_SERVOS + NUM_MOTORS != NUM_AXIES"
-#endif
-
+#define A(CODE) " " CODE "\n\t"
 
 //------------------------------------------------------------------------------
 // step direction
@@ -206,16 +191,16 @@
 
 #ifdef ESP8266
 
-#define CLOCK_FREQ            (80000000L)
-#define MAX_COUNTER           (4294967295L)  // 32 bits
+#define F_CPU                   (80000000L)
+#define MAX_COUNTER             (4294967295L)  // 32 bits
 #define CRITICAL_SECTION_START  noInterrupts();
 #define CRITICAL_SECTION_END    interrupts();
 
 #else  // ESP8266
 
 // for timer interrupt control
-#define CLOCK_FREQ            (16000000L)
-#define MAX_COUNTER           (65536L)  // 16 bits
+#define F_CPU                   (16000000L)
+#define MAX_COUNTER             (65536L)  // 16 bits
 #ifndef CRITICAL_SECTION_START
 #define CRITICAL_SECTION_START  unsigned char _sreg = SREG;  cli();
 #define CRITICAL_SECTION_END    SREG = _sreg;
@@ -223,16 +208,17 @@
 
 #endif  // ESP8266
 
-#define TIMER_RATE            ((CLOCK_FREQ)/8)
+#define TIMER_RATE            ((F_CPU)/8)
 
 // optimize code, please
 #define FORCE_INLINE         __attribute__((always_inline)) inline
 
 // TODO a guess.  use real math here!
 // https://reprap.org/wiki/Step_rates
-// 0.9deg stepper, 20-tooth GT2 pulley, 1/16 microstepping = 160 steps/mm, 1500mm/s = 240000 steps/s
-#define CLOCK_MAX_STEP_FREQUENCY (240000)
-#define CLOCK_MIN_STEP_FREQUENCY (CLOCK_FREQ/500000U)
+// 0.9deg stepper, 20-tooth GT2 pulley, 1/16 microstepping = 160 steps/mm, 200mm/s = 240000 steps/s
+// 1.8deg stepper, 20-tooth GT2 pulley, 1/16 microstepping = 160 steps/mm, 400mm/s = 480000 steps/s
+#define CLOCK_MAX_STEP_FREQUENCY (240000L)
+#define CLOCK_MIN_STEP_FREQUENCY (F_CPU/500000U)
 
 #define TIMEOUT_OK (1000)
 
@@ -241,8 +227,30 @@
 #define ELAPSED(NOW,SOON) (!PENDING(NOW,SOON))
 
 // uncomment this to slow the machine and smooth movement if the segment buffer is running low.
-#define BUFFER_EMPTY_SLOWDOWN // smooth motion if buffer underflow.
-#define MIN_SEGMENT_TIME_US  (45000)
+#define BUFFER_EMPTY_SLOWDOWN
+#ifndef MIN_SEGMENT_TIME_US
+#define MIN_SEGMENT_TIME_US  (40000)
+#endif
+
+// if a segment added to the buffer is less tahn this many motor steps, roll it into the next move.
+#define MIN_STEPS_PER_SEGMENT 6
+
+//------------------------------------------------------------------------------
+// SANITY CHECKS
+//------------------------------------------------------------------------------
+
+#if NUM_MOTORS > MAX_MOTORS
+#error "The number of motors needed is more than this board supports."
+#endif
+#if NUM_SERVOS > MAX_BOARD_SERVOS
+#error "The number of servos needed is more than this board supports."
+#endif
+
+#if NUM_SERVOS + NUM_MOTORS != NUM_AXIES
+// not always the case!  Skycam has more motors than axies.
+//#error "NUM_SERVOS + NUM_MOTORS != NUM_AXIES"
+#endif
+
 
 //------------------------------------------------------------------------------
 // STRUCTURES
