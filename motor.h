@@ -109,8 +109,7 @@ typedef struct {
 
 extern Segment line_segments[MAX_SEGMENTS];
 extern Segment *working_seg;
-extern volatile int current_segment;
-extern volatile int last_segment;
+extern volatile int current_segment, last_segment, nonbusy_segment;
 extern int first_segment_delay;
 extern Motor motors[NUM_MOTORS+NUM_SERVOS];
 extern const char *AxisNames;
@@ -145,9 +144,18 @@ extern const int movesPlanned();
 extern void isr_internal();
 #endif // DEBUG_STEPPING
 
-//extern FORCE_INLINE Segment *get_current_segment();
-// for reasons I don't understand... if i put this method in the .h file i get compile errors.
-// so I put it here, which forces the externs.
+FORCE_INLINE const int movesPlanned() {
+  return SEGMOD( last_segment - nonbusy_segment );
+}
+
+FORCE_INLINE const int get_next_segment(int i) {
+  return SEGMOD( i + 1 ); 
+}
+
+FORCE_INLINE const int get_prev_segment(int i) {
+  return SEGMOD( i - 1 );
+}
+
 FORCE_INLINE Segment *get_current_segment() {
   if (current_segment == last_segment ) return NULL;
   if (first_segment_delay > 0) {
@@ -155,7 +163,14 @@ FORCE_INLINE Segment *get_current_segment() {
     if (movesPlanned() > 3) first_segment_delay = 0;
     return NULL;
   }
-  return &line_segments[current_segment];
+
+  Segment *block = &line_segments[current_segment];
+  
+  if(block->recalculate_flag!=0) return NULL;  // wait, not ready
+  nonbusy_segment = get_next_segment(current_segment);
+  
+  return block;
 }
+
 
 #endif // MOTOR_H

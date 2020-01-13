@@ -12,6 +12,7 @@
 #include "motor.h"
 #include "MServo.h"
 #include "LCD.h"
+#include "speed_lookuptable.h"
 
 //------------------------------------------------------------------------------
 // MACROS
@@ -53,6 +54,7 @@ Segment line_segments[MAX_SEGMENTS];
 Segment *working_seg = NULL;
 volatile int current_segment = 0;
 volatile int last_segment = 0;
+volatile int nonbusy_segment = 0;
 int first_segment_delay;
 
 // used by timer1 to optimize interrupt inner loop
@@ -128,6 +130,99 @@ uint8_t positionErrorFlags;
 void itr();
 #endif
 
+
+// intRes = intIn1 * intIn2 >> 16
+// uses:
+// r26 to store 0
+// r27 to store the byte 1 of the 24 bit result
+static FORCE_INLINE uint16_t MultiU16X8toH16(uint8_t charIn1, uint16_t intIn2) {
+  register uint8_t tmp;
+  register uint16_t intRes;
+  __asm__ __volatile__ (
+    A("clr %[tmp]")
+    A("mul %[charIn1], %B[intIn2]")
+    A("movw %A[intRes], r0")
+    A("mul %[charIn1], %A[intIn2]")
+    A("add %A[intRes], r1")
+    A("adc %B[intRes], %[tmp]")
+    A("lsr r0")
+    A("adc %A[intRes], %[tmp]")
+    A("adc %B[intRes], %[tmp]")
+    A("clr r1")
+      : [intRes] "=&r" (intRes),
+        [tmp] "=&r" (tmp)
+      : [charIn1] "d" (charIn1),
+        [intIn2] "d" (intIn2)
+      : "cc"
+  );
+  return intRes;
+}
+
+
+// intRes = longIn1 * longIn2 >> 24
+// uses:
+// A[tmp] to store 0
+// B[tmp] to store bits 16-23 of the 48bit result. The top bit is used to round the two byte result.
+// note that the lower two bytes and the upper byte of the 48bit result are not calculated.
+// this can cause the result to be out by one as the lower bytes may cause carries into the upper ones.
+// B A are bits 24-39 and are the returned value
+// C B A is longIn1
+// D C B A is longIn2
+//
+static FORCE_INLINE uint16_t MultiU24X32toH16(uint32_t longIn1, uint32_t longIn2) {
+#ifdef ESP8266
+  uint16_t intRes = longIn1 * longIn2 >> 24;
+#else // ESP8266
+  register uint8_t tmp1;
+  register uint8_t tmp2;
+  register uint16_t intRes;
+  __asm__ __volatile__(
+    A("clr %[tmp1]")
+    A("mul %A[longIn1], %B[longIn2]")
+    A("mov %[tmp2], r1")
+    A("mul %B[longIn1], %C[longIn2]")
+    A("movw %A[intRes], r0")
+    A("mul %C[longIn1], %C[longIn2]")
+    A("add %B[intRes], r0")
+    A("mul %C[longIn1], %B[longIn2]")
+    A("add %A[intRes], r0")
+    A("adc %B[intRes], r1")
+    A("mul %A[longIn1], %C[longIn2]")
+    A("add %[tmp2], r0")
+    A("adc %A[intRes], r1")
+    A("adc %B[intRes], %[tmp1]")
+    A("mul %B[longIn1], %B[longIn2]")
+    A("add %[tmp2], r0")
+    A("adc %A[intRes], r1")
+    A("adc %B[intRes], %[tmp1]")
+    A("mul %C[longIn1], %A[longIn2]")
+    A("add %[tmp2], r0")
+    A("adc %A[intRes], r1")
+    A("adc %B[intRes], %[tmp1]")
+    A("mul %B[longIn1], %A[longIn2]")
+    A("add %[tmp2], r1")
+    A("adc %A[intRes], %[tmp1]")
+    A("adc %B[intRes], %[tmp1]")
+    A("lsr %[tmp2]")
+    A("adc %A[intRes], %[tmp1]")
+    A("adc %B[intRes], %[tmp1]")
+    A("mul %D[longIn2], %A[longIn1]")
+    A("add %A[intRes], r0")
+    A("adc %B[intRes], r1")
+    A("mul %D[longIn2], %B[longIn1]")
+    A("add %B[intRes], r0")
+    A("clr r1")
+    : [intRes] "=&r" (intRes),
+    [tmp1] "=&r" (tmp1),
+    [tmp2] "=&r" (tmp2)
+    : [longIn1] "d" (longIn1),
+    [longIn2] "d" (longIn2)
+    : "cc"
+  );
+#endif // ESP8266
+  return intRes;
+}
+
 /* //not used anywhere so far
 #ifdef HAS_TMC2130
 uint16_t rms_current(uint8_t CS, float Rsense = 0.11) {
@@ -135,18 +230,6 @@ uint16_t rms_current(uint8_t CS, float Rsense = 0.11) {
 }
 #endif
 */
-
-const int movesPlanned() {
-  return SEGMOD( last_segment - current_segment );
-}
-
-FORCE_INLINE int get_next_segment(int i) {
-  return SEGMOD( i + 1 );
-}
-
-FORCE_INLINE int get_prev_segment(int i) {
-  return SEGMOD( i - 1 );
-}
 
 /**
    Calculate the maximum allowable speed at this point, in order
@@ -199,7 +282,6 @@ void tmc_setup(TMC2130Stepper &driver) {
  * set up the pins for each motor
  */
 void motor_setup() {
-	
   motors[0].step_pin        = MOTOR_0_STEP_PIN;
   motors[0].dir_pin         = MOTOR_0_DIR_PIN;
   motors[0].enable_pin      = MOTOR_0_ENABLE_PIN;
@@ -257,7 +339,7 @@ void motor_setup() {
     digitalWrite(CS_PIN_0, HIGH);
     digitalWrite(CS_PIN_1, HIGH);
 	
-	SPI.begin();
+    SPI.begin();
     pinMode(MISO, INPUT_PULLUP);
 
     tmc_setup(driver_0);
@@ -352,10 +434,10 @@ void disable_stealthChop(){
   
   #ifdef MEASURED_TSTEP
 	Serial.println("measured_tstep is inputting");
-    driver_0.TCOOLTHRS((float)MEASURED_TSTEP*(100+MEASURED_TSTEP_MARGIN_PCT)/100.0f);  // + margin %
-	driver_1.TCOOLTHRS((float)MEASURED_TSTEP*(100+MEASURED_TSTEP_MARGIN_PCT)/100.0f);  // + margin %
-    driver_0.THIGH    ((float)MEASURED_TSTEP*(100-MEASURED_TSTEP_MARGIN_PCT)/100.0f);  // - margin %
-    driver_1.THIGH    ((float)MEASURED_TSTEP*(100-MEASURED_TSTEP_MARGIN_PCT)/100.0f);  // - margin %
+  driver_0.TCOOLTHRS((float)MEASURED_TSTEP*(100+MEASURED_TSTEP_MARGIN_PCT)/100.0f);  // + margin %
+  driver_1.TCOOLTHRS((float)MEASURED_TSTEP*(100+MEASURED_TSTEP_MARGIN_PCT)/100.0f);  // + margin %
+  driver_0.THIGH    ((float)MEASURED_TSTEP*(100-MEASURED_TSTEP_MARGIN_PCT)/100.0f);  // - margin %
+  driver_1.THIGH    ((float)MEASURED_TSTEP*(100-MEASURED_TSTEP_MARGIN_PCT)/100.0f);  // - margin %
   #endif MEASURED_TSTEP
   
   #ifdef STEALTHCHOP
@@ -364,6 +446,7 @@ void disable_stealthChop(){
   driver_1.stealthChop(0);
   #endif // STEALTHCHOP
 }
+
 void enable_stealthChop(){	
 	cli();
 	TCCR1A = 0;		// set entire TCCR1A register to 0
@@ -396,7 +479,6 @@ void enable_stealthChop(){
 }
 
 void motor_home(){
-	  
 	//Backoff
 	for (uint32_t i = 0; i < STEPS_PER_MM * 25; ++i) {
 		digitalWrite(MOTOR_0_STEP_PIN, HIGH);
@@ -407,12 +489,12 @@ void motor_home(){
 	}
 	
 	cli();
-    TCCR1A = 0;// set entire TCCR1A register to 0
-    TCNT1  = 0;//initialize counter value to 0
-    OCR1A = HOMING_OCR1A; // = (16*10^6) / (1*1024) - 1 (must be <65536)
-    TCCR1B = (1 << WGM12);		// turn on CTC mode
-    TCCR1B |= (1 << CS11);		// Set CS11 bits for 8 prescaler
-    TIMSK1 |= (1 << OCIE1A);	// enable timer compare interrupt
+  TCCR1A = 0;// set entire TCCR1A register to 0
+  TCNT1  = 0;//initialize counter value to 0
+  OCR1A = HOMING_OCR1A; // = (16*10^6) / (1*1024) - 1 (must be <65536)
+  TCCR1B = (1 << WGM12);		// turn on CTC mode
+  TCCR1B |= (1 << CS11);		// Set CS11 bits for 8 prescaler
+  TIMSK1 |= (1 << OCIE1A);	// enable timer compare interrupt
 
 	homing = true;
 	
@@ -427,18 +509,20 @@ void motor_home(){
 	sei();	
 }
 #endif
+
 // turn on power to the motors (make them immobile)
 void motor_engage() {
   int i;
   for (i = 0; i < NUM_MOTORS; ++i) {
     digitalWrite(motors[i].enable_pin, LOW);
   }
-  /*
-    #if MACHINE_STYLE == SIXI
+/*
+  #if MACHINE_STYLE == SIXI
     // DM320T drivers want high for enabled
     digitalWrite(motors[4].enable_pin,HIGH);
     digitalWrite(motors[5].enable_pin,HIGH);
-    #endif*/
+  #endif
+*/
 }
 
 
@@ -447,12 +531,14 @@ void motor_disengage() {
   int i;
   for (i = 0; i < NUM_MOTORS; ++i) {
     digitalWrite(motors[i].enable_pin, HIGH);
-  }/*
+  }
+  /*
   #if MACHINE_STYLE == SIXI
   // DM320T drivers want low for disabled
   digitalWrite(motors[4].enable_pin,LOW);
   digitalWrite(motors[5].enable_pin,LOW);
-  #endif*/
+  #endif
+  */
 }
 
 
@@ -755,92 +841,33 @@ void motor_onestep(int motor) {
    To calculate the timer frequency (for example 2Hz using timer1) you will need:
 */
 FORCE_INLINE unsigned short calc_timer(uint32_t desired_freq_hz, uint8_t*loops) {
+  uint32_t timer;
   uint8_t step_multiplier = 1;
+
   int idx=0;
-  while( idx<7 && desired_freq_hz > 10000 ) {
+  while( idx<2 && desired_freq_hz > 10000 ) {
     step_multiplier <<= 1;
     desired_freq_hz >>= 1;
     idx++;
   }
   *loops = step_multiplier;
   
-  if ( desired_freq_hz < CLOCK_MIN_STEP_FREQUENCY ) desired_freq_hz = CLOCK_MIN_STEP_FREQUENCY;
-
-  long counter_value = ( CLOCK_FREQ >> 3 ) / desired_freq_hz;
-  if ( counter_value >= MAX_COUNTER ) {
-    counter_value = MAX_COUNTER - 1;
-  } else if ( counter_value < 100 ) {
-    counter_value = 100;
+  if( desired_freq_hz < CLOCK_MIN_STEP_FREQUENCY ) desired_freq_hz = CLOCK_MIN_STEP_FREQUENCY;
+  desired_freq_hz -= CLOCK_MIN_STEP_FREQUENCY;
+  if(desired_freq_hz >= 8 *256) {
+    const uint8_t tmp_step_rate = (desired_freq_hz & 0x00FF);
+    const uint16_t table_address = (uint16_t)&speed_lookuptable_fast[(uint8_t)(desired_freq_hz >> 8)][0],
+                   gain = (uint16_t)pgm_read_word_near(table_address + 2);
+    timer = MultiU16X8toH16(tmp_step_rate, gain);
+    timer = (uint16_t)pgm_read_word_near(table_address) - timer;
+  } else { // lower step rates
+    uint16_t table_address = (uint16_t)&speed_lookuptable_slow[0][0];
+    table_address += ((desired_freq_hz) >> 1) & 0xFFFC;
+    timer = (uint16_t)pgm_read_word_near(table_address)
+          - (((uint16_t)pgm_read_word_near(table_address + 2) * (uint8_t)(desired_freq_hz & 0x0007)) >> 3);
   }
-
-  return counter_value;
-}
-
-
-#define A(CODE) " " CODE "\n\t"
-
-// intRes = longIn1 * longIn2 >> 24
-// uses:
-// A[tmp] to store 0
-// B[tmp] to store bits 16-23 of the 48bit result. The top bit is used to round the two byte result.
-// note that the lower two bytes and the upper byte of the 48bit result are not calculated.
-// this can cause the result to be out by one as the lower bytes may cause carries into the upper ones.
-// B A are bits 24-39 and are the returned value
-// C B A is longIn1
-// D C B A is longIn2
-//
-static FORCE_INLINE uint16_t MultiU24X32toH16(uint32_t longIn1, uint32_t longIn2) {
-#ifdef ESP8266
-  uint16_t intRes = longIn1 * longIn2 >> 24;
-#else // ESP8266
-  register uint8_t tmp1;
-  register uint8_t tmp2;
-  register uint16_t intRes;
-  __asm__ __volatile__(
-    A("clr %[tmp1]")
-    A("mul %A[longIn1], %B[longIn2]")
-    A("mov %[tmp2], r1")
-    A("mul %B[longIn1], %C[longIn2]")
-    A("movw %A[intRes], r0")
-    A("mul %C[longIn1], %C[longIn2]")
-    A("add %B[intRes], r0")
-    A("mul %C[longIn1], %B[longIn2]")
-    A("add %A[intRes], r0")
-    A("adc %B[intRes], r1")
-    A("mul %A[longIn1], %C[longIn2]")
-    A("add %[tmp2], r0")
-    A("adc %A[intRes], r1")
-    A("adc %B[intRes], %[tmp1]")
-    A("mul %B[longIn1], %B[longIn2]")
-    A("add %[tmp2], r0")
-    A("adc %A[intRes], r1")
-    A("adc %B[intRes], %[tmp1]")
-    A("mul %C[longIn1], %A[longIn2]")
-    A("add %[tmp2], r0")
-    A("adc %A[intRes], r1")
-    A("adc %B[intRes], %[tmp1]")
-    A("mul %B[longIn1], %A[longIn2]")
-    A("add %[tmp2], r1")
-    A("adc %A[intRes], %[tmp1]")
-    A("adc %B[intRes], %[tmp1]")
-    A("lsr %[tmp2]")
-    A("adc %A[intRes], %[tmp1]")
-    A("adc %B[intRes], %[tmp1]")
-    A("mul %D[longIn2], %A[longIn1]")
-    A("add %A[intRes], r0")
-    A("adc %B[intRes], r1")
-    A("mul %D[longIn2], %B[longIn1]")
-    A("add %B[intRes], r0")
-    A("clr r1")
-    : [intRes] "=&r" (intRes),
-    [tmp1] "=&r" (tmp1),
-    [tmp2] "=&r" (tmp2)
-    : [longIn1] "d" (longIn1),
-    [longIn2] "d" (longIn2)
-    : "cc"
-  );
-#endif // ESP8266
-  return intRes;
+  
+  return timer;
 }
 
 
@@ -1167,7 +1194,7 @@ void isr_internal() {
     }
 #ifndef ESP8266
     // TODO this line needs explaining.  Is it even needed?
-    OCR1A = (OCR1A < (TCNT1 + 16)) ? (TCNT1 + 16) : OCR1A;
+    //OCR1A = (OCR1A < (TCNT1 + 16)) ? (TCNT1 + 16) : OCR1A;
 #endif // ESP8266
   }
 }
@@ -1313,7 +1340,7 @@ void motor_line(const float * const target_position, float fr_mm_s) {
   feed_rate = fr_mm_s;
 
   // No steps?  No work!  Stop now.
-  if ( new_seg.steps_total == 0 ) return;
+  if ( new_seg.steps_total < MIN_STEPS_PER_SEGMENT ) return;
 
 #ifdef HAS_LCD
   // use LCD to adjust speed while drawing
@@ -1322,23 +1349,27 @@ void motor_line(const float * const target_position, float fr_mm_s) {
   
   new_seg.busy = false;
   new_seg.distance = distance_mm;
-  float inverse_distance_mm = 1.0 / new_seg.distance;
+  float inverse_distance_mm = 1.0 / distance_mm;
   float inverse_secs = fr_mm_s * inverse_distance_mm;
-
+  
+  int movesQueued = movesPlanned();
+  //int moves_queued = SEGMOD(prev_segment - get_next_segment(current_segment));
+  uint32_t segment_time_us = lroundf(1000000.0f / inverse_secs);
+  
+//*
 #ifdef BUFFER_EMPTY_SLOWDOWN
-  int moves_queued = SEGMOD(prev_segment - get_next_segment(current_segment));
-  if(moves_queued >= 2 && moves_queued <= (MAX_SEGMENTS/2)-1) {
-    uint32_t segment_time_us = lroundf(1000000.0f / inverse_secs);
+  if(movesQueued >= 2 && movesQueued <= (MAX_SEGMENTS/2)-1) {
     if(segment_time_us < min_segment_time_us) {
       //Serial.print("was ");  Serial.print(inverse_secs);
-      const uint32_t nst = segment_time_us + lroundf(2 * (min_segment_time_us - segment_time_us) / moves_queued);
+      const uint32_t nst = segment_time_us + lroundf(2 * (min_segment_time_us - segment_time_us) / movesQueued);
       inverse_secs = 1000000.0f / nst;
       //Serial.print(" now ");  Serial.println(inverse_secs);
     }
   }
 #endif
+//*/
 
-  new_seg.nominal_speed = new_seg.distance * inverse_secs;
+  new_seg.nominal_speed = distance_mm * inverse_secs;
   new_seg.nominal_rate = ceil(new_seg.steps_total * inverse_secs);
 
 
@@ -1450,8 +1481,6 @@ void motor_line(const float * const target_position, float fr_mm_s) {
 
   // what is the maximum starting speed for this segment?
   float vmax_junction = MIN_FEEDRATE;
-
-  int movesQueued = movesPlanned();
   
   if (movesQueued <= 0 || previous_safe_speed <= 0.0001) {
     vmax_junction = safe_speed;
