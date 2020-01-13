@@ -49,7 +49,6 @@ long last_cmd_time;             // prevent timeouts
 long line_number = 0;           // make sure commands arrive in order
 uint8_t lastGcommand = -1;
 
-float tool_offset[NUM_TOOLS][NUM_AXIES];
 uint8_t current_tool = 0;
 
 #if MACHINE_STYLE == SIXI
@@ -191,41 +190,34 @@ void testKinematics() {
    @input new_feed_rate speed to travel along arc
 */
 void lineSafe(float *pos, float new_feed_rate) {
-  float destination[NUM_AXIES];
-  int i;
-  for (i = 0; i < NUM_AXIES; ++i) {
-    destination[i] = pos[i] - tool_offset[current_tool][i];
-    // @TODO confirm destination is within max/min limits.
-  }
-
 #ifdef SUBDIVIDE_LINES
   // split up long lines to make them straighter
   float delta[NUM_AXIES];
   float startPos[NUM_AXIES];
   float temp[NUM_AXIES];
-  float len = 0;
-  for (i = 0; i < NUM_AXIES; ++i) {
+  float lenSquared = 0;
+  for (int i = 0; i < NUM_AXIES; ++i) {
     startPos[i] = axies[i].pos;
-    delta[i] = destination[i] - startPos[i];
-    len += sq(delta[i]);
+    delta[i] = pos[i] - startPos[i];
+    lenSquared += sq(delta[i]);
   }
 
 #if MACHINE_STYLE == POLARGRAPH
   // What if some axies don't need subdividing?  like z axis on polargraph.
   // often SEGMENT_PER_CM_LINE is 10mm or 20mm.  but a servo movement can be 90-160=70, or 7 segments.  This is pretty nuts.
   // discount the z movement from the subdivision to use less segments and (I hope) move the servo faster.
-  len -= sq(delta[2]);
+  lenSquared -= sq(delta[2]);
   delta[2] = 0;
 #endif
 
-  len = sqrt(len);  //mm
   float a;
   float j;
+  float stepSquared = sq(SEGMENT_MAX_LENGTH_MM);
 
   // draw everything up to (but not including) the destination.
-  for (j = SEGMENT_MAX_LENGTH_MM; j < len; j += SEGMENT_MAX_LENGTH_MM) {
-    a = j / len;
-    for (i = 0; i < NUM_AXIES; ++i) {
+  for (j = stepSquared; j < lenSquared; j += stepSquared) {
+    a = j / lenSquared;
+    for (int i = 0; i < NUM_AXIES; ++i) {
       temp[i] = delta[i] * a + startPos[i];
     }
     motor_line(temp, new_feed_rate);
@@ -233,7 +225,7 @@ void lineSafe(float *pos, float new_feed_rate) {
 #endif
 
   // guarantee we stop exactly at the destination (no rounding errors).
-  motor_line(destination, new_feed_rate);
+  motor_line(pos, new_feed_rate);
 }
 
 
@@ -323,12 +315,12 @@ void help() {
   Serial.print(F("\n\nHELLO WORLD! "));
   sayModelAndUID();
   sayFirmwareVersionNumber();
-  Serial.println(F("== http://www.marginallyclever.com/ =="));
-  Serial.println(F("M100 - display this message"));
-  Serial.println(F("M101 [Tx.xx] [Bx.xx] [Rx.xx] [Lx.xx]"));
-  Serial.println(F("       - display/update board dimensions."));
-  Serial.println(F("As well as the following G-codes (http://en.wikipedia.org/wiki/G-code):"));
-  Serial.println(F("G00,G01,G02,G03,G04,G28,G90,G91,G92,M18,M114"));
+  Serial.println(F("Please see http://makelangelo.com/ for more information."));
+  Serial.print(F("Uploaded "));
+  Serial.print(__DATE__);
+  Serial.print(' ');
+  Serial.println(__TIME__);
+  Serial.println(F("Try these (with a newline): G00,G01,G02,G03,G04,G28,G90,G91,G92,M18,M101,M100,M114"));
 #ifdef HAS_WIFI
   // Print the IP address
   Serial.print("Use this URL to connect: http://");
@@ -425,32 +417,6 @@ void printConfig() {
 
 
 /**
-   Set the relative tool offset
-   @input toolID the active tool id
-   @input pos the offsets
-*/
-void set_tool_offset(int toolID, float *pos) {
-  int i;
-
-  for (i = 0; i < NUM_AXIES; ++i) {
-    tool_offset[toolID][i] = pos[i];
-  }
-}
-
-
-/**
-   @param results array of NUM_AXIES floats
-   @return the position + active tool offset
-*/
-void get_end_plus_offset(float *results) {
-  int i;
-  for (i = 0; i < NUM_AXIES; ++i) {
-    results[i] = tool_offset[current_tool][i] + axies[i].pos;
-  }
-}
-
-
-/**
    M6 [Tnnn]
    Change the currently active tool
 */
@@ -511,8 +477,6 @@ void parseDwell() {
    straight lines.  distance in mm.
 */
 void parseLine() {
-  float offset[NUM_AXIES];
-  get_end_plus_offset(offset);
   acceleration = parseNumber('A', acceleration);
   acceleration = min(max(acceleration, (float)MIN_ACCELERATION), (float)MAX_ACCELERATION);
   float f = parseNumber('F', feed_rate);
@@ -521,7 +485,8 @@ void parseLine() {
   int i;
   float pos[NUM_AXIES];
   for (i = 0; i < NUM_AXIES; ++i) {
-    pos[i] = parseNumber(AxisNames[i], (absolute_mode ? offset[i] : 0)) + (absolute_mode ? 0 : offset[i]);
+    float p = axies[i].pos;
+    pos[i] = parseNumber(AxisNames[i], (absolute_mode ? p : 0)) + (absolute_mode ? 0 : p);
   }
 
   lineSafe( pos, f );
@@ -534,8 +499,6 @@ void parseLine() {
    @param clockwise (G2) 1 for cw, (G3) 0 for ccw
 */
 void parseArc(int clockwise) {
-  float offset[NUM_AXIES];
-  get_end_plus_offset(offset);
   acceleration = parseNumber('A', acceleration);
   acceleration = min(max(acceleration, (float)MIN_ACCELERATION), (float)MAX_ACCELERATION);
   float f = parseNumber('F', feed_rate);
@@ -544,11 +507,14 @@ void parseArc(int clockwise) {
   int i;
   float pos[NUM_AXIES];
   for (i = 0; i < NUM_AXIES; ++i) {
-    pos[i] = parseNumber(AxisNames[i], (absolute_mode ? offset[i] : 0)) + (absolute_mode ? 0 : offset[i]);
+    float p = axies[i].pos;
+    pos[i] = parseNumber(AxisNames[i], (absolute_mode ? p : 0)) + (absolute_mode ? 0 : p);
   }
 
-  arc(parseNumber('I', (absolute_mode ? offset[0] : 0)) + (absolute_mode ? 0 : offset[0]),
-      parseNumber('J', (absolute_mode ? offset[1] : 0)) + (absolute_mode ? 0 : offset[1]),
+    float p0 = axies[0].pos;
+    float p1 = axies[1].pos;
+  arc(parseNumber('I', (absolute_mode ? p0 : 0)) + (absolute_mode ? 0 : p0),
+      parseNumber('J', (absolute_mode ? p1 : 0)) + (absolute_mode ? 0 : p1),
       pos,
       clockwise,
       f );
@@ -560,29 +526,13 @@ void parseArc(int clockwise) {
    Teleport mental position
 */
 void parseTeleport() {
-  float offset[NUM_AXIES];
-  get_end_plus_offset(offset);
-
   int i;
   float pos[NUM_AXIES];
   for (i = 0; i < NUM_AXIES; ++i) {
-    pos[i] = parseNumber(AxisNames[i], (absolute_mode ? offset[i] : 0)) + (absolute_mode ? 0 : offset[i]);
+    float p = axies[i].pos;
+    pos[i] = parseNumber(AxisNames[i], (absolute_mode ? p : 0)) + (absolute_mode ? 0 : p);
   }
   teleport(pos);
-}
-
-
-/**
-   G54-G59 [Xnnn] [Ynnn] [Znnn] [Unnn] [Vnnn] [Wnnn]
-   Adjust tool offset
-*/
-void parseToolOffset(int toolID) {
-  int i;
-  float offset[NUM_AXIES];
-  for (i = 0; i < NUM_AXIES; ++i) {
-    offset[i] = parseNumber(AxisNames[i], tool_offset[toolID][i]);
-  }
-  set_tool_offset(toolID, offset);
 }
 
 
@@ -885,12 +835,6 @@ void processCommand() {
 #if MACHINE_STYLE == POLARGRAPH
     //case 29:  calibrateBelts();  break;
 #endif
-    case 54:
-    case 55:
-    case 56:
-    case 57:
-    case 58:
-    case 59:  parseToolOffset(cmd - 54);  break;
     case 90:  absolute_mode = 1;  break; // absolute mode
     case 91:  absolute_mode = 0;  break; // relative mode
     case 92:  parseTeleport();  break;
@@ -1149,17 +1093,6 @@ void parser_ready() {
 }
 
 
-/**
-   reset all tool offsets
-*/
-void tools_setup() {
-  for (int i = 0; i < NUM_TOOLS; ++i) {
-    for (int j = 0; j < NUM_AXIES; ++j) {
-      tool_offset[i][j] = 0;
-    }
-  }
-}
-
 
 /**
    runs once on machine start
@@ -1188,7 +1121,6 @@ void setup() {
 
   motor_setup();
   motor_engage();
-  tools_setup();
   findStepDelay();
 
   //easyPWM_init();
