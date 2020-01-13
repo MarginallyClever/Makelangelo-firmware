@@ -25,10 +25,10 @@ void IK(const float *const cartesian, long *motorStepArray) {
   
   dy = cartesian[1] - limit_ymax;
   dx = cartesian[0] - limit_xmin;
-  motorStepArray[0] = lround( sqrt(dx*dx+dy*dy) / MM_PER_STEP );
+  motorStepArray[0] = lroundf( sqrt(dx*dx+dy*dy) / MM_PER_STEP );
   // find length to M2
   dx = limit_xmax - cartesian[0];
-  motorStepArray[1] = lround( sqrt(dx*dx+dy*dy) / MM_PER_STEP );
+  motorStepArray[1] = lroundf( sqrt(dx*dx+dy*dy) / MM_PER_STEP );
   
   motorStepArray[2] = cartesian[2];
 }
@@ -293,7 +293,7 @@ void robot_findHome() {
  * @Deprecated
  */
 void calibrateBelts() {
-#ifdef defined(CAN_HOME)
+#if defined(CAN_HOME)
   wait_for_empty_segment_buffer();
   motor_engage();
 
