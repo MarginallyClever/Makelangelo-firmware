@@ -315,6 +315,11 @@ void teleport(float *pos) {
 }
 
 
+void sayBuildDateAndTime() {
+  Serial.print("Built ");  
+  Serial.println(__DATE__ " " __TIME__);
+}
+
 /**
    M100
    Print a helpful message to serial.  The first line must never be changed to play nice with the JAVA software.
@@ -323,12 +328,10 @@ void help() {
   Serial.print(F("\n\nHELLO WORLD! "));
   sayModelAndUID();
   sayFirmwareVersionNumber();
+  sayBuildDateAndTime();
   Serial.println(F("== http://www.marginallyclever.com/ =="));
-  Serial.println(F("M100 - display this message"));
-  Serial.println(F("M101 [Tx.xx] [Bx.xx] [Rx.xx] [Lx.xx]"));
-  Serial.println(F("       - display/update board dimensions."));
   Serial.println(F("As well as the following G-codes (http://en.wikipedia.org/wiki/G-code):"));
-  Serial.println(F("G00,G01,G02,G03,G04,G28,G90,G91,G92,M18,M114"));
+  Serial.println(F("G00,G01,G02,G03,G04,G28,G90,G91,G92,M18,M100,M101,M114"));
 #ifdef HAS_WIFI
   // Print the IP address
   Serial.print("Use this URL to connect: http://");
