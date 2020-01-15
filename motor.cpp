@@ -761,7 +761,16 @@ static FORCE_INLINE uint16_t MultiU24X32toH16(uint32_t longIn1, uint32_t longIn2
 /**
  *  Process all line segments in the ring buffer.  Uses bresenham's line algorithm to move all motors.
  */
+#if defined(HAS_LCD) && defined(LCD_INT_POLLING)
+extern void LCD_read(void);
+#endif
+
 inline void isr_internal() {
+#if defined(HAS_LCD) && defined(LCD_INT_POLLING)
+  // call the rotary encoder polling
+  LCD_read();
+#endif
+
   // segment buffer empty? do nothing
   if ( working_seg == NULL ) {
     working_seg = get_current_segment();

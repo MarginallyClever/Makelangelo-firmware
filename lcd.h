@@ -30,6 +30,9 @@
 
 #include "dogm_font_data_6x9.h"
 
+// turn this on. Using the motor interrupt we will gather the encoder info
+#define LCD_INT_POLLING 
+#define LCD_TURN_PER_MENU  (4)  // with the latest 128x64 each click is 4 counts, this seems to work well.
 #endif
 
 //----------------------------------------------------
@@ -66,7 +69,10 @@
 
 #define LCD_MESSAGE_LENGTH (LCD_HEIGHT * LCD_WIDTH + 1)  // we have two lines of 20 characters avialable in 7.16
 #define LCD_DRAW_DELAY     (100)
+
+#ifndef LCD_TURN_PER_MENU
 #define LCD_TURN_PER_MENU  (3)  // was 5
+#endif
 
 extern char lcd_message[LCD_MESSAGE_LENGTH+1];
 extern char lcd_message_m117[LCD_MESSAGE_LENGTH/2+1];
