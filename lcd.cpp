@@ -511,20 +511,9 @@ void LCD_start_menu() {
   if(lcd_turn!=0 || lcd_click_now==1) lcd_dirty=1;
 
   if(lcd_dirty==1) {
-    //Serial.println(millis());
-    //long t0=micros();
-    
     MENU_START
     MENU_BACK("Main");
-/*
-  while(entry.openNext(&root)) {
-    if (!entry.isSubDir() && !entry.isHidden()) {
-      entry.getName(filename,32);
-      Serial.println(filename);
-    }
-    entry.close();
-  }
-*/
+    
     root.open("/");
     SdFile entry;
     char filename[20];
@@ -547,19 +536,12 @@ void LCD_start_menu() {
     }
     root.close();
     MENU_END
-    
-    //long t1=micros();
-    //Serial.print(menuStack[menuStackDepth].menu_position,DEC);
-    //Serial.print(' ');
-    //Serial.print(num_menu_items,DEC);
-    //Serial.print(' ');
-    //Serial.print(t1-t0);
-    //Serial.println();
+   
     lcd_dirty=0;
   }
   
 #else
-  // i don't know how you got here surfing the LCD panel.
+  // I don't know how you got here surfing the LCD panel.
   // someone messed up in the logic.  Go back to the main menu.
   MENU_POP();
 #endif
