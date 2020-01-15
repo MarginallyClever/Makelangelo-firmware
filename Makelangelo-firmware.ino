@@ -185,47 +185,64 @@ void testKinematics() {
 
 
 /**
-   Move the pen holder in a straight line using bresenham's algorithm
+   Split long moves into sub-moves if needed.
    @input pos NUM_AXIES floats describing destination coordinates
    @input new_feed_rate speed to travel along arc
 */
-void lineSafe(float *pos, float new_feed_rate) {
-#ifdef SUBDIVIDE_LINES
+void lineSafe(float *pos, float new_feed_rate_mms) {
+  feed_rate = new_feed_rate_mms;
+  
+#ifdef HAS_LCD
+  // use LCD to adjust speed while drawing
+  new_feed_rate_mms *= (float)speed_adjust * 0.01f;
+#endif
+
   // split up long lines to make them straighter
   float delta[NUM_AXIES];
   float startPos[NUM_AXIES];
-  float temp[NUM_AXIES];
   float lenSquared = 0;
-  for (int i = 0; i < NUM_AXIES; ++i) {
+  uint8_t i;
+  for (i = 0; i < NUM_AXIES; ++i) {
     startPos[i] = axies[i].pos;
     delta[i] = pos[i] - startPos[i];
     lenSquared += sq(delta[i]);
   }
 
 #if MACHINE_STYLE == POLARGRAPH
-  // What if some axies don't need subdividing?  like z axis on polargraph.
-  // often SEGMENT_PER_CM_LINE is 10mm or 20mm.  but a servo movement can be 90-160=70, or 7 segments.  This is pretty nuts.
-  // discount the z movement from the subdivision to use less segments and (I hope) move the servo faster.
-  lenSquared -= sq(delta[2]);
-  delta[2] = 0;
-#endif
-
-  float a;
-  float j;
-  float stepSquared = sq(SEGMENT_MAX_LENGTH_MM);
-
-  // draw everything up to (but not including) the destination.
-  for (j = stepSquared; j < lenSquared; j += stepSquared) {
-    a = j / lenSquared;
-    for (int i = 0; i < NUM_AXIES; ++i) {
-      temp[i] = delta[i] * a + startPos[i];
-    }
-    motor_line(temp, new_feed_rate);
+  if(delta[0]==0 && delta[1]==0) {
+    // only moving Z, don't split the line.
+    motor_line(pos, new_feed_rate_mms, delta[2]);
+    return;
   }
 #endif
 
+  float len_mm = sqrt(lenSquared);
+  if(abs(len_mm)<0.000001f) return;
+
+  const float seconds = len_mm / new_feed_rate_mms;
+#ifdef SUBDIVIDE_LINES
+  uint16_t segments = seconds * SEGMENTS_PER_SECOND;
+  if(segments<1) segments=1;
+#else
+  uint16_t segments=1;
+#endif
+  
+  const float inv_segments = 1.0f / float(segments);
+  const float segment_len_mm = len_mm * inv_segments;
+  
+  for(i = 0; i < NUM_AXIES; ++i) {
+    delta[i] *= inv_segments;
+  }
+  
+  while(--segments) {
+    for(i = 0; i < NUM_AXIES; ++i) {
+      startPos[i] += delta[i];
+    }
+    motor_line(startPos, new_feed_rate_mms,segment_len_mm);
+  }
+
   // guarantee we stop exactly at the destination (no rounding errors).
-  motor_line(pos, new_feed_rate);
+  motor_line(pos, new_feed_rate_mms,segment_len_mm);
 }
 
 
@@ -263,7 +280,7 @@ void arc(float cx, float cy, float *destination, char clockwise, float new_feed_
   float len1 = abs(da) * sr;
   float len = sqrt( len1 * len1 + dr * dr ); // mm
 
-  int i, segments = ceil( len / SEGMENT_MAX_LENGTH_MM );
+  int i, segments = ceil( len );
 
   float n[NUM_AXIES], scale;
   float a, r;

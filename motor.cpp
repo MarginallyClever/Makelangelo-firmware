@@ -1260,7 +1260,7 @@ char segment_buffer_full() {
    @input pos NUM_AXIES floats describing destination coordinates
    @input new_feed_rate speed to travel along arc
 */
-void motor_line(const float * const target_position, float fr_mm_s) {
+void motor_line(const float * const target_position, float fr_mm_s,float millimeters) {
   // get the next available spot in the segment buffer
   int next_segment = get_next_segment(last_segment);
   while ( next_segment == current_segment ) {
@@ -1294,15 +1294,12 @@ void motor_line(const float * const target_position, float fr_mm_s) {
 #endif
 
   // record the new target position & feed rate for the next movement.
-  int i;
-  for (i = 0; i < NUM_AXIES; ++i) {
-    distance_mm += sq(target_position[i] - axies[i].pos);
-  }
-  distance_mm = sqrt( distance_mm );
+  distance_mm = millimeters;
 
   // find the number of steps for each motor, the direction, and the absolute steps
   // The axis that has the most steps will control the overall acceleration as per bresenham's algorithm.
   new_seg.steps_total = 0;
+  int i;
   for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
     new_seg.a[i].step_count = steps[i];
     new_seg.a[i].delta_steps = steps[i] - old_seg.a[i].step_count;
@@ -1336,17 +1333,9 @@ void motor_line(const float * const target_position, float fr_mm_s) {
     axies[i].pos = target_position[i];
   }
 
-  // even if there is no work, remember the new feedrate.
-  feed_rate = fr_mm_s;
-
   // No steps?  No work!  Stop now.
   if ( new_seg.steps_total < MIN_STEPS_PER_SEGMENT ) return;
 
-#ifdef HAS_LCD
-  // use LCD to adjust speed while drawing
-  fr_mm_s *= (float)speed_adjust * 0.01f;
-#endif
-  
   new_seg.busy = false;
   new_seg.distance = distance_mm;
   float inverse_distance_mm = 1.0 / distance_mm;

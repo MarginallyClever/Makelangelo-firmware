@@ -17,8 +17,7 @@
 
 // plan long moves as a set of submoves to increase accuracy.  Uncomment to turn this off.
 #define SUBDIVIDE_LINES
-// what is the maximum length of a subdivided line?
-#define SEGMENT_MAX_LENGTH_MM  (5)
+#define SEGMENTS_PER_SECOND (10)
 
 #define NUM_AXIES            (7)
 #define NUM_MOTORS           (6)

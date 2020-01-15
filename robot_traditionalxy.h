@@ -36,8 +36,7 @@
 
 // plan long moves as a set of submoves to increase accuracy.  Uncomment to turn this off.
 //#define SUBDIVIDE_LINES
-// what is the maximum length of a subdivided line?
-#define SEGMENT_MAX_LENGTH_MM  (20)
+#define SEGMENTS_PER_SECOND (10)
 
 // alter these two values to equal gear ratio * motor steps * microstepping for each axis.
 // by default they are set the same as all other robots in the system.

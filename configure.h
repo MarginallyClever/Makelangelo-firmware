@@ -218,7 +218,7 @@
 // uncomment this to slow the machine and smooth movement if the segment buffer is running low.
 #define BUFFER_EMPTY_SLOWDOWN
 #ifndef MIN_SEGMENT_TIME_US
-#define MIN_SEGMENT_TIME_US  (40000)
+#define MIN_SEGMENT_TIME_US  (20000)
 #endif
 
 // if a segment added to the buffer is less tahn this many motor steps, roll it into the next move.
