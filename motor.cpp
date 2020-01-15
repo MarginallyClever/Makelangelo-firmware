@@ -767,8 +767,13 @@ extern void LCD_read(void);
 
 inline void isr_internal() {
 #if defined(HAS_LCD) && defined(LCD_INT_POLLING)
-  // call the rotary encoder polling
-  LCD_read();
+  static uint8_t _intTimes = 0;
+
+  if ((_intTimes++ % 10) == 0)
+  {
+    // call the rotary encoder polling
+    LCD_read();
+  }
 #endif
 
   // segment buffer empty? do nothing

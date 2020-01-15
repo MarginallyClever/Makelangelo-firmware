@@ -776,10 +776,10 @@ void LCD_update() {
     // if we are polling in the interrupt, then seeif there was any change 
     if (int_lcd_turn)
     {
-//        noInterrupts();
+        noInterrupts();
         lcd_turn = int_lcd_turn;
         int_lcd_turn = 0;
-//        interrupts();
+        interrupts();
     }
 #endif  
 
