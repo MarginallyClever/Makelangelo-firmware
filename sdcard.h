@@ -9,18 +9,20 @@
 #ifdef HAS_SD
 
 #include <SPI.h>
-#include <SD.h>
+#include "SdFat.h"
 
 
-extern File root;
+//extern File root;
+extern SdFile root;
 extern char sd_inserted;
 extern char sd_printing_now;
 extern char sd_printing_paused;
-#endif
 
 extern void SD_check();
 extern void SD_setup();
 extern void SD_listFiles();
-extern void SD_StartPrintingFile(const char *);
+extern void SD_StartPrintingFile(SdFile toPrint);
+
+#endif  // HAS_SD
 
 #endif // SDCARD_H

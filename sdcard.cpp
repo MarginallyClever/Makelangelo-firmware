@@ -9,26 +9,24 @@
 //------------------------------------------------------------------------------
 #include "configure.h"
 
+#ifdef HAS_SD
+
 #include "sdcard.h"
+
 
 //------------------------------------------------------------------------------
 // GLOBALS
 //------------------------------------------------------------------------------
-#ifdef HAS_SD
-
-File root;
+SdFat sd;
+SdFile root;
 char sd_inserted;
 char sd_printing_now;
 char sd_printing_paused;
-File sd_print_file;
 
-//float sd_percent_complete;  // Deprecated
-//long sd_file_size;  // Deprecated
-//long sd_bytes_read;  // Deprecated
-
-#endif
-
-
+SdFile sd_print_file;
+float sd_percent_complete;
+long sd_file_size;
+long sd_bytes_read;
 
 //------------------------------------------------------------------------------
 // METHODS
@@ -36,31 +34,26 @@ File sd_print_file;
 
 // initialize the SD card and print some info.
 void SD_setup() {
-#ifdef HAS_SD
   pinMode(SDSS, OUTPUT);
   pinMode(SDCARDDETECT,INPUT);
   digitalWrite(SDCARDDETECT,HIGH);
 
   sd_inserted = false;
   sd_printing_now=false;
-  //sd_percent_complete=0;
+  sd_percent_complete=0;
   SD_check();
-#endif  // HAS_SD
 }
 
 
 // Load the SD card and read some info about it
 void SD_load_card() {
-#ifdef HAS_SD
-  SD.begin(SDSS);
-  root = SD.open("/");
-#endif
+  sd.begin(SDSS);
+  root.open("/");
 }
 
 
 // Check if the SD card has been added or removed
 void SD_check() {
-#ifdef HAS_SD
   int state = (digitalRead(SDCARDDETECT) == LOW);
   if(sd_inserted != state) {
     Serial.print("SD is ");
@@ -102,7 +95,7 @@ void SD_check() {
       }*/
       if(c=='\n') {
         // update the % visible on the LCD.
-        //sd_percent_complete = (float)sd_bytes_read * 100.0 / (float)sd_file_size;
+        sd_percent_complete = 100.0 * (float)sd_bytes_read / (float)sd_file_size;
 
         // end string
         serialBuffer[sofar-1]=0;
@@ -128,49 +121,40 @@ void SD_check() {
       }
     }
   }
-#endif // HAS_SD
 }
 
 
-void SD_StartPrintingFile(const char *filename) {
-#ifdef HAS_SD
-  sd_print_file=SD.open(filename);
-  if(!sd_print_file) {
-    Serial.print(F("File "));
-    Serial.print(filename);
-    Serial.println(F(" not found."));
-    return;
-  }
+void SD_StartPrintingFile(SdFile toPrint) {
+  sd_print_file = toPrint;
 
   // count the number of lines (\n characters) for displaying % complete.
-  //sd_file_size=sd_print_file.size();
-  //sd_bytes_read=0;
-  //sd_percent_complete=0;
+  sd_file_size=sd_print_file.fileSize();
+  sd_bytes_read=0;
+  sd_percent_complete=0;
 
   // return to start
-  sd_print_file.seek(0);
+  sd_print_file.rewind();
 
   sd_printing_now=true;
   sd_printing_paused=false;
-#endif
 }
 
 
 void SD_listFiles() {
-#ifdef HAS_SD
   if (!sd_inserted) return;
 
-  root.rewindDirectory();
-  while (1) {
-    File entry =  root.openNextFile();
-    if (!entry) {
-      // no more files, return to the first file in the directory
-      break;
-    }
-    if (!entry.isDirectory() && entry.name()[0] != '_') {
-      Serial.println(entry.name());
+  root.open("/");
+  SdFile entry;
+  char filename[32];
+  while(entry.openNext(&root)) {
+    if (!entry.isSubDir() && !entry.isHidden()) {
+      entry.getName(filename,32);
+      Serial.println(filename);
     }
     entry.close();
   }
-#endif
+  root.close();
 }
+
+
+#endif  // HAS_SD

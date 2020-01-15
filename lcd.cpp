@@ -516,32 +516,36 @@ void LCD_start_menu() {
     
     MENU_START
     MENU_BACK("Main");
-    
-    root.rewindDirectory();
-    while ( true ) {
-      //long tStart = millis();
-      File entry = root.openNextFile();
-      //long tEnd = millis();
-      //Serial.print(tEnd-tStart);
-      //Serial.print('\t');
-      if (!entry) {
-        // no more files, return to the first file in the directory
-        break;
-      }
-      const char *filename = entry.name();
-      //Serial.print( entry.isDirectory()?">":" " );
-      //Serial.println(filename);
-      if (!entry.isDirectory() && filename[0] != '_') {
+/*
+  while(entry.openNext(&root)) {
+    if (!entry.isSubDir() && !entry.isHidden()) {
+      entry.getName(filename,32);
+      Serial.println(filename);
+    }
+    entry.close();
+  }
+*/
+    root.open("/");
+    SdFile entry;
+    char filename[20];
+    while(entry.openNext(&root)) {
+      if (!entry.isSubDir() && !entry.isHidden()) {
+        entry.getName(filename,18);
         MENU_ITEM_START(filename)
         if (menuStack[menuStackDepth].menu_position == ty && lcd_click_now==1) {
           lcd_click_now = 0;
-          SD_StartPrintingFile(filename);
-          MENU_PUSH(LCD_status_menu);
+          // go back to status menu
+          while(menuStackDepth>0) MENU_POP();
+          
+          SD_StartPrintingFile(entry);
+          root.close();
+          return;
         }
         MENU_ITEM_END()
       }
       entry.close();
     }
+    root.close();
     MENU_END
     
     //long t1=micros();
