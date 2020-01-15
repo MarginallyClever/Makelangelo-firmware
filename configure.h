@@ -23,13 +23,9 @@
 #define ZARPLOTTER       4  // 4 motor, x-shaped 2D motion
 #define SKYCAM           5  // 4 motor, x-shaped 3D motion
 #define DELTA            6  // 3 arm delta robot, rotary action.  untested.
-//#define KOSSEL           7  // 3 arm delta robot, linear action.  not supported yet.
-#define STEWART          8  // 6 arm stewart platform, rotary action.  untested.
-//#define OSGOODE          9  // 6 arm stewart platform, linear action.  not supported yet.
-#define ARM3             10
-//#define ARM4             11
-//#define ARM5             12
-#define SIXI             13
+#define STEWART          7  // 6 arm stewart platform, rotary action.  untested.
+#define ARM3             8
+#define SIXI             9  // 6DOF industrial arm.
 
 #define MACHINE_STYLE POLARGRAPH  // Change this
 
@@ -39,12 +35,8 @@
 #include "robot_zarplotter.h"
 #include "robot_skycam.h"
 #include "robot_delta.h"
-//#include "robot_kossel.h"
 #include "robot_stewart.h"
-//#include "robot_osgoode.h"
 #include "robot_arm3.h"
-//#include "robot_arm4.h"
-//#include "robot_arm5.h"
 #include "robot_sixi.h"
 
 //------------------------------------------------------------------------------
