@@ -594,17 +594,18 @@ char checkLineNumberAndCRCisOK() {
 */
 void parseMessage() {
 #ifdef HAS_LCD
-  LCD_setStatusMessage(0);  // empty string
-
   // find M
   uint16_t i = 0;
+  // skip "N*** M117 "
   while(serialBuffer[i]!='M') ++i;
-  // skip "M117 "
   i+=5;
+  // anything left?
   if (i >= strlen(serialBuffer)) {
     // no message
+    LCD_setStatusMessage(0);
     return;
   }
+  
   // read in any remaining message
   char message[M117_MAX_LEN];
   char *buf = serialBuffer + i;
@@ -613,6 +614,7 @@ void parseMessage() {
     message[i++] = *buf;
     buf++;
   }
+  
   // make sure the message is properly terminated
   message[i]=0;
   // update the LCD.
@@ -697,8 +699,12 @@ void waitForPinState() {
 
   // while pin is in oldState (opposite of state for which we are waiting)
   while (digitalRead(pin) == oldState) {
+#ifdef HAS_SD
     //SD_check();
+#endif
+#ifdef HAS_LCD
     //LCD_update();  // causes menu to change when we don't want it to change.
+#endif
     //Serial.print(".");
   }
 
@@ -742,10 +748,13 @@ void parseBeep() {
    process commands in the serial receive buffer
 */
 void processCommand() {
-  if ((serialBuffer[0] == '\0') || (serialBuffer[0] == ';')) return;  // blank lines
-  if (!checkLineNumberAndCRCisOK()) return; // message garbled
-
-  if (!strncmp(serialBuffer, "UID", 3)) {
+  if( serialBuffer[0] == '\0' || serialBuffer[0] == ';' ) return;  // blank lines
+  if(!checkLineNumberAndCRCisOK()) return; // message garbled
+  // remove any trailing semicolon.
+  int last = strlen(serialBuffer)-1;
+  if( serialBuffer[last] == ';') serialBuffer[last]=0;
+  
+  if( !strncmp(serialBuffer, "UID", 3) ) {
     robot_uid = atoi(strchr(serialBuffer, ' ') + 1);
     saveUID();
   }
@@ -758,7 +767,9 @@ void processCommand() {
     case   6:  toolChange(parseNumber('T', current_tool));  break;
     case  17:  motor_engage();  break;
     case  18:  motor_disengage();  break;
+#ifdef HAS_SD
     case  20:  SD_listFiles();  break;
+#endif
     case  42:  adjustPinState();  break;
     case 100:  help();  break;
     case 101:  parseLimits();  break;
@@ -777,8 +788,9 @@ void processCommand() {
   cmd = parseNumber('D', -1);
   switch (cmd) {
     case  0:  jogMotors();  break;
-    //    case  3:  SD_ListFiles();  break;
-    case  4:  SD_StartPrintingFile(strchr(serialBuffer, ' ') + 1);  break; // read file
+#ifdef HAS_SD
+//    case  4:  SD_StartPrintingFile(strchr(serialBuffer, ' ') + 1);  break;
+#endif
     case  5:  sayFirmwareVersionNumber();  break;
     case  6:  parseSetHome();  break;
     case  7:  setCalibration();  break;
@@ -1116,8 +1128,12 @@ void setup() {
   Serial.println('/');
 #endif  // HAS_WIFI
 
+#ifdef HAS_SD
   SD_setup();
+#endif
+#ifdef HAS_LCD
   LCD_setup();
+#endif
 
   motor_setup();
   motor_engage();
@@ -1258,8 +1274,12 @@ void copySensorsToMotorPositions() {
 */
 void loop() {
   Serial_listen();
+#ifdef HAS_SD
   SD_check();
+#endif
+#ifdef HAS_LCD
   LCD_update();
+#endif
 
   // The PC will wait forever for the ready signal.
   // if Arduino hasn't received a new instruction in a while, send ready() again
