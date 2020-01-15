@@ -1194,7 +1194,7 @@ void isr_internal() {
     }
 #ifndef ESP8266
     // TODO this line needs explaining.  Is it even needed?
-    //OCR1A = (OCR1A < (TCNT1 + 16)) ? (TCNT1 + 16) : OCR1A;
+    OCR1A = (OCR1A < (TCNT1 + 16)) ? (TCNT1 + 16) : OCR1A;
 #endif // ESP8266
   }
 }
