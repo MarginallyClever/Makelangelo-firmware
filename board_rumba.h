@@ -96,13 +96,9 @@
 
 #ifdef HAS_TMC2130
 
-#define CS_PIN_0    30//53  //           17        64  //chip select
-#define CS_PIN_1    31//49  //           17        64  //chip select
+#define CS_PIN_0    30  //chip select
+#define CS_PIN_1    31  //chip select
 
-#include <Arduino.h>
-// What are these tmc_trasfer8 used for??????
-extern inline uint8_t tmc_transfer8(uint8_t val);
-extern inline uint32_t tmc_transfer16(uint32_t val);
 #endif  // HAS_TMC2130
 
 
