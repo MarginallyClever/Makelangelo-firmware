@@ -649,36 +649,18 @@ void segment_update_trapezoid(Segment *s, const float &entry_factor, const float
   if (final_rate  < MIN_STEP_RATE) final_rate  = MIN_STEP_RATE;
 
   const int32_t accel = s->acceleration_steps_per_s2;
-  int32_t accelerate_steps =  ceil( estimate_acceleration_distance(intial_rate    , s->nominal_rate,  accel) );
-  int32_t decelerate_steps = floor( estimate_acceleration_distance(s->nominal_rate, final_rate     , -accel) );
+  uint32_t accelerate_steps =  ceil( estimate_acceleration_distance(intial_rate    , s->nominal_rate,  accel) );
+  uint32_t decelerate_steps = floor( estimate_acceleration_distance(s->nominal_rate, final_rate     , -accel) );
   int32_t plateau_steps = s->steps_total - accelerate_steps - decelerate_steps;
   if (plateau_steps < 0) {
-    accelerate_steps = ceil( intersection_distance( intial_rate, final_rate, accel, s->steps_total ) );
-    accelerate_steps = min( (uint32_t)max( accelerate_steps, 0 ), s->steps_total );
+    const float accelerate_steps_float = ceil( intersection_distance( intial_rate, final_rate, accel, s->steps_total ) );
+    accelerate_steps = min( (uint32_t)max( accelerate_steps_float, 0 ), s->steps_total );
     plateau_steps = 0;
   }
-  CRITICAL_SECTION_START
-  /*
-    decelerate_steps = s->steps_total - plateau_steps - accelerate_steps;
-    Serial.print("t entry_factor=");  Serial.print(entry_factor);
-    Serial.print(" exit_factor=");  Serial.print(exit_factor);
-    Serial.print(" accel=");  Serial.print(accel);
-    Serial.print(" intial_rate=");  Serial.print(intial_rate);
-    Serial.print(" nominal_rate=");  Serial.print(s->nominal_rate);
-    Serial.print(" final_rate=");  Serial.print(final_rate);
-    Serial.print(" steps_total=");  Serial.print(s->steps_total);
-    Serial.print(" accelerate_steps=");  Serial.print(accelerate_steps);
-    Serial.print(" plateau_steps=");  Serial.print(plateau_steps);
-    Serial.print(" decelerate_steps=");  Serial.print(decelerate_steps);
-    Serial.println();
-  */
-  if (!s->busy) {
-    s->accel_until = accelerate_steps;
-    s->decel_after = accelerate_steps + plateau_steps;
-    s->initial_rate = intial_rate;
-    s->final_rate  = final_rate;
-  }
-  CRITICAL_SECTION_END
+  s->accel_until = accelerate_steps;
+  s->decel_after = accelerate_steps + plateau_steps;
+  s->initial_rate = intial_rate;
+  s->final_rate  = final_rate;
 }
 
 
@@ -695,6 +677,7 @@ void recalculate_trapezoids() {
     if (current) {
       // Recalculate if current block entry or exit junction speed has changed.
       if ( current->recalculate_flag || next->recalculate_flag ) {
+        current->recalculate_flag=true;
         if (!current->busy) {
           // NOTE: Entry and exit factors always > 0 by all previous logic operations.
           const float inom = 1.0 / current->nominal_speed;
@@ -709,9 +692,12 @@ void recalculate_trapezoids() {
   }
 
   // Last/newest block in buffer. Make sure the last block always ends motion.
-  if (next != NULL) {
-    const float inom = 1.0 / next->nominal_speed;
-    segment_update_trapezoid(next, next_entry_speed * inom, MIN_FEEDRATE * inom);
+  if (next) {
+    next->recalculate_flag = true;
+    if(!current->busy) {
+      const float inom = 1.0 / next->nominal_speed;
+      segment_update_trapezoid(next, next_entry_speed * inom, MIN_FEEDRATE * inom);
+    }
     next->recalculate_flag = false;
   }
 }
@@ -719,27 +705,33 @@ void recalculate_trapezoids() {
 
 void describe_segments() {
   CRITICAL_SECTION_START
-  /**/
-  Serial.println("A = index");
-  Serial.println("B = distance");
-  Serial.println("C = acceleration");
-
-  Serial.println("D = entry_speed");
-  Serial.println("E = nominal_speed");
-  Serial.println("F = entry_speed_max");
-
-  Serial.println("G = entry rate");
-  Serial.println("H = nominal rate");
-  Serial.println("I = exit rate");
-
-  Serial.println("J = accel_until");
-  Serial.println("K = coast steps");
-  Serial.println("L = decel steps");
-
-  Serial.println("O = nominal?");
-  Serial.println("P = recalculate?");
-  Serial.println("Q = busy?");/**/
-  Serial.println("\nA\tB\tC\tD\tE\tF\t[G\tH\tI]\t[J\tK\tL]\tO\tP\tQ");
+  static uint8_t once=0;
+  if(once==0) {
+    once=1;
+    Serial.println("A = index");
+    Serial.println("B = distance");
+    Serial.println("C = acceleration");
+    Serial.println("D = acceleration steps s2");
+    Serial.println("E = acceleration rate");
+  
+    Serial.println("F = entry_speed");
+    Serial.println("G = nominal_speed");
+    Serial.println("H = entry_speed_max");
+  
+    Serial.println("I = entry rate");
+    Serial.println("J = nominal rate");
+    Serial.println("K = exit rate");
+  
+    Serial.println("L = accel_until");
+    Serial.println("M = coast steps");
+    Serial.println("N = decel steps");
+    Serial.println("O = total steps");
+    
+    Serial.println("P = nominal?");
+    Serial.println("Q = recalculate?");
+    Serial.println("R = busy?");/**/
+    Serial.println("\nA\tB\tC\tD\tE\tF\tG\tH\tI\tJ\tK\tL\tM\tN\tO\tP\tQ\tR");
+  }
   Serial.println("---------------------------------------------------------------------------------------------------------------------------");
 
   int s = current_segment;
@@ -750,6 +742,8 @@ void describe_segments() {
     Serial.print(s);
     Serial.print(F("\t"));   Serial.print(next->distance);
     Serial.print(F("\t"));   Serial.print(next->acceleration);
+    Serial.print(F("\t"));   Serial.print(next->acceleration_steps_per_s2);
+    Serial.print(F("\t"));   Serial.print(next->acceleration_rate);
 
     Serial.print(F("\t"));   Serial.print(next->entry_speed);
     Serial.print(F("\t"));   Serial.print(next->nominal_speed);
@@ -762,7 +756,7 @@ void describe_segments() {
     Serial.print(F("\t"));   Serial.print(next->accel_until);
     Serial.print(F("\t"));   Serial.print(coast);
     Serial.print(F("\t"));   Serial.print(decel);
-    //Serial.print(F("\t"));   Serial.print(next->steps_total);
+    Serial.print(F("\t"));   Serial.print(next->steps_total);
     //Serial.print(F("\t"));   Serial.print(next->steps_taken);
 
     Serial.print(F("\t"));   Serial.print(next->nominal_length_flag != 0 ? 'Y' : 'N');
@@ -779,8 +773,6 @@ void recalculate_acceleration() {
   recalculate_reverse();
   recalculate_forward();
   recalculate_trapezoids();
-
-  //Serial.println("**FINISHED**");
   //describe_segments();
 }
 
@@ -1152,8 +1144,11 @@ void isr_internal() {
 #ifdef DEBUG_STEPPING
       //Serial.print("d");
 #endif
-      uint32_t end_feed_rate = working_seg->nominal_rate - MultiU24X32toH16( time_decelerating, current_acceleration );
-      if ( end_feed_rate < working_seg->final_rate ) {
+      uint32_t end_feed_rate = MultiU24X32toH16( time_decelerating, current_acceleration );
+      if ( end_feed_rate < current_feed_rate ) {
+        end_feed_rate = current_feed_rate - end_feed_rate;
+        end_feed_rate = max(end_feed_rate,working_seg->final_rate);
+      } else {
         end_feed_rate = working_seg->final_rate;
       }
       interval = calc_timer(end_feed_rate, &isr_step_multiplier);
@@ -1288,9 +1283,10 @@ void motor_line(const float * const target_position, float fr_mm_s,float millime
 
   float distance_mm = 0;
 
-#if MACHINE_STYLE == POLARGRAPH && defined(DYNAMIC_ACCELERATION)
+#if MACHINE_STYLE == POLARGRAPH
   float oldX = axies[0].pos;
   float oldY = axies[1].pos;
+  float oldZ = axies[2].pos;
 #endif
 
   // record the new target position & feed rate for the next movement.
@@ -1342,10 +1338,8 @@ void motor_line(const float * const target_position, float fr_mm_s,float millime
   float inverse_secs = fr_mm_s * inverse_distance_mm;
   
   int movesQueued = movesPlanned();
-  //int moves_queued = SEGMOD(prev_segment - get_next_segment(current_segment));
   uint32_t segment_time_us = lroundf(1000000.0f / inverse_secs);
   
-//*
 #ifdef BUFFER_EMPTY_SLOWDOWN
   if(movesQueued >= 2 && movesQueued <= (MAX_SEGMENTS/2)-1) {
     if(segment_time_us < min_segment_time_us) {
@@ -1356,7 +1350,6 @@ void motor_line(const float * const target_position, float fr_mm_s,float millime
     }
   }
 #endif
-//*/
 
   new_seg.nominal_speed = distance_mm * inverse_secs;
   new_seg.nominal_rate = ceil(new_seg.steps_total * inverse_secs);
@@ -1381,6 +1374,7 @@ void motor_line(const float * const target_position, float fr_mm_s,float millime
 
   // acceleration is a global set with "G0 A*"
   float max_acceleration = acceleration;
+
 #if MACHINE_STYLE == POLARGRAPH && defined(DYNAMIC_ACCELERATION)
   {
     // Adjust the maximum acceleration based on the plotter position to reduce wobble at the bottom of the picture.
@@ -1431,12 +1425,12 @@ void motor_line(const float * const target_position, float fr_mm_s,float millime
   const float steps_per_mm = new_seg.steps_total * inverse_distance_mm;
   uint32_t accel = ceil( max_acceleration * steps_per_mm );
 
-  const float max_acceleration_steps_per_s2 = max_acceleration * steps_per_mm;
+  const float max_acceleration_steps_per_s2 = max_acceleration * steps_per_mm;  
   for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
-    if (new_seg.a[i].delta_steps && max_acceleration_steps_per_s2 < accel) {
-      const float comp = (float)max_acceleration_steps_per_s2 * (float)new_seg.steps_total;
-      if ((float)accel * (float)new_seg.a[i].delta_steps > comp ) {
-        accel = comp / (float)new_seg.a[i].delta_steps;
+    if (new_seg.a[i].absdelta && max_acceleration_steps_per_s2 < accel) {
+      const uint32_t comp = max_acceleration_steps_per_s2 * new_seg.steps_total;
+      if (accel * new_seg.a[i].absdelta > comp ) {
+        accel = comp / (float)new_seg.a[i].absdelta;
       }
     }
   }
@@ -1464,16 +1458,19 @@ void motor_line(const float * const target_position, float fr_mm_s,float millime
   }
 
 #ifdef DEBUG_STEPPING
-        Serial.print("  nominal_speed=");  Serial.println(new_seg.nominal_speed);
-        Serial.print("  safe_speed=");  Serial.println(safe_speed);
+  Serial.print("  nominal_speed=");  Serial.println(new_seg.nominal_speed);
+  Serial.print("  safe_speed=");  Serial.println(safe_speed);
 #endif
 
   // what is the maximum starting speed for this segment?
-  float vmax_junction = MIN_FEEDRATE;
-  
-  if (movesQueued <= 0 || previous_safe_speed <= 0.0001) {
-    vmax_junction = safe_speed;
-  } else {  // 
+  float vmax_junction;
+
+#if MACHINE_STYLE == POLARGRAPH
+  if(new_seg.a[2].absdelta != old_seg.a[2].absdelta) {
+    vmax_junction=0;
+  } else
+#endif
+  if (movesQueued > 0 && previous_safe_speed > 0.000001) {
     // Estimate a maximum velocity allowed at a joint of two successive segments.
     // If this maximum velocity allowed is lower than the minimum of the entry / exit safe velocities,
     // then the machine is not coasting anymore and the safe entry / exit velocities shall be used.
@@ -1509,6 +1506,7 @@ void motor_line(const float * const target_position, float fr_mm_s,float millime
         ++limited;
       }
     }
+    
     if (limited) {
 #ifdef DEBUG_STEPPING
       Serial.print("  limited ");  Serial.print(v_factor);
@@ -1523,12 +1521,14 @@ void motor_line(const float * const target_position, float fr_mm_s,float millime
       // better to start the segment from start.
       vmax_junction = safe_speed;
     }
+  } else {
+    vmax_junction = safe_speed;
   }
-  
+
   // END JERK LIMITING
   
 #ifdef DEBUG_STEPPING
-        Serial.print("  vmax_junction 2=");  Serial.println(vmax_junction);
+  Serial.print("  vmax_junction 2=");  Serial.println(vmax_junction);
 #endif
 
   previous_safe_speed = safe_speed;
@@ -1553,7 +1553,6 @@ void motor_line(const float * const target_position, float fr_mm_s,float millime
   }
   last_segment = next_segment;
 
-  recalculate_acceleration();
   /*
     Serial.print("q=");  Serial.print(moves_queued);
     Serial.print("distance=");  Serial.println(new_seg.distance);
@@ -1580,6 +1579,8 @@ void motor_line(const float * const target_position, float fr_mm_s,float millime
     Serial.print("allowable_speed=");  Serial.println(allowable_speed);
     Serial.print("safe_speed=");  Serial.println(safe_speed);
     //*/
+    
+  recalculate_acceleration();
 }
 
 
