@@ -220,29 +220,24 @@ void lineSafe(float *pos, float new_feed_rate_mms) {
   if(abs(len_mm)<0.000001f) return;
 
   const float seconds = len_mm / new_feed_rate_mms;
-#ifdef SUBDIVIDE_LINES
   uint16_t segments = seconds * SEGMENTS_PER_SECOND;
   if(segments<1) segments=1;
-#else
-  uint16_t segments=1;
-#endif
   
   const float inv_segments = 1.0f / float(segments);
   const float segment_len_mm = len_mm * inv_segments;
   
-  for(i = 0; i < NUM_AXIES; ++i) {
-    delta[i] *= inv_segments;
-  }
+  for(i = 0; i < NUM_AXIES; ++i) delta[i] *= inv_segments;
   
   while(--segments) {
-    for(i = 0; i < NUM_AXIES; ++i) {
-      startPos[i] += delta[i];
-    }
+    for(i = 0; i < NUM_AXIES; ++i) startPos[i] += delta[i];
+    
     motor_line(startPos, new_feed_rate_mms,segment_len_mm);
   }
 
   // guarantee we stop exactly at the destination (no rounding errors).
   motor_line(pos, new_feed_rate_mms,segment_len_mm);
+
+//  Serial.print("P");  Serial.println(movesPlanned());
 }
 
 
