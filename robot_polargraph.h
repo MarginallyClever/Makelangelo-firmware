@@ -29,10 +29,8 @@
 
 #define MACHINE_HAS_LIFTABLE_PEN
 
-// plan long moves as a set of submoves to increase accuracy.  Uncomment to turn this off.
-//#define SUBDIVIDE_LINES
 // what is the maximum length of a subdivided line?
-#define SEGMENTS_PER_SECOND (80)
+#define SEGMENTS_PER_SECOND (2)
 
 
 // servo angles for pen control
@@ -44,7 +42,7 @@
 #define NUM_SERVOS           (1)
 #define NUM_TOOLS            (1)
 
-#define MAX_FEEDRATE         (200.0)  // depends on timer interrupt & hardware
+#define MAX_FEEDRATE         (500.0)  // depends on timer interrupt & hardware
 #define MIN_FEEDRATE         (0.0)
 
 #define MAX_FEEDRATE_Z       (2000.0)  // depends on timer interrupt & hardware
@@ -64,7 +62,7 @@
 #endif
 
 #define MAX_JERK             (8.0)
-#define MAX_JERK_Z           (0.3)
+#define MAX_JERK_Z           (0.0)
 
 // uncomment this line to adjust acceleration based on pen position
 #define DYNAMIC_ACCELERATION
