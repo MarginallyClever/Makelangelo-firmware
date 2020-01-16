@@ -773,7 +773,9 @@ void LCD_update() {
       uint8_t upperBound = num_menu_items * LCD_TURN_PER_MENU;
 
       // potentially change the menu item
-      int8_t newPos = (menuStack[menuStackDepth].menu_position_sum + lcd_turn + upperBound ) % upperBound;
+      int8_t newPos = menuStack[menuStackDepth].menu_position_sum + lcd_turn;
+      if(newPos<0) newPos=0;
+      if(newPos >= upperBound) newPos=upperBound-1;
       menuStack[menuStackDepth].menu_position_sum = newPos;
       
       uint8_t newMenuPosition = newPos / LCD_TURN_PER_MENU;
