@@ -1,5 +1,4 @@
-#ifndef MOTOR_H
-#define MOTOR_H
+#pragma once
 //------------------------------------------------------------------------------
 // Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
@@ -171,6 +170,3 @@ FORCE_INLINE Segment *get_current_segment() {
   
   return block;
 }
-
-
-#endif // MOTOR_H

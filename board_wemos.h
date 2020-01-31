@@ -1,5 +1,4 @@
-#ifndef BOARD_WEMOS_H
-#define BOARD_WEMOS_H
+#pragma once
 //------------------------------------------------------------------------------
 // Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
@@ -49,5 +48,3 @@
 #undef HAS_LCD
 
 #endif // MOTHERBOARD == BOARD_WEMOS 
-
-#endif  // BOARD_WEMOS_H

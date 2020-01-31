@@ -1,5 +1,4 @@
-#ifndef ROBOT_STEWART_H
-#define ROBOT_STEWART_H
+#pragma once
 //------------------------------------------------------------------------------
 // Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
@@ -52,6 +51,3 @@
 extern void stewartDemo();
 
 #endif  // #ifdef STEWART
-
-
-#endif  // #ifndef ROBOT_STEWART_H

@@ -1,3 +1,4 @@
+#pragma once
 /*
   Servo.h - Interrupt driven Servo library for Arduino using 16 bit timers- Version 2
   Copyright (c) 2009 Michael Margolis.  All right reserved.
@@ -41,9 +42,6 @@
    attached()  - Returns true if there is a servo attached.
    detach()    - Stops an attached servos from pulsing its i/o pin.
  */
-
-#ifndef Servo_h
-#define Servo_h
 
 #ifndef ESP8266
 
@@ -135,5 +133,3 @@ private:
 };
 
 #endif // ESP8266
-
-#endif // Servo_h

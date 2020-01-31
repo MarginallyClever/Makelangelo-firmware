@@ -1,3 +1,4 @@
+#pragma once
 /**
  * Marlin 3D Printer Firmware
  * Copyright (C) 2016 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
@@ -19,9 +20,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-
-#ifndef SPEED_LOOKUPTABLE_H
-#define SPEED_LOOKUPTABLE_H
 
 #include "configure.h"
 
@@ -170,5 +168,3 @@
   };
 
 #endif
-
-#endif // SPEED_LOOKUPTABLE_H

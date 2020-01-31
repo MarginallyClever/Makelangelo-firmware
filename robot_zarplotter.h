@@ -1,5 +1,4 @@
-#ifndef ROBOT_ZARPLOTTER_H
-#define ROBOT_ZARPLOTTER_H
+#pragma once
 //------------------------------------------------------------------------------
 // Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
@@ -45,6 +44,3 @@
 #define MAX_SEGMENTS         (16)  // override the default to save RAM
 
 #endif  // ZARPLOTTER
-
-
-#endif  // #ifndef ROBOT_ZARPLOTTER_H

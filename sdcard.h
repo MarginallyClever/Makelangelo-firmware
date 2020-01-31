@@ -1,5 +1,4 @@
-#ifndef SDCARD_H
-#define SDCARD_H
+#pragma once
 //------------------------------------------------------------------------------
 // Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
@@ -24,5 +23,3 @@ extern void SD_listFiles();
 extern void SD_StartPrintingFile(SdFile toPrint);
 
 #endif  // HAS_SD
-
-#endif // SDCARD_H

@@ -1,5 +1,4 @@
-#ifndef ROBOT_SIXI_H
-#define ROBOT_SIXI_H
+#pragma once
 //------------------------------------------------------------------------------
 // Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
@@ -97,6 +96,3 @@ extern float sensorAngles[NUM_SENSORS];
 extern void sensorUpdate();
 
 #endif  // #ifdef SIXI
-
-
-#endif  // #ifndef ROBOT_SIXI_H

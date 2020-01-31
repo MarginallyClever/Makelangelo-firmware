@@ -1,5 +1,4 @@
-#ifndef ROBOT_ARM3_H
-#define ROBOT_ARM3_H
+#pragma once
 //------------------------------------------------------------------------------
 // Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
@@ -54,6 +53,3 @@
 #define HOME_Z                (22.2)
 
 #endif  // #ifdef ARM3
-
-
-#endif  // #ifndef ROBOT_ARM3_H

@@ -1,5 +1,4 @@
-#ifndef ROBOT_DELTA_H
-#define ROBOT_DELTA_H
+#pragma once
 //------------------------------------------------------------------------------
 // Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
@@ -73,8 +72,4 @@
 #define DELTA_HOME_DIRECTION     LOW  // LOW or HIGH
 #endif
 
-
-#endif  // #ifdef DELTA
-
-
-#endif  // #ifndef ROBOT_DELTA_H
+#endif  // MACHINE_STYLE == DELTA

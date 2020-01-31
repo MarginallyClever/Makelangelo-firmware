@@ -1,5 +1,4 @@
-#ifndef BOARD_MKS_H
-#define BOARD_MKS_H
+#pragma once
 //------------------------------------------------------------------------------
 // Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
@@ -79,7 +78,3 @@
 #define encrot3            1
 
 #endif  // BOARD_MKS
-
-
-#endif  // BOARD_MKS_H
-

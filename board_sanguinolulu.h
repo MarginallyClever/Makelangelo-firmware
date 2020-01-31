@@ -1,5 +1,4 @@
-#ifndef BOARD_SANGUINOLULU_H
-#define BOARD_SANGUINOLULU_H
+#pragma once
 //------------------------------------------------------------------------------
 // Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
@@ -39,6 +38,3 @@
 #undef HAS_SD
 
 #endif
-
-
-#endif  // BOARD_SANGUINOLULU_H

@@ -1,5 +1,4 @@
-#ifndef BOARD_SIXI_MEGA_H
-#define BOARD_SIXI_MEGA_H
+#pragma once
 //------------------------------------------------------------------------------
 // Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
@@ -92,10 +91,4 @@
 #define PIN_SENSOR_MOSI_5   26
 #define PIN_SENSOR_MISO_5   28
 
-
-
-
 #endif  // MOTHERBOARD == BOARD_SIXI_MEGA 
-
-
-#endif  // BOARD_SIXI_MEGA_H

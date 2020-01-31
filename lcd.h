@@ -1,5 +1,4 @@
-#ifndef LCD_H
-#define LCD_H
+#pragma once
 //------------------------------------------------------------------------------
 // Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
@@ -77,5 +76,3 @@ extern void LCD_setup();
 extern void LCD_setStatusMessage(char *message);
 
 #endif // HAS_LCD
-
-#endif // LCD_H

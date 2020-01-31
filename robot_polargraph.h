@@ -1,5 +1,4 @@
-#ifndef ROBOT_POLARGRAPH_H
-#define ROBOT_POLARGRAPH_H
+#pragma once
 //------------------------------------------------------------------------------
 // Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
@@ -9,22 +8,6 @@
 #if MACHINE_STYLE == POLARGRAPH
 
 #define MACHINE_STYLE_NAME       "POLARGRAPH"
-
-// supported versions of makelangelo polargraph robot
-#define MAKELANGELO_3    3
-#define MAKELANGELO_3_3  4
-#define MAKELANGELO_5    5
-#define MAKELANGELO_6    6  // for testing
-
-
-/// -------------- change here ----------------
-// change this line for your version
-#define MACHINE_HARDWARE_VERSION   MAKELANGELO_5
-
-// choose one of the following
-#define NORMAL_MOTOR_STEPS   200  // 1.8 degrees per step
-//#define NORMAL_MOTOR_STEPS   400  // 0.9 degrees per step
-/// -------------- change here ----------------
 
 
 #define MACHINE_HAS_LIFTABLE_PEN
@@ -62,7 +45,7 @@
 #endif
 
 #define MAX_JERK             (8.0)
-#define MAX_JERK_Z           (0.0)
+#define MAX_JERK_Z           (0.3)
 
 // uncomment this line to adjust acceleration based on pen position
 #define DYNAMIC_ACCELERATION
@@ -102,6 +85,3 @@ extern void recordHome();
 
 
 #endif  // #ifdef POLARGRAPH
-
-
-#endif  // #ifndef ROBOT_POLARGRAPH_H

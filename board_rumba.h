@@ -1,5 +1,4 @@
-#ifndef BOARD_RUMBA_H
-#define BOARD_RUMBA_H
+#pragma once
 //------------------------------------------------------------------------------
 // Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
@@ -103,5 +102,3 @@
 
 
 #endif
-
-#endif  // BOARD_RUMBA_H

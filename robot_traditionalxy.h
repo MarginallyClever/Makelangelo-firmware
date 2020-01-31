@@ -1,5 +1,4 @@
-#ifndef ROBOT_TRADITIONALXY_H
-#define ROBOT_TRADITIONALXY_H
+#pragma once
 //------------------------------------------------------------------------------
 // Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
@@ -44,6 +43,3 @@
 #define MM_PER_STEP_Y    MM_PER_STEP
 
 #endif  // #ifdef TRADITIONALXY
-
-
-#endif  // #ifndef ROBOT_TRADITIONALXY_H

@@ -1,5 +1,4 @@
-#ifndef ROBOT_SKYCAM_H
-#define ROBOT_SKYCAM_H
+#pragma once
 //------------------------------------------------------------------------------
 // Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
@@ -40,6 +39,3 @@
 #define PEN_DOWN_ANGLE       (90)  // Some steppers don't like 0 degrees
 
 #endif  // SKYCAM
-
-
-#endif  // #ifndef ROBOT_SKYCAM_H

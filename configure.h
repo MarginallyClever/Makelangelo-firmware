@@ -1,5 +1,4 @@
-#ifndef CONFIGURE_H
-#define CONFIGURE_H
+#pragma once
 //------------------------------------------------------------------------------
 // Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
@@ -28,6 +27,25 @@
 #define SIXI             9  // 6DOF industrial arm.
 
 #define MACHINE_STYLE POLARGRAPH  // Change this
+
+
+
+#if MACHINE_STYLE == POLARGRAPH
+
+// supported versions of makelangelo polargraph robot
+#define MAKELANGELO_3    3
+#define MAKELANGELO_3_3  4
+#define MAKELANGELO_5    5
+#define MAKELANGELO_6    6  // for testing
+
+#define MACHINE_HARDWARE_VERSION   MAKELANGELO_5  // Change this if your machine is polargraph.
+
+// choose one of the following
+#define NORMAL_MOTOR_STEPS   200  // 1.8 degrees per step
+//#define NORMAL_MOTOR_STEPS   400  // 0.9 degrees per step
+
+#endif  // MACHINE_STYLE == POLARGRAPH
+
 
 #include "robot_polargraph.h"
 #include "robot_traditionalxy.h"
@@ -285,5 +303,3 @@ extern void get_end_plus_offset(float *results);
 extern void set_tool_offset(int toolID, float *pos);
 extern void reportCalibration();
 extern void where();
-
-#endif // CONFIGURE_H

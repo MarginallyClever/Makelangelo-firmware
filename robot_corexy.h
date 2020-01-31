@@ -1,5 +1,4 @@
-#ifndef ROBOT_COREXY_H
-#define ROBOT_COREXY_H
+#pragma once
 //------------------------------------------------------------------------------
 // Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
@@ -40,6 +39,3 @@
 #define SEGMENTS_PER_SECOND (10)
 
 #endif  // #ifdef COREXY
-
-
-#endif  // #ifndef ROBOT_COREXY_H
