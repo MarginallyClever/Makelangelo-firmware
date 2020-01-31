@@ -34,7 +34,7 @@
 
 // supported versions of makelangelo polargraph robot
 #define MAKELANGELO_3    3
-#define MAKELANGELO_3_3  4
+#define MAKELANGELO_3_3  4  // Makelangelo Huge
 #define MAKELANGELO_5    5
 #define MAKELANGELO_6    6  // for testing
 
