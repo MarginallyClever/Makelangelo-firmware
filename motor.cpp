@@ -1254,6 +1254,7 @@ char segment_buffer_full() {
    Uses bresenham's line algorithm to move both motors
    @input pos NUM_AXIES floats describing destination coordinates
    @input new_feed_rate speed to travel along arc
+   @input millimeters must be >=0
 */
 void motor_line(const float * const target_position, float fr_mm_s,float millimeters) {
   // get the next available spot in the segment buffer
