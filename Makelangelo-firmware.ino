@@ -190,6 +190,8 @@ void testKinematics() {
    @input new_feed_rate speed to travel along arc
 */
 void lineSafe(float *pos, float new_feed_rate_mms) {
+  // Remember the feed rate.  This value will be used whenever no feedrate is given in a command, so it MUST be saved BEFORE the dial adjustment.
+  // otherwise the feedrate will slowly fall or climb as new commands are processed.
   feed_rate = new_feed_rate_mms;
   
 #ifdef HAS_LCD
@@ -211,7 +213,7 @@ void lineSafe(float *pos, float new_feed_rate_mms) {
 #if MACHINE_STYLE == POLARGRAPH
   if(delta[0]==0 && delta[1]==0) {
     // only moving Z, don't split the line.
-    motor_line(pos, new_feed_rate_mms, delta[2]);
+    motor_line(pos, new_feed_rate_mms, abs(delta[2]));
     return;
   }
 #endif
@@ -495,7 +497,7 @@ void parseLine() {
   acceleration = parseNumber('A', acceleration);
   acceleration = min(max(acceleration, (float)MIN_ACCELERATION), (float)MAX_ACCELERATION);
   float f = parseNumber('F', feed_rate);
-  f = max(f, (float)MIN_FEEDRATE);
+  f = min(max(f, (float)MIN_FEEDRATE), (float)MAX_FEEDRATE);
 
   int i;
   float pos[NUM_AXIES];
@@ -517,7 +519,7 @@ void parseArc(int clockwise) {
   acceleration = parseNumber('A', acceleration);
   acceleration = min(max(acceleration, (float)MIN_ACCELERATION), (float)MAX_ACCELERATION);
   float f = parseNumber('F', feed_rate);
-  f = max(f, (float)MIN_FEEDRATE);
+  f = min(max(f, (float)MIN_FEEDRATE), (float)MAX_FEEDRATE);
 
   int i;
   float pos[NUM_AXIES];
