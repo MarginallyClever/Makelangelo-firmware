@@ -13,25 +13,27 @@
 #include <EEPROM.h>
 #include <Arduino.h>  // for type definitions
 
-/** 
- * from http://www.arduino.cc/cgi-bin/yabb2/YaBB.pl?num=1234477290/3
- */
-void EEPROM_writeLong(int ee, long value) {
-  byte* p = (byte*)(void*)&value;
-  for (uint16_t i = 0; i < sizeof(value); i++)
-  EEPROM.write(ee++, *p++);
-}
 
-
-/** 
- * from http://www.arduino.cc/cgi-bin/yabb2/YaBB.pl?num=1234477290/3
- */
+// from http://www.arduino.cc/cgi-bin/yabb2/YaBB.pl?num=1234477290/3
 long EEPROM_readLong(int ee) {
   long value = 0;
   byte* p = (byte*)(void*)&value;
   for (uint16_t i = 0; i < sizeof(value); i++)
   *p++ = EEPROM.read(ee++);
   return value;
+}
+
+// 2020-01-31 Dan added check to not update EEPROM if value is unchanged.
+// from http://www.arduino.cc/cgi-bin/yabb2/YaBB.pl?num=1234477290/3
+// returns true if the value was changed.
+boolean EEPROM_writeLong(int ee, long value) {
+  if(EEPROM_readLong(ee) == value) return false;
+  
+  byte* p = (byte*)(void*)&value;
+  for (uint16_t i = 0; i < sizeof(value); i++)
+  EEPROM.write(ee++, *p++);
+
+  return true;
 }
 
 
