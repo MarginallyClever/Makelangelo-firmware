@@ -6,6 +6,7 @@
 //------------------------------------------------------------------------------
 
 #include <Arduino.h>
+
 #ifdef HAS_TMC2130
 #include <TMC2130Stepper.h>
 #include <TMC2130Stepper_REGDEFS.h>
@@ -18,14 +19,6 @@
 //------------------------------------------------------------------------------
 // CONSTANTS
 //------------------------------------------------------------------------------
-#if MACHINE_STYLE == SIXI
-
-#define POSITION_ERROR_FLAG_CONTINUOUS   (1<<0)  // report position (d17) continuously?
-#define POSITION_ERROR_FLAG_ERROR        (1<<1)  // has error occurred?
-#define POSITION_ERROR_FLAG_FIRSTERROR   (1<<2)  // report the error once per occurrence
-#define POSITION_ERROR_FLAG_ESTOP        (1<<3)  // check for error at all?
-
-#endif
 
 #ifdef HAS_TMC2130
 #define STEPPER_DIR_HIGH   LOW
@@ -140,7 +133,7 @@ extern void setPenAngle(int arg0);
 extern const int movesPlanned();
 
 #ifdef DEBUG_STEPPING
-extern void isr_internal();
+extern void debug_stepping();
 #endif // DEBUG_STEPPING
 
 FORCE_INLINE const int movesPlanned() {

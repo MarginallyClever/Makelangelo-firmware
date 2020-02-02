@@ -455,7 +455,7 @@ float parseNumber(char code, float val) {
   char *finale = serialBuffer + sofar;
   for (ptr = serialBuffer; ptr < finale; ++ptr) { // walk to the end
     if (*ptr == ';') break;
-    if (*ptr == code) { // if you find code on your walk,
+    if (toupper(*ptr) == code) { // if you find code on your walk,
       return atof(ptr + 1); // convert the digits that follow into a float and return it
     }
   }
@@ -471,7 +471,7 @@ char hasGCode(char code) {
   char *finale = serialBuffer + sofar;
   for (ptr = serialBuffer; ptr < finale; ++ptr) { // walk to the end
     if (*ptr == ';') break;
-    if (*ptr == code) { // if you find code on your walk,
+    if (toupper(*ptr) == code) { // if you find code on your walk,
       return 1;  // found
     }
   }
@@ -1341,6 +1341,6 @@ void loop() {
 #endif
 
 #ifdef DEBUG_STEPPING
-  isr_internal();
+  debug_stepping();
 #endif  // DEBUG_STEPPING
 }

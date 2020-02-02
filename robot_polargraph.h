@@ -13,7 +13,7 @@
 #define MACHINE_HAS_LIFTABLE_PEN
 
 // what is the maximum length of a subdivided line?
-#define SEGMENTS_PER_SECOND (20)
+#define SEGMENTS_PER_SECOND  (40)
 
 
 // servo angles for pen control
@@ -62,7 +62,7 @@
 #define HAS_LCD
 #endif
 #if MACHINE_HARDWARE_VERSION == MAKELANGELO_5
-#define MAX_SEGMENTS         (16)
+#define MAX_SEGMENTS         (32)
 #define USE_LIMIT_SWITCH
 #define HAS_SD
 #define HAS_LCD

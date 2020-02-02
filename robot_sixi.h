@@ -16,7 +16,7 @@
 
 // plan long moves as a set of submoves to increase accuracy.  Uncomment to turn this off.
 #define SUBDIVIDE_LINES
-#define SEGMENTS_PER_SECOND (10)
+#define SEGMENTS_PER_SECOND  (5)
 
 #define NUM_AXIES            (7)
 #define NUM_MOTORS           (6)
@@ -90,6 +90,14 @@
 #define END3 LOW
 #define END4 LOW
 #define END5 LOW
+
+
+// behaviour flags
+#define POSITION_ERROR_FLAG_CONTINUOUS   (1<<0)  // report position (d17) continuously?
+#define POSITION_ERROR_FLAG_ERROR        (1<<1)  // has error occurred?
+#define POSITION_ERROR_FLAG_FIRSTERROR   (1<<2)  // report the error once per occurrence
+#define POSITION_ERROR_FLAG_ESTOP        (1<<3)  // check for error at all?
+
 
 extern float sensorAngles[NUM_SENSORS];
 

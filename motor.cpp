@@ -4,6 +4,10 @@
 // Please see http://www.github.com/MarginallyClever/makelangeloFirmware for more information.
 //------------------------------------------------------------------------------
 
+// TCNT* - Timer/Counter Register.  The actual timer value is stored here.
+// OCR*  - Output Compare Register
+  
+
 
 //------------------------------------------------------------------------------
 // INCLUDES
@@ -20,8 +24,22 @@
 
 #ifdef ESP8266
 #define CLOCK_ADJUST(x) {  timer0_write(ESP.getCycleCount() + (long) (80000L*(x)) );  }  // microseconds
+
+inline void CRITICAL_SECTION_START() {} 
+inline void CRITICAL_SECTION_END() {}
+
 #else
 #define CLOCK_ADJUST(x) {  OCR1A = (x);  }  // microseconds
+
+unsigned char _sreg=0;
+inline void CRITICAL_SECTION_START() {
+  _sreg = SREG;  cli();
+}
+inline void CRITICAL_SECTION_END() {
+  SREG = _sreg;
+}
+
+
 #endif
 
 //------------------------------------------------------------------------------
@@ -63,7 +81,8 @@ int steps_taken;
 int accel_until, decel_after;
 uint32_t current_feed_rate;
 uint32_t current_acceleration;
-uint32_t start_feed_rate, end_feed_rate, isr_nominal_rate;
+uint32_t start_feed_rate, end_feed_rate;
+int32_t isr_nominal_rate=-1;
 uint32_t time_accelerating, time_decelerating;
 float max_jerk[NUM_MOTORS + NUM_SERVOS];
 float max_feedrate_mm_s[NUM_MOTORS + NUM_SERVOS];
@@ -114,6 +133,8 @@ int global_servoStep_dir_0;
 float previous_nominal_speed = 0;
 float previous_safe_speed = 0;
 float previous_speed[NUM_MOTORS + NUM_SERVOS];
+
+uint32_t nextMainISR=0;
 
 const char *MotorNames = "LRUVWT";
 const char *AxisNames = "XYZUVWT";
@@ -400,7 +421,8 @@ void motor_setup() {
 
 #ifndef DEBUG_STEPPING
   // disable global interrupts
-  noInterrupts();
+  CRITICAL_SECTION_START();
+  
 #ifdef ESP8266
   timer0_isr_init();
   timer0_attachInterrupt(itr);
@@ -420,7 +442,7 @@ void motor_setup() {
   TIMSK1 |= (1 << OCIE1A);
 #endif  // ESP8266
 
-  interrupts();  // enable global interrupts
+  CRITICAL_SECTION_END();
 #endif // DEBUG_STEPPING
 }
 
@@ -478,7 +500,7 @@ void enable_stealthChop(){
 	motor_engage();
 }
 
-void motor_home(){
+void motor_home() {
 	//Backoff
 	for (uint32_t i = 0; i < STEPS_PER_MM * 25; ++i) {
 		digitalWrite(MOTOR_0_STEP_PIN, HIGH);
@@ -704,7 +726,7 @@ void recalculate_trapezoids() {
 
 
 void describe_segments() {
-  CRITICAL_SECTION_START
+  CRITICAL_SECTION_START();
   static uint8_t once=0;
   if(once==0) {
     once=1;
@@ -765,7 +787,7 @@ void describe_segments() {
     Serial.println();
     s = get_next_segment(s);
   }
-  CRITICAL_SECTION_END
+  CRITICAL_SECTION_END();
 }
 
 
@@ -837,7 +859,7 @@ FORCE_INLINE unsigned short calc_timer(uint32_t desired_freq_hz, uint8_t*loops) 
   uint8_t step_multiplier = 1;
 
   int idx=0;
-  while( idx<2 && desired_freq_hz > 10000 ) {
+  while( idx<6 && desired_freq_hz > 10000 ) {
     step_multiplier <<= 1;
     desired_freq_hz >>= 1;
     idx++;
@@ -863,276 +885,153 @@ FORCE_INLINE unsigned short calc_timer(uint32_t desired_freq_hz, uint8_t*loops) 
 }
 
 
-/**
- *  Process all line segments in the ring buffer.  Uses bresenham's line algorithm to move all motors.
- */
-#ifndef DEBUG_STEPPING
-inline 
-#endif
-void isr_internal() {
-  // segment buffer empty? do nothing
-  if ( working_seg == NULL ) {
-    working_seg = get_current_segment();
-
-    if ( working_seg != NULL ) {
-      // New segment!
-      working_seg->busy = true;
-
-      // set the direction pins
-      digitalWrite( MOTOR_0_DIR_PIN, working_seg->a[0].dir );
-      global_step_dir_0 = (working_seg->a[0].dir == STEPPER_DIR_HIGH) ? 1 : -1;
-
-#if NUM_MOTORS>1
-      digitalWrite( MOTOR_1_DIR_PIN, working_seg->a[1].dir );
-      global_step_dir_1 = (working_seg->a[1].dir == STEPPER_DIR_HIGH) ? 1 : -1;
-#endif
-#if NUM_MOTORS>2
-      digitalWrite( MOTOR_2_DIR_PIN, working_seg->a[2].dir );
-      global_step_dir_2 = (working_seg->a[2].dir == STEPPER_DIR_HIGH) ? 1 : -1;
-#endif
-#if NUM_MOTORS>3
-      digitalWrite( MOTOR_3_DIR_PIN, working_seg->a[3].dir );
-      global_step_dir_3 = (working_seg->a[3].dir == STEPPER_DIR_HIGH) ? 1 : -1;
-#endif
-#if NUM_MOTORS>4
-      digitalWrite( MOTOR_4_DIR_PIN, working_seg->a[4].dir );
-      global_step_dir_4 = (working_seg->a[4].dir == STEPPER_DIR_HIGH) ? 1 : -1;
-#endif
-#if NUM_MOTORS>5
-      digitalWrite( MOTOR_5_DIR_PIN, working_seg->a[5].dir );
-      global_step_dir_5 = (working_seg->a[5].dir == STEPPER_DIR_HIGH) ? 1 : -1;
-#endif
-#if NUM_SERVOS>0
-      global_servoStep_dir_0 = (working_seg->a[NUM_MOTORS].dir == STEPPER_DIR_HIGH) ? -1 : 1;
-#endif
-
-#if NUM_SERVOS>0
-#ifdef ESP8266
-      //analogWrite(SERVO0_PIN, working_seg->a[NUM_MOTORS].step_count);
-#else
-      //servos[0].write(working_seg->a[NUM_MOTORS].step_count);
-#endif  // ESP8266
-#endif  // NUM_SERVOS>0
-
-      start_feed_rate = working_seg->initial_rate;
-      end_feed_rate = working_seg->final_rate;
-      current_feed_rate = start_feed_rate;
-      current_acceleration = working_seg->acceleration_rate;
-      accel_until = working_seg->accel_until;
-      decel_after = working_seg->decel_after;
-      time_accelerating = 0;
-      time_decelerating = 0;
-      isr_nominal_rate = 0;
-
-      // defererencing some data so the loop runs faster.
-      steps_total = working_seg->steps_total;
-      steps_taken = 0;
-      delta0 = working_seg->a[0].absdelta;
-      over0 = -(steps_total >> 1);
-#if NUM_MOTORS>1
-      delta1 = working_seg->a[1].absdelta;
-      over1 = -(steps_total >> 1);
-#endif
-#if NUM_MOTORS>2
-      delta2 = working_seg->a[2].absdelta;
-      over2 = -(steps_total >> 1);
-#endif
-#if NUM_MOTORS>3
-      delta3 = working_seg->a[3].absdelta;
-      over3 = -(steps_total >> 1);
-#endif
-#if NUM_MOTORS>4
-      delta4 = working_seg->a[4].absdelta;
-      over4 = -(steps_total >> 1);
-#endif
-#if NUM_MOTORS>5
-      delta5 = working_seg->a[5].absdelta;
-      over5 = -(steps_total >> 1);
-#endif
-#if NUM_SERVOS>0
-      global_servoSteps_0 = working_seg->a[NUM_MOTORS].step_count - working_seg->a[NUM_MOTORS].delta_steps;
-      
-      servoDelta0 = working_seg->a[NUM_MOTORS].absdelta;
-      servoOver0 = -(steps_total >> 1);
-#endif
-
-#ifdef DEBUG_STEPPING
-      int decel = working_seg->steps_total - working_seg->decel_after;
-      Serial.print("seg: ");  Serial.println((long)working_seg,HEX);
-      Serial.print("  distance: ");  Serial.println(working_seg->distance);
-      Serial.print("  nominal_speed: ");  Serial.println(working_seg->nominal_speed);
-      Serial.print("  entry_speed: ");  Serial.println(working_seg->entry_speed);
-      Serial.print("  entry_speed_max: ");  Serial.println(working_seg->entry_speed_max);
-      Serial.print("  acceleration: ");  Serial.println(working_seg->acceleration);
-      Serial.print("  accel: ");  Serial.println(working_seg->accel_until);
-      Serial.print("  nominal: ");  Serial.println(working_seg->steps_total-working_seg->accel_until-decel);
-      Serial.print("  decel: ");  Serial.println(decel);
-      Serial.print("  initial_rate: ");  Serial.println(working_seg->initial_rate);
-      Serial.print("  nominal_rate: ");  Serial.println(working_seg->nominal_rate);
-      Serial.print("  final_rate: ");  Serial.println(working_seg->final_rate);
-      Serial.print("  acceleration_steps_per_s2: ");  Serial.println(working_seg->acceleration_steps_per_s2);
-      Serial.print("  acceleration_rate: ");  Serial.println(working_seg->acceleration_rate);
-      Serial.print("  nominal_length_flag: ");  Serial.println(working_seg->nominal_length_flag==0?"n":"y");
-      //Serial.print("  recalculate_flag: ");  Serial.println(working_seg->recalculate_flag==0?"n":"y");
-      //Serial.print("  dx: ");  Serial.println(working_seg->a[0].delta_mm);
-      //Serial.print("  dy: ");  Serial.println(working_seg->a[1].delta_mm);
-      //Serial.print("  dz: ");  Serial.println(working_seg->a[2].delta_mm);
-#endif
-      return;
-    } else {
-      CLOCK_ADJUST(2000); // wait 1ms
-      return;
-    }
-  }
-
-
-  if ( working_seg != NULL ) {
-    uint8_t i;
+// Process pulsing in the isr step
+inline void isr_internal_pulse() {
+  if ( working_seg == NULL ) return;
+  
+  uint8_t i;
 
 #if MACHINE_STYLE == SIXI
-    if ((positionErrorFlags & POSITION_ERROR_FLAG_ESTOP) != 0) {
-      // check if the sensor position differs from the estimated position.
-      float fraction = (float)steps_taken / (float)steps_total;
+  if ((positionErrorFlags & POSITION_ERROR_FLAG_ESTOP) != 0) {
+    // check if the sensor position differs from the estimated position.
+    float fraction = (float)steps_taken / (float)steps_total;
 
-      for (i = 0; i < NUM_SENSORS; ++i) {
-        // interpolate live = (b-a)*f + a
-        working_seg->a[i].expectedPosition =
-          (working_seg->a[i].positionEnd - working_seg->a[i].positionStart) * fraction + working_seg->a[i].positionStart;
+    for (i = 0; i < NUM_SENSORS; ++i) {
+      // interpolate live = (b-a)*f + a
+      working_seg->a[i].expectedPosition =
+        (working_seg->a[i].positionEnd - working_seg->a[i].positionStart) * fraction + working_seg->a[i].positionStart;
 
-        float diff = abs(working_seg->a[i].expectedPosition - sensorAngles[i]);
-        if (diff > POSITION_EPSILON) {
-          // do nothing while the margin is too big.
-          // Only end this condition is stopping the ISR, either via software disable or hardware reset.
-          positionErrorFlags |= POSITION_ERROR_FLAG_ERROR;
-          return;
-        }
+      float diff = abs(working_seg->a[i].expectedPosition - sensorAngles[i]);
+      if (diff > POSITION_EPSILON) {
+        // do nothing while the margin is too big.
+        // Only end this condition is stopping the ISR, either via software disable or hardware reset.
+        positionErrorFlags |= POSITION_ERROR_FLAG_ERROR;
+        return;
       }
     }
+  }
 #endif
 
-    // move each axis
-    for (i = 0; i < isr_step_multiplier; ++i) {
+  // move each axis
+  for (i = 0; i < isr_step_multiplier; ++i) {
 #ifdef DEBUG_STEPPING
-      delayMicroseconds(150);
+    delayMicroseconds(150);
 #endif
-      over0 += delta0;
-      if (over0 > 0) digitalWrite(MOTOR_0_STEP_PIN, START0);
+    over0 += delta0;
+    if (over0 > 0) digitalWrite(MOTOR_0_STEP_PIN, START0);
 #if NUM_MOTORS>1
-      over1 += delta1;
-      if (over1 > 0) digitalWrite(MOTOR_1_STEP_PIN, START1);
+    over1 += delta1;
+    if (over1 > 0) digitalWrite(MOTOR_1_STEP_PIN, START1);
 #endif
 #if NUM_MOTORS>2
-      over2 += delta2;
-      if (over2 > 0) digitalWrite(MOTOR_2_STEP_PIN, START2);
+    over2 += delta2;
+    if (over2 > 0) digitalWrite(MOTOR_2_STEP_PIN, START2);
 #endif
 #if NUM_MOTORS>3
-      over3 += delta3;
-      if (over3 > 0) digitalWrite(MOTOR_3_STEP_PIN, START3);
+    over3 += delta3;
+    if (over3 > 0) digitalWrite(MOTOR_3_STEP_PIN, START3);
 #endif
 #if NUM_MOTORS>4
-      over4 += delta4;
-      if (over4 > 0) digitalWrite(MOTOR_4_STEP_PIN, START4);
+    over4 += delta4;
+    if (over4 > 0) digitalWrite(MOTOR_4_STEP_PIN, START4);
 #endif
 #if NUM_MOTORS>5
-      over5 += delta5;
-      if (over5 > 0) digitalWrite(MOTOR_5_STEP_PIN, START5);
+    over5 += delta5;
+    if (over5 > 0) digitalWrite(MOTOR_5_STEP_PIN, START5);
 #endif
 #if NUM_SERVOS>0
-      servoOver0 += servoDelta0;
+    servoOver0 += servoDelta0;
 #endif
-      // now that the pins have had a moment to settle, do the second half of the steps.
-      // M0
-      if (over0 > 0) {
-        over0 -= steps_total;
-        global_steps_0 += global_step_dir_0;
-        digitalWrite(MOTOR_0_STEP_PIN, END0);
-      }
-#if NUM_MOTORS>1
-      // M1
-      if (over1 > 0) {
-        over1 -= steps_total;
-        global_steps_1 += global_step_dir_1;
-        digitalWrite(MOTOR_1_STEP_PIN, END1);
-      }
-#endif
-#if NUM_MOTORS>2
-      // M2
-      if (over2 > 0) {
-        over2 -= steps_total;
-        global_steps_2 += global_step_dir_2;
-        digitalWrite(MOTOR_2_STEP_PIN, END2);
-      }
-#endif
-#if NUM_MOTORS>3
-      // M3
-      if (over3 > 0) {
-        over3 -= steps_total;
-        global_steps_3 += global_step_dir_3;
-        digitalWrite(MOTOR_3_STEP_PIN, END3);
-      }
-#endif
-#if NUM_MOTORS>4
-      // M4
-      if (over4 > 0) {
-        over4 -= steps_total;
-        global_steps_4 += global_step_dir_4;
-        digitalWrite(MOTOR_4_STEP_PIN, END4);
-      }
-#endif
-#if NUM_MOTORS>5
-      // M5
-      if (over5 > 0) {
-        over5 -= steps_total;
-        global_steps_5 += global_step_dir_5;
-        digitalWrite(MOTOR_5_STEP_PIN, END5);
-      }
-#endif
-#if NUM_SERVOS>0
-      // servo 0
-      if(servoOver0>0) {
-        servoOver0 -= steps_total;
-        global_servoSteps_0 += global_servoStep_dir_0;
-#ifdef ESP8266
-        //analogWrite(SERVO0_PIN, global_servoSteps_0);
-#else
-        servos[0].write(global_servoSteps_0);
-#endif
-      }
-#endif
-
-      // make a step
-      steps_taken++;
-      if (steps_taken >= steps_total) break;
+    // now that the pins have had a moment to settle, do the second half of the steps.
+    // M0
+    if (over0 > 0) {
+      over0 -= steps_total;
+      global_steps_0 += global_step_dir_0;
+      digitalWrite(MOTOR_0_STEP_PIN, END0);
     }
+#if NUM_MOTORS>1
+    // M1
+    if (over1 > 0) {
+      over1 -= steps_total;
+      global_steps_1 += global_step_dir_1;
+      digitalWrite(MOTOR_1_STEP_PIN, END1);
+    }
+#endif
+#if NUM_MOTORS>2
+    // M2
+    if (over2 > 0) {
+      over2 -= steps_total;
+      global_steps_2 += global_step_dir_2;
+      digitalWrite(MOTOR_2_STEP_PIN, END2);
+    }
+#endif
+#if NUM_MOTORS>3
+    // M3
+    if (over3 > 0) {
+      over3 -= steps_total;
+      global_steps_3 += global_step_dir_3;
+      digitalWrite(MOTOR_3_STEP_PIN, END3);
+    }
+#endif
+#if NUM_MOTORS>4
+    // M4
+    if (over4 > 0) {
+      over4 -= steps_total;
+      global_steps_4 += global_step_dir_4;
+      digitalWrite(MOTOR_4_STEP_PIN, END4);
+    }
+#endif
+#if NUM_MOTORS>5
+    // M5
+    if (over5 > 0) {
+      over5 -= steps_total;
+      global_steps_5 += global_step_dir_5;
+      digitalWrite(MOTOR_5_STEP_PIN, END5);
+    }
+#endif
+#if NUM_SERVOS>0
+    // servo 0
+    if(servoOver0>0) {
+      servoOver0 -= steps_total;
+      global_servoSteps_0 += global_servoStep_dir_0;
+#ifdef ESP8266
+      //analogWrite(SERVO0_PIN, global_servoSteps_0);
+#else
+      servos[0].write(global_servoSteps_0);
+#endif
+    }
+#endif
 
+    // make a step
+    steps_taken++;
+    if (steps_taken >= steps_total) break;
+  }
+}
 
+// Process blocks in the isr 
+inline uint32_t isr_internal_block() {
+  uint32_t interval = (TIMER_RATE)/1000;
+
+  if( working_seg != NULL ) {
     // Is this segment done?
     if ( steps_taken >= steps_total ) {
       // Move on to next segment without wasting an interrupt tick.
       working_seg = NULL;
       current_segment = get_next_segment(current_segment);
-      return;
-    }
-
-    // accel
-    uint32_t interval;
-    if ( steps_taken <= accel_until ) {
+    } else {
+      if ( steps_taken <= accel_until ) {
+        // accelerating
+        current_feed_rate = start_feed_rate + MultiU24X32toH16( time_accelerating, current_acceleration );
+        current_feed_rate = min(current_feed_rate,working_seg->nominal_rate);
+        interval = calc_timer(current_feed_rate, &isr_step_multiplier);
+        time_accelerating += interval;
 #ifdef DEBUG_STEPPING
-      //Serial.print("a");
-#endif
-      current_feed_rate = start_feed_rate + MultiU24X32toH16( time_accelerating, current_acceleration );
-      if (current_feed_rate > working_seg->nominal_rate) {
-        current_feed_rate = working_seg->nominal_rate;
-      }
-      interval = calc_timer(current_feed_rate, &isr_step_multiplier);
-      time_accelerating += interval;
-      CLOCK_ADJUST(interval);
-      /*
+        /*
         Serial.print("A\t");
         Serial.print(current_feed_rate);
         Serial.print("\t");
         Serial.println(isr_step_multiplier);//*/
-      /*
+        /*
         Serial.print("A >> ");   Serial.print(interval);
         Serial.print("\t");      Serial.print(isr_step_multiplier);
         Serial.print("\t");      Serial.print(current_feed_rate);
@@ -1140,26 +1039,26 @@ void isr_internal() {
         Serial.print(" + ");     Serial.print(current_acceleration);
         Serial.print(" * ");     Serial.print(time_accelerating);
         Serial.println();//*/
-    } else if ( steps_taken > decel_after ) {
-#ifdef DEBUG_STEPPING
-      //Serial.print("d");
+        Serial.print("A >> ");
 #endif
-      uint32_t end_feed_rate = MultiU24X32toH16( time_decelerating, current_acceleration );
-      if ( end_feed_rate < current_feed_rate ) {
-        end_feed_rate = current_feed_rate - end_feed_rate;
-        end_feed_rate = max(end_feed_rate,working_seg->final_rate);
-      } else {
-        end_feed_rate = working_seg->final_rate;
-      }
-      interval = calc_timer(end_feed_rate, &isr_step_multiplier);
-      time_decelerating += interval;
-      CLOCK_ADJUST(interval);
-      /*
+      } else if ( steps_taken > decel_after ) {
+        // decelerating
+        uint32_t end_feed_rate = MultiU24X32toH16( time_decelerating, current_acceleration );
+        if ( end_feed_rate < current_feed_rate ) {
+          end_feed_rate = current_feed_rate - end_feed_rate;
+          end_feed_rate = max(end_feed_rate,working_seg->final_rate);
+        } else {
+          end_feed_rate = working_seg->final_rate;
+        }
+        interval = calc_timer(end_feed_rate, &isr_step_multiplier);
+        time_decelerating += interval;
+#ifdef DEBUG_STEPPING
+        /*
         Serial.print("D\t");
         Serial.print(end_feed_rate);
         Serial.print("\t");
         Serial.println(isr_step_multiplier);//*/
-      /*
+        /*
         Serial.print("D >> ");  Serial.print(interval);
         Serial.print("\t");     Serial.print(isr_step_multiplier);
         Serial.print("\t");     Serial.print(end_feed_rate);
@@ -1167,55 +1066,178 @@ void isr_internal() {
         Serial.print(" - ");     Serial.print(current_acceleration);
         Serial.print(" * ");     Serial.print(time_decelerating);
         Serial.println();//*/
-    } else {
-#ifdef DEBUG_STEPPING
-      //Serial.print("n");
+        Serial.print("D >> ");
 #endif
-      if (isr_nominal_rate == 0) {
-        isr_nominal_rate = calc_timer(working_seg->nominal_rate, &isr_step_multiplier);
-      }
-      CLOCK_ADJUST(isr_nominal_rate);
-      /*
-        Serial.print("C\t");
+      } else {
+        // cruising at nominal speed (flat top of the trapezoid)
+        if (isr_nominal_rate < 0) {
+          isr_nominal_rate = calc_timer(working_seg->nominal_rate, &isr_step_multiplier);
+        }
+        interval = isr_nominal_rate;
+#ifdef DEBUG_STEPPING
+        /*
+        Serial.print("N\t");
         Serial.print(working_seg->nominal_rate);
         Serial.print("\t");
         Serial.println(isr_step_multiplier);//*/
-      /*
-        Serial.print("C >> ");  Serial.println(working_seg->nominal_rate);
-        //Serial.print("\t");  Serial.print(interval);
-        //Serial.print("\t");     Serial.print(isr_step_multiplier);
-        Serial.print("\t");     Serial.print(current_feed_rate);
+        /*
+        Serial.print("N >> ");  Serial.println(interval);
+        Serial.print("\t");     Serial.print(isr_step_multiplier);
+        Serial.print(" / ");     Serial.print(working_seg->nominal_rate);
         Serial.println();//*/
+        Serial.print("N >> ");
+#endif
+      }
     }
-#ifndef ESP8266
-    // TODO this line needs explaining.  Is it even needed?
-    OCR1A = (OCR1A < (TCNT1 + 16)) ? (TCNT1 + 16) : OCR1A;
-#endif // ESP8266
   }
+  
+  // segment buffer empty? do nothing
+  if ( working_seg == NULL ) {
+    working_seg = get_current_segment();
+
+    if ( working_seg == NULL ) return interval;  // buffer empty
+    
+    // New segment!
+    working_seg->busy = true;
+
+    // set the direction pins
+    digitalWrite( MOTOR_0_DIR_PIN, working_seg->a[0].dir );
+    global_step_dir_0 = (working_seg->a[0].dir == STEPPER_DIR_HIGH) ? 1 : -1;
+
+#if NUM_MOTORS>1
+    digitalWrite( MOTOR_1_DIR_PIN, working_seg->a[1].dir );
+    global_step_dir_1 = (working_seg->a[1].dir == STEPPER_DIR_HIGH) ? 1 : -1;
+#endif
+#if NUM_MOTORS>2
+    digitalWrite( MOTOR_2_DIR_PIN, working_seg->a[2].dir );
+    global_step_dir_2 = (working_seg->a[2].dir == STEPPER_DIR_HIGH) ? 1 : -1;
+#endif
+#if NUM_MOTORS>3
+    digitalWrite( MOTOR_3_DIR_PIN, working_seg->a[3].dir );
+    global_step_dir_3 = (working_seg->a[3].dir == STEPPER_DIR_HIGH) ? 1 : -1;
+#endif
+#if NUM_MOTORS>4
+    digitalWrite( MOTOR_4_DIR_PIN, working_seg->a[4].dir );
+    global_step_dir_4 = (working_seg->a[4].dir == STEPPER_DIR_HIGH) ? 1 : -1;
+#endif
+#if NUM_MOTORS>5
+    digitalWrite( MOTOR_5_DIR_PIN, working_seg->a[5].dir );
+    global_step_dir_5 = (working_seg->a[5].dir == STEPPER_DIR_HIGH) ? 1 : -1;
+#endif
+#if NUM_SERVOS>0
+    global_servoStep_dir_0 = (working_seg->a[NUM_MOTORS].dir == STEPPER_DIR_HIGH) ? -1 : 1;
+#endif
+
+#if NUM_SERVOS>0
+#ifdef ESP8266
+    //analogWrite(SERVO0_PIN, working_seg->a[NUM_MOTORS].step_count);
+#else
+    //servos[0].write(working_seg->a[NUM_MOTORS].step_count);
+#endif  // ESP8266
+#endif  // NUM_SERVOS>0
+
+    start_feed_rate = working_seg->initial_rate;
+    end_feed_rate = working_seg->final_rate;
+    current_feed_rate = start_feed_rate;
+    current_acceleration = working_seg->acceleration_rate;
+    accel_until = working_seg->accel_until;
+    decel_after = working_seg->decel_after;
+    time_accelerating = 0;
+    time_decelerating = 0;
+    isr_nominal_rate = -1;
+
+    interval = calc_timer(current_feed_rate, &isr_step_multiplier);
+
+    // defererencing some data so the loop runs faster.
+    steps_total = working_seg->steps_total;
+    steps_taken = 0;
+    delta0 = working_seg->a[0].absdelta;
+    over0 = -(steps_total >> 1);
+#if NUM_MOTORS>1
+    delta1 = working_seg->a[1].absdelta;
+    over1 = -(steps_total >> 1);
+#endif
+#if NUM_MOTORS>2
+    delta2 = working_seg->a[2].absdelta;
+    over2 = -(steps_total >> 1);
+#endif
+#if NUM_MOTORS>3
+    delta3 = working_seg->a[3].absdelta;
+    over3 = -(steps_total >> 1);
+#endif
+#if NUM_MOTORS>4
+    delta4 = working_seg->a[4].absdelta;
+    over4 = -(steps_total >> 1);
+#endif
+#if NUM_MOTORS>5
+    delta5 = working_seg->a[5].absdelta;
+    over5 = -(steps_total >> 1);
+#endif
+#if NUM_SERVOS>0
+    global_servoSteps_0 = working_seg->a[NUM_MOTORS].step_count - working_seg->a[NUM_MOTORS].delta_steps;
+    
+    servoDelta0 = working_seg->a[NUM_MOTORS].absdelta;
+    servoOver0 = -(steps_total >> 1);
+#endif
+
+#ifdef DEBUG_STEPPING
+    int decel = working_seg->steps_total - working_seg->decel_after;
+    Serial.print("seg: ");  Serial.println((long)working_seg,HEX);
+    Serial.print("  distance: ");  Serial.println(working_seg->distance);
+    Serial.print("  nominal_speed: ");  Serial.println(working_seg->nominal_speed);
+    Serial.print("  entry_speed: ");  Serial.println(working_seg->entry_speed);
+    Serial.print("  entry_speed_max: ");  Serial.println(working_seg->entry_speed_max);
+    Serial.print("  acceleration: ");  Serial.println(working_seg->acceleration);
+    Serial.print("  accel: ");  Serial.println(working_seg->accel_until);
+    Serial.print("  nominal: ");  Serial.println(working_seg->steps_total-working_seg->accel_until-decel);
+    Serial.print("  decel: ");  Serial.println(decel);
+    Serial.print("  initial_rate: ");  Serial.println(working_seg->initial_rate);
+    Serial.print("  nominal_rate: ");  Serial.println(working_seg->nominal_rate);
+    Serial.print("  final_rate: ");  Serial.println(working_seg->final_rate);
+    Serial.print("  acceleration_steps_per_s2: ");  Serial.println(working_seg->acceleration_steps_per_s2);
+    Serial.print("  acceleration_rate: ");  Serial.println(working_seg->acceleration_rate);
+    Serial.print("  nominal_length_flag: ");  Serial.println(working_seg->nominal_length_flag==0?"n":"y");
+    //Serial.print("  recalculate_flag: ");  Serial.println(working_seg->recalculate_flag==0?"n":"y");
+    //Serial.print("  dx: ");  Serial.println(working_seg->a[0].delta_mm);
+    //Serial.print("  dy: ");  Serial.println(working_seg->a[1].delta_mm);
+    //Serial.print("  dz: ");  Serial.println(working_seg->a[2].delta_mm);
+#endif
+  }
+  
+  return interval;
 }
+
+
+#ifdef DEBUG_STEPPING
+void debug_stepping() {
+  Serial.print("~");
+  isr_internal_pulse();
+  uint32_t interval = isr_internal_block();
+  Serial.print("I");
+  Serial.println(interval);
+}
+#endif
 
 #ifdef HAS_TMC2130
 inline void homing_sequence() {
   if (en0 == true) {
-	  
-	digitalWrite(MOTOR_0_STEP_PIN, HIGH);
-	digitalWrite(MOTOR_0_STEP_PIN, LOW);
-	if (digitalRead(MOTOR_0_LIMIT_SWITCH_PIN) == LOW) {
-		digitalWrite( MOTOR_0_ENABLE_PIN,  HIGH );
-		en0 = false;
-	}
+  	digitalWrite(MOTOR_0_STEP_PIN, HIGH);
+  	digitalWrite(MOTOR_0_STEP_PIN, LOW);
+  	if (digitalRead(MOTOR_0_LIMIT_SWITCH_PIN) == LOW) {
+  		digitalWrite( MOTOR_0_ENABLE_PIN,  HIGH );
+  		en0 = false;
+  	}
   }
   if (en1 == true) {
     digitalWrite(MOTOR_1_STEP_PIN, HIGH);
     digitalWrite(MOTOR_1_STEP_PIN, LOW);
     if (digitalRead(MOTOR_1_LIMIT_SWITCH_PIN) == LOW) {
       digitalWrite( MOTOR_1_ENABLE_PIN,  HIGH );
-	  en1 = false;
+	    en1 = false;
     }
   }
-  if (en1 == false && en0 == false){
-	  homing = false;
-  }
+  // make homing false when en0 and en1 are both false at the same time.
+  homing = en0 | en1;
 }
 #endif
 
@@ -1224,19 +1246,51 @@ inline void homing_sequence() {
 void itr() {
 #else
 ISR(TIMER1_COMPA_vect) {
-  CRITICAL_SECTION_START
-#endif
+#endif // ESP8266
+  //#ifndef __AVR__
+    // Disable interrupts, to avoid ISR preemption while we reprogram the period
+    // (AVR enters the ISR with global interrupts disabled, so no need to do it here)
+    CRITICAL_SECTION_START();
+  //#endif
+  // set the timer interrupt value as big as possible so there's little chance it triggers while i'm still in the ISR.
+  CLOCK_ADJUST(MAX_OCR1A_VALUE);
+
+  uint8_t max_loops=10;
+  uint32_t next_isr_ticks=0;
+  uint32_t min_ticks;
+  do {
+    // Turn the interrupts back on (reduces UART delay, apparently)
+    CRITICAL_SECTION_END();
+  
 #ifndef DEBUG_STEPPING
 #ifdef HAS_TMC2130
-  if (homing == true) homing_sequence();
-  else
+      if (homing == true) {
+        homing_sequence();
+        nextMainISR = HOMING_OCR1A;
+      } else 
 #endif
-	     isr_internal();
+    if(!nextMainISR) isr_internal_pulse();
+	  if(!nextMainISR) nextMainISR = isr_internal_block();
 #endif // DEBUG_STEPPING
 
-#ifndef ESP8266
-  CRITICAL_SECTION_END
-#endif
+    uint32_t interval = nextMainISR;
+    interval = min(MAX_OCR1A_VALUE,interval);
+    nextMainISR -= interval;
+
+    next_isr_ticks += interval;
+    
+    CRITICAL_SECTION_START();
+    min_ticks = OCR1A + 8;
+    
+    if (!--max_loops) next_isr_ticks = min_ticks;
+    // ORC1A has been advancing while the interrupt was running.
+    // if OCR1A is too close to the timer, do the step again immediately
+  } while( next_isr_ticks < min_ticks);
+
+  // set the next isr to fire at the right time.
+  CLOCK_ADJUST(next_isr_ticks);
+  // turn the interrupts back on
+  CRITICAL_SECTION_END();
 }
 
 
@@ -1266,7 +1320,7 @@ void motor_line(const float * const target_position, float fr_mm_s,float millime
     sensorUpdate();
 #else
 #ifdef DEBUG_STEPPING
-    isr_internal();
+    debug_stepping();
 #else
     delay(1);
 #endif
