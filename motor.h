@@ -137,6 +137,10 @@ extern void debug_stepping();
 #endif // DEBUG_STEPPING
 
 FORCE_INLINE const int movesPlanned() {
+  return SEGMOD( last_segment - current_segment );
+}
+
+FORCE_INLINE const int movesPlannedNotBusy() {
   return SEGMOD( last_segment - nonbusy_segment );
 }
 
