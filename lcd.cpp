@@ -738,6 +738,7 @@ void LCD_print_float(float v,int padding,int precision) {
 
 
 void LCD_setStatusMessage(char *message) {
+#ifdef HAS_LCD
   char *i=lcd_message_m117;
   char *m=message;
   int c=0;
@@ -750,6 +751,7 @@ void LCD_setStatusMessage(char *message) {
 
   // pop to top level menu
   while(menuStackDepth>0) MENU_POP();
+#endif
 }
 
 
