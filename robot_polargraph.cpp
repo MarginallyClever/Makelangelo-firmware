@@ -216,9 +216,11 @@ void polargraph_homeAtSpeed(int delayTime) {
     pause(delayTime);
   } while (left + right < 2);
 }
+
+
 /**
-   If limit switches are installed, move to touch each switch so that the pen holder can move to home position.
-*/
+ *  If limit switches are installed, move to touch each switch so that the pen holder can move to home position.
+ */
 void robot_findHome() {
 #if defined(CAN_HOME)
   // do not run this code unless you have the hardware to find home!
@@ -227,47 +229,47 @@ void robot_findHome() {
 
   Serial.println(F("Find Home..."));
 
-#ifdef HAS_TMC2130
-	delay(500);
-	digitalWrite(MOTOR_0_DIR_PIN, STEPPER_DIR_HIGH);
-	digitalWrite(MOTOR_1_DIR_PIN, STEPPER_DIR_HIGH);
-
-	motor_home();
+  #ifdef HAS_TMC2130
+  	delay(500);
+  	digitalWrite(MOTOR_0_DIR_PIN, STEPPER_DIR_HIGH);
+  	digitalWrite(MOTOR_1_DIR_PIN, STEPPER_DIR_HIGH);
   
-	while(homing == true){
-		Serial.print(driver_0.TSTEP());
-		Serial.print("   ");
-		Serial.print(digitalRead(MOTOR_0_LIMIT_SWITCH_PIN));
-		Serial.print("   ");
-		Serial.print(digitalRead(MOTOR_1_LIMIT_SWITCH_PIN));
-		Serial.print("   ");
-	  Serial.println("still homing");
-	}
-	Serial.println("BOTH EN false");
-	enable_stealthChop();
-
-#else
-
-  findStepDelay();
-  polargraph_homeAtSpeed(step_delay);
-  // make sure there's no momentum to skip the belt on the pulley.
-  delay(500);
-  // back off a bit
-  digitalWrite(MOTOR_0_DIR_PIN, STEPPER_DIR_HIGH);
-  digitalWrite(MOTOR_1_DIR_PIN, STEPPER_DIR_HIGH);
-  for(int i=0;i<1500;++i) {
-      digitalWrite(MOTOR_0_STEP_PIN, HIGH);
-      digitalWrite(MOTOR_0_STEP_PIN, LOW);
+  	motor_home();
     
-      digitalWrite(MOTOR_1_STEP_PIN, HIGH);
-      digitalWrite(MOTOR_1_STEP_PIN, LOW);
-      pause(step_delay*5);
-  }
-  // find it again, but slower
-  polargraph_homeAtSpeed(step_delay*10);
+  	while(homing == true){
+  		Serial.print(driver_0.TSTEP());
+  		Serial.print("   ");
+  		Serial.print(digitalRead(MOTOR_0_LIMIT_SWITCH_PIN));
+  		Serial.print("   ");
+  		Serial.print(digitalRead(MOTOR_1_LIMIT_SWITCH_PIN));
+  		Serial.print("   ");
+  	  Serial.println("still homing");
+  	}
+  	Serial.println("BOTH EN false");
+  	enable_stealthChop();
   
+  #else
 
-  #endif
+    findStepDelay();
+    polargraph_homeAtSpeed(step_delay);
+    // make sure there's no momentum to skip the belt on the pulley.
+    delay(500);
+    // back off a bit
+    digitalWrite(MOTOR_0_DIR_PIN, STEPPER_DIR_HIGH);
+    digitalWrite(MOTOR_1_DIR_PIN, STEPPER_DIR_HIGH);
+    for(int i=0;i<500;++i) {
+        digitalWrite(MOTOR_0_STEP_PIN, HIGH);
+        digitalWrite(MOTOR_0_STEP_PIN, LOW);
+      
+        digitalWrite(MOTOR_1_STEP_PIN, HIGH);
+        digitalWrite(MOTOR_1_STEP_PIN, LOW);
+        pause(step_delay*3);
+    }
+    // find it again, but slower
+    polargraph_homeAtSpeed(step_delay*10);
+    
+  #endif  // HAS_TMC2130
+  
   //Serial.println(F("Estimating position..."));
   long count[NUM_MOTORS+NUM_SERVOS];
   count[0] = calibrateLeft/MM_PER_STEP;
@@ -282,6 +284,13 @@ void robot_findHome() {
   FK(count, offset);
   teleport(offset);
   where();
+
+  // go home
+  float pos[NUM_AXIES];
+  offset[0]=axies[0].homePos;
+  offset[1]=axies[1].homePos;
+  lineSafe( offset, feed_rate );
+  
   Serial.println(F("Done."));
 #endif // defined(CAN_HOME)
 }

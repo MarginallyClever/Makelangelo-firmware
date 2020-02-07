@@ -906,19 +906,15 @@ void setFeedratePerAxis() {
 
 #if MACHINE_STYLE == POLARGRAPH
 // convert belt length to cartesian position, save that as home pos.
-void calibrationToHomePosition() {
+void calibrationToPosition() {
   float axies2[NUM_AXIES];
   long steps[3];
   steps[0]=calibrateLeft;
   steps[1]=calibrateRight;
   steps[2]=axies[2].pos;
   FK(steps, axies2);
-  
-  float homePos[NUM_AXIES];
-  homePos[0] = axies2[0];
-  homePos[1] = axies2[1];
-  homePos[2] = axies2[2];
-  setHome(homePos);
+    
+  teleport(axies2);
 }
 
 /**
@@ -938,7 +934,14 @@ void makelangelo6Setup() {
   calibrateLeft = 1025;
   calibrateRight = 1025;
   saveCalibration();
-  calibrationToHomePosition();
+  calibrationToPosition();
+  
+  // set home
+  float homePos[NUM_AXIES];
+  homePos[0] = 0;
+  homePos[1] = 0;
+  homePos[2] = 90;
+  setHome(homePos);
 }
 /**
    D11 makelangelo 5 specific setup call
@@ -957,7 +960,14 @@ void makelangelo5Setup() {
   calibrateLeft = 1025;
   calibrateRight = 1025;
   saveCalibration();
-  calibrationToHomePosition();
+  calibrationToPosition();
+  
+  // set home
+  float homePos[NUM_AXIES];
+  homePos[0] = 0;
+  homePos[1] = 0;
+  homePos[2] = 90;
+  setHome(homePos);
 }
 
 
@@ -977,7 +987,14 @@ void makelangelo33Setup() {
   calibrateLeft = 2022;
   calibrateRight = 2022;
   saveCalibration();
-  calibrationToHomePosition();
+  calibrationToPosition();
+  
+  // set home
+  float homePos[NUM_AXIES];
+  homePos[0] = 0;
+  homePos[1] = 0;
+  homePos[2] = 90;
+  setHome(homePos);
 }
 #endif
 
@@ -1097,18 +1114,11 @@ boolean equalEpsilon(float a, float b) {
 
 
 void setHome(float *pos) {
-  boolean changed = false;
-
   int i;
   for (i = 0; i < NUM_AXIES; ++i) {
-    if (!equalEpsilon(axies[i].homePos, pos[i])) changed = true;
+    axies[i].homePos = pos[i];
   }
-  if (changed == true) {
-    for (i = 0; i < NUM_AXIES; ++i) {
-      axies[i].homePos = pos[i];
-    }
-    saveHome();
-  }
+  saveHome();
 }
 
 
