@@ -51,7 +51,7 @@
 // LCD pins
 #ifdef LCD_IS_128X64
 // 128x64 full graphics controller
-#define BEEPER             44
+#define BEEPER             37
 
 #define LCD_PINS_RS        19
 #define LCD_PINS_ENABLE    42
@@ -61,9 +61,9 @@
 //#define LCD_PINS_ENABLE    17
 //#define LCD_PINS_D4        23
 
-#define LCD_PINS_D5        38
-#define LCD_PINS_D6        41
-#define LCD_PINS_D7        40
+#define LCD_PINS_D5        25
+#define LCD_PINS_D6        27
+#define LCD_PINS_D7        29
 
 // Encoder rotation values
 #define BTN_EN1            31
@@ -71,12 +71,12 @@
 #define BTN_ENC            35
 
 // SD card settings
-#define SDPOWER            31
-#define SDSS               33
-#define SDCARDDETECT       35
+#define SDPOWER            -1
+#define SDSS               53
+#define SDCARDDETECT       49
 
 #define KILL_PIN           41
-#endif
+#endif // LCD_IS_128X64
 
 #ifdef LCD_IS_SMART
 // Smart controller settings
@@ -99,6 +99,6 @@
 #define SDCARDDETECT       49
 
 #define KILL_PIN           41
-#endif
+#endif  // LCD_IS_SMART
 
 #endif
