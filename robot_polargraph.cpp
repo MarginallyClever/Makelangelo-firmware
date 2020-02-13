@@ -88,6 +88,9 @@ void recordHome() {
 #if defined(CAN_HOME)
   wait_for_empty_segment_buffer();
   motor_engage();
+#ifdef MACHINE_HAS_LIFTABLE_PEN
+  setPenAngle(PEN_UP_ANGLE);
+#endif
   findStepDelay();
 
   Serial.println(F("Record home..."));
@@ -226,6 +229,9 @@ void robot_findHome() {
   // do not run this code unless you have the hardware to find home!
   wait_for_empty_segment_buffer();
   motor_engage();
+#ifdef MACHINE_HAS_LIFTABLE_PEN
+  setPenAngle(PEN_UP_ANGLE);
+#endif
 
   Serial.println(F("Find Home..."));
 
@@ -305,6 +311,9 @@ void calibrateBelts() {
 #if defined(CAN_HOME)
   wait_for_empty_segment_buffer();
   motor_engage();
+#ifdef MACHINE_HAS_LIFTABLE_PEN
+  setPenAngle(PEN_UP_ANGLE);
+#endif
 
   Serial.println(F("Find switches..."));
 
