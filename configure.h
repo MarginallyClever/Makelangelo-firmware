@@ -41,8 +41,8 @@
 #define MACHINE_HARDWARE_VERSION   MAKELANGELO_5  // Change this if your machine is polargraph.
 
 // choose one of the following
-#define NORMAL_MOTOR_STEPS   200  // 1.8 degrees per step
-//#define NORMAL_MOTOR_STEPS   400  // 0.9 degrees per step
+//#define NORMAL_MOTOR_STEPS   200  // 1.8 degrees per step
+#define NORMAL_MOTOR_STEPS   400  // 0.9 degrees per step
 
 #endif  // MACHINE_STYLE == POLARGRAPH
 
@@ -198,7 +198,7 @@
 
 #ifdef ESP8266
 
-#define F_CPU                   (80000000L)
+#define CLOCK_SPEED             (80000000L)
 #define MAX_COUNTER             (4294967295L)  // 32 bits
 #define CRITICAL_SECTION_START  noInterrupts();
 #define CRITICAL_SECTION_END    interrupts();
@@ -206,12 +206,12 @@
 #else  // ESP8266
 
 // for timer interrupt control
-#define F_CPU                   (16000000L)
+#define CLOCK_SPEED             (16000000L)
 #define MAX_COUNTER             (65536L)  // 16 bits
 
 #endif  // ESP8266
 
-#define TIMER_RATE            ((F_CPU)/8)
+#define TIMER_RATE            ((CLOCK_SPEED)/8)
 
 // optimize code, please
 #define FORCE_INLINE         __attribute__((always_inline)) inline
@@ -221,7 +221,7 @@
 // 0.9deg stepper, 20-tooth GT2 pulley, 1/16 microstepping = 160 steps/mm, 200mm/s = 240000 steps/s
 // 1.8deg stepper, 20-tooth GT2 pulley, 1/16 microstepping = 160 steps/mm, 400mm/s = 480000 steps/s
 #define CLOCK_MAX_STEP_FREQUENCY (240000L)
-#define CLOCK_MIN_STEP_FREQUENCY (F_CPU/500000U)
+#define CLOCK_MIN_STEP_FREQUENCY (CLOCK_SPEED/500000U)
 
 #define TIMEOUT_OK (1000)
 

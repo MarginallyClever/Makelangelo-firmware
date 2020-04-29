@@ -11,14 +11,13 @@
 //------------------------------------------------------------------------------
 #include "configure.h"
 #include "motor.h"
-#include "SDcard.h"
-#include "LCD.h"
+#include "sdcard.h"
+#include "lcd.h"
 #include "eeprom.h"
 
 #include <SPI.h>  // pkm fix for Arduino 1.5
 
 #include "Vector3.h"
-#include "sdcard.h"
 
 
 //------------------------------------------------------------------------------
@@ -762,8 +761,8 @@ void parseBeep() {
 
 
 /**
-   process commands in the serial receive buffer
-*/
+ * process commands in the serial receive buffer
+ */
 void processCommand() {
   if( serialBuffer[0] == '\0' || serialBuffer[0] == ';' ) return;  // blank lines
   if(!checkLineNumberAndCRCisOK()) return; // message garbled
@@ -1078,9 +1077,9 @@ void reportCalibration() {
 
 #if MACHINE_STYLE == SIXI
 /**
-   D22
-   reset home position to the current angle values.
-*/
+ * D22
+ * reset home position to the current angle values.
+ */
 void sixiResetSensorOffsets() {
   int i;
   // cancel the current home offsets
@@ -1202,11 +1201,10 @@ void setup() {
 */
 void Serial_listen() {
   // listen for serial commands
-  while (Serial.available() > 0) {
+  if(Serial.available() > 0) {
     char c = Serial.read();
-    if (c == '\r') continue;
     if (sofar < MAX_BUF) serialBuffer[sofar++] = c;
-    if (c == '\n') {
+    if (c == '\r' || c == '\n') {
       serialBuffer[sofar - 1] = 0;
 
       // echo confirmation

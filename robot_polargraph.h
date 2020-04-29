@@ -25,7 +25,7 @@
 #define NUM_SERVOS           (1)
 #define NUM_TOOLS            (1)
 
-#define MAX_FEEDRATE         (500.0)  // depends on timer interrupt & hardware
+#define MAX_FEEDRATE         (1000.0)  // depends on timer interrupt & hardware
 #define MIN_FEEDRATE         (0.0)
 
 #define MAX_FEEDRATE_Z       (2000.0)  // depends on timer interrupt & hardware
