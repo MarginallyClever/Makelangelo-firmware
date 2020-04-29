@@ -12,7 +12,12 @@
   #error "Oops!  Make sure you have 'Arduino Mega 2560' selected from the 'Tools -> Boards' menu."
 #endif
 
-#define MAX_MOTORS                 (6)
+#define BAUD                      (115200)  // How fast is the Arduino talking?
+
+#undef HAS_LCD
+#undef HAS_SD
+
+#define MAX_MOTORS                (6)
 
 #define MOTOR_0_DIR_PIN           46
 #define MOTOR_0_STEP_PIN          45
@@ -48,9 +53,6 @@
 
 #define MAX_BOARD_SERVOS          (1)
 #define SERVO0_PIN                (13)
-
-#undef HAS_LCD
-#undef HAS_SD
 
 // SENSORS
 // sensor bits, flags, and masks

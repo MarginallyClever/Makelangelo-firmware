@@ -1,4 +1,4 @@
-  //------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
 // Please see http://www.github.com/MarginallyClever/makelangeloFirmware for more information.
@@ -192,8 +192,11 @@ void sensorUpdate() {
     // This is the only place motor direction should ever be inverted.
     if(i!=1 && i!=2) v=-v;
     v -= axies[i].homePos;
-    while(v<-180) v+=360;
-    while(v> 180) v-=360;
+    v+=180;  // shift up so our desired range is 0...360
+    v =fmod(v,360.0f);  // limit to within 0...360
+    v-=180;  // now shift back to +/-180
+//    while(v<-180) v+=360;
+//    while(v> 180) v-=360;
     sensorAngles[i] = v;
   }
 }

@@ -1138,6 +1138,7 @@ void parser_ready() {
 void setup() {
   // start communications
   Serial.begin(BAUD);
+  Serial.println("\n\n**** LOAD 8,1 ****\n\n");
 
   loadConfig();
 
