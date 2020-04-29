@@ -12,7 +12,7 @@
   #error "Oops!  Make sure you have 'Arduino Mega 2560' selected from the 'Tools -> Boards' menu."
 #endif
 
-#define BAUD                      (115200)  // How fast is the Arduino talking?
+#define BAUD                      (57600)  // How fast is the Arduino talking?
 
 #undef HAS_LCD
 #undef HAS_SD

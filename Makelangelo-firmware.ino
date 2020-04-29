@@ -1093,6 +1093,7 @@ void sixiResetSensorOffsets() {
   for (i = 0; i < NUM_SENSORS; ++i) {
     homePos[i] = sensorAngles[i];
   }
+  homePos[1]+=90;
   setHome(homePos);
 }
 #endif

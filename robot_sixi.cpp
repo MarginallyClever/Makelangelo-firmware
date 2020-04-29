@@ -187,9 +187,6 @@ void sensorUpdate() {
   for(int i=0;i<NUM_SENSORS;++i) {
     if(getSensorRawValue(i,rawValue)) continue;
     v = extractAngleFromRawValue(rawValue);
-    // Some of these are negative because the sensor is reading the opposite rotation from the Robot Overlord simulation.
-    // Robot Overlord has the final say, so these are flipped to match the simulation.
-    // This is the only place motor direction should ever be inverted.
     if(i!=1 && i!=2) v=-v;
     v -= axies[i].homePos;
     v+=180;  // shift up so our desired range is 0...360

@@ -26,7 +26,7 @@
 #define ARM3             8
 #define SIXI             9  // 6DOF industrial arm.
 
-#define MACHINE_STYLE POLARGRAPH  // Change this
+#define MACHINE_STYLE SIXI  // Change this
 
 
 
@@ -78,7 +78,7 @@
 #define BOARD_SIXI_MEGA    6  // Arduino Mega + custom shield for Sixi 2 robot
 
 #ifndef MOTHERBOARD
-#define MOTHERBOARD BOARD_RUMBA  // change this
+#define MOTHERBOARD BOARD_SIXI_MEGA  // change this
 #endif
 
 #include "board_rumba.h"
@@ -128,8 +128,10 @@
 // COMMUNICATION & BUFFERING
 //------------------------------------------------------------------------------
 // for serial
+#ifndef BAUD
 #define BAUD                 (57600)  // How fast is the Arduino talking?
-#define MAX_BUF              (64)  // What is the longest message Arduino can store?
+#endif
+#define MAX_BUF              (128)  // What is the longest message Arduino can store?
 
 // buffering commands
 #ifndef MAX_SEGMENTS
