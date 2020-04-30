@@ -82,6 +82,8 @@ int FK(long *motorStepArray, float *axies) {
 void robot_findHome() {
   motor_engage();
   // sixi always knows where it is.
+  float pos[6] = {0,-90,0,0,20,0};
+  lineSafe(pos,feed_rate);
 }
 
 
@@ -189,12 +191,7 @@ void sensorUpdate() {
     v = extractAngleFromRawValue(rawValue);
     if(i!=1 && i!=2) v=-v;
     v -= axies[i].homePos;
-    v+=180;  // shift up so our desired range is 0...360
-    v =fmod(v,360.0f);  // limit to within 0...360
-    v-=180;  // now shift back to +/-180
-//    while(v<-180) v+=360;
-//    while(v> 180) v-=360;
-    sensorAngles[i] = v;
+    sensorAngles[i] = WRAP_DEGREES(v);
   }
 }
 

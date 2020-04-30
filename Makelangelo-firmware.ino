@@ -192,6 +192,7 @@ void lineSafe(float *pos, float new_feed_rate_mms) {
   // Remember the feed rate.  This value will be used whenever no feedrate is given in a command, so it MUST be saved BEFORE the dial adjustment.
   // otherwise the feedrate will slowly fall or climb as new commands are processed.
   feed_rate = new_feed_rate_mms;
+
   
 #ifdef HAS_LCD
   // use LCD to adjust speed while drawing
@@ -204,6 +205,7 @@ void lineSafe(float *pos, float new_feed_rate_mms) {
   float lenSquared = 0;
   uint8_t i;
   for (i = 0; i < NUM_AXIES; ++i) {
+    pos[i] = WRAP_DEGREES(pos[i]);
     startPos[i] = axies[i].pos;
     delta[i] = pos[i] - startPos[i];
     lenSquared += sq(delta[i]);
@@ -481,7 +483,7 @@ char hasGCode(char code) {
    G4 [Snn] [Pnn]
    Wait S milliseconds and P seconds.
 */
-void parseDwell() {
+void G04() {
   wait_for_empty_segment_buffer();
   float delayTime = parseNumber('S', 0) + parseNumber('P', 0) * 1000.0f;
   pause(delayTime);
@@ -492,7 +494,7 @@ void parseDwell() {
    G0-G1 [Xnnn] [Ynnn] [Znnn] [Unnn] [Vnnn] [Wnnn] [Ann] [Fnn]
    straight lines.  distance in mm.
 */
-void parseLine() {
+void G01() {
   acceleration = parseNumber('A', acceleration);
   acceleration = min(max(acceleration, (float)MIN_ACCELERATION), (float)MAX_ACCELERATION);
   float f = parseNumber('F', feed_rate);
@@ -514,7 +516,7 @@ void parseLine() {
    arcs in the XY plane
    @param clockwise (G2) 1 for cw, (G3) 0 for ccw
 */
-void parseArc(int clockwise) {
+void G02(int clockwise) {
   acceleration = parseNumber('A', acceleration);
   acceleration = min(max(acceleration, (float)MIN_ACCELERATION), (float)MAX_ACCELERATION);
   float f = parseNumber('F', feed_rate);
@@ -855,10 +857,10 @@ void processCommand() {
   lastGcommand = -1;
   switch (cmd) {
     case  0:
-    case  1:  parseLine();  lastGcommand = cmd;  break;
-    case  2:  parseArc(1);  lastGcommand = cmd;  break; // clockwise
-    case  3:  parseArc(0);  lastGcommand = cmd;  break; // counter-clockwise
-    case  4:  parseDwell();  break;
+    case  1:  G01();  lastGcommand = cmd;  break;
+    case  2:  G02(1);  lastGcommand = cmd;  break; // clockwise
+    case  3:  G02(0);  lastGcommand = cmd;  break; // counter-clockwise
+    case  4:  G04();  break;
     case 28:  robot_findHome();  break;
 #if MACHINE_STYLE == POLARGRAPH
     //case 29:  calibrateBelts();  break;
@@ -1133,6 +1135,10 @@ void parser_ready() {
 void parser_stillReady() {
   Serial.print(F("\n> "));  // signal ready to receive input
   last_cmd_time = millis();
+}
+
+void parser_announceWaiting() {
+  Serial.print(F("\n> "));  // signal ready to receive input
 }
 
 
