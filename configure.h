@@ -124,6 +124,10 @@
 #define STEPS_PER_MM         (STEPS_PER_TURN/PULLEY_PITCH)
 #define MICROSTEP_PER_DEGREE (STEPS_PER_TURN/360.0)
 
+// wrap all degrees to within -180...180.
+#define WRAP_DEGREES(NN)     (fmod( (pos[i]+180), 360 ) - 180)
+#define WRAP_RADIANS(NN)     (fmod( (pos[i]+PI), PI*2 ) - PI)
+
 //------------------------------------------------------------------------------
 // COMMUNICATION & BUFFERING
 //------------------------------------------------------------------------------
