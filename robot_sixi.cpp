@@ -82,7 +82,7 @@ int FK(long *motorStepArray, float *axies) {
 void robot_findHome() {
   motor_engage();
   // sixi always knows where it is.
-  float pos[6] = {0,-90,0,0,0,0};
+  float pos[6] = {0,-90,0,0,20,0};
   lineSafe(pos,feed_rate);
 }
 
