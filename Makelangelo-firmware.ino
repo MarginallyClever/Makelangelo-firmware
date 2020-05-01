@@ -819,7 +819,15 @@ void processCommand() {
       Serial.println(MACHINE_HARDWARE_VERSION);
       break;
 #if MACHINE_STYLE == POLARGRAPH
+#if MACHINE_HARDWARE_VERSION == MAKELANGELO_6
     case 11:  makelangelo6Setup();  break;
+#endif
+#if MACHINE_HARDWARE_VERSION == MAKELANGELO_5
+    case 11:  makelangelo5Setup();  break;
+#endif
+#if MACHINE_HARDWARE_VERSION == MAKELANGELO_3_3
+    case 11:  makelangelo33Setup();  break;
+#endif
     //case 12:  recordHome();  break;
 #endif
 #ifdef MACHINE_HAS_LIFTABLE_PEN
@@ -839,9 +847,6 @@ void processCommand() {
     case 19:  positionErrorFlags ^= POSITION_ERROR_FLAG_CONTINUOUS;  break; // toggle
     case 20:  positionErrorFlags &= 0xffff ^ (POSITION_ERROR_FLAG_ERROR | POSITION_ERROR_FLAG_FIRSTERROR);  break; // off
     case 21:  positionErrorFlags ^= POSITION_ERROR_FLAG_ESTOP;  break; // toggle ESTOP
-#endif
-#if MACHINE_STYLE == POLARGRAPH
-    case 22:  makelangelo33Setup();  break;
 #endif
 #if MACHINE_STYLE == SIXI
     case 22:  sixiResetSensorOffsets();  break;
@@ -944,6 +949,7 @@ void makelangelo6Setup() {
   homePos[2] = 90;
   setHome(homePos);
 }
+
 /**
    D11 makelangelo 5 specific setup call
 */
@@ -1149,8 +1155,7 @@ void parser_announceWaiting() {
 void setup() {
   // start communications
   Serial.begin(BAUD);
-  Serial.println("\n\n**** LOAD 8,1 ****\n\n");
-
+  
   loadConfig();
 
 #ifdef HAS_WIFI
