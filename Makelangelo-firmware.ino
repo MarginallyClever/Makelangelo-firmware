@@ -924,8 +924,8 @@ void calibrationToPosition() {
 }
 
 /**
-   D11 makelangelo 6 specific setup call
-*/
+ * D11 makelangelo 6 specific setup call
+ */
 void makelangelo6Setup() {
   // if you accidentally upload m3 firmware to an m5 then upload it ONCE with this line uncommented.
   float limits[NUM_AXIES * 2];
