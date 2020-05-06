@@ -205,7 +205,9 @@ void lineSafe(float *pos, float new_feed_rate_mms) {
   float lenSquared = 0;
   uint8_t i;
   for (i = 0; i < NUM_AXIES; ++i) {
+#if MACHINE_STYLE == SIXI    
     pos[i] = WRAP_DEGREES(pos[i]);
+#endif
     startPos[i] = axies[i].pos;
     delta[i] = pos[i] - startPos[i];
     lenSquared += sq(delta[i]);
