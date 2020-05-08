@@ -1305,16 +1305,7 @@ void motor_line(const float * const target_position, float fr_mm_s,float millime
   int next_segment = get_next_segment(last_segment);
   while ( next_segment == current_segment ) {
     // the segment buffer is full, we are way ahead of the motion system.  wait here.
-    // TODO perform idle time activities.
-#if MACHINE_STYLE == SIXI
-    sensorUpdate();
-#else
-#ifdef DEBUG_STEPPING
-    debug_stepping();
-#else
-    delay(1);
-#endif
-#endif
+    meanwhile();
   }
 
   int prev_segment = get_prev_segment(last_segment);

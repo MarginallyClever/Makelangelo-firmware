@@ -205,7 +205,7 @@ void lineSafe(float *pos, float new_feed_rate_mms) {
   float lenSquared = 0;
   uint8_t i;
   for (i = 0; i < NUM_AXIES; ++i) {
-    pos[i] = WRAP_DEGREES(pos[i]);
+    pos[i] = pos[i];
     startPos[i] = axies[i].pos;
     delta[i] = pos[i] - startPos[i];
     lenSquared += sq(delta[i]);
@@ -559,6 +559,8 @@ void parseTeleport() {
 */
 char checkLineNumberAndCRCisOK() {
   // is there a line number?
+  boolean found=false;
+  
   long cmd = parseNumber('N', -1);
   if (cmd != -1 && serialBuffer[0] == 'N') { // line number must appear first on the line
     if ( cmd != line_number ) {
@@ -568,38 +570,39 @@ char checkLineNumberAndCRCisOK() {
       return 0;
     }
 
-    // is there a checksum?
-    int i;
-    for (i = strlen(serialBuffer) - 1; i >= 0; --i) {
-      if (serialBuffer[i] == '*') {
-        break;
-      }
+    line_number++;
+    found=true;
+  }
+  
+  // is there a checksum?
+  int i;
+  for (i = strlen(serialBuffer) - 1; i >= 0; --i) {
+    if (serialBuffer[i] == '*') {
+      break;
     }
+  }
 
-    if (i >= 0) {
-      // yes.  is it valid?
-      char checksum = 0;
-      int c;
-      for (c = 0; c < i; ++c) {
-        checksum ^= serialBuffer[c];
-      }
-      c++; // skip *
-      int against = strtod(serialBuffer + c, NULL);
-      if ( checksum != against ) {
-        Serial.print(F("BADCHECKSUM "));
-        Serial.println(line_number);
-        return 0;
-      }
-    } else {
-      Serial.print(F("NOCHECKSUM "));
+  if (i >= 0) {
+    // yes.  is it valid?
+    char checksum = 0;
+    int c;
+    for (c = 0; c < i; ++c) {
+      checksum ^= serialBuffer[c];
+    }
+    c++; // skip *
+    int against = strtod(serialBuffer + c, NULL);
+    if ( checksum != against ) {
+      Serial.print(F("BADCHECKSUM "));
       Serial.println(line_number);
       return 0;
     }
 
     // remove checksum
     serialBuffer[i] = 0;
-
-    line_number++;
+  } else if(found==true) {
+    Serial.print(F("NOCHECKSUM "));
+    Serial.println(line_number);
+    return 0;
   }
 
   return 1;  // ok!
@@ -717,6 +720,7 @@ void waitForPinState() {
 
   // while pin is in oldState (opposite of state for which we are waiting)
   while (digitalRead(pin) == oldState) {
+    meanwhile();
 #ifdef HAS_SD
     //SD_check();
 #endif
@@ -833,9 +837,10 @@ void processCommand() {
     case 15:  stewartDemo();  break;
 #endif
 #if MACHINE_STYLE == SIXI
+    case 15:  sixiDemo();  break;
     case 16:  setFeedratePerAxis();  break;
     case 17:  reportAllAngleValues();  break;
-    case 18:  copySensorsToMotorPositions();  break;
+    case 18:  D18();  break;
     case 19:  positionErrorFlags ^= POSITION_ERROR_FLAG_CONTINUOUS;  break; // toggle
     case 20:  positionErrorFlags &= 0xffff ^ (POSITION_ERROR_FLAG_ERROR | POSITION_ERROR_FLAG_FIRSTERROR);  break; // off
     case 21:  positionErrorFlags ^= POSITION_ERROR_FLAG_ESTOP;  break; // toggle ESTOP
@@ -1078,6 +1083,240 @@ void reportCalibration() {
 }
 
 #if MACHINE_STYLE == SIXI
+
+void reportError() {
+  wait_for_empty_segment_buffer();
+  sensorUpdate();
+    
+  Serial.print(F("DP"));
+
+  int i;
+  for (i = 0; i < NUM_AXIES; ++i) {
+    Serial.print('\t');
+    Serial.print(AxisNames[i]);
+    float dp = axies[i].pos-sensorAngles[i];
+    Serial.print(dp, 3);
+  }
+  Serial.println();
+}
+
+void printGoto(float *pos) {
+  Serial.print(F("G0"));
+  for(int i=0;i<6;++i) {
+    Serial.print('\t');
+    Serial.print(AxisNames[i]);
+    Serial.print(pos[i], 3);
+  }
+  Serial.println();
+}
+
+//d15
+void sixiDemo() {
+  //sixiDemo1();
+  //sixiDemo2();
+  sixiDemo3();
+}
+
+void drive(int i,int totalSteps,int t) {
+  for(int j=0;j<totalSteps;++j) {
+    digitalWrite(motors[i].step_pin,HIGH);
+    digitalWrite(motors[i].step_pin,LOW);
+    delay(t);
+  }
+}
+
+void drive2(int i,float change) {
+  float pos[NUM_AXIES] = {0,-90,0,0,20,0,0};
+  
+  pos[i] +=- change;
+  
+  printGoto(pos);
+  lineSafe(pos,feed_rate);
+}
+
+void sixiDemo3a(int i,float t) {
+  delay(100);
+
+  int totalSteps=3000;
+
+  digitalWrite(motors[i].dir_pin,HIGH);
+  //drive(i,3000,t);
+  drive2(i,-90);
+  
+  sensorUpdate();
+  float uStart = sensorAngles[3];
+  float vStart = sensorAngles[4];
+  float wStart = sensorAngles[5];
+  
+  Serial.print(AxisNames[i]);
+  Serial.print('s');
+  Serial.print('\t');    Serial.print(uStart,5);
+  Serial.print('\t');    Serial.print(vStart,5);
+  Serial.print('\t');    Serial.println(wStart,5);
+  
+  digitalWrite(motors[i].dir_pin,LOW);
+  //drive(i,6000,t);
+  drive2(i,90);
+  
+  sensorUpdate();
+  float uEnd = sensorAngles[3];
+  float vEnd = sensorAngles[4];
+  float wEnd = sensorAngles[5];
+  
+  Serial.print(AxisNames[i]);
+  Serial.print('e');
+  Serial.print('\t');    Serial.print(uEnd,5);
+  Serial.print('\t');    Serial.print(vEnd,5);
+  Serial.print('\t');    Serial.println(wEnd,5);
+
+  Serial.print(AxisNames[i]);
+  Serial.print('d');
+  Serial.print('\t');    Serial.print((uEnd-uStart),5);
+  Serial.print('\t');    Serial.print((vEnd-vStart),5);
+  Serial.print('\t');    Serial.println((wEnd-wStart),5);
+
+  // put it back where we found it
+  digitalWrite(motors[i].dir_pin,HIGH);
+  //drive(i,3000,t);
+  drive2(i,0);
+  
+  Serial.println();
+}
+
+// move each axis and measure the degree-per-step of just that one axis.
+void sixiDemo3() {
+  robot_findHome();
+
+  float of = feed_rate;
+  feed_rate=60;
+  
+  Serial.println("Jn\tU\tV\tW");
+  
+  for(int i=3;i<6;++i) {
+    sixiDemo3a(i,5);  
+  }
+
+  feed_rate=of;
+}
+
+
+void sixiDemo2a(float t) {
+  delay(100);
+
+  int totalSteps=200;
+
+  Serial.print(t);
+  
+  for(int i=0;i<NUM_AXIES;++i) {
+    digitalWrite(motors[i].dir_pin,LOW);
+    sensorUpdate();
+    float aStart = sensorAngles[i];
+    for(int j=0;j<totalSteps;++j) {
+      digitalWrite(motors[i].step_pin,HIGH);
+      digitalWrite(motors[i].step_pin,LOW);
+      delay(t);
+    }
+    sensorUpdate();
+    float aEnd = sensorAngles[i];
+    float perStep = fabs(aEnd-aStart)/(float)totalSteps;
+    
+    Serial.print('\t');
+    Serial.print(perStep,5);
+
+    // put it back where we found it
+    digitalWrite(motors[i].dir_pin,HIGH);
+    for(int j=0;j<totalSteps;++j) {
+      digitalWrite(motors[i].step_pin,HIGH);
+      digitalWrite(motors[i].step_pin,LOW);
+      delay(t);
+    }
+  }
+  Serial.println();
+}
+
+// move each axis and measure the degree-per-step of just that one axis.
+void sixiDemo2() {
+  robot_findHome();
+  
+  Serial.print("\ndt");
+  
+#define PPX(NN)  { Serial.print('\t');  Serial.print(AxisNames[NN]);  Serial.print(DEGREES_PER_STEP_##NN,5);  }
+  PPX(0);
+  PPX(1);
+  PPX(2);
+  PPX(3);
+  PPX(4);
+  PPX(5);
+  Serial.println();
+  
+  for(int i=50;i>=20;--i) {
+    sixiDemo2a(i);  
+  }
+}
+
+void sixiDemo1() {
+  Serial.println(F("SIXI DEMO START"));
+  Serial.print("AXIES=");
+  Serial.println(NUM_AXIES);
+  
+  float posHome[NUM_AXIES] = {0,-90,0,0,20,0,0};
+  float pos[NUM_AXIES] = {0,0,0,0,0,0,0};
+  int i,j;
+
+  float fr = feed_rate;
+  float aa = acceleration;
+
+  feed_rate = 80;
+  acceleration = 25;
+
+  printGoto(posHome);
+  robot_findHome();
+  reportError();
+  
+  // one joint at a time
+  for(i=0;i<NUM_AXIES;++i) {
+    for(j=0;j<15;++j) 
+    {
+      for(int k=0;k<NUM_AXIES;++k) {
+        pos[k] = posHome[k];
+      }
+      pos[i] = posHome[i] - 10;
+      
+      printGoto(pos);
+      lineSafe(pos,feed_rate);
+
+      for(int k=0;k<NUM_AXIES;++k) {
+        pos[k] = posHome[k];
+      }
+      pos[i] = posHome[i] + 10;
+      printGoto(pos);
+      lineSafe(pos,feed_rate);
+    }
+    printGoto(posHome);
+    robot_findHome();
+    reportError();
+  }
+  
+  // combo moves
+  for(j=0;j<30;++j)
+  {
+    for(i=0;i<NUM_AXIES;++i) {
+      pos[i] = posHome[i] + random(-10,10);
+    }
+    printGoto(pos);
+    lineSafe(pos,feed_rate);
+  }
+  printGoto(posHome);
+  robot_findHome();
+  reportError();
+  
+  feed_rate = fr;
+  acceleration = aa;
+  
+  Serial.println(F("SIXI DEMO END"));
+}
+
+
 /**
  * D22
  * reset home position to the current angle values.
@@ -1194,7 +1433,7 @@ void setup() {
 #if MACHINE_STYLE == SIXI
   sensorUpdate();
   sensorUpdate();
-  copySensorsToMotorPositions();
+  D18();
 #endif
 
   // display the help at startup.
@@ -1277,7 +1516,7 @@ void reportAllAngleValues() {
 /**
    D18 copy sensor values to motor step positions.
 */
-void copySensorsToMotorPositions() {
+void D18() {
   wait_for_empty_segment_buffer();
   float a[NUM_AXIES];
   int i, j;
@@ -1300,6 +1539,35 @@ void copySensorsToMotorPositions() {
   teleport(a);
 }
 #endif
+
+
+void meanwhile() {
+#if MACHINE_STYLE == SIXI
+  sensorUpdate();
+
+  if ((positionErrorFlags & POSITION_ERROR_FLAG_ERROR) != 0) {
+    if ((positionErrorFlags & POSITION_ERROR_FLAG_FIRSTERROR) != 0) {
+      Serial.println(F("\n\n** POSITION ERROR **\n"));
+      positionErrorFlags &= 0xffff ^ POSITION_ERROR_FLAG_FIRSTERROR; // turn off
+    }
+  } else {
+    if ((positionErrorFlags & POSITION_ERROR_FLAG_FIRSTERROR) == 0) {
+      positionErrorFlags |= POSITION_ERROR_FLAG_FIRSTERROR; // turn on
+    }
+  }
+
+  if ((positionErrorFlags & POSITION_ERROR_FLAG_CONTINUOUS) != 0) {
+    if (millis() > reportDelay) {
+      reportDelay = millis() + 100;
+      reportAllAngleValues();
+    }
+  }
+#endif
+
+#ifdef DEBUG_STEPPING
+  debug_stepping();
+#endif  // DEBUG_STEPPING
+}
 
 
 /**
@@ -1335,29 +1603,5 @@ void loop() {
     last_cmd_time = millis();
   }
 
-#if MACHINE_STYLE == SIXI
-  sensorUpdate();
-
-  if ((positionErrorFlags & POSITION_ERROR_FLAG_ERROR) != 0) {
-    if ((positionErrorFlags & POSITION_ERROR_FLAG_FIRSTERROR) != 0) {
-      Serial.println(F("\n\n** POSITION ERROR **\n"));
-      positionErrorFlags &= 0xffff ^ POSITION_ERROR_FLAG_FIRSTERROR; // turn off
-    }
-  } else {
-    if ((positionErrorFlags & POSITION_ERROR_FLAG_FIRSTERROR) == 0) {
-      positionErrorFlags |= POSITION_ERROR_FLAG_FIRSTERROR; // turn on
-    }
-  }
-
-  if ((positionErrorFlags & POSITION_ERROR_FLAG_CONTINUOUS) != 0) {
-    if (millis() > reportDelay) {
-      reportDelay = millis() + 100;
-      reportAllAngleValues();
-    }
-  }
-#endif
-
-#ifdef DEBUG_STEPPING
-  debug_stepping();
-#endif  // DEBUG_STEPPING
+  meanwhile();
 }

@@ -23,6 +23,7 @@ long EEPROM_readLong(int ee) {
   return value;
 }
 
+
 // 2020-01-31 Dan added check to not update EEPROM if value is unchanged.
 // from http://www.arduino.cc/cgi-bin/yabb2/YaBB.pl?num=1234477290/3
 // returns true if the value was changed.

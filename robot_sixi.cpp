@@ -42,9 +42,13 @@ void IK(const float *const axies, long *motorStepArray) {
   float J4 =  axies[4];  // wrist (G0 V*)
   float J5 = -axies[5];  // hand  (G0 W*)
 
+  float j4Adjust = -(J3/NEMA17_CYCLOID_GEARBOX_RATIO);
+  float j5Adjust = (J4/NEMA17_CYCLOID_GEARBOX_RATIO)+j4Adjust;
+
   // adjust for the wrist differential
-  J5 += (J4/NEMA17_CYCLOID_GEARBOX_RATIO)+(J3/NEMA17_CYCLOID_GEARBOX_RATIO);
-  J4 += (J3/NEMA17_CYCLOID_GEARBOX_RATIO);
+  J4 += j4Adjust;
+  J5 += j5Adjust;
+  
   
   motorStepArray[0] = J0 * MOTOR_0_STEPS_PER_TURN / 360.0;  // ANCHOR
   motorStepArray[1] = J1 * MOTOR_1_STEPS_PER_TURN / 360.0;  // SHOULDER
@@ -82,7 +86,7 @@ int FK(long *motorStepArray, float *axies) {
 void robot_findHome() {
   motor_engage();
   // sixi always knows where it is.
-  float pos[6] = {0,-90,0,0,20,0};
+  float pos[NUM_AXIES] = {0,-90,0,0,20,0,0};
   lineSafe(pos,feed_rate);
 }
 
