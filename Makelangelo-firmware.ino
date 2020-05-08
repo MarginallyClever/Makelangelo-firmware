@@ -117,7 +117,7 @@ void pause(const long us) {
    Change axis A limits to max T and min B.
    look for change to dimensions in command, apply and save changes.
 */
-void parseLimits() {
+void M101() {
   int axisNumber = parseNumber('A', -1);
   if (axisNumber >= 0 && axisNumber < NUM_AXIES) {
     float newT = parseNumber('T', axies[axisNumber].limitMax);
@@ -330,9 +330,9 @@ void sayBuildDateAndTime() {
 
 /**
    M100
-   Print a helpful message to serial.  The first line must never be changed to play nice with the JAVA software.
+   Print a M100ful message to serial.  The first line must never be changed to play nice with the JAVA software.
 */
-void help() {
+void M100() {
   Serial.print(F("\n\nHELLO WORLD! "));
   sayModelAndUID();
   sayFirmwareVersionNumber();
@@ -793,8 +793,8 @@ void processCommand() {
     case  20:  SD_listFiles();  break;
 #endif
     case  42:  adjustPinState();  break;
-    case 100:  help();  break;
-    case 101:  parseLimits();  break;
+    case 100:  M100();  break;
+    case 101:  M101();  break;
     case 110:  line_number = parseNumber('N', line_number);  break;
     case 114:  where();  break;
     case 117:  parseMessage();  break;
@@ -823,7 +823,15 @@ void processCommand() {
       Serial.println(MACHINE_HARDWARE_VERSION);
       break;
 #if MACHINE_STYLE == POLARGRAPH
+#if MACHINE_HARDWARE_VERSION == MAKELANGELO_6
     case 11:  makelangelo6Setup();  break;
+#endif
+#if MACHINE_HARDWARE_VERSION == MAKELANGELO_5
+    case 11:  makelangelo5Setup();  break;
+#endif
+#if MACHINE_HARDWARE_VERSION == MAKELANGELO_3_3
+    case 11:  makelangelo33Setup();  break;
+#endif
     //case 12:  recordHome();  break;
 #endif
 #ifdef MACHINE_HAS_LIFTABLE_PEN
@@ -844,9 +852,6 @@ void processCommand() {
     case 19:  positionErrorFlags ^= POSITION_ERROR_FLAG_CONTINUOUS;  break; // toggle
     case 20:  positionErrorFlags &= 0xffff ^ (POSITION_ERROR_FLAG_ERROR | POSITION_ERROR_FLAG_FIRSTERROR);  break; // off
     case 21:  positionErrorFlags ^= POSITION_ERROR_FLAG_ESTOP;  break; // toggle ESTOP
-#endif
-#if MACHINE_STYLE == POLARGRAPH
-    case 22:  makelangelo33Setup();  break;
 #endif
 #if MACHINE_STYLE == SIXI
     case 22:  sixiResetSensorOffsets();  break;
@@ -924,8 +929,8 @@ void calibrationToPosition() {
 }
 
 /**
-   D11 makelangelo 6 specific setup call
-*/
+ * D11 makelangelo 6 specific setup call
+ */
 void makelangelo6Setup() {
   // if you accidentally upload m3 firmware to an m5 then upload it ONCE with this line uncommented.
   float limits[NUM_AXIES * 2];
@@ -949,6 +954,7 @@ void makelangelo6Setup() {
   homePos[2] = 90;
   setHome(homePos);
 }
+
 /**
    D11 makelangelo 5 specific setup call
 */
@@ -1368,7 +1374,11 @@ void setHome(float *pos) {
 */
 void parser_ready() {
   sofar = 0; // clear input buffer
-  parser_announceWaiting();
+  parser_stillReady();
+}
+
+void parser_stillReady() {
+  Serial.print(F("\n> "));  // signal ready to receive input
   last_cmd_time = millis();
 }
 
@@ -1384,8 +1394,7 @@ void parser_announceWaiting() {
 void setup() {
   // start communications
   Serial.begin(BAUD);
-  Serial.println("\n\n**** LOAD 8,1 ****\n\n");
-
+  
   loadConfig();
 
 #ifdef HAS_WIFI
@@ -1436,8 +1445,8 @@ void setup() {
   D18();
 #endif
 
-  // display the help at startup.
-  help();
+  // display the M100 at startup.
+  M100();
 
   parser_ready();
 }
@@ -1599,8 +1608,7 @@ void loop() {
       Serial.println(stallValue, DEC);
     }
 #endif
-    parser_announceWaiting();
-    last_cmd_time = millis();
+    parser_stillReady();
   }
 
   meanwhile();

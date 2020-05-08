@@ -224,9 +224,9 @@
 
 // TODO a guess.  use real math here!
 // https://reprap.org/wiki/Step_rates
-// 0.9deg stepper, 20-tooth GT2 pulley, 1/16 microstepping = 160 steps/mm, 200mm/s = 240000 steps/s
-// 1.8deg stepper, 20-tooth GT2 pulley, 1/16 microstepping = 160 steps/mm, 400mm/s = 480000 steps/s
-#define CLOCK_MAX_STEP_FREQUENCY (240000L)
+// 0.9deg stepper @ 1/16 microstepping = 6400 steps/turn.  w/ 20-tooth GT2 pulley, 6400 steps = 40mm. 
+// 1M us / 6400 = 156us/step.  100mm/s would be 2.5x faster, or 62.4us/step.  not much!
+//#define CLOCK_MAX_STEP_FREQUENCY (240000L)
 #define CLOCK_MIN_STEP_FREQUENCY (CLOCK_SPEED/500000U)
 
 #define TIMEOUT_OK (1000)
