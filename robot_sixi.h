@@ -102,4 +102,7 @@ extern float sensorAngles[NUM_SENSORS];
 
 extern void sensorUpdate();
 
+extern void sixiResetSensorOffsets();
+extern void sixiDemo();
+
 #endif  // #ifdef SIXI

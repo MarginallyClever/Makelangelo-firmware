@@ -82,8 +82,8 @@ void SD_check() {
       c=sd_print_file.read();
       //sd_bytes_read++;
       if(c=='\r') continue;
-      if(sofar<MAX_BUF) {
-        serialBuffer[sofar++]=c;
+      if(parser.sofar<MAX_BUF) {
+        parser.serialBuffer[parser.sofar++]=c;
       }/*
       if(c==';') {
         // eat to the end of the line
@@ -98,13 +98,18 @@ void SD_check() {
         sd_percent_complete = 100.0 * (float)sd_bytes_read / (float)sd_file_size;
 
         // end string
-        serialBuffer[sofar-1]=0;
-        // print for our benefit
+        parser.serialBuffer[parser.sofar-1]=0;
+        
+        // echo command?
         //Serial.println(serialBuffer);
+        
         // process command
-        processCommand();
+        parser.processCommand();
+        
         // reset buffer for next line
-        parser_ready();
+        parser.sofar=0;
+        
+        parser.ready();
         // quit this loop so we can update the LCD and listen for commands from the laptop (if any)
         break;
       }

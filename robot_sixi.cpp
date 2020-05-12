@@ -5,7 +5,6 @@
 //------------------------------------------------------------------------------
 
 #include "configure.h"
-#include "robot_sixi.h"
 
 #if MACHINE_STYLE == SIXI
 
@@ -137,6 +136,13 @@ void robot_setup() {
   // slow the servo on pin D13 down to 61.04Hz
   // see https://arduinoinfo.mywikis.net/wiki/Arduino-PWM-Frequency
   //TCCR0B = (TCCR0B & B11111000) | B00000101;
+
+  // the first few reads will return junk so we force a couple empties here.
+  sensorUpdate();
+  sensorUpdate();
+
+  // initialize the step count to the sensor reading.
+  parser.D18();
 }
 
 /**
@@ -187,6 +193,7 @@ float extractAngleFromRawValue(uint16_t rawValue) {
   return (float)(rawValue & BOTTOM_14_MASK) * 360.0 / (float)(1<<SENSOR_ANGLE_BITS);
 }
 
+
 void sensorUpdate() {
   uint16_t rawValue;
   float v;
@@ -199,8 +206,267 @@ void sensorUpdate() {
   }
 }
 
-#else // MACHINE_STYLE == SIXI
 
-void reportAllAngleValues() {}
+void reportError() {
+  wait_for_empty_segment_buffer();
+  sensorUpdate();
+    
+  Serial.print(F("DP"));
+
+  int i;
+  for (i = 0; i < NUM_SENSORS; ++i) {
+    Serial.print('\t');
+    Serial.print(AxisNames[i]);
+    float dp = axies[i].pos-sensorAngles[i];
+    Serial.print(dp, 3);
+  }
+  Serial.println();
+}
+
+
+void printGoto(float *pos) {
+  Serial.print(F("G0"));
+  for(int i=0;i<6;++i) {
+    Serial.print('\t');
+    Serial.print(AxisNames[i]);
+    Serial.print(pos[i], 3);
+  }
+  Serial.println();
+}
+
+
+void drive(int i,int totalSteps,int t) {
+  for(int j=0;j<totalSteps;++j) {
+    digitalWrite(motors[i].step_pin,HIGH);
+    digitalWrite(motors[i].step_pin,LOW);
+    delay(t);
+  }
+}
+
+
+void drive2(int i,float change) {
+  float pos[NUM_AXIES] = {0,-90,0,0,20,0,0};
+  
+  pos[i] +=- change;
+  
+  printGoto(pos);
+  lineSafe(pos,feed_rate);
+}
+
+
+void sixiDemo3a(int i,float t) {
+  delay(100);
+
+  int totalSteps=3000;
+
+  digitalWrite(motors[i].dir_pin,HIGH);
+  //drive(i,3000,t);
+  drive2(i,-90);
+  
+  sensorUpdate();
+  float uStart = sensorAngles[3];
+  float vStart = sensorAngles[4];
+  float wStart = sensorAngles[5];
+  
+  Serial.print(AxisNames[i]);
+  Serial.print('s');
+  Serial.print('\t');    Serial.print(uStart,5);
+  Serial.print('\t');    Serial.print(vStart,5);
+  Serial.print('\t');    Serial.println(wStart,5);
+  
+  digitalWrite(motors[i].dir_pin,LOW);
+  //drive(i,6000,t);
+  drive2(i,90);
+  
+  sensorUpdate();
+  float uEnd = sensorAngles[3];
+  float vEnd = sensorAngles[4];
+  float wEnd = sensorAngles[5];
+  
+  Serial.print(AxisNames[i]);
+  Serial.print('e');
+  Serial.print('\t');    Serial.print(uEnd,5);
+  Serial.print('\t');    Serial.print(vEnd,5);
+  Serial.print('\t');    Serial.println(wEnd,5);
+
+  Serial.print(AxisNames[i]);
+  Serial.print('d');
+  Serial.print('\t');    Serial.print((uEnd-uStart),5);
+  Serial.print('\t');    Serial.print((vEnd-vStart),5);
+  Serial.print('\t');    Serial.println((wEnd-wStart),5);
+
+  // put it back where we found it
+  digitalWrite(motors[i].dir_pin,HIGH);
+  //drive(i,3000,t);
+  drive2(i,0);
+  
+  Serial.println();
+}
+
+
+// move each axis and measure the degree-per-step of just that one axis.
+void sixiDemo3() {
+  robot_findHome();
+
+  float of = feed_rate;
+  feed_rate=60;
+  
+  Serial.println("Jn\tU\tV\tW");
+  
+  for(int i=3;i<6;++i) {
+    sixiDemo3a(i,5);  
+  }
+
+  feed_rate=of;
+}
+
+
+void sixiDemo2a(float t) {
+  delay(100);
+
+  int totalSteps=200;
+
+  Serial.print(t);
+  
+  for(int i=0;i<NUM_SENSORS;++i) {
+    digitalWrite(motors[i].dir_pin,LOW);
+    sensorUpdate();
+    float aStart = sensorAngles[i];
+    for(int j=0;j<totalSteps;++j) {
+      digitalWrite(motors[i].step_pin,HIGH);
+      digitalWrite(motors[i].step_pin,LOW);
+      delay(t);
+    }
+    sensorUpdate();
+    float aEnd = sensorAngles[i];
+    float perStep = fabs(aEnd-aStart)/(float)totalSteps;
+    
+    Serial.print('\t');
+    Serial.print(perStep,5);
+
+    // put it back where we found it
+    digitalWrite(motors[i].dir_pin,HIGH);
+    for(int j=0;j<totalSteps;++j) {
+      digitalWrite(motors[i].step_pin,HIGH);
+      digitalWrite(motors[i].step_pin,LOW);
+      delay(t);
+    }
+  }
+  Serial.println();
+}
+
+
+// move each axis and measure the degree-per-step of just that one axis.
+void sixiDemo2() {
+  robot_findHome();
+  
+  Serial.print("\ndt");
+  
+#define PPX(NN)  { Serial.print('\t');  Serial.print(AxisNames[NN]);  Serial.print(DEGREES_PER_STEP_##NN,5);  }
+  PPX(0);
+  PPX(1);
+  PPX(2);
+  PPX(3);
+  PPX(4);
+  PPX(5);
+  Serial.println();
+  
+  for(int i=50;i>=20;--i) {
+    sixiDemo2a(i);  
+  }
+}
+
+
+void sixiDemo1() {
+  Serial.println(F("SIXI DEMO START"));
+  Serial.print("AXIES=");
+  Serial.println(NUM_AXIES);
+  
+  float posHome[NUM_AXIES] = {0,-90,0,0,20,0,0};
+  float pos[NUM_AXIES] = {0,0,0,0,0,0,0};
+  int i,j;
+
+  float fr = feed_rate;
+  float aa = acceleration;
+
+  feed_rate = 80;
+  acceleration = 25;
+
+  printGoto(posHome);
+  robot_findHome();
+  reportError();
+  
+  // one joint at a time
+  for(i=0;i<NUM_AXIES;++i) {
+    for(j=0;j<15;++j) 
+    {
+      for(int k=0;k<NUM_AXIES;++k) {
+        pos[k] = posHome[k];
+      }
+      pos[i] = posHome[i] - 10;
+      
+      printGoto(pos);
+      lineSafe(pos,feed_rate);
+
+      for(int k=0;k<NUM_AXIES;++k) {
+        pos[k] = posHome[k];
+      }
+      pos[i] = posHome[i] + 10;
+      printGoto(pos);
+      lineSafe(pos,feed_rate);
+    }
+    printGoto(posHome);
+    robot_findHome();
+    reportError();
+  }
+  
+  // combo moves
+  for(j=0;j<30;++j)
+  {
+    for(i=0;i<NUM_AXIES;++i) {
+      pos[i] = posHome[i] + random(-10,10);
+    }
+    printGoto(pos);
+    lineSafe(pos,feed_rate);
+  }
+  printGoto(posHome);
+  robot_findHome();
+  reportError();
+  
+  feed_rate = fr;
+  acceleration = aa;
+  
+  Serial.println(F("SIXI DEMO END"));
+}
+
+
+//d15
+void sixiDemo() {
+  //sixiDemo1();
+  //sixiDemo2();
+  sixiDemo3();
+}
+
+
+/**
+ * D22
+ * reset home position to the current angle values.
+ */
+void sixiResetSensorOffsets() {
+  int i;
+  // cancel the current home offsets
+  for (i = 0; i < NUM_SENSORS; ++i) {
+    axies[i].homePos = 0;
+  }
+  // read the sensor
+  sensorUpdate();
+  // apply the new offsets
+  float homePos[NUM_AXIES];
+  for (i = 0; i < NUM_SENSORS; ++i) {
+    homePos[i] = sensorAngles[i];
+  }
+  homePos[1]+=90;
+  setHome(homePos);
+}
 
 #endif

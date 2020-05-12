@@ -185,7 +185,7 @@ void recordHome() {
   float offset[NUM_AXIES];
   FK(count, offset);
   teleport(offset);
-  where();
+  parser.M114();
   Serial.println(F("Done."));
 #endif // defined(CAN_HOME)
 }
@@ -289,7 +289,7 @@ void robot_findHome() {
   float offset[NUM_AXIES];
   FK(count, offset);
   teleport(offset);
-  where();
+  parser.M114();
 
   // go home
   float pos[NUM_AXIES];
@@ -366,7 +366,7 @@ void calibrateBelts() {
   float axies2[NUM_AXIES];
   FK(steps, axies2);
   teleport(axies2);
-  where();
+  parser.M114();
 
   // go home.
   Serial.println(F("Homing..."));
@@ -378,6 +378,102 @@ void calibrateBelts() {
   lineSafe(offset, feed_rate);
   Serial.println(F("Done."));
 #endif // defined(CAN_HOME)
+}
+
+
+// convert belt length to cartesian position, save that as home pos.
+void calibrationToPosition() {
+  float axies2[NUM_AXIES];
+  long steps[3];
+  steps[0]=calibrateLeft;
+  steps[1]=calibrateRight;
+  steps[2]=axies[2].pos;
+  FK(steps, axies2);
+    
+  teleport(axies2);
+}
+
+
+/**
+ * D11 makelangelo 6 specific setup call
+ */
+void makelangelo6Setup() {
+  // if you accidentally upload m3 firmware to an m5 then upload it ONCE with this line uncommented.
+  float limits[NUM_AXIES * 2];
+  limits[0] = 707.5 / 2;
+  limits[1] = -707.5 / 2;
+  limits[2] = 500;
+  limits[3] = -500;
+  limits[4] = PEN_UP_ANGLE;
+  limits[5] = PEN_DOWN_ANGLE;
+  adjustLimits(limits);
+
+  calibrateLeft = 1025;
+  calibrateRight = 1025;
+  saveCalibration();
+  calibrationToPosition();
+  
+  // set home
+  float homePos[NUM_AXIES];
+  homePos[0] = 0;
+  homePos[1] = 0;
+  homePos[2] = 90;
+  setHome(homePos);
+}
+
+
+/**
+   D11 makelangelo 5 specific setup call
+*/
+void makelangelo5Setup() {
+  // if you accidentally upload m3 firmware to an m5 then upload it ONCE with this line uncommented.
+  float limits[NUM_AXIES * 2];
+  limits[0] = 325.0;
+  limits[1] = -325.0;
+  limits[2] = 500;
+  limits[3] = -500;
+  limits[4] = PEN_UP_ANGLE;
+  limits[5] = PEN_DOWN_ANGLE;
+  adjustLimits(limits);
+
+  calibrateLeft = 1025;
+  calibrateRight = 1025;
+  saveCalibration();
+  calibrationToPosition();
+  
+  // set home
+  float homePos[NUM_AXIES];
+  homePos[0] = 0;
+  homePos[1] = 0;
+  homePos[2] = 90;
+  setHome(homePos);
+}
+
+
+/**
+   D13 makelangelo 3.3 specific setup call
+*/
+void makelangelo33Setup() {
+  float limits[NUM_AXIES * 2];
+  limits[0] = 1000.0;
+  limits[1] = -1000.0;
+  limits[2] = 800;
+  limits[3] = -800;
+  limits[4] = PEN_UP_ANGLE;
+  limits[5] = PEN_DOWN_ANGLE;
+  adjustLimits(limits);
+
+  calibrateLeft = 2022;
+  calibrateRight = 2022;
+  saveCalibration();
+  calibrationToPosition();
+  
+  // set home
+  float homePos[NUM_AXIES];
+  homePos[0] = 0;
+  homePos[1] = 0;
+  homePos[2] = 90;
+  setHome(homePos);
 }
 
 

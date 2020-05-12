@@ -78,7 +78,7 @@
 #define BOARD_SIXI_MEGA    6  // Arduino Mega + custom shield for Sixi 2 robot
 
 #ifndef MOTHERBOARD
-#define MOTHERBOARD BOARD_SIXI_MEGA  // change this
+#define MOTHERBOARD BOARD_RUMBA  // change this
 #endif
 
 #include "board_rumba.h"
@@ -124,18 +124,11 @@
 #define STEPS_PER_MM         (STEPS_PER_TURN/PULLEY_PITCH)
 #define MICROSTEP_PER_DEGREE (STEPS_PER_TURN/360.0)
 
-// wrap all degrees to within -180...180.
-#define WRAP_DEGREES(NN)     (fmod( (NN+180), 360 ) - 180)
-#define WRAP_RADIANS(NN)     (fmod( (NN+PI), PI*2 ) - PI)
 
 //------------------------------------------------------------------------------
 // COMMUNICATION & BUFFERING
 //------------------------------------------------------------------------------
-// for serial
-#ifndef BAUD
-#define BAUD                 (57600)  // How fast is the Arduino talking?
-#endif
-#define MAX_BUF              (128)  // What is the longest message Arduino can store?
+
 
 // buffering commands
 #ifndef MAX_SEGMENTS
@@ -151,9 +144,6 @@
 // for arc directions
 #define ARC_CW               (1)
 #define ARC_CCW              (-1)
-
-
-#define A(CODE) " " CODE "\n\t"
 
 //------------------------------------------------------------------------------
 // step direction
@@ -219,9 +209,6 @@
 
 #define TIMER_RATE            ((CLOCK_SPEED)/8)
 
-// optimize code, please
-#define FORCE_INLINE         __attribute__((always_inline)) inline
-
 // TODO a guess.  use real math here!
 // https://reprap.org/wiki/Step_rates
 // 0.9deg stepper @ 1/16 microstepping = 6400 steps/turn.  w/ 20-tooth GT2 pulley, 6400 steps = 40mm. 
@@ -230,10 +217,6 @@
 #define CLOCK_MIN_STEP_FREQUENCY (CLOCK_SPEED/500000U)
 
 #define TIMEOUT_OK (1000)
-
-// convenience
-#define PENDING(NOW,SOON) ((long)(NOW-(SOON))<0)
-#define ELAPSED(NOW,SOON) (!PENDING(NOW,SOON))
 
 // uncomment this to slow the machine and smooth movement if the segment buffer is running low.
 #define BUFFER_EMPTY_SLOWDOWN
@@ -280,6 +263,7 @@ typedef struct {
 
 
 #include "motor.h"
+#include "parser.h"
 
 //------------------------------------------------------------------------------
 // GLOBALS
@@ -292,8 +276,6 @@ extern int robot_uid;
 extern Axis axies[NUM_AXIES];
 extern float calibrateRight;
 extern float calibrateLeft;
-extern char serialBuffer[MAX_BUF + 1]; // Serial buffer
-extern int sofar;                      // Serial buffer progress
 
 extern void pause(const long us);
 extern void findStepDelay();
@@ -301,12 +283,11 @@ extern void IK(const float *const axies, long *motorStepArray);
 extern int FK(long *motorStepArray, float *axies);
 extern void robot_findHome();
 extern void robot_setup();
-extern void processCommand();
-extern void parser_ready();
 extern void teleport(float *pos);
 extern void lineSafe(float *pos, float new_feed_rate);
+extern void arc(float cx, float cy, float *destination, char clockwise, float new_feed_rate);
 extern void get_end_plus_offset(float *results);
 extern void set_tool_offset(int toolID, float *pos);
 extern void reportCalibration();
-extern void where();
 extern void meanwhile();
+extern void setHome(float *pos);

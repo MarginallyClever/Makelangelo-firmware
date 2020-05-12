@@ -7,34 +7,19 @@
 
 #include <Arduino.h>
 
-#ifdef HAS_TMC2130
-#include <TMC2130Stepper.h>
-#include <TMC2130Stepper_REGDEFS.h>
+#include "macros.h"
+#include "tmc2130.h"
 
-#if TMC2130STEPPER_VERSION < 0x020201
-  #error "Update TMC2130Stepper library to 2.2.1 or newer."
-#endif
-#endif
+
+// use in for(ALL_MOTORS(i)) { //i will be rising
+#define ALL_MOTORS(NN) int NN=0;NN<NUM_MOTORS;++NN
+
 
 //------------------------------------------------------------------------------
 // CONSTANTS
 //------------------------------------------------------------------------------
 
 #ifdef HAS_TMC2130
-#define STEPPER_DIR_HIGH   LOW
-#define STEPPER_DIR_LOW    HIGH
-
-#define HOMING_OCR1A 			          450 //776
-// define this only after you have measured your desired TSTEP
-#define MEASURED_TSTEP            	169 //295
-#define MEASURED_TSTEP_MARGIN_PCT 	15  // +/-% for stall warning
-  
-#define CURRENT			 			      219  // 310ma / sqrt(2)
-#define R_SENSE            			0.11
-#define HOLD_MULTIPLIER    			0.5
-  
-#define STALL_VALUE        			-64//-24
-//#define HYBRID_THRESHOLD        100
 #else
 // A4988
 #define STEPPER_DIR_HIGH   HIGH
@@ -112,12 +97,9 @@ extern float max_feedrate_mm_s[NUM_MOTORS+NUM_SERVOS];
 extern uint8_t positionErrorFlags;
 extern uint32_t min_segment_time_us;
 
-
-#ifdef HAS_TMC2130
-extern bool homing;
-extern TMC2130Stepper driver_0;
-extern TMC2130Stepper driver_1;
-#endif
+//------------------------------------------------------------------------------
+// METHODS
+//------------------------------------------------------------------------------
 
 extern void motor_set_step_count(long *a);
 extern void wait_for_empty_segment_buffer();
