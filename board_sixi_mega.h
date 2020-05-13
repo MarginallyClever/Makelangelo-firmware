@@ -7,6 +7,9 @@
 
 
 #if MOTHERBOARD == BOARD_SIXI_MEGA 
+
+#define SIXI_UNIT1
+
 // wrong board type set
 #ifndef __AVR_ATmega2560__
   #error "Oops!  Make sure you have 'Arduino Mega 2560' selected from the 'Tools -> Boards' menu."
@@ -19,26 +22,32 @@
 
 #define MAX_MOTORS                (6)
 
+#define MOTOR_0_LETTER            'X'
 #define MOTOR_0_DIR_PIN           46
 #define MOTOR_0_STEP_PIN          45
 #define MOTOR_0_ENABLE_PIN        47
 
+#define MOTOR_1_LETTER            'Y'
 #define MOTOR_1_DIR_PIN           43
 #define MOTOR_1_STEP_PIN          42
 #define MOTOR_1_ENABLE_PIN        44
 
+#define MOTOR_2_LETTER            'Z'
 #define MOTOR_2_DIR_PIN           40
 #define MOTOR_2_STEP_PIN          39
 #define MOTOR_2_ENABLE_PIN        41
 
+#define MOTOR_3_LETTER            'U'
 #define MOTOR_3_DIR_PIN           37
 #define MOTOR_3_STEP_PIN          36
 #define MOTOR_3_ENABLE_PIN        38
 
+#define MOTOR_4_LETTER            'V'
 #define MOTOR_4_DIR_PIN           34
 #define MOTOR_4_STEP_PIN          33
 #define MOTOR_4_ENABLE_PIN        35
 
+#define MOTOR_5_LETTER            'W'
 #define MOTOR_5_DIR_PIN           31
 #define MOTOR_5_STEP_PIN          30
 #define MOTOR_5_ENABLE_PIN        32
@@ -83,7 +92,8 @@
 #define PIN_SENSOR_MOSI_3   19
 #define PIN_SENSOR_MISO_3   18
 
-#ifdef UNIT1
+#ifdef SIXI_UNIT1
+// first unit ever
 #define PIN_SENSOR_CSEL_4   29
 #define  PIN_SENSOR_CLK_4   27
 #define PIN_SENSOR_MOSI_4   25
@@ -94,7 +104,8 @@
 #define PIN_SENSOR_MOSI_5   26
 #define PIN_SENSOR_MISO_5   28
 
-#else  // UNIT1
+#else
+// every unit after the first
 #define PIN_SENSOR_CSEL_4   22
 #define  PIN_SENSOR_CLK_4   24
 #define PIN_SENSOR_MOSI_4   26
@@ -105,6 +116,6 @@
 #define PIN_SENSOR_MOSI_5   25
 #define PIN_SENSOR_MISO_5   23
 
-#endif  // UNIT1
+#endif  // SIXI_UNIT1
 
 #endif  // MOTHERBOARD == BOARD_SIXI_MEGA 

@@ -39,9 +39,6 @@ float feed_rate = DEFAULT_FEEDRATE;
 float acceleration = DEFAULT_ACCELERATION;
 float step_delay;
 
-// Serial comm reception
-long last_cmd_time;             // prevent timeouts
-
 
 #if MACHINE_STYLE == SIXI
 uint32_t reportDelay = 0;
@@ -159,7 +156,6 @@ void lineSafe(float *pos, float new_feed_rate_mms) {
   // otherwise the feedrate will slowly fall or climb as new commands are processed.
   feed_rate = new_feed_rate_mms;
 
-  
 #ifdef HAS_LCD
   // use LCD to adjust speed while drawing
   new_feed_rate_mms *= (float)speed_adjust * 0.01f;
@@ -169,9 +165,8 @@ void lineSafe(float *pos, float new_feed_rate_mms) {
   float delta[NUM_AXIES];
   float startPos[NUM_AXIES];
   float lenSquared = 0;
-  uint8_t i;
-  for (i = 0; i < NUM_AXIES; ++i) {
-    pos[i] = pos[i];
+
+  for(ALL_AXIES(i)) {
     startPos[i] = axies[i].pos;
     delta[i] = pos[i] - startPos[i];
     lenSquared += sq(delta[i]);
@@ -195,10 +190,10 @@ void lineSafe(float *pos, float new_feed_rate_mms) {
   const float inv_segments = 1.0f / float(segments);
   const float segment_len_mm = len_mm * inv_segments;
   
-  for(i = 0; i < NUM_AXIES; ++i) delta[i] *= inv_segments;
+  for(ALL_AXIES(i)) delta[i] *= inv_segments;
   
   while(--segments) {
-    for(i = 0; i < NUM_AXIES; ++i) startPos[i] += delta[i];
+    for(ALL_AXIES(i)) startPos[i] += delta[i];
     
     motor_line(startPos, new_feed_rate_mms,segment_len_mm);
   }
@@ -277,13 +272,16 @@ void arc(float cx, float cy, float *destination, char clockwise, float new_feed_
 void teleport(float *pos) {
   wait_for_empty_segment_buffer();
 
-  int i;
-  for (i = 0; i < NUM_AXIES; ++i) {
+  //Serial.println("Teleport");
+  for(ALL_AXIES(i)) {
     axies[i].pos = pos[i];
+    //Serial.println(pos[i]);
   }
 
-  long steps[NUM_MOTORS + NUM_SERVOS];
+  long steps[NUM_MOTORS + NUM_SERVOS+10];
+  
   IK(pos, steps);
+
   motor_set_step_count(steps);
 }
 
@@ -293,62 +291,7 @@ void setHome(float *pos) {
   for (i = 0; i < NUM_AXIES; ++i) {
     axies[i].homePos = pos[i];
   }
-  saveHome();
-}
-
-
-/**
-   runs once on machine start
-*/
-void setup() {
-  parser.start();
-  
-  loadConfig();
-
-#ifdef HAS_WIFI
-  // Start WIFI
-  WiFi.mode(WIFI_AP);
-  Serial.println( WiFi.softAP(SSID_NAME, SSID_PASS) ? "WIFI OK" : "WIFI FAILED" );
-  Serial.println( port.begin(localPort) ? "UDP OK" : "UDP FAILED" );
-  // Print the IP address
-  Serial.print("Use this URL to connect: http://");
-  Serial.print(WiFi.softAPIP());
-  Serial.print(':');
-  Serial.print(localPort);
-  Serial.println('/');
-#endif  // HAS_WIFI
-
-#ifdef HAS_SD
-  SD_setup();
-#endif
-#ifdef HAS_LCD
-  LCD_setup();
-#endif
-
-  motor_setup();
-  motor_engage();
-  findStepDelay();
-
-  //easyPWM_init();
-
-  // initialize the plotter position.
-  float pos[NUM_AXIES];
-  for (int i = 0; i < NUM_AXIES; ++i) {
-    pos[i] = 0;
-  }
-#ifdef MACHINE_HAS_LIFTABLE_PEN
-  if (NUM_AXIES >= 3) pos[2] = PEN_UP_ANGLE;
-#endif
-  teleport(pos);
-#ifdef MACHINE_HAS_LIFTABLE_PEN
-  setPenAngle(PEN_UP_ANGLE);
-#endif
-  setFeedRate(DEFAULT_FEEDRATE);
-
-  robot_setup();
-
-  parser.M100();
-  parser.ready();
+  eeprom.saveHome();
 }
 
 
@@ -381,9 +324,70 @@ void meanwhile() {
 }
 
 
-/**
-   main loop
+// runs once on machine start
+void setup() {
+  parser.start();
+    
+  eeprom.loadConfig();
+/*
+  // unit test WRAP_DEGREES
+  for(float i=-360;i<=360;i+=0.7) {
+    Serial.print(i);
+    Serial.print("\t");
+    Serial.println(WRAP_DEGREES(i));
+  }
 */
+  
+#ifdef HAS_WIFI
+  // Start WIFI
+  WiFi.mode(WIFI_AP);
+  Serial.println( WiFi.softAP(SSID_NAME, SSID_PASS) ? "WIFI OK" : "WIFI FAILED" );
+  Serial.println( port.begin(localPort) ? "UDP OK" : "UDP FAILED" );
+  // Print the IP address
+  Serial.print("Use this URL to connect: http://");
+  Serial.print(WiFi.softAPIP());
+  Serial.print(':');
+  Serial.print(localPort);
+  Serial.println('/');
+#endif  // HAS_WIFI
+
+#ifdef HAS_SD
+  SD_setup();
+#endif
+#ifdef HAS_LCD
+  LCD_setup();
+#endif
+
+  motor_setup();
+  motor_engage();
+  findStepDelay();
+
+  //easyPWM_init();
+
+  // initialize the plotter position.
+  float pos[NUM_AXIES];
+  for(ALL_AXIES(i)) pos[i] = 0;
+  
+#ifdef MACHINE_HAS_LIFTABLE_PEN
+  if (NUM_AXIES >= 3) pos[2] = PEN_UP_ANGLE;
+#endif
+
+  teleport(pos);
+
+#ifdef MACHINE_HAS_LIFTABLE_PEN
+  setPenAngle(PEN_UP_ANGLE);
+#endif
+
+  setFeedRate(DEFAULT_FEEDRATE);
+
+  robot_setup();
+
+  parser.M100();
+  parser.ready();
+}
+
+
+// after setup runs over and over.
 void loop() {
   parser.update();
   
@@ -397,7 +401,7 @@ void loop() {
   // The PC will wait forever for the ready signal.
   // if Arduino hasn't received a new instruction in a while, send ready() again
   // just in case USB garbled ready and each half is waiting on the other.
-  if ( !segment_buffer_full() && (millis() - last_cmd_time) > TIMEOUT_OK ) {
+  if ( !segment_buffer_full() && (millis() - parser.lastCmdTimeMs ) > TIMEOUT_OK ) {
 #ifdef HAS_TMC2130
     {
       uint32_t drv_status = driver_0.DRV_STATUS();

@@ -87,6 +87,7 @@
 //------------------------------------------------------------------------------
 
 typedef struct {
+  char letter;
   uint8_t step_pin;
   uint8_t dir_pin;
   uint8_t enable_pin;

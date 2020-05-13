@@ -55,7 +55,8 @@ void IK(const float *const axies, long *motorStepArray) {
   motorStepArray[3] = J3 * MOTOR_3_STEPS_PER_TURN / 360.0;  // ULNA
   motorStepArray[4] = J4 * MOTOR_4_STEPS_PER_TURN / 360.0;  // WRIST
   motorStepArray[5] = J5 * MOTOR_5_STEPS_PER_TURN / 360.0;  // HAND
-  motorStepArray[NUM_MOTORS] = axies[6];
+  motorStepArray[6] = axies[6];
+  
 #ifdef DEBUG_IK
   Serial.print("J=");  Serial.print(J0);
   Serial.print('\t');  Serial.print(J1);
@@ -93,37 +94,17 @@ void robot_findHome() {
 void robot_setup() {
   int i=0;
 
-  sensorPins[i++]=PIN_SENSOR_CSEL_0;
-  sensorPins[i++]=PIN_SENSOR_CLK_0;
-  sensorPins[i++]=PIN_SENSOR_MISO_0;
-  sensorPins[i++]=PIN_SENSOR_MOSI_0;
-  
-  sensorPins[i++]=PIN_SENSOR_CSEL_1;
-  sensorPins[i++]=PIN_SENSOR_CLK_1;
-  sensorPins[i++]=PIN_SENSOR_MISO_1;
-  sensorPins[i++]=PIN_SENSOR_MOSI_1;
-  
-  sensorPins[i++]=PIN_SENSOR_CSEL_2;
-  sensorPins[i++]=PIN_SENSOR_CLK_2;
-  sensorPins[i++]=PIN_SENSOR_MISO_2;
-  sensorPins[i++]=PIN_SENSOR_MOSI_2;
-  
-  sensorPins[i++]=PIN_SENSOR_CSEL_3;
-  sensorPins[i++]=PIN_SENSOR_CLK_3;
-  sensorPins[i++]=PIN_SENSOR_MISO_3;
-  sensorPins[i++]=PIN_SENSOR_MOSI_3;
-  
-  sensorPins[i++]=PIN_SENSOR_CSEL_4;
-  sensorPins[i++]=PIN_SENSOR_CLK_4;
-  sensorPins[i++]=PIN_SENSOR_MISO_4;
-  sensorPins[i++]=PIN_SENSOR_MOSI_4;
-  
-  sensorPins[i++]=PIN_SENSOR_CSEL_5;
-  sensorPins[i++]=PIN_SENSOR_CLK_5;
-  sensorPins[i++]=PIN_SENSOR_MISO_5;
-  sensorPins[i++]=PIN_SENSOR_MOSI_5;
+#define SSP(label,NN)    sensorPins[i++] = PIN_SENSOR_##label##_##NN;
+#define SSP2(NN)         if(NUM_SENSORS>NN) {  SSP(CSEL,NN)  SSP(CLK,NN)  SSP(MISO,NN)  SSP(MOSI,NN)  }
 
-  for(i=0;i<NUM_SENSORS;++i) {
+  SSP2(0)
+  SSP2(1)
+  SSP2(2)
+  SSP2(3)
+  SSP2(4)
+  SSP2(5)
+
+  for(ALL_SENSORS(i)) {
     pinMode(sensorPins[(i*4)+0],OUTPUT);  // csel
     pinMode(sensorPins[(i*4)+1],OUTPUT);  // clk
     pinMode(sensorPins[(i*4)+2],INPUT);  // miso
@@ -197,12 +178,13 @@ float extractAngleFromRawValue(uint16_t rawValue) {
 void sensorUpdate() {
   uint16_t rawValue;
   float v;
-  for(int i=0;i<NUM_SENSORS;++i) {
+  for(ALL_SENSORS(i)) {
     if(getSensorRawValue(i,rawValue)) continue;
     v = extractAngleFromRawValue(rawValue);
     if(i!=1 && i!=2) v=-v;
     v -= axies[i].homePos;
-    sensorAngles[i] = WRAP_DEGREES(v);
+    v = WRAP_DEGREES(v);
+    sensorAngles[i] = v;
   }
 }
 
@@ -213,8 +195,7 @@ void reportError() {
     
   Serial.print(F("DP"));
 
-  int i;
-  for (i = 0; i < NUM_SENSORS; ++i) {
+  for(ALL_SENSORS(i)) {
     Serial.print('\t');
     Serial.print(AxisNames[i]);
     float dp = axies[i].pos-sensorAngles[i];
@@ -226,7 +207,7 @@ void reportError() {
 
 void printGoto(float *pos) {
   Serial.print(F("G0"));
-  for(int i=0;i<6;++i) {
+  for(ALL_AXIES(i)) {
     Serial.print('\t');
     Serial.print(AxisNames[i]);
     Serial.print(pos[i], 3);
@@ -328,7 +309,7 @@ void sixiDemo2a(float t) {
 
   Serial.print(t);
   
-  for(int i=0;i<NUM_SENSORS;++i) {
+  for(ALL_SENSORS(i)) {
     digitalWrite(motors[i].dir_pin,LOW);
     sensorUpdate();
     float aStart = sensorAngles[i];
@@ -397,10 +378,10 @@ void sixiDemo1() {
   reportError();
   
   // one joint at a time
-  for(i=0;i<NUM_AXIES;++i) {
+  for(ALL_AXIES(i)) {
     for(j=0;j<15;++j) 
     {
-      for(int k=0;k<NUM_AXIES;++k) {
+      for(ALL_AXIES(k)) {
         pos[k] = posHome[k];
       }
       pos[i] = posHome[i] - 10;
@@ -408,7 +389,7 @@ void sixiDemo1() {
       printGoto(pos);
       lineSafe(pos,feed_rate);
 
-      for(int k=0;k<NUM_AXIES;++k) {
+      for(ALL_AXIES(k)) {
         pos[k] = posHome[k];
       }
       pos[i] = posHome[i] + 10;
@@ -423,7 +404,7 @@ void sixiDemo1() {
   // combo moves
   for(j=0;j<30;++j)
   {
-    for(i=0;i<NUM_AXIES;++i) {
+    for(ALL_AXIES(i)) {
       pos[i] = posHome[i] + random(-10,10);
     }
     printGoto(pos);
@@ -447,26 +428,5 @@ void sixiDemo() {
   sixiDemo3();
 }
 
-
-/**
- * D22
- * reset home position to the current angle values.
- */
-void sixiResetSensorOffsets() {
-  int i;
-  // cancel the current home offsets
-  for (i = 0; i < NUM_SENSORS; ++i) {
-    axies[i].homePos = 0;
-  }
-  // read the sensor
-  sensorUpdate();
-  // apply the new offsets
-  float homePos[NUM_AXIES];
-  for (i = 0; i < NUM_SENSORS; ++i) {
-    homePos[i] = sensorAngles[i];
-  }
-  homePos[1]+=90;
-  setHome(homePos);
-}
 
 #endif

@@ -389,7 +389,7 @@ void LCD_find_home() {
 
 void LCD_this_is_home() {
   float offset[NUM_AXIES];
-  for (int i = 0; i < NUM_AXIES; ++i) offset[i] = axies[i].homePos;
+  for(ALL_AXIES(i)) offset[i] = axies[i].homePos;
   teleport(offset);
   MENU_POP();
 }
@@ -397,7 +397,7 @@ void LCD_this_is_home() {
 
 void LCD_go_home() {
   float homes[NUM_AXIES];
-  for (int i = 0; i < NUM_AXIES; ++i) homes[i] = axies[i].homePos;
+  for(ALL_AXIES(i)) homes[i] = axies[i].homePos;
   lineSafe( homes, DEFAULT_FEEDRATE );
   MENU_POP();
 }
@@ -587,7 +587,7 @@ void draw_border(int width, int height, int landscape) {
 
   // return to start position
   lineSafe( start, feed_rate );
-#endif // NUM_AXIES
+#endif // NUM_AXIES == 3
   MENU_POP();
 }
 

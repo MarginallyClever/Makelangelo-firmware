@@ -6,12 +6,7 @@
 
 // TCNT* - Timer/Counter Register.  The actual timer value is stored here.
 // OCR*  - Output Compare Register
-  
 
-
-//------------------------------------------------------------------------------
-// INCLUDES
-//------------------------------------------------------------------------------
 #include "configure.h"
 #include "motor.h"
 #include "MServo.h"
@@ -80,39 +75,27 @@ float max_feedrate_mm_s[NUM_MOTORS + NUM_SERVOS];
 uint8_t isr_step_multiplier = 1;
 uint32_t min_segment_time_us=MIN_SEGMENT_TIME_US;
 
-int delta0;
-int over0;
-long global_steps_0;
-int global_step_dir_0;
+#define DECL_MOT(NN) int delta##NN; \
+                     int over##NN; \
+                     long global_steps_##NN; \
+                     int global_step_dir_##NN;
+
+DECL_MOT(0)
+
 #if NUM_MOTORS>1
-int delta1;
-int over1;
-long global_steps_1;
-int global_step_dir_1;
+DECL_MOT(1)
 #endif
 #if NUM_MOTORS>2
-int delta2;
-int over2;
-long global_steps_2;
-int global_step_dir_2;
+DECL_MOT(2)
 #endif
 #if NUM_MOTORS>3
-int delta3;
-int over3;
-long global_steps_3;
-int global_step_dir_3;
+DECL_MOT(3)
 #endif
 #if NUM_MOTORS>4
-int delta4;
-int over4;
-long global_steps_4;
-int global_step_dir_4;
+DECL_MOT(4)
 #endif
 #if NUM_MOTORS>5
-int delta5;
-int over5;
-long global_steps_5;
-int global_step_dir_5;
+DECL_MOT(5)
 #endif
 #if NUM_SERVOS>0
 int servoDelta0;
@@ -253,43 +236,31 @@ float max_speed_allowed(const float &acc, const float &target_velocity, const fl
  * set up the pins for each motor
  */
 void motor_setup() {
-  motors[0].step_pin        = MOTOR_0_STEP_PIN;
-  motors[0].dir_pin         = MOTOR_0_DIR_PIN;
-  motors[0].enable_pin      = MOTOR_0_ENABLE_PIN;
-  motors[0].limit_switch_pin = MOTOR_0_LIMIT_SWITCH_PIN;
+  #define SETUP_MOT(NN) \
+    motors[NN].letter           = MOTOR_##NN##_LETTER;\
+    motors[NN].step_pin         = MOTOR_##NN##_STEP_PIN;\
+    motors[NN].dir_pin          = MOTOR_##NN##_DIR_PIN;\
+    motors[NN].enable_pin       = MOTOR_##NN##_ENABLE_PIN;\
+    motors[NN].limit_switch_pin = MOTOR_##NN##_LIMIT_SWITCH_PIN;\
+
+  SETUP_MOT(0)
 #if NUM_MOTORS>1
-  motors[1].step_pin        = MOTOR_1_STEP_PIN;
-  motors[1].dir_pin         = MOTOR_1_DIR_PIN;
-  motors[1].enable_pin      = MOTOR_1_ENABLE_PIN;
-  motors[1].limit_switch_pin = MOTOR_1_LIMIT_SWITCH_PIN;
+  SETUP_MOT(1)
 #endif
 #if NUM_MOTORS>2
-  motors[2].step_pin        = MOTOR_2_STEP_PIN;
-  motors[2].dir_pin         = MOTOR_2_DIR_PIN;
-  motors[2].enable_pin      = MOTOR_2_ENABLE_PIN;
-  motors[2].limit_switch_pin = MOTOR_2_LIMIT_SWITCH_PIN;
+  SETUP_MOT(2)
 #endif
 #if NUM_MOTORS>3
-  motors[3].step_pin        = MOTOR_3_STEP_PIN;
-  motors[3].dir_pin         = MOTOR_3_DIR_PIN;
-  motors[3].enable_pin      = MOTOR_3_ENABLE_PIN;
-  motors[3].limit_switch_pin = MOTOR_3_LIMIT_SWITCH_PIN;
+  SETUP_MOT(3)
 #endif
 #if NUM_MOTORS>4
-  motors[4].step_pin        = MOTOR_4_STEP_PIN;
-  motors[4].dir_pin         = MOTOR_4_DIR_PIN;
-  motors[4].enable_pin      = MOTOR_4_ENABLE_PIN;
-  motors[4].limit_switch_pin = MOTOR_4_LIMIT_SWITCH_PIN;
+  SETUP_MOT(4)
 #endif
 #if NUM_MOTORS>5
-  motors[5].step_pin        = MOTOR_5_STEP_PIN;
-  motors[5].dir_pin         = MOTOR_5_DIR_PIN;
-  motors[5].enable_pin      = MOTOR_5_ENABLE_PIN;
-  motors[5].limit_switch_pin = MOTOR_5_LIMIT_SWITCH_PIN;
+  SETUP_MOT(5)
 #endif
 
-  int i;
-  for (i = 0; i < NUM_MOTORS; ++i) {
+  for(ALL_MOTORS(i)) {
     // set the motor pin & scale
     pinMode(motors[i].step_pin, OUTPUT);
     pinMode(motors[i].dir_pin, OUTPUT);
@@ -302,8 +273,8 @@ void motor_setup() {
 	  digitalWrite(motors[i].enable_pin, HIGH); //deactivate driver (LOW active)
 	  digitalWrite(motors[i].step_pin, LOW);
 	#endif
-	
   }
+  
   #ifdef HAS_TMC2130
     pinMode(CS_PIN_0,OUTPUT);
     pinMode(CS_PIN_1,OUTPUT);
@@ -320,7 +291,8 @@ void motor_setup() {
   long steps[NUM_MOTORS + NUM_SERVOS];
   memset(steps, 0, (NUM_MOTORS + NUM_SERVOS)*sizeof(long));
 
-  for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
+  int i;
+  for(i=0;i<NUM_MOTORS+NUM_SERVOS;++i) {
     max_jerk[i] = MAX_JERK;
     max_feedrate_mm_s[i] = MAX_FEEDRATE;
   }
@@ -336,6 +308,7 @@ void motor_setup() {
 
   // setup servos
 #if NUM_SERVOS>0
+  motors[NUM_MOTORS].letter='T';
 #ifdef ESP8266
   pinMode(SERVO0_PIN, OUTPUT);
 #else
@@ -399,8 +372,7 @@ void motor_setup() {
 
 // turn on power to the motors (make them immobile)
 void motor_engage() {
-  int i;
-  for (i = 0; i < NUM_MOTORS; ++i) {
+  for(ALL_MOTORS(i)) {
     digitalWrite(motors[i].enable_pin, LOW);
   }
 /*
@@ -415,8 +387,7 @@ void motor_engage() {
 
 // turn off power to the motors (make them move freely)
 void motor_disengage() {
-  int i;
-  for (i = 0; i < NUM_MOTORS; ++i) {
+  for(ALL_MOTORS(i)) {
     digitalWrite(motors[i].enable_pin, HIGH);
   }
   /*
@@ -770,7 +741,7 @@ inline void isr_internal_pulse() {
     // check if the sensor position differs from the estimated position.
     float fraction = (float)steps_taken / (float)steps_total;
 
-    for (i = 0; i < NUM_SENSORS; ++i) {
+    for(ALL_SENSORS(i)) {
       // interpolate live = (b-a)*f + a
       working_seg->a[i].expectedPosition =
         (working_seg->a[i].positionEnd - working_seg->a[i].positionStart) * fraction + working_seg->a[i].positionStart;

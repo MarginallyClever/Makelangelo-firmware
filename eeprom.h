@@ -27,53 +27,45 @@
 #define EEPROM_PID_LENGTH       (NUM_AXIES*3*SIZEOF_FLOAT_BYTES)
 
 
+class Eeprom {
+public:
+  long readLong(int ee);
+  boolean writeLong(int ee, long value);
+  
+  char loadVersion();
+  void saveUID();
+  void saveLimits();
+  void loadLimits();
+  
+  /**
+   * @param limits NUM_AXIES pairs of floats.  each pair is one float for max limit and one for min limit.
+   */
+  void adjustLimits(float *limits);
+  
+  /**
+   * 
+   */
+  void saveHome();
+  
+  /**
+   * 
+   */
+  void loadHome();
+  
+  /**
+   *
+   */
+  void saveCalibration();
+  
+  /**
+   * 
+   */
+  void loadCalibration();
+  
+  /**
+   * 
+   */
+  void loadConfig();
+};
 
-/**
- * 
- */
-char loadVersion();
-
-/**
- * 
- */
-void saveUID();
-
-/**
- * 
- */
-void saveLimits();
-
-/**
- * 
- */
-void loadLimits();
-
-/**
- * @param limits NUM_AXIES pairs of floats.  each pair is one float for max limit and one for min limit.
- */
-void adjustLimits(float *limits);
-
-/**
- * 
- */
-void saveHome();
-
-/**
- * 
- */
-void loadHome();
-
-/**
- *
- */
-void saveCalibration();
-
-/**
- * 
- */
-void loadCalibration();
-
-/**
- * 
- */
-void loadConfig();
+extern Eeprom eeprom;

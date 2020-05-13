@@ -188,7 +188,7 @@ void Parser::processCommand() {
 
   if( !strncmp(serialBuffer, "UID", 3) ) {
     robot_uid = atoi(strchr(serialBuffer, ' ') + 1);
-    saveUID();
+    eeprom.saveUID();
   }
 
   int16_t cmd;
@@ -208,11 +208,19 @@ void Parser::processCommand() {
       case 101:  M101();  break;
       case 110:  lineNumber = parseNumber('N', lineNumber);  break;
       case 114:  M114();  break;
+#ifdef HAS_LCD
       case 117:  M117();  break;
+#endif
       case 203:  M203();  break;
       case 205:  M205();  break;
       case 226:  M226();  break;
       case 300:  M300();  break;
+      //case 306:  M306();  break;
+      case 428:  M428();  break;
+      case 500:  M500();  break;
+      case 501:  M501();  break;
+      case 502:  M502();  break;
+      case 503:  M503();  break;
       default:   break;
     }
     return;
@@ -228,9 +236,11 @@ void Parser::processCommand() {
   #endif
       case  5:  D5();  break;
       case  6:  D6();  break;
+#if MACHINE_STYLE == POLARGRAPH
       case  7:  D7();  break;
       case  8:  D8();  break;
-      case  9:  saveCalibration();  break;
+#endif
+      case  9:  eeprom.saveCalibration();  break;
       case 10:  // get hardware version
         Serial.print(F("D10 V"));
         Serial.println(MACHINE_HARDWARE_VERSION);
@@ -259,17 +269,14 @@ void Parser::processCommand() {
 #endif
 #if MACHINE_STYLE == SIXI
       case 15:  sixiDemo();  break;
-#endif
-      case 16:  D16();  break;
-#if MACHINE_STYLE == SIXI
       case 17:  D17();  break;
       case 18:  D18();  break;
       case 19:  positionErrorFlags ^= POSITION_ERROR_FLAG_CONTINUOUS;  break; // toggle
       case 20:  positionErrorFlags &= 0xffff ^ (POSITION_ERROR_FLAG_ERROR | POSITION_ERROR_FLAG_FIRSTERROR);  break; // off
       case 21:  positionErrorFlags ^= POSITION_ERROR_FLAG_ESTOP;  break; // toggle ESTOP
-      case 22:  sixiResetSensorOffsets();  break;
+      case 22:  D22();  break;
 #endif
-      case 23:  D23();  break;
+      //case 50:  D50();  break;
       default:  break;
     }
     return;
@@ -346,7 +353,7 @@ void Parser::D0() {
    report current firmware version
 */
 void Parser::D5() {
-  char versionNumber = loadVersion();
+  char versionNumber = eeprom.loadVersion();
 
   Serial.print(F("Firmware v"));
   Serial.println(versionNumber, DEC);
@@ -367,6 +374,7 @@ void Parser::D6() {
 }
 
 
+#if MACHINE_STYLE == POLARGRAPH
 /**
    D7 [Lnnn] [Rnnn]
    Set calibration length of each belt
@@ -376,8 +384,10 @@ void Parser::D7() {
   calibrateRight = parseNumber('R', calibrateRight);
   D8();
 }
+#endif
 
 
+#if MACHINE_STYLE == POLARGRAPH
 /**
    D8
    Report calibration values for left and right belts
@@ -388,50 +398,16 @@ void Parser::D8() {
   Serial.print(F(" R"));
   Serial.println(calibrateRight);
 }
-
-
-
-/**
-   D16 X<jerk> Y<jerk> Z<jerk> U<jerk> V<jerk> W<jerk>
-   set axis n to feedrate m and jerk o.
-*/
-void Parser::D16() {
-  float f;
-
-  Serial.print("D16 X");  Serial.print(max_feedrate_mm_s[0]);
-  f = parseNumber('X', max_feedrate_mm_s[0]);  max_feedrate_mm_s[0] = max(f, (float)MIN_FEEDRATE);
-#if NUM_AXIES > 1
-  f = parseNumber('Y', max_feedrate_mm_s[1]);  max_feedrate_mm_s[1] = max(f, (float)MIN_FEEDRATE);
-  Serial.print(" Y");  Serial.print(max_feedrate_mm_s[1]);
 #endif
-#if NUM_AXIES > 2
-  f = parseNumber('Z', max_feedrate_mm_s[2]);  max_feedrate_mm_s[2] = max(f, (float)MIN_FEEDRATE);
-  Serial.print(" Z");  Serial.print(max_feedrate_mm_s[2]);
-#endif
-#if NUM_AXIES > 3
-  f = parseNumber('U', max_feedrate_mm_s[3]);  max_feedrate_mm_s[3] = max(f, (float)MIN_FEEDRATE);
-  Serial.print(" U");  Serial.print(max_feedrate_mm_s[3]);
-#endif
-#if NUM_AXIES > 4
-  f = parseNumber('V', max_feedrate_mm_s[4]);  max_feedrate_mm_s[4] = max(f, (float)MIN_FEEDRATE);
-  Serial.print(" V");  Serial.print(max_feedrate_mm_s[4]);
-#endif
-#if NUM_AXIES > 5
-  f = parseNumber('W', max_feedrate_mm_s[5]);  max_feedrate_mm_s[5] = max(f, (float)MIN_FEEDRATE);
-  Serial.print(" W");  Serial.println(max_feedrate_mm_s[5]);
-#endif
-}
 
 
 #if MACHINE_STYLE == SIXI
-/**
-   D17 report the 6 axis sensor values from the Sixi robot arm.
-*/
+// D17 report the 6 axis sensor values from the Sixi robot arm.
 void Parser::D17() {
   Serial.print(F("D17"));
-  for (int i = 0; i < 6; ++i) {
+  for (ALL_SENSORS(i)) {
     Serial.print('\t');
-    Serial.print(sensorAngles[i], 2);
+    Serial.print(WRAP_DEGREES(sensorAngles[i]), 2);
   }
   /*
     if(current_segment==last_segment) {
@@ -439,7 +415,7 @@ void Parser::D17() {
     Serial.print(F("\t-\t"));
 
     working_seg = get_current_segment();
-    for (uint8_t i = 0; i < NUM_SENSORS; ++i) {
+    for (ALL_SENSORS(i)) {
       //float diff = working_seg->a[i].expectedPosition - sensorAngles[i];
       //Serial.print('\t');
       //Serial.print(abs(diff),3);
@@ -468,38 +444,25 @@ void Parser::D18() {
   int i, j;
   int numSamples = 10;
 
-  for (j = 0; j < NUM_AXIES; ++j) a[j] = 0;
+  for(ALL_AXIES(j)) {
+    a[j] = 0;
+  }
 
   // assert(NUM_SENSORS <= NUM_AXIES);
 
-  for (i = 0; i < numSamples; ++i) {
+  for(i = 0; i < numSamples; ++i) {
     sensorUpdate();
-    for (j = 0; j < NUM_SENSORS; ++j) {
+    for(ALL_SENSORS(j)) {
       a[j] += sensorAngles[j];
     }
   }
-  for (j = 0; j < NUM_SENSORS; ++j) {
+  for(ALL_AXIES(j)) {
     a[j] /= (float)numSamples;
   }
 
   teleport(a);
 }
 #endif
-
-
-
-/**
-   D23 report home values
-*/
-void Parser::D23() {
-  Serial.print(F("D23 "));
-  for (int i = 0; i < NUM_AXIES; ++i) {
-    Serial.print(AxisNames[i]);
-    Serial.print(axies[i].homePos);
-    Serial.print(' ');
-  }
-  Serial.println();
-}
 
 
 // G commands
@@ -668,7 +631,7 @@ void Parser::M101() {
       changed = true;
     }
     if (changed == true) {
-      saveLimits();
+      eeprom.saveLimits();
     }
   }
 
@@ -714,13 +677,12 @@ void Parser::M114() {
   Serial.println(acceleration);
 }
 
-
+#ifdef HAS_LCD
 /**
    M117 [string]
    Display string on the LCD panel.  Command is ignored if there is no LCD panel.
 */
 void Parser::M117() {
-#ifdef HAS_LCD
   // find M
   uint16_t i = 0;
   // skip "N*** M117 "
@@ -746,12 +708,12 @@ void Parser::M117() {
   message[i]=0;
   // update the LCD.
   LCD_setStatusMessage(message);
-#endif  // HAS_LCD
 }
+#endif  // HAS_LCD
 
 
 /**
-   M203 X2000 Y5000 Z200 etc...
+   M203 [Xnn] [Ynn] [Znn] [Unn] [Vnn] [Wnn]
    adjust the max feedrate of each axis
 */
 void Parser::M203() {
@@ -774,28 +736,28 @@ void Parser::M203() {
 void Parser::M205() {
   float f;
   f = parseNumber('X', max_jerk[0]);  max_jerk[0] = max(min(f, (float)MAX_JERK), (float)0);
+  Serial.print("M205 X");  Serial.print(max_jerk[0]);
 #if NUM_AXIES>1
   f = parseNumber('Y', max_jerk[1]);  max_jerk[1] = max(min(f, (float)MAX_JERK), (float)0);
+  Serial.print(" Y");  Serial.print(max_jerk[1]);
 #endif
 #if NUM_AXIES>2
   f = parseNumber('Z', max_jerk[2]);  max_jerk[2] = max(min(f, (float)MAX_JERK), (float)0);
+  Serial.print(" Z");  Serial.print(max_jerk[2]);
 #endif
 #if NUM_AXIES>3
   f = parseNumber('U', max_jerk[3]);  max_jerk[3] = max(min(f, (float)MAX_JERK), (float)0);
+  Serial.print(" U");  Serial.print(max_jerk[3]);
 #endif
 #if NUM_AXIES>4
   f = parseNumber('V', max_jerk[4]);  max_jerk[4] = max(min(f, (float)MAX_JERK), (float)0);
+  Serial.print(" V");  Serial.print(max_jerk[4]);
 #endif
 #if NUM_AXIES>5
   f = parseNumber('W', max_jerk[5]);  max_jerk[5] = max(min(f, (float)MAX_JERK), (float)0);
+  Serial.print(" W");  Serial.print(max_jerk[5]);
 #endif
   f = parseNumber('B', min_segment_time_us);  min_segment_time_us = max(min(f, 1000000), (float)0);
-  Serial.print("M205 X");  Serial.print(max_jerk[0]);
-  Serial.print(" Y");  Serial.print(max_jerk[1]);
-  Serial.print(" Z");  Serial.print(max_jerk[2]);
-  Serial.print(" U");  Serial.print(max_jerk[3]);
-  Serial.print(" V");  Serial.print(max_jerk[4]);
-  Serial.print(" W");  Serial.print(max_jerk[5]);
   Serial.print(" B");  Serial.println(min_segment_time_us);
 }
 
@@ -860,4 +822,82 @@ void Parser::M300() {
   delay(ms);
   digitalWrite(BEEPER, LOW);
 #endif
+}
+
+
+#if MACHINE_STYLE == SIXI
+
+/**
+ * D22
+ * reset home position to the current angle values.
+ */
+void Parser::D22() {
+  int i;
+  // cancel the current home offsets
+  for(ALL_SENSORS(i)) {
+    axies[i].homePos = 0;
+  }
+  // read the sensor
+  sensorUpdate();
+  // apply the new offsets
+  float homePos[NUM_AXIES];
+  for(ALL_SENSORS(i)) {
+    homePos[i] = sensorAngles[i];
+  }
+  homePos[1]+=90;
+  setHome(homePos);
+}
+
+// M428 - set home position to the current angle values
+void Parser::M428() {
+  // cancel the current home offsets
+  M502();
+
+  // read the sensor
+  sensorUpdate();
+
+  // apply the new offsets
+  for (ALL_MOTORS(i)) {
+    axies[i].homePos = sensorAngles[i];
+  }
+  D18();
+}
+#endif
+
+
+// M500 - save home offsets
+void Parser::M500() {
+  eeprom.saveHome();
+}
+
+
+// M501 - load home offsets
+void Parser::M501() {
+  eeprom.loadHome();
+}
+
+
+// M502 - reset the home offsets
+void Parser::M502() {
+#define SHP(NN)  if(NUM_MOTORS>NN) axies[NN].homePos = DH_##NN##_THETA;
+  SHP(0)
+  SHP(1)
+  SHP(2)
+  SHP(3)
+  SHP(4)
+  SHP(5)
+
+  D18();
+}
+
+
+// M503 - report the home offsets
+void Parser::M503() {
+  Serial.print(F("M503"));
+  for (ALL_MOTORS(i)) {
+    Serial.print(' ');
+    Serial.print(motors[i].letter);
+    Serial.print(axies[i].homePos);
+  }
+  Serial.println();
 }

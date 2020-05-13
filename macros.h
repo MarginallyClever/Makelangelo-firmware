@@ -1,5 +1,6 @@
 #pragma once
 
+#include <arduino.h>
 
 // for assembly in isr inner loop
 #define A(CODE) " " CODE "\n\t"
@@ -29,6 +30,22 @@
 
 
 // wrap all degrees to within -180...180.
-#define WRAP_DEGREES(NN)     (fmod( (NN+180), 360 ) - 180)
+FORCE_INLINE float WRAP_DEGREES(float n) {
+  n = fmod(n,360);
+  n +=360;
+  n = fmod(n,360);
+  if(n>180) n-=360;
+  return n;
+}
+
 // wrapp all radians within -PI...PI
-#define WRAP_RADIANS(NN)     (fmod( (NN+PI), PI*2 ) - PI)
+FORCE_INLINE float WRAP_RADIANS(float n) {
+  n = fmod(n,TWO_PI);
+  n += TWO_PI;
+  n = fmod(n,TWO_PI);
+  if(n>PI) n-=TWO_PI;
+  return n;
+}
+
+// use in for(ALL_AXIES(i)) { //i will be rising
+#define ALL_AXIES(NN)  int NN=0;NN<NUM_AXIES;++NN
