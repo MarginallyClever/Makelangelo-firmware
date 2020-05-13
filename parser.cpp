@@ -144,8 +144,9 @@ void Parser::update() {
       serialBuffer[sofar - 1] = 0;
 
       // echo confirmation
-      //if(MUST_ECHO) 
-      Serial.println(serialBuffer);
+      if(MUST_ECHO) {
+        Serial.println(serialBuffer);
+      }
 
       // do something with the command
       processCommand();
@@ -281,8 +282,8 @@ void Parser::processCommand() {
   switch (cmd) {
     case  0:
     case  1:  G01();  lastGcommand = cmd;  break;
-    case  2:  G02(1);  lastGcommand = cmd;  break; // clockwise
-    case  3:  G02(0);  lastGcommand = cmd;  break; // counter-clockwise
+    case  2:  G02(ARC_CW );  lastGcommand = cmd;  break; // clockwise
+    case  3:  G02(ARC_CCW);  lastGcommand = cmd;  break; // counter-clockwise
     case  4:  G04();  break;
     case 28:  robot_findHome();  break;
 #if MACHINE_STYLE == POLARGRAPH
@@ -530,7 +531,7 @@ void Parser::G01() {
    arcs in the XY plane
    @param clockwise (G2) 1 for cw, (G3) 0 for ccw
 */
-void Parser::G02(int clockwise) {
+void Parser::G02(int8_t clockwise) {
   acceleration = parseNumber('A', acceleration);
   acceleration = min(max(acceleration, (float)MIN_ACCELERATION), (float)MAX_ACCELERATION);
   float f = parseNumber('F', feed_rate);

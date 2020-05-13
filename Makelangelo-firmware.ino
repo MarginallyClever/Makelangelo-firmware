@@ -47,6 +47,7 @@ long last_cmd_time;             // prevent timeouts
 uint32_t reportDelay = 0;
 #endif
 
+
 #ifdef HAS_WIFI
 
 #include <ESP8266WiFi.h>
@@ -231,8 +232,8 @@ void arc(float cx, float cy, float *destination, char clockwise, float new_feed_
   float er = sqrt(dx * dx + dy * dy);
 
   float da = ea - sa;
-  if (clockwise != 0 && da < 0) ea += 2 * PI;
-  else if (clockwise == 0 && da > 0) sa += 2 * PI;
+  if (clockwise == ARC_CW && da < 0) ea += 2 * PI;
+  else if (clockwise == ARC_CCW && da > 0) sa += 2 * PI;
   da = ea - sa;
   float dr = er - sr;
 

@@ -28,6 +28,61 @@
 
 
 //------------------------------------------------------------------------------
+// MOVE BUFFERING
+//------------------------------------------------------------------------------
+
+
+// buffering commands
+#ifndef MAX_SEGMENTS
+#define MAX_SEGMENTS         (32)  // number of line segments to buffer ahead. must be a power of two.
+#endif
+
+#define SEGMOD(x)            ((x)&(MAX_SEGMENTS-1))
+
+
+//------------------------------------------------------------------------------
+// step direction
+//------------------------------------------------------------------------------
+
+#ifndef START0
+#define START0 LOW
+#endif
+#ifndef START1
+#define START1 LOW
+#endif
+#ifndef START2
+#define START2 LOW
+#endif
+#ifndef START3
+#define START3 LOW
+#endif
+#ifndef START4
+#define START4 LOW
+#endif
+#ifndef START5
+#define START5 LOW
+#endif
+
+#ifndef END0
+#define END0 HIGH
+#endif
+#ifndef END1
+#define END1 HIGH
+#endif
+#ifndef END2
+#define END2 HIGH
+#endif
+#ifndef END3
+#define END3 HIGH
+#endif
+#ifndef END4
+#define END4 HIGH
+#endif
+#ifndef END5
+#define END5 HIGH
+#endif
+
+//------------------------------------------------------------------------------
 // STRUCTURES
 //------------------------------------------------------------------------------
 

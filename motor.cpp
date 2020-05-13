@@ -1096,13 +1096,16 @@ ISR(TIMER1_COMPA_vect) {
   
 #ifndef DEBUG_STEPPING
 #ifdef HAS_TMC2130
-      if (homing == true) {
-        homing_sequence();
-        nextMainISR = HOMING_OCR1A;
-      } else 
+    if (homing == true) {
+      homing_sequence();
+      nextMainISR = HOMING_OCR1A;
+    } else {
 #endif
-    if(!nextMainISR) isr_internal_pulse();
-	  if(!nextMainISR) nextMainISR = isr_internal_block();
+      if(!nextMainISR) isr_internal_pulse();
+  	  if(!nextMainISR) nextMainISR = isr_internal_block();
+#ifdef HAS_TMC2130
+    }
+#endif
 #endif // DEBUG_STEPPING
 
     uint32_t interval = nextMainISR;

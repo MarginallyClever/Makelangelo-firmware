@@ -1,5 +1,8 @@
 #pragma once
 
+//------------------------------------------------------------------------------
+// SERIAL
+//------------------------------------------------------------------------------
 
 // How fast is the Arduino talking?
 #ifndef BAUD
@@ -10,12 +13,20 @@
 #define MAX_BUF              (128)
 
 
+// for arc directions
+#define ARC_CW               (1)
+#define ARC_CCW              (-1)
+
+
 // state flags for the parser
 #define FLAG_RELATIVE      (0)  // relative moves
 #define FLAG_STRICT        (1)  // force CRC check on all commands
+#define FLAG_ECHO          (2)
 
 #define RELATIVE_MOVES     (TEST(parserFlags,FLAG_RELATIVE))
 #define IS_STRICT          (TEST(parserFlags,FLAG_STRICT))
+#define MUST_ECHO          (TEST(parserFlags,FLAG_ECHO))
+
 
 class Parser {
 public:
@@ -68,7 +79,7 @@ public:
 
   
   void G01();  // G0/G1 [Xn] [Yn] [Zn] [Un] [Vn] [Wn]
-  void G02(int clockwise);  // arc
+  void G02(int8_t clockwise);  // arc
   void G04();  // dwell
   void G28();  // go home
   void G90();  // set absolute mode
