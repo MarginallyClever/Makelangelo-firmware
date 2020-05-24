@@ -47,5 +47,9 @@ FORCE_INLINE float WRAP_RADIANS(float n) {
   return n;
 }
 
+
+// use in for(ALL_MOTORS(i)) { //i will be rising
+#define ALL_MOTORS(NN) int NN=0;NN<NUM_MOTORS;++NN
+
 // use in for(ALL_AXIES(i)) { //i will be rising
 #define ALL_AXIES(NN)  int NN=0;NN<NUM_AXIES;++NN

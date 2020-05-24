@@ -124,11 +124,16 @@ void Eeprom::saveHome() {
 
 
 void Eeprom::loadHome() {
-  int i,j=ADDR_HOME;
+  Serial.print(F("Loading home:"));
+  int j=ADDR_HOME;
   for(ALL_AXIES(i)) {
     axies[i].homePos = (float)readLong(j)/100.0f;
+    Serial.print(' ');
+    Serial.print(motors[i].letter);
+    Serial.print(axies[i].homePos);
     j+=4;
   }
+  Serial.println();
 }
 
 

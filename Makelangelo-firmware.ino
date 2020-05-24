@@ -324,33 +324,23 @@ void meanwhile() {
 }
 
 
-// runs once on machine start
-void setup() {
-  parser.start();
-    
-  eeprom.loadConfig();
-/*
+void unitTestWrapDegrees() {
   // unit test WRAP_DEGREES
   for(float i=-360;i<=360;i+=0.7) {
     Serial.print(i);
     Serial.print("\t");
     Serial.println(WRAP_DEGREES(i));
   }
-*/
-  
-#ifdef HAS_WIFI
-  // Start WIFI
-  WiFi.mode(WIFI_AP);
-  Serial.println( WiFi.softAP(SSID_NAME, SSID_PASS) ? "WIFI OK" : "WIFI FAILED" );
-  Serial.println( port.begin(localPort) ? "UDP OK" : "UDP FAILED" );
-  // Print the IP address
-  Serial.print("Use this URL to connect: http://");
-  Serial.print(WiFi.softAPIP());
-  Serial.print(':');
-  Serial.print(localPort);
-  Serial.println('/');
-#endif  // HAS_WIFI
+}
 
+// runs once on machine start
+void setup() {
+  parser.start();
+    
+  eeprom.loadConfig();
+
+  //unitTestWrapDegrees();
+  
 #ifdef HAS_SD
   SD_setup();
 #endif

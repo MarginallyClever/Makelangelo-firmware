@@ -34,6 +34,19 @@ void Parser::start() {
   Serial.begin(BAUD);
   // clear input buffer
   sofar = 0;
+  
+#ifdef HAS_WIFI
+  // Start WIFI
+  WiFi.mode(WIFI_AP);
+  Serial.println( WiFi.softAP(SSID_NAME, SSID_PASS) ? "WIFI OK" : "WIFI FAILED" );
+  Serial.println( port.begin(localPort) ? "UDP OK" : "UDP FAILED" );
+  // Print the IP address
+  Serial.print("Use this URL to connect: http://");
+  Serial.print(WiFi.softAPIP());
+  Serial.print(':');
+  Serial.print(localPort);
+  Serial.println('/');
+#endif  // HAS_WIFI
 }
 
 
