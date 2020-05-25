@@ -278,10 +278,10 @@ void teleport(float *pos) {
     //Serial.println(pos[i]);
   }
 
-  long steps[NUM_MOTORS + NUM_SERVOS+10];
+  long steps[NUM_AXIES];
   
   IK(pos, steps);
-
+  
   motor_set_step_count(steps);
 }
 
@@ -297,21 +297,21 @@ void setHome(float *pos) {
 
 void meanwhile() {
 #if MACHINE_STYLE == SIXI
-  sensorUpdate();
+  sensorManager.updateAll();
 
-  if ((positionErrorFlags & POSITION_ERROR_FLAG_ERROR) != 0) {
-    if ((positionErrorFlags & POSITION_ERROR_FLAG_FIRSTERROR) != 0) {
+  if( TEST(positionErrorFlags,POSITION_ERROR_FLAG_ERROR) ) {
+    if( TEST(positionErrorFlags,POSITION_ERROR_FLAG_FIRSTERROR) ) {
       Serial.println(F("\n\n** POSITION ERROR **\n"));
-      positionErrorFlags &= 0xffff ^ POSITION_ERROR_FLAG_FIRSTERROR; // turn off
+      SET_BIT_OFF(positionErrorFlags,POSITION_ERROR_FLAG_FIRSTERROR);
     }
   } else {
-    if ((positionErrorFlags & POSITION_ERROR_FLAG_FIRSTERROR) == 0) {
-      positionErrorFlags |= POSITION_ERROR_FLAG_FIRSTERROR; // turn on
+    if( TEST(positionErrorFlags,POSITION_ERROR_FLAG_FIRSTERROR) == 0 ) {
+      SET_BIT_ON(positionErrorFlags,POSITION_ERROR_FLAG_FIRSTERROR);
     }
   }
 
-  if ((positionErrorFlags & POSITION_ERROR_FLAG_CONTINUOUS) != 0) {
-    if (millis() > reportDelay) {
+  if( TEST(positionErrorFlags,POSITION_ERROR_FLAG_CONTINUOUS) ) {
+    if( millis() > reportDelay ) {
       reportDelay = millis() + 100;
       parser.D17();
     }
@@ -333,13 +333,58 @@ void unitTestWrapDegrees() {
   }
 }
 
+void unitTestBitMacros() {
+  uint32_t a=0;
+  Serial.print("on=");
+  SET_BIT_ON(a,1);
+  Serial.println(a,BIN);
+  
+  Serial.print("test=");
+  Serial.println(TEST(a,1)?"on":"off");
+
+  Serial.print("off=");
+  SET_BIT_OFF(a,1);
+  Serial.println(a,BIN);
+
+  Serial.print("test=");
+  Serial.println(TEST(a,1)?"on":"off");
+
+  Serial.print("flip=");
+  FLIP_BIT(a,1);
+  Serial.println(a,BIN);
+
+  Serial.print("test=");
+  Serial.println(TEST(a,1)?"on":"off");
+
+  Serial.print("set=");
+  SET_BIT(a,1,false);
+  Serial.println(a,BIN);
+  
+  Serial.print("test=");
+  Serial.println(TEST(a,1)?"on":"off");
+
+  while(1) {}
+}
+
+
+void reportAllMotors() {
+  for(ALL_MOTORS(i)) {
+    Serial.println(motors[i].letter);
+    Serial.print("\tangleHome=");        Serial.println(axies[i].homePos);
+    Serial.print("\tsensor=");           Serial.println(sensors[i].angle);
+  }
+  Serial.println();
+}
+
+
 // runs once on machine start
 void setup() {
   parser.start();
     
-  eeprom.loadConfig();
+  eeprom.loadAll();
 
   //unitTestWrapDegrees();
+  //unitTestBitMacros();
   
 #ifdef HAS_SD
   SD_setup();
@@ -364,13 +409,11 @@ void setup() {
 
   teleport(pos);
 
-#ifdef MACHINE_HAS_LIFTABLE_PEN
-  setPenAngle(PEN_UP_ANGLE);
-#endif
-
   setFeedRate(DEFAULT_FEEDRATE);
 
   robot_setup();
+
+  reportAllMotors();
 
   parser.M100();
   parser.ready();
