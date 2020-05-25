@@ -63,14 +63,6 @@
 #define MAX_BOARD_SERVOS          (1)
 #define SERVO0_PIN                (13)
 
-// SENSORS
-// sensor bits, flags, and masks
-#define BOTTOM_14_MASK       (0x3FFF)
-#define SENSOR_TOTAL_BITS    (16)
-#define SENSOR_DATA_BITS     (15)
-#define SENSOR_ANGLE_BITS    (14)
-#define SENSOR_ANGLE_PER_BIT (360.0/(float)((long)1<<SENSOR_ANGLE_BITS))  // 0.00549316406
-
 // pins
 #define PIN_SENSOR_CSEL_0   8
 #define  PIN_SENSOR_CLK_0   9

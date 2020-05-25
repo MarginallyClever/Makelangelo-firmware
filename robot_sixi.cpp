@@ -12,8 +12,7 @@
 
 //#define DEBUG_IK
 
-char sensorPins[4*NUM_SENSORS];
-float sensorAngles[NUM_SENSORS];
+SensorManager sensorManager;
 
 /**
    Inverse Kinematics turns XY coordinates into step counts from each motor
@@ -92,11 +91,70 @@ void robot_findHome() {
 
 
 void robot_setup() {
+  sensorManager.setup();
+  
+  // initialize the step count to the sensor reading.
+  parser.D18();
+}
+
+
+void SensorAS5147::start() {
+  pinMode(pin_CSEL,OUTPUT);
+  pinMode(pin_CLK ,OUTPUT);
+  pinMode(pin_MISO,INPUT);
+  pinMode(pin_MOSI,OUTPUT);
+  
+  digitalWrite(pin_CSEL,HIGH);
+  digitalWrite(pin_MOSI,HIGH);
+}
+
+
+/**
+ * @param result where to store the returned value.  may be changed even if method fails.
+ * @return 0 on fail, 1 on success.
+// @see https://ams.com/documents/20143/36005/AS5147_DS000307_2-00.pdf
+ */
+boolean SensorAS5147::getRawValue(uint16_t &result) {
+  uint8_t input,parity=0;
+
+  result=0;
+  
+  // Send the request for the angle value (command 0xFFFF) at the same time as receiving an angle.
+  // This is done by leaving MOSI high all the time.
+
+  // Collect the 16 bits of data from the sensor
+  digitalWrite(pin_CSEL,LOW);  // csel
+  
+  for(int i=0;i<SENSOR_TOTAL_BITS;++i) {
+    digitalWrite(pin_CLK,HIGH);  // clk
+    // this is here to give a little more time to the clock going high.
+    // only needed if the arduino is *very* fast.  I'm feeling generous.
+    result <<= 1;
+    digitalWrite(pin_CLK,LOW);  // clk
+    
+    input = digitalRead(pin_MISO);  // miso
+#ifdef VERBOSE
+    Serial.print(input,DEC);
+#endif
+    result |= input;
+    parity ^= (i>0) & input;
+  }
+
+  digitalWrite(pin_CSEL,HIGH);  // csel
+  
+  // check the parity bit
+  return ( parity != (result>>SENSOR_DATA_BITS) );
+}
+
+
+void SensorManager::setup() {
   int i=0;
 
-#define SSP(label,NN)    sensorPins[i++] = PIN_SENSOR_##label##_##NN;
-#define SSP2(NN)         if(NUM_SENSORS>NN) {  SSP(CSEL,NN)  SSP(CLK,NN)  SSP(MISO,NN)  SSP(MOSI,NN)  }
+#define SSP(label,NN,JJ)    sensors[NN].pin_##label = PIN_SENSOR_##label##_##NN;
+#define SSP2(NN)            if(NUM_SENSORS>NN) {  SSP(CSEL,NN,0)  SSP(CLK,NN,1)  SSP(MISO,NN,2)  SSP(MOSI,NN,3)  }
 
+//#define SSP(label,NN)    pins[i++] = PIN_SENSOR_##label##_##NN;
+//#define SSP2(NN)         if(NUM_SENSORS>NN) {  SSP(CSEL,NN)  SSP(CLK,NN)  SSP(MISO,NN)  SSP(MOSI,NN)  }
   SSP2(0)
   SSP2(1)
   SSP2(2)
@@ -105,13 +163,7 @@ void robot_setup() {
   SSP2(5)
 
   for(ALL_SENSORS(i)) {
-    pinMode(sensorPins[(i*4)+0],OUTPUT);  // csel
-    pinMode(sensorPins[(i*4)+1],OUTPUT);  // clk
-    pinMode(sensorPins[(i*4)+2],INPUT);  // miso
-    pinMode(sensorPins[(i*4)+3],OUTPUT);  // mosi
-
-    digitalWrite(sensorPins[(i*4)+0],HIGH);  // csel
-    digitalWrite(sensorPins[(i*4)+3],HIGH);  // mosi
+    sensors[i].start();
   }
 
   // slow the servo on pin D13 down to 61.04Hz
@@ -119,86 +171,40 @@ void robot_setup() {
   //TCCR0B = (TCCR0B & B11111000) | B00000101;
 
   // the first few reads will return junk so we force a couple empties here.
-  sensorUpdate();
-  sensorUpdate();
-
-  // initialize the step count to the sensor reading.
-  parser.D18();
-}
-
-/**
- * @param index the sensor to read
- * @param result where to store the returned value.  may be changed even if method fails.
- * @return 0 on fail, 1 on success.
-// @see https://ams.com/documents/20143/36005/AS5147_DS000307_2-00.pdf
- */
-boolean getSensorRawValue(int index, uint16_t &result) {
-  result=0;
-  uint8_t input,parity=0;
-
-  index*=4;
-  
-  // Send the request for the angle value (command 0xFFFF)
-  // at the same time as receiving an angle.
-
-  // Collect the 16 bits of data from the sensor
-  digitalWrite(sensorPins[index+0],LOW);  // csel
-  
-  for(int i=0;i<SENSOR_TOTAL_BITS;++i) {
-    digitalWrite(sensorPins[index+1],HIGH);  // clk
-    // this is here to give a little more time to the clock going high.
-    // only needed if the arduino is *very* fast.  I'm feeling generous.
-    result <<= 1;
-    digitalWrite(sensorPins[index+1],LOW);  // clk
-    
-    input = digitalRead(sensorPins[index+2]);  // miso
-#ifdef VERBOSE
-    Serial.print(input,DEC);
-#endif
-    result |= input;
-    parity ^= (i>0) & input;
-  }
-
-  digitalWrite(sensorPins[index+0],HIGH);  // csel
-  
-  // check the parity bit
-  return ( parity != (result>>SENSOR_DATA_BITS) );
+  updateAll();
+  updateAll();
 }
 
 
-/**
- * @param rawValue 16 bit value from as4157 sensor, including parity and EF bit
- * @return degrees calculated from bottom 14 bits.
- */
-float extractAngleFromRawValue(uint16_t rawValue) {
-  return (float)(rawValue & BOTTOM_14_MASK) * 360.0 / (float)(1<<SENSOR_ANGLE_BITS);
-}
-
-
-void sensorUpdate() {
+void SensorManager::updateAll() {
   uint16_t rawValue;
   float v;
   for(ALL_SENSORS(i)) {
-    if(getSensorRawValue(i,rawValue)) continue;
+    if(sensors[i].getRawValue(rawValue)) continue;
     v = extractAngleFromRawValue(rawValue);
     if(i!=1 && i!=2) v=-v;
+    //Serial.print(motors[i].letter);
+    //Serial.print("\traw=");  Serial.print(rawValue,BIN);
+    //Serial.print("\tbefore=");  Serial.print(v);
+    //Serial.print("\thome=");  Serial.print(axies[i].homePos);
     v -= axies[i].homePos;
     v = WRAP_DEGREES(v);
-    sensorAngles[i] = v;
+    //Serial.print("\tafter=");  Serial.println(v);
+    sensors[i].angle = v;
   }
 }
 
 
 void reportError() {
   wait_for_empty_segment_buffer();
-  sensorUpdate();
+  sensorManager.updateAll();
     
   Serial.print(F("DP"));
 
   for(ALL_SENSORS(i)) {
     Serial.print('\t');
     Serial.print(AxisNames[i]);
-    float dp = axies[i].pos-sensorAngles[i];
+    float dp = axies[i].pos - sensorManager.sensors[i].angle;
     Serial.print(dp, 3);
   }
   Serial.println();
@@ -244,10 +250,10 @@ void sixiDemo3a(int i,float t) {
   //drive(i,3000,t);
   drive2(i,-90);
   
-  sensorUpdate();
-  float uStart = sensorAngles[3];
-  float vStart = sensorAngles[4];
-  float wStart = sensorAngles[5];
+  sensorManager.updateAll();
+  float uStart = sensorManager.sensors[3].angle;
+  float vStart = sensorManager.sensors[4].angle;
+  float wStart = sensorManager.sensors[5].angle;
   
   Serial.print(AxisNames[i]);
   Serial.print('s');
@@ -259,10 +265,10 @@ void sixiDemo3a(int i,float t) {
   //drive(i,6000,t);
   drive2(i,90);
   
-  sensorUpdate();
-  float uEnd = sensorAngles[3];
-  float vEnd = sensorAngles[4];
-  float wEnd = sensorAngles[5];
+  sensorManager.updateAll();
+  float uEnd = sensorManager.sensors[3].angle;
+  float vEnd = sensorManager.sensors[4].angle;
+  float wEnd = sensorManager.sensors[5].angle;
   
   Serial.print(AxisNames[i]);
   Serial.print('e');
@@ -311,15 +317,15 @@ void sixiDemo2a(float t) {
   
   for(ALL_SENSORS(i)) {
     digitalWrite(motors[i].dir_pin,LOW);
-    sensorUpdate();
-    float aStart = sensorAngles[i];
+    sensorManager.updateAll();
+    float aStart = sensorManager.sensors[i].angle;
     for(int j=0;j<totalSteps;++j) {
       digitalWrite(motors[i].step_pin,HIGH);
       digitalWrite(motors[i].step_pin,LOW);
       delay(t);
     }
-    sensorUpdate();
-    float aEnd = sensorAngles[i];
+    sensorManager.updateAll();
+    float aEnd = sensorManager.sensors[i].angle;
     float perStep = fabs(aEnd-aStart)/(float)totalSteps;
     
     Serial.print('\t');

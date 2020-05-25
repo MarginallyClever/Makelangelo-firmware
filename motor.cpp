@@ -288,11 +288,8 @@ void motor_setup() {
     tmc_setup(driver_1);
   #endif  // HAS_TMC2130
 
-  long steps[NUM_MOTORS + NUM_SERVOS];
-  memset(steps, 0, (NUM_MOTORS + NUM_SERVOS)*sizeof(long));
-
   int i;
-  for(i=0;i<NUM_MOTORS+NUM_SERVOS;++i) {
+  for(i=0;i<NUM_AXIES;++i) {
     max_jerk[i] = MAX_JERK;
     max_feedrate_mm_s[i] = MAX_FEEDRATE;
   }
@@ -304,6 +301,8 @@ void motor_setup() {
   max_jerk[NUM_MOTORS] = MAX_JERK_Z;
 #endif
 
+  long steps[NUM_AXIES];
+  memset(steps, 0, (NUM_AXIES)*sizeof(long));
   motor_set_step_count(steps);
 
   // setup servos
@@ -332,14 +331,15 @@ void motor_setup() {
   current_segment = 0;
   last_segment = 0;
   Segment &old_seg = line_segments[get_prev_segment(last_segment)];
-  for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
+  for (i = 0; i < NUM_AXIES; ++i) {
     old_seg.a[i].step_count = 0;
   }
 
   working_seg = NULL;
   first_segment_delay = 0;
 #if MACHINE_STYLE == SIXI
-  positionErrorFlags = POSITION_ERROR_FLAG_CONTINUOUS;// | POSITION_ERROR_FLAG_ESTOP;
+  positionErrorFlags = 0;
+  SET_BIT_ON(positionErrorFlags,POSITION_ERROR_FLAG_CONTINUOUS);
 #endif
 
 #ifndef DEBUG_STEPPING
@@ -367,6 +367,8 @@ void motor_setup() {
 
   CRITICAL_SECTION_END();
 #endif // DEBUG_STEPPING
+
+  motor_engage();
 }
 
 
@@ -737,7 +739,7 @@ inline void isr_internal_pulse() {
   uint8_t i;
 
 #if MACHINE_STYLE == SIXI
-  if ((positionErrorFlags & POSITION_ERROR_FLAG_ESTOP) != 0) {
+  if( TEST(positionErrorFlags,POSITION_ERROR_FLAG_ESTOP) ) {
     // check if the sensor position differs from the estimated position.
     float fraction = (float)steps_taken / (float)steps_total;
 
@@ -746,11 +748,11 @@ inline void isr_internal_pulse() {
       working_seg->a[i].expectedPosition =
         (working_seg->a[i].positionEnd - working_seg->a[i].positionStart) * fraction + working_seg->a[i].positionStart;
 
-      float diff = abs(working_seg->a[i].expectedPosition - sensorAngles[i]);
+      float diff = abs(working_seg->a[i].expectedPosition - sensorManager.sensors[i].angle);
       if (diff > POSITION_EPSILON) {
         // do nothing while the margin is too big.
         // Only end this condition is stopping the ISR, either via software disable or hardware reset.
-        positionErrorFlags |= POSITION_ERROR_FLAG_ERROR;
+        SET_BIT_ON(positionErrorFlags, POSITION_ERROR_FLAG_ERROR);
         return;
       }
     }

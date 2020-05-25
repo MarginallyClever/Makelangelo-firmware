@@ -371,7 +371,7 @@ void reportAllMotors() {
   for(ALL_MOTORS(i)) {
     Serial.println(motors[i].letter);
     Serial.print("\tangleHome=");        Serial.println(axies[i].homePos);
-    Serial.print("\tsensor=");           Serial.println(sensors[i].angle);
+    Serial.print("\tsensor=");           Serial.println(sensorManager.sensors[i].angle);
   }
   Serial.println();
 }
@@ -394,7 +394,6 @@ void setup() {
 #endif
 
   motor_setup();
-  motor_engage();
   findStepDelay();
 
   //easyPWM_init();
@@ -413,7 +412,7 @@ void setup() {
 
   robot_setup();
 
-  reportAllMotors();
+  //reportAllMotors();
 
   parser.M100();
   parser.ready();

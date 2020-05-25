@@ -284,9 +284,11 @@ void Parser::processCommand() {
       case 15:  sixiDemo();  break;
       case 17:  D17();  break;
       case 18:  D18();  break;
-      case 19:  positionErrorFlags ^= POSITION_ERROR_FLAG_CONTINUOUS;  break; // toggle
-      case 20:  positionErrorFlags &= 0xffff ^ (POSITION_ERROR_FLAG_ERROR | POSITION_ERROR_FLAG_FIRSTERROR);  break; // off
-      case 21:  positionErrorFlags ^= POSITION_ERROR_FLAG_ESTOP;  break; // toggle ESTOP
+      case 19:  FLIP_BIT(positionErrorFlags,POSITION_ERROR_FLAG_CONTINUOUS);  break; // toggle
+      case 20:  SET_BIT_OFF(positionErrorFlags,POSITION_ERROR_FLAG_ERROR);
+                SET_BIT_OFF(positionErrorFlags,POSITION_ERROR_FLAG_FIRSTERROR);
+                break;
+      case 21:  FLIP_BIT(positionErrorFlags,POSITION_ERROR_FLAG_ESTOP);  break;  // toggle ESTOP
       case 22:  D22();  break;
 #endif
       //case 50:  D50();  break;
@@ -420,7 +422,8 @@ void Parser::D17() {
   Serial.print(F("D17"));
   for (ALL_SENSORS(i)) {
     Serial.print('\t');
-    Serial.print(WRAP_DEGREES(sensorAngles[i]), 2);
+    // 360/(2^14) aka 0.02197265625deg is the minimum sensor resolution.  as such more than 3 decimal places is useless.
+    Serial.print(WRAP_DEGREES(sensorManager.sensors[i].angle), 3);
   }
   /*
     if(current_segment==last_segment) {
@@ -438,10 +441,10 @@ void Parser::D17() {
     }*/
 
   Serial.print('\t');
-  //Serial.print(((positionErrorFlags&POSITION_ERROR_FLAG_CONTINUOUS)!=0)?'+':'-');
-  Serial.print(((positionErrorFlags & POSITION_ERROR_FLAG_ERROR) != 0) ? '+' : '-');
-  //Serial.print(((positionErrorFlags&POSITION_ERROR_FLAG_FIRSTERROR)!=0)?'+':'-');
-  //Serial.print(((positionErrorFlags&POSITION_ERROR_FLAG_ESTOP)!=0)?'+':'-');
+  //Serial.print(TEST(positionErrorFlags,POSITION_ERROR_FLAG_CONTINUOUS)?'+':'-');
+  Serial.print(TEST(positionErrorFlags,POSITION_ERROR_FLAG_ERROR) ? '+' : '-');
+  //Serial.print(TEST(positionErrorFlags,POSITION_ERROR_FLAG_FIRSTERROR)?'+':'-');
+  //Serial.print(TEST(positionErrorFlags,POSITION_ERROR_FLAG_ESTOP)?'+':'-');
   Serial.println();
 }
 #endif
@@ -453,8 +456,8 @@ void Parser::D17() {
 */
 void Parser::D18() {
   wait_for_empty_segment_buffer();
+  
   float a[NUM_AXIES];
-  int i, j;
   int numSamples = 10;
 
   for(ALL_AXIES(j)) {
@@ -463,10 +466,10 @@ void Parser::D18() {
 
   // assert(NUM_SENSORS <= NUM_AXIES);
 
-  for(i = 0; i < numSamples; ++i) {
-    sensorUpdate();
+  for(int i = 0; i < numSamples; ++i) {
+    sensorManager.updateAll();
     for(ALL_SENSORS(j)) {
-      a[j] += sensorAngles[j];
+      a[j] += sensorManager.sensors[j].angle;
     }
   }
   for(ALL_AXIES(j)) {
@@ -851,11 +854,11 @@ void Parser::D22() {
     axies[i].homePos = 0;
   }
   // read the sensor
-  sensorUpdate();
+  sensorManager.updateAll();
   // apply the new offsets
   float homePos[NUM_AXIES];
   for(ALL_SENSORS(i)) {
-    homePos[i] = sensorAngles[i];
+    homePos[i] = sensorManager.sensors[i].angle;
   }
   homePos[1]+=90;
   setHome(homePos);
@@ -867,11 +870,11 @@ void Parser::M428() {
   M502();
 
   // read the sensor
-  sensorUpdate();
+  sensorManager.updateAll();
 
   // apply the new offsets
   for (ALL_MOTORS(i)) {
-    axies[i].homePos = sensorAngles[i];
+    axies[i].homePos = sensorManager.sensors[i].angle;
   }
   D18();
 }

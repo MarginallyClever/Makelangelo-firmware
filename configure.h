@@ -122,8 +122,10 @@ extern Axis axies[NUM_AXIES];
 
 extern void pause(const long us);
 extern void findStepDelay();
+
 extern void IK(const float *const axies, long *motorStepArray);
 extern int FK(long *motorStepArray, float *axies);
+
 extern void robot_findHome();
 extern void robot_setup();
 extern void teleport(float *pos);
