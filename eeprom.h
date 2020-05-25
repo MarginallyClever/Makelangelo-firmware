@@ -32,8 +32,9 @@ public:
   long readLong(int ee);
   boolean writeLong(int ee, long value);
   
-  char loadVersion();
+  uint8_t loadVersion();
   void saveUID();
+  uint8_t loadUID();
   void saveLimits();
   void loadLimits();
   
@@ -42,30 +43,14 @@ public:
    */
   void adjustLimits(float *limits);
   
-  /**
-   * 
-   */
   void saveHome();
-  
-  /**
-   * 
-   */
   void loadHome();
   
-  /**
-   *
-   */
   void saveCalibration();
-  
-  /**
-   * 
-   */
   void loadCalibration();
   
-  /**
-   * 
-   */
-  void loadConfig();
+  void saveAll();
+  void loadAll();
 };
 
 extern Eeprom eeprom;

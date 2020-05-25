@@ -41,7 +41,7 @@ boolean Eeprom::writeLong(int ee, long value) {
 }
 
 
-char Eeprom::loadVersion() {
+uint8_t Eeprom::loadVersion() {
   return EEPROM.read(ADDR_VERSION);
 }
 
@@ -49,6 +49,10 @@ char Eeprom::loadVersion() {
 void Eeprom::saveUID() {
   Serial.println(F("Saving UID."));
   writeLong(ADDR_UUID,(long)robot_uid);
+}
+
+uint8_t Eeprom::loadUID() {
+  return EEPROM.read(ADDR_VERSION);
 }
 
 
@@ -124,16 +128,16 @@ void Eeprom::saveHome() {
 
 
 void Eeprom::loadHome() {
-  Serial.print(F("Loading home:"));
+  //Serial.print(F("Loading home:"));
   int j=ADDR_HOME;
   for(ALL_AXIES(i)) {
     axies[i].homePos = (float)readLong(j)/100.0f;
-    Serial.print(' ');
-    Serial.print(motors[i].letter);
-    Serial.print(axies[i].homePos);
+    //Serial.print(' ');
+    //Serial.print(motors[i].letter);
+    //Serial.print(axies[i].homePos);
     j+=4;
   }
-  Serial.println();
+  //Serial.println();
 }
 
 
@@ -149,8 +153,14 @@ void Eeprom::loadCalibration() {
   calibrateRight  = (float)readLong(ADDR_CALIBRATION_RIGHT )/100.0f;
 }
 
+void Eeprom::saveAll() {
+  saveUID();
+  saveLimits();
+  saveHome();
+}
 
-void Eeprom::loadConfig() {
+
+void Eeprom::loadAll() {
   char versionNumber = loadVersion();
   if( versionNumber != FIRMWARE_VERSION ) {
     // If not the current FIRMWARE_VERSION or the FIRMWARE_VERSION is sullied (i.e. unknown data)
@@ -163,7 +173,7 @@ void Eeprom::loadConfig() {
   }
   
   // Retrieve stored configuration
-  robot_uid=readLong(ADDR_UUID);
+  loadUID();
   loadLimits();
   loadHome();
   loadCalibration();
