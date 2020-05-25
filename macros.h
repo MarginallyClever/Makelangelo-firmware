@@ -38,7 +38,7 @@ FORCE_INLINE float WRAP_DEGREES(float n) {
   return n;
 }
 
-// wrapp all radians within -PI...PI
+// wrap all radians within -PI...PI
 FORCE_INLINE float WRAP_RADIANS(float n) {
   n = fmod(n,TWO_PI);
   n += TWO_PI;
@@ -47,9 +47,8 @@ FORCE_INLINE float WRAP_RADIANS(float n) {
   return n;
 }
 
+// use in for(ALL_AXIES(i)) { //i will be rising
+#define ALL_AXIES(NN)  int NN=0;NN<NUM_AXIES;++NN
 
 // use in for(ALL_MOTORS(i)) { //i will be rising
 #define ALL_MOTORS(NN) int NN=0;NN<NUM_MOTORS;++NN
-
-// use in for(ALL_AXIES(i)) { //i will be rising
-#define ALL_AXIES(NN)  int NN=0;NN<NUM_AXIES;++NN
