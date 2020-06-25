@@ -14,7 +14,7 @@
 
 //----------------------------------------------------
 
-#ifdef LCD_IS_128X64
+#if LCD_TYPE == LCD_IS_128X64
 
 #define LCD_PIXEL_HEIGHT   64
 #define LCD_PIXEL_WIDTH    128
@@ -33,7 +33,7 @@
 
 //----------------------------------------------------
 
-#ifdef LCD_IS_SMART
+#if LCD_TYPE == LCD_IS_SMART
 
 // there is no practical per-pixel control.
 //#define LCD_PIXEL_HEIGHT   ?

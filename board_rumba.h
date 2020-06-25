@@ -58,7 +58,7 @@
 
 
 // LCD pins
-#ifdef LCD_IS_128X64
+#if LCD_TYPE == LCD_IS_128X64
 #define BEEPER             44
 #define LCD_PINS_RS        19
 #define LCD_PINS_ENABLE    42
@@ -78,7 +78,7 @@
 #define SDCARDDETECT       49
 #endif
 
-#ifdef LCD_IS_SMART
+#if LCD_TYPE == LCD_IS_SMART
 #define BEEPER             44
 #define LCD_PINS_RS        19
 #define LCD_PINS_ENABLE    42
