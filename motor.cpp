@@ -10,7 +10,7 @@
 #include "configure.h"
 #include "motor.h"
 #include "MServo.h"
-#include "LCD.h"
+#include "lcd.h"
 #include "speed_lookuptable.h"
 
 //------------------------------------------------------------------------------

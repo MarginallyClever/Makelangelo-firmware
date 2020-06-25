@@ -27,28 +27,19 @@
 #define SIXI             9  // 6DOF robot arm.
 #define TRADITIONAL6    10  // 6 axis machine, no restrictions.
 
-#define MACHINE_STYLE TRADITIONAL6  // Change this
-
-// there may be some sub-options in these .h files, too.
-#include "robot_polargraph.h"
-#include "robot_traditionalxy.h"
-#include "robot_corexy.h"
-#include "robot_zarplotter.h"
-#include "robot_skycam.h"
-#include "robot_delta.h"
-#include "robot_stewart.h"
-#include "robot_arm3.h"
-#include "robot_sixi.h"
-#include "robot_traditional6.h"
+// default value
+#define MACHINE_STYLE POLARGRAPH
 
 //------------------------------------------------------------------------------
 // LCD panels supported
 //------------------------------------------------------------------------------
 
-// only uncomment one of these options
-//#define LCD_IS_128X64  // reprapdiscount Full Graphic Smart LCD Controller
-#define LCD_IS_SMART  // reprapdiscount Smart LCD Controller (including XXL model)
+#define LCD_NONE       0
+#define LCD_IS_128X64  1  // reprapdiscount Full Graphic Smart LCD Controller
+#define LCD_IS_SMART   2  // reprapdiscount Smart LCD Controller (including XXL model)
 
+// default value
+#define LCD_TYPE LCD_IS_SMART
 
 //------------------------------------------------------------------------------
 // Microcontrollers supported
@@ -61,9 +52,34 @@
 #define BOARD_WEMOS        5  // Wemos D1 R2 + cnc shield (see board_wemos.h)
 #define BOARD_SIXI_MEGA    6  // Arduino Mega + custom shield for Sixi 2 robot
 
-#ifndef MOTHERBOARD
-#define MOTHERBOARD BOARD_RUMBA  // change this
+// default value
+#define MOTHERBOARD BOARD_RUMBA
+
+//------------------------------------------------------------------------------
+// YOUR CHANGES GO HERE
+//------------------------------------------------------------------------------
+
+#if __has_include("local_config.h")
+// Your local changes go here.
+// Do not send your local_config.h in a pull request.  Thank you!
+#include "local_config.h"
 #endif
+
+
+//------------------------------------------------------------------------------
+// 
+//------------------------------------------------------------------------------
+
+#include "robot_polargraph.h"
+#include "robot_traditionalxy.h"
+#include "robot_corexy.h"
+#include "robot_zarplotter.h"
+#include "robot_skycam.h"
+#include "robot_delta.h"
+#include "robot_stewart.h"
+#include "robot_arm3.h"
+#include "robot_sixi.h"
+#include "robot_traditional6.h"
 
 #include "board_rumba.h"
 #include "board_ramps.h"
@@ -76,7 +92,6 @@
 #include "clock.h"
 #include "motor.h"
 #include "parser.h"
-
 
 //------------------------------------------------------------------------------
 // SANITY CHECKS

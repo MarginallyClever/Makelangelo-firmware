@@ -54,7 +54,7 @@
 #define LIMIT_SWITCH_PIN_RIGHT    (MOTOR_1_LIMIT_SWITCH_PIN)
 
 // LCD pins
-#ifdef LCD_IS_128X64
+#if LCD_TYPE == LCD_IS_128X64
 // 128x64 full graphics controller
 #define BEEPER             37
 
@@ -83,7 +83,7 @@
 #define KILL_PIN           41
 #endif // LCD_IS_128X64
 
-#ifdef LCD_IS_SMART
+#if LCD_TYPE == LCD_IS_SMART
 // Smart controller settings
 #define BEEPER             37
 #define LCD_PINS_RS        16
