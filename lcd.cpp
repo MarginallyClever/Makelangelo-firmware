@@ -14,10 +14,10 @@
 
 #ifdef HAS_LCD
 
-#ifdef LCD_IS_SMART
+#if LCD_TYPE == LCD_IS_SMART
 #include <LiquidCrystal.h>
 #endif
-#ifdef LCD_IS_128X64
+#if LCD_TYPE == LCD_IS_128X64
 #include <Arduino.h>
 #include <U8glib.h>
 #include <SPI.h>
@@ -40,10 +40,10 @@ typedef struct {
 //------------------------------------------------------------------------------
 // GLOBALS
 //------------------------------------------------------------------------------
-#ifdef LCD_IS_SMART
+#if LCD_TYPE == LCD_IS_SMART
 LiquidCrystal lcd(LCD_PINS_RS, LCD_PINS_ENABLE, LCD_PINS_D4, LCD_PINS_D5, LCD_PINS_D6, LCD_PINS_D7);
 #endif
-#ifdef LCD_IS_128X64
+#if LCD_TYPE == LCD_IS_128X64
 // This is not ideal - will not work when board models change.
 U8GLIB_ST7920_128X64_1X u8g(LCD_PINS_D4, LCD_PINS_ENABLE, LCD_PINS_RS);
 #endif
@@ -77,7 +77,7 @@ uint8_t ty;
 void (*current_menu)();
 
 
-#ifdef LCD_IS_128X64
+#if LCD_TYPE == LCD_IS_128X64
 /**
    Made with Marlin Bitmap Converter
    http://marlinfw.org/tools/u8glib/converter.html
@@ -132,13 +132,13 @@ const unsigned char logoImage [] PROGMEM = {
 /**
    Clear the screen
 */
-#ifdef LCD_IS_SMART
+#if LCD_TYPE == LCD_IS_SMART
 inline void LCD_clear() {
   for (int i = 0; i < LCD_MESSAGE_LENGTH; ++i) lcd_message[i] = ' ';
   lcd_message[LCD_MESSAGE_LENGTH - 1] = 0;
 }
 #endif
-#ifdef LCD_IS_128X64
+#if LCD_TYPE == LCD_IS_128X64
 inline void LCD_clear() {
   //u8g.firstPage();
   //while( u8g.nextPage() );
@@ -151,7 +151,7 @@ inline void LCD_clear() {
 /**
    print text to the LCD
 */
-#ifdef LCD_IS_SMART
+#if LCD_TYPE == LCD_IS_SMART
 inline void LCD_advance() {
   lcd_posx++;
   if (lcd_posx >= LCD_WIDTH) {
@@ -193,7 +193,7 @@ inline void LCD_print(const char x) {
   LCD_advance();
 }
 #endif
-#ifdef LCD_IS_128X64
+#if LCD_TYPE == LCD_IS_128X64
 #define LCD_print      u8g.print
 #endif
 
@@ -201,10 +201,10 @@ inline void LCD_print(const char x) {
 /**
    Set the row/column of text at which to begin printing
 */
-#ifdef LCD_IS_SMART
+#if LCD_TYPE == LCD_IS_SMART
 #define LCD_setCursor(x,y)   {lcd_posx=x; lcd_posy=y;}
 #endif
-#ifdef LCD_IS_128X64
+#if LCD_TYPE == LCD_IS_128X64
 #define LCD_setCursor(x,y)   u8g.setPrintPos(((x)+1)*FONT_WIDTH,((y)+1)*FONT_HEIGHT)
 #endif
 
@@ -796,12 +796,12 @@ void LCD_update() {
     }
     
     // draw the new screen contents
-    #ifdef LCD_IS_128X64
+    #if LCD_TYPE == LCD_IS_128X64
     u8g.firstPage();
     do {
     #endif
       (*current_menu)();
-    #ifdef LCD_IS_128X64
+    #if LCD_TYPE == LCD_IS_128X64
     } while(u8g.nextPage());
     #endif
     LCD_refresh_display();
@@ -814,7 +814,7 @@ void LCD_update() {
 
 void LCD_refresh_display() {
 #ifdef HAS_LCD
-#ifdef LCD_IS_SMART
+#if LCD_TYPE == LCD_IS_SMART
   char temp[LCD_MESSAGE_LENGTH];
   memcpy(temp + (LCD_WIDTH * 0), lcd_message + (LCD_WIDTH * 0), LCD_WIDTH);
   memcpy(temp + (LCD_WIDTH * 1), lcd_message + (LCD_WIDTH * 2), LCD_WIDTH);
@@ -944,10 +944,10 @@ void LCD_status_menu() {
 // initialize the Smart controller LCD panel
 void LCD_setup() {
 #ifdef HAS_LCD
-#ifdef LCD_IS_SMART
+#if LCD_TYPE == LCD_IS_SMART
   lcd.begin(LCD_WIDTH, LCD_HEIGHT);
 #endif
-#ifdef LCD_IS_128X64
+#if LCD_TYPE == LCD_IS_128X64
   u8g.begin();
   u8g.disableCursor();
   u8g.setFont(u8g_font_6x9);
@@ -992,19 +992,19 @@ void LCD_drawSplash() {
   int x2 = (LCD_WIDTH - strlen("marginallyclever.com")) / 2;
   int y2 = y + 1;
 
-#ifdef LCD_IS_128X64
+#if LCD_TYPE == LCD_IS_128X64
   u8g.firstPage();
   do {
 #endif
     LCD_clear();
-#ifdef LCD_IS_128X64
+#if LCD_TYPE == LCD_IS_128X64
     u8g.drawBitmapP((LCD_PIXEL_WIDTH - logoImageWidth) / 2, 0, logoImageWidth / 8, logoImageHeight, logoImage);
 #endif
     LCD_setCursor(x, y);
     LCD_print(message);
     LCD_setCursor(x2, y2);
     LCD_print("marginallyclever.com");
-#ifdef LCD_IS_128X64
+#if LCD_TYPE == LCD_IS_128X64
   } while (u8g.nextPage());
 #endif
   LCD_refresh_display();
