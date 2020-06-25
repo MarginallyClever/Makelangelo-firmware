@@ -10,8 +10,8 @@
 //------------------------------------------------------------------------------
 #include "configure.h"
 #include "motor.h"
-#include "SDcard.h"
-#include "LCD.h"
+#include "sdcard.h"
+#include "lcd.h"
 #include "eeprom.h"
 
 #include <SPI.h>  // pkm fix for Arduino 1.5

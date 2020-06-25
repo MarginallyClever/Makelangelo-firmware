@@ -55,8 +55,8 @@
 #define HAS_SD   // if you have SD card support on your LCD panel (must be on panel?)
 
 // only uncomment one of these options
-//#define LCD_IS_128X64  // reprapdiscount Full Graphic Smart LCD Controller
-#define LCD_IS_SMART  // reprapdiscount Smart LCD Controller (including XXL model)
+#define LCD_IS_128X64  // reprapdiscount Full Graphic Smart LCD Controller
+//#define LCD_IS_SMART  // reprapdiscount Smart LCD Controller (including XXL model)
 
 
 //------------------------------------------------------------------------------
@@ -71,11 +71,12 @@
 #define BOARD_SIXI_MEGA    6  // Arduino Mega + custom shield for Sixi 2 robot
 
 #ifndef MOTHERBOARD
-#define MOTHERBOARD BOARD_RUMBA  // change this
+#define MOTHERBOARD BOARD_MELZI  // change this
 #endif
 
 #include "board_rumba.h"
 #include "board_ramps.h"
+#include "board_melzi.h"
 #include "board_sanguinolulu.h"
 #include "board_teensylu.h"
 #include "board_wemos.h"

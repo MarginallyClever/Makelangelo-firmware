@@ -11,7 +11,7 @@
 #include "configure.h"
 #include "motor.h"
 #include "MServo.h"
-#include "LCD.h"
+#include "lcd.h"
 
 //------------------------------------------------------------------------------
 // MACROS
