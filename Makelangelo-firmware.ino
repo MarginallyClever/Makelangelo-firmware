@@ -371,7 +371,9 @@ void reportAllMotors() {
   for(ALL_MOTORS(i)) {
     Serial.println(motors[i].letter);
     Serial.print("\tangleHome=");        Serial.println(axies[i].homePos);
+#if MACHINE_STYLE == SIXI
     Serial.print("\tsensor=");           Serial.println(sensorManager.sensors[i].angle);
+#endif
   }
   Serial.println();
 }
@@ -392,6 +394,8 @@ void setup() {
 #ifdef HAS_LCD
   LCD_setup();
 #endif
+
+  //clockISRProfile();
 
   motor_setup();
   findStepDelay();

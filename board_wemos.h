@@ -22,11 +22,13 @@
 // TODO add more pin definitions
 #define MAX_MOTORS                (2)
 
+#define MOTOR_0_LETTER            'X'
 #define MOTOR_0_DIR_PIN           (3)
 #define MOTOR_0_STEP_PIN          (0)
 #define MOTOR_0_ENABLE_PIN        (6)
 #define MOTOR_0_LIMIT_SWITCH_PIN  (7)   /* X min */
 
+#define MOTOR_1_LETTER            'Y'
 #define MOTOR_1_DIR_PIN           (4)
 #define MOTOR_1_STEP_PIN          (1)
 #define MOTOR_1_ENABLE_PIN        (6)

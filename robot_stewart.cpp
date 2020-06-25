@@ -363,7 +363,7 @@ void robot_findHome() {
   do {
     hits = 0;
     // for each stepper,
-    for (i = 0; i < NUM_MOTORS; ++i) {
+    for (ALL_MOTORS(i)) {
       digitalWrite(motors[i].dir_pin, HIGH);
       // if this switch hasn't been hit yet
       if (digitalRead(motors[i].limit_switch_pin) == HIGH) {

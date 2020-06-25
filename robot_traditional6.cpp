@@ -7,24 +7,18 @@
 #include "configure.h"
 #include "robot_traditionalxy.h"
 
-#if MACHINE_STYLE == TRADITIONALXY
+#if MACHINE_STYLE == TRADITIONAL6
 
 #include <Arduino.h>
 /**
- * Inverse Kinematics turns XY coordinates into step counts from each motor
- * @param x cartesian coordinate
- * @param y cartesian coordinate
- * @param motorStepArray a measure of each belt to that plotter position
+ * Inverse Kinematics turns cartesian coordinates into step counts from each motor
+ * @param cartesian array of cartesian coordinates
+ * @param motorStepArray number of steps per motor
  */
 void IK(const float *const cartesian, long *motorStepArray) {
-  float x = cartesian[0];
-  float y = cartesian[1];
-  float z = cartesian[2];
-  
-  motorStepArray[0] = lround(x / MM_PER_STEP_X);
-  motorStepArray[1] = lround(y / MM_PER_STEP_Y);
-
-  motorStepArray[NUM_MOTORS] = z;
+  for(ALL_AXIES(i)) {
+    motorStepArray[i] = lround(cartesian[i] / MM_PER_STEP);
+  }
 }
 
 
@@ -35,11 +29,10 @@ void IK(const float *const cartesian, long *motorStepArray) {
  * @return 0 if no problem, 1 on failure.
  */
 int FK(long *motorStepArray,float *axies) {
-  axies[0] = motorStepArray[0] * MM_PER_STEP_X;
-  axies[1] = motorStepArray[1] * MM_PER_STEP_Y;
-  axies[2] = motorStepArray[NUM_MOTORS];
+  for(ALL_AXIES(i)) {
+    axies[i] = motorStepArray[i] * MM_PER_STEP;
+  }
 }
-
 
 
 void robot_findHome() {
@@ -73,12 +66,11 @@ void robot_findHome() {
   } while (hits < NUM_MOTORS);
   Serial.println(F("Found."));
   
-  float zeros[2] = {0, 0};
+  float zeros[6] = {0, 0, 0, 0, 0, 0};
   teleport(zeros);
 }
 
 
-void robot_setup() {
-}
+void robot_setup() {}
 
-#endif
+#endif  // TRADITIONAL6

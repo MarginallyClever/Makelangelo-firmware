@@ -107,7 +107,9 @@ public:
   void M226();  // M226 P[a] S[b] - Wait for pin P to be in state S (1 or 0).
   void M300();  // M300 S[a] P[b] - play frequency a for b milliseconds (if there is a speaker)
   //void M306();  // adjust PID  M306 L[0...5] [Pn] [In] [Dn] and report new values.
+#if MACHINE_STYLE == SIXI
   void M428();  // set home position to the current raw angle values (don't use home position to adjust home position!)
+#endif
   void M500();  // save home offsets
   void M501();  // load home offsets
   void M502();  // reset the home offsets

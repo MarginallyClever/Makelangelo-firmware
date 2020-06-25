@@ -163,6 +163,7 @@ extern void enable_stealthChop();
 extern void motor_disengage();
 extern void motor_setup();
 extern void setPenAngle(int arg0);
+extern void clockISRProfile();
 
 extern const int movesPlanned();
 

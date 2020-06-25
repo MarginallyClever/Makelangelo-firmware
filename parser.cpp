@@ -229,7 +229,9 @@ void Parser::processCommand() {
       case 226:  M226();  break;
       case 300:  M300();  break;
       //case 306:  M306();  break;
+#if MACHINE_STYLE == SIXI
       case 428:  M428();  break;
+#endif
       case 500:  M500();  break;
       case 501:  M501();  break;
       case 502:  M502();  break;
@@ -843,10 +845,7 @@ void Parser::M300() {
 
 #if MACHINE_STYLE == SIXI
 
-/**
- * D22
- * reset home position to the current angle values.
- */
+// D22 - reset home position to the current angle values.
 void Parser::D22() {
   int i;
   // cancel the current home offsets
@@ -895,6 +894,7 @@ void Parser::M501() {
 
 // M502 - reset the home offsets
 void Parser::M502() {
+#if MACHINE_STYLE == SIXI
 #define SHP(NN)  if(NUM_MOTORS>NN) axies[NN].homePos = DH_##NN##_THETA;
   SHP(0)
   SHP(1)
@@ -904,6 +904,7 @@ void Parser::M502() {
   SHP(5)
 
   D18();
+#endif
 }
 
 

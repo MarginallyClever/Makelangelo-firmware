@@ -1102,6 +1102,40 @@ ISR(TIMER1_COMPA_vect) {
 }
 
 
+
+
+void clockISRProfile() {
+  // Disable interrupts, to avoid ISR preemption while we reprogram the period
+  //CRITICAL_SECTION_START();
+  // make sure the isr_step_multiplier is 1
+  int oldMult = isr_step_multiplier;
+  isr_step_multiplier=1;
+
+  int count=1000;
+  // get set... go!
+  uint32_t tStart = micros();
+  
+  for(int i=0;i<count;++i) {
+    isr_internal_pulse();
+  }
+  
+  uint32_t tEnd = micros();
+  
+  // restore isr_step_multiplier
+  isr_step_multiplier=oldMult;
+  
+  // Turn the interrupts back on (reduces UART delay, apparently)
+  //CRITICAL_SECTION_END();
+  
+  // report results
+  uint32_t dt = tEnd-tStart;
+  float dtPer = (float)dt / (float)count;
+  Serial.print(F("profile loops     ="));  Serial.println(count);
+  Serial.print(F("profile total time="));  Serial.println(dt);
+  Serial.print(F("profile per loop  ="));  Serial.println(dtPer);
+}
+
+
 /**
    @return 1 if buffer is full, 0 if it is not.
 */

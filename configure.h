@@ -25,8 +25,9 @@
 #define STEWART          7  // 6 arm stewart platform, rotary action.  untested.
 #define ARM3             8  // 3DOF palletizing robot arm.
 #define SIXI             9  // 6DOF robot arm.
+#define TRADITIONAL6    10  // 6 axis machine, no restrictions.
 
-#define MACHINE_STYLE SIXI  // Change this
+#define MACHINE_STYLE TRADITIONAL6  // Change this
 
 // there may be some sub-options in these .h files, too.
 #include "robot_polargraph.h"
@@ -38,6 +39,7 @@
 #include "robot_stewart.h"
 #include "robot_arm3.h"
 #include "robot_sixi.h"
+#include "robot_traditional6.h"
 
 //------------------------------------------------------------------------------
 // LCD panels supported
