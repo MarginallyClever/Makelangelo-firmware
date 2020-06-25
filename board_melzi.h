@@ -7,6 +7,14 @@
   //------------------------------------------------------------------------------
 
 
+  //-------------------------------------------------------------------------------
+  // Creality Melzi board (Ender3, 3Pro, CR-10, etc.)
+  // Submitted by rob.m.kotz@gmail.com
+  // Check out Marlin firmware for Melzi board pin definitions - 
+  // https://github.com/MarlinFirmware/Marlin/blob/2.0.x/Marlin/src/pins/sanguino/pins_MELZI_CREALITY.h
+  // -------------------------------------------------------------------------------
+
+
   #if MOTHERBOARD == BOARD_MELZI 
 
     #undef LCD_PINS_RS
