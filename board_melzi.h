@@ -45,7 +45,7 @@
     #define LIMIT_SWITCH_PIN_RIGHT    (MOTOR_1_LIMIT_SWITCH_PIN)
 
     //#undef HAS_LCD
-    //#undef HAS_SD
+    #undef HAS_SD
 
       // LCD pins
     #ifdef LCD_IS_128X64
@@ -62,10 +62,10 @@
       #define BTN_ENC            16
 
       // SD card settings
-      #define SDSS               31
-      #define SDCARDDETECT       -1
-      #define SDPOWER            -1
-      #define KILL_PIN           -1
+      //#define SDSS               31
+      //#define SDCARDDETECT       -1
+      //#define SDPOWER            -1
+      //#define KILL_PIN           -1
 
 
     #endif
