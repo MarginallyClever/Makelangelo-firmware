@@ -52,7 +52,7 @@
 #define LCD_IS_SMART   2  // reprapdiscount Smart LCD Controller (including XXL model)
 
 // default value
-#define LCD_TYPE LCD_IS_SMART
+#define LCD_TYPE LCD_IS_128X64
 
 //------------------------------------------------------------------------------
 // Microcontrollers supported
