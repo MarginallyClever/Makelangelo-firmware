@@ -26,12 +26,13 @@
 
     #define MAX_MOTORS                 (2)
 
+    #define MOTOR_0_LETTER            'X'
     #define MOTOR_0_DIR_PIN           (21)
     #define MOTOR_0_STEP_PIN          (15)
     #define MOTOR_0_ENABLE_PIN        (14)
     #define MOTOR_0_LIMIT_SWITCH_PIN  (18)   /* X min */
 
-
+    #define MOTOR_1_LETTER            'Y'
     #define MOTOR_1_DIR_PIN           (23)
     #define MOTOR_1_STEP_PIN          (22)
     #define MOTOR_1_ENABLE_PIN        (14)
