@@ -27,7 +27,7 @@
 #define SIXI             9  // 6DOF robot arm.
 #define TRADITIONAL6    10  // 6 axis machine, no restrictions.
 
-#define MACHINE_STYLE TRADITIONAL6  // Change this
+#define MACHINE_STYLE POLARGRAPH  // Change this
 
 // there may be some sub-options in these .h files, too.
 #include "robot_polargraph.h"
@@ -60,13 +60,15 @@
 #define BOARD_TEENSYLU     4  // Teensylu
 #define BOARD_WEMOS        5  // Wemos D1 R2 + cnc shield (see board_wemos.h)
 #define BOARD_SIXI_MEGA    6  // Arduino Mega + custom shield for Sixi 2 robot
+#define BOARD_MELZI 	   7  // Creality Melzi Board -- Ender3, Ender3 Pro, CR-10, etc.
 
 #ifndef MOTHERBOARD
-#define MOTHERBOARD BOARD_RUMBA  // change this
+#define MOTHERBOARD BOARD_MELZI  // change this
 #endif
 
 #include "board_rumba.h"
 #include "board_ramps.h"
+#include "board_melzi.h"
 #include "board_sanguinolulu.h"
 #include "board_teensylu.h"
 #include "board_wemos.h"
