@@ -69,6 +69,7 @@
 #define BOARD_TEENSYLU     4  // Teensylu
 #define BOARD_WEMOS        5  // Wemos D1 R2 + cnc shield (see board_wemos.h)
 #define BOARD_SIXI_MEGA    6  // Arduino Mega + custom shield for Sixi 2 robot
+#define BOARD_MELZI 	   7  // Creality Melzi Board -- Ender3, Ender3 Pro, CR-10, etc.
 
 #ifndef MOTHERBOARD
 #define MOTHERBOARD BOARD_MELZI  // change this
