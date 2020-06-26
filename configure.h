@@ -27,19 +27,32 @@
 #define SIXI             9  // 6DOF robot arm.
 #define TRADITIONAL6    10  // 6 axis machine, no restrictions.
 
-// default value
-#define MACHINE_STYLE POLARGRAPH
+#define MACHINE_STYLE POLARGRAPH  // Change this
+
+// there may be some sub-options in these .h files, too.
+#include "robot_polargraph.h"
+#include "robot_traditionalxy.h"
+#include "robot_corexy.h"
+#include "robot_zarplotter.h"
+#include "robot_skycam.h"
+#include "robot_delta.h"
+#include "robot_stewart.h"
+#include "robot_arm3.h"
+#include "robot_sixi.h"
+#include "robot_traditional6.h"
+
 
 //------------------------------------------------------------------------------
 // LCD panels supported
 //------------------------------------------------------------------------------
+
 
 #define LCD_NONE       0
 #define LCD_IS_128X64  1  // reprapdiscount Full Graphic Smart LCD Controller
 #define LCD_IS_SMART   2  // reprapdiscount Smart LCD Controller (including XXL model)
 
 // default value
-#define LCD_TYPE LCD_IS_SMART
+#define LCD_TYPE LCD_IS_128X64
 
 //------------------------------------------------------------------------------
 // Microcontrollers supported
@@ -51,9 +64,10 @@
 #define BOARD_TEENSYLU     4  // Teensylu
 #define BOARD_WEMOS        5  // Wemos D1 R2 + cnc shield (see board_wemos.h)
 #define BOARD_SIXI_MEGA    6  // Arduino Mega + custom shield for Sixi 2 robot
+#define BOARD_MELZI 	   7  // Creality Melzi Board -- Ender3, Ender3 Pro, CR-10, etc.
 
 // default value
-#define MOTHERBOARD BOARD_RUMBA
+#define MOTHERBOARD BOARD_MELZI
 
 //------------------------------------------------------------------------------
 // YOUR CHANGES GO HERE
@@ -83,6 +97,7 @@
 
 #include "board_rumba.h"
 #include "board_ramps.h"
+#include "board_melzi.h"
 #include "board_sanguinolulu.h"
 #include "board_teensylu.h"
 #include "board_wemos.h"

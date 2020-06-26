@@ -1,6 +1,6 @@
 #pragma once
 
-#include <arduino.h>
+#include <Arduino.h>
 
 // for assembly in isr inner loop
 #define A(CODE) " " CODE "\n\t"
