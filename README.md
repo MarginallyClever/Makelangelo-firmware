@@ -1,4 +1,4 @@
-﻿##### Makelangelo-firmware #####
+##### Makelangelo-firmware #####
 
 http://www.makelangelo.com/
 
