@@ -1057,6 +1057,17 @@ ISR(TIMER1_COMPA_vect) {
     // (AVR enters the ISR with global interrupts disabled, so no need to do it here)
     CRITICAL_SECTION_START();
   //#endif
+
+#if defined(HAS_LCD) && defined(LCD_INT_POLLING)
+  static uint8_t _intTimes = 0;
+
+  if ((_intTimes++ % 10) == 0)
+  {
+    // call the rotary encoder polling
+    LCD_read();
+  }
+#endif
+
   // set the timer interrupt value as big as possible so there's little chance it triggers while i'm still in the ISR.
   CLOCK_ADJUST(MAX_OCR1A_VALUE);
 

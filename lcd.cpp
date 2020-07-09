@@ -52,6 +52,9 @@ uint32_t lcd_draw_delay  = 0;
 
 int lcd_rot_old  = 0;
 int lcd_turn     = 0;
+#if defined(LCD_INT_POLLING)
+int int_lcd_turn = 0;
+#endif
 int lcd_posx = 0, lcd_posy = 0;
 char lcd_click_old = HIGH;
 char lcd_click_now = 0;
@@ -313,6 +316,13 @@ void *update_val;
 
 
 void LCD_read() {
+  int *lcd_turn_ptr = &lcd_turn;
+  
+#if defined(LCD_INT_POLLING)
+  buttons = ((digitalRead(BTN_EN1) == LOW) << BLEN_A)
+            | ((digitalRead(BTN_EN2) == LOW) << BLEN_B);
+  lcd_turn_ptr = &int_lcd_turn;
+#else
   long now = millis();
   
   if(ELAPSED(now,next_lcd_read)) {
@@ -321,23 +331,26 @@ void LCD_read() {
             | ((digitalRead(BTN_EN2) == LOW) << BLEN_B);
     next_lcd_read=now+30;
   }
-  
+#endif
+
   // potentiometer uses grey code.  Pattern is 0 3 1 2
   if (lcd_rot_old != buttons) {
     switch (buttons) {
-      case ENCROT0:  switch( lcd_rot_old ) { case ENCROT3: lcd_turn++; break; case ENCROT1: lcd_turn--; break; } break;
-      case ENCROT1:  switch( lcd_rot_old ) { case ENCROT0: lcd_turn++; break; case ENCROT2: lcd_turn--; break; } break;
-      case ENCROT2:  switch( lcd_rot_old ) { case ENCROT1: lcd_turn++; break; case ENCROT3: lcd_turn--; break; } break;
-      case ENCROT3:  switch( lcd_rot_old ) { case ENCROT2: lcd_turn++; break; case ENCROT0: lcd_turn--; break; } break;
-    }
+      case ENCROT0:  switch( lcd_rot_old ) { case ENCROT3: (*lcd_turn_ptr)++; break; case ENCROT1: (*lcd_turn_ptr)--; break; } break;
+      case ENCROT1:  switch( lcd_rot_old ) { case ENCROT0: (*lcd_turn_ptr)++; break; case ENCROT2: (*lcd_turn_ptr)--; break; } break;
+      case ENCROT2:  switch( lcd_rot_old ) { case ENCROT1: (*lcd_turn_ptr)++; break; case ENCROT3: (*lcd_turn_ptr)--; break; } break;
+      case ENCROT3:  switch( lcd_rot_old ) { case ENCROT2: (*lcd_turn_ptr)++; break; case ENCROT0: (*lcd_turn_ptr)--; break; } break;
+    } 
     // for debugging potentiometer
     {
-      //if(lcd_turn !=0) Serial.print(lcd_turn>0?'+':'-');
-      //else Serial.print(' ');
+#if 0
+      if(*lcd_turn_ptr !=0) Serial.print(*lcd_turn_ptr>0?'+':'-');
+      else Serial.print(' ');
       //Serial.print(millis());     Serial.print('\t');
-      //Serial.print(lcd_rot_old);  Serial.print('\t');
-      //Serial.print(buttons);      Serial.print('\t');
-      //Serial.print(lcd_turn);     Serial.print('\n');
+      Serial.print(lcd_rot_old);  Serial.print('\t');
+      Serial.print(buttons);      Serial.print('\t');
+      Serial.print(*lcd_turn_ptr);     Serial.print('\n');
+#endif
     }
     
     lcd_rot_old = buttons;
@@ -757,12 +770,26 @@ void LCD_setStatusMessage(char *message) {
 
 void LCD_update() {
 #ifdef HAS_LCD
+# if !defined(LCD_INT_POLLING)
   LCD_read();
+# endif
   
+
   if (millis() >= lcd_draw_delay ) {
     lcd_draw_delay = millis() + LCD_DRAW_DELAY;
 
-    //Serial.print(lcd_turn,DEC);
+#if defined(LCD_INT_POLLING)
+    // if we are polling in the interrupt, then seeif there was any change 
+    if (int_lcd_turn)
+    {
+        noInterrupts();
+        lcd_turn = int_lcd_turn;
+        int_lcd_turn = 0;
+        interrupts();
+    }
+#endif  
+
+    //Serial.println(lcd_turn,DEC);
     //Serial.print('\t');  Serial.print(menuStack[menuStackDepth].menu_position,DEC);
     //Serial.print('\t');  Serial.print(menuStack[menuStackDepth].menu_position_sum,DEC);
     //Serial.print('\t');  Serial.print(screen_position,DEC);
