@@ -54,7 +54,7 @@
 #define BOARD_UNO_CNCV3    7  // UNO + CNC Shield v3
 
 // default value
-#define MOTHERBOARD BOARD_UNO_CNCV3
+#define MOTHERBOARD BOARD_RUMBA
 
 //------------------------------------------------------------------------------
 // YOUR CHANGES GO HERE
