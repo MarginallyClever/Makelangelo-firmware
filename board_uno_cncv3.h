@@ -18,6 +18,12 @@
   #error "Oops!  Make sure you have 'Arduino UNO' selected from the 'Tools -> Boards' menu."
 #endif
 
+#ifdef MAX_SEGMENTS
+#undef MAX_SEGMENTS
+#define MAX_SEGMENTS              (4)
+#endif
+
+
 // actual limit is 4 but I only have the pins for the first two motors.
 // TODO add more pin definitions
 #define MAX_MOTORS                (2)
@@ -40,7 +46,10 @@
 #define LIMIT_SWITCH_PIN_LEFT     (MOTOR_0_LIMIT_SWITCH_PIN)
 #define LIMIT_SWITCH_PIN_RIGHT    (MOTOR_1_LIMIT_SWITCH_PIN)
 
-#define CLOCK_FREQ            (16000000L)
+#define CLOCK_FREQ                (16000000L)
+
+#define _useTimer2
+#undef _useTimer3
 
 #undef HAS_SD  
 #undef HAS_LCD

@@ -7,7 +7,6 @@
 
 #ifdef ESP8266
 
-#define CLOCK_SPEED             (80000000L)
 #define MAX_COUNTER             (4294967295L)  // 32 bits
 #define CRITICAL_SECTION_START  noInterrupts();
 #define CRITICAL_SECTION_END    interrupts();
@@ -15,19 +14,18 @@
 #else  // ESP8266
 
 // for timer interrupt control
-#define CLOCK_SPEED             (16000000L)
 #define MAX_COUNTER             (65536L)  // 16 bits
 
 #endif  // ESP8266
 
-#define TIMER_RATE            ((CLOCK_SPEED)/8)
+#define TIMER_RATE            ((CLOCK_FREQ)/8)
 
 // TODO a guess.  use real math here!
 // https://reprap.org/wiki/Step_rates
 // 0.9deg stepper @ 1/16 microstepping = 6400 steps/turn.  w/ 20-tooth GT2 pulley, 6400 steps = 40mm. 
 // 1M us / 6400 = 156us/step.  100mm/s would be 2.5x faster, or 62.4us/step.  not much!
 //#define CLOCK_MAX_STEP_FREQUENCY (240000L)
-#define CLOCK_MIN_STEP_FREQUENCY (CLOCK_SPEED/500000U)
+#define CLOCK_MIN_STEP_FREQUENCY (CLOCK_FREQ/500000U)
 
 #define TIMEOUT_OK (1000)
 

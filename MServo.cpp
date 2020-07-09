@@ -135,6 +135,13 @@ void Timer1Service()
   handle_interrupts(_timer1, &TCNT1, &OCR1A);
 }
 #endif
+#if defined(_useTimer2)
+void Timer2Service()
+{
+  handle_interrupts(_timer2, &TCNT2, &OCR2A);
+}
+#endif
+
 #if defined(_useTimer3)
 void Timer3Service()
 {
@@ -165,6 +172,25 @@ static void initISR(timer16_Sequence_t timer)
   }
 #endif
 
+#if defined (_useTimer2)
+  if(timer == _timer2) {
+    TCCR2A = 0;             // normal counting mode
+    TCCR2B = _BV(CS21);     // set prescaler of 8
+    TCNT2 = 0;              // clear the timer count
+#if defined(__AVR_ATmega8__)|| defined(__AVR_ATmega128__)
+    TIFR |= _BV(OCF2A);      // clear any pending interrupts;
+    TIMSK |=  _BV(OCIE2A) ;  // enable the output compare interrupt
+#else
+    // here if not ATmega8 or ATmega128
+    TIFR2 |= _BV(OCF2A);     // clear any pending interrupts;
+    TIMSK2 |=  _BV(OCIE2A) ; // enable the output compare interrupt
+#endif
+#if defined(WIRING)
+    timerAttach(TIMER1OUTCOMPAREA_INT, Timer1Service);
+#endif
+  }
+#endif
+
 #if defined (_useTimer3)
   if(timer == _timer3) {
     TCCR3A = 0;             // normal counting mode
@@ -172,7 +198,7 @@ static void initISR(timer16_Sequence_t timer)
     TCNT3 = 0;              // clear the timer count
 #if defined(__AVR_ATmega128__)
     TIFR |= _BV(OCF3A);     // clear any pending interrupts;
-	ETIMSK |= _BV(OCIE3A);  // enable the output compare interrupt
+	  ETIMSK |= _BV(OCIE3A);  // enable the output compare interrupt
 #else
     TIFR3 = _BV(OCF3A);     // clear any pending interrupts;
     TIMSK3 =  _BV(OCIE3A) ; // enable the output compare interrupt
