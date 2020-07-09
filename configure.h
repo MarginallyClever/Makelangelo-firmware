@@ -10,7 +10,7 @@
 //------------------------------------------------------------------------------
 
 //#define VERBOSE           (1)  // add to get a lot more serial output.
-//#define DEBUG_STEPPING  // uncomment to debug stepper internal timer
+//#define DEBUG_STEPPING         // uncomment to debug stepper internal timer
 
 //------------------------------------------------------------------------------
 // Robot styles supported
@@ -51,6 +51,7 @@
 #define BOARD_TEENSYLU     4  // Teensylu
 #define BOARD_WEMOS        5  // Wemos D1 R2 + cnc shield (see board_wemos.h)
 #define BOARD_SIXI_MEGA    6  // Arduino Mega + custom shield for Sixi 2 robot
+#define BOARD_UNO_CNCV3    7  // UNO + CNC Shield v3
 
 // default value
 #define MOTHERBOARD BOARD_RUMBA
@@ -87,6 +88,7 @@
 #include "board_teensylu.h"
 #include "board_wemos.h"
 #include "board_sixi_mega.h"
+#include "board_cncv3.h"
 
 
 #include "clock.h"
