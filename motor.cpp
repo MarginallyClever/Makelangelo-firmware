@@ -54,6 +54,10 @@ Motor motors[NUM_MOTORS + NUM_SERVOS];
 Servo servos[NUM_SERVOS];
 #endif
 
+#if defined(LCD_INT_POLLING)
+void LCD_read(void);
+#endif
+
 Segment line_segments[MAX_SEGMENTS];
 Segment *working_seg = NULL;
 volatile int current_segment = 0;
