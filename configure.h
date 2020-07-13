@@ -51,7 +51,7 @@
 #define BOARD_TEENSYLU     4  // Teensylu
 #define BOARD_WEMOS        5  // Wemos D1 R2 + cnc shield (see board_wemos.h)
 #define BOARD_SIXI_MEGA    6  // Arduino Mega + custom shield for Sixi 2 robot
-#define BOARD_UNO_CNCV3    7  // UNO + CNC Shield v3
+#define BOARD_CNCV3        7  // CNC Shield v3
 
 // default value
 #define MOTHERBOARD BOARD_RUMBA

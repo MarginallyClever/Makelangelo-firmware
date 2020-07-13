@@ -17,8 +17,11 @@
 #define PEN_UP_ANGLE         (90)
 #define PEN_DOWN_ANGLE       (50)  // Some steppers don't like 0 degrees
 
+#ifndef NUM_AXIES
 #define NUM_AXIES            (3)  // could be more?
-#define NUM_MOTORS           (2)
+#endif
+
+#define NUM_MOTORS           (3)
 #define NUM_SERVOS           (1)
 #define NUM_TOOLS            (1)
 
