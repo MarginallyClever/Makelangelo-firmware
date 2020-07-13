@@ -60,31 +60,31 @@ public:
   void D5();  // D5 - report current firmware version
   void D6();  // D6 [Xnn] [Ynn] [Znn] [Unn] [Vnn] [Wnn] - Set home position for each axis.
 #if MACHINE_STYLE == POLARGRAPH
-  void D7();  // D7 [Lnn] [Rnn] - Set calibration length of each belt
-  void D8();  // D8 - Report calibration values for left and right belts
-  //void D11();  // D11 - Makleangelo setup
-  //void D13();  // D13 Znn - Set pen angle
+  void D7();  // D7 [Lnn] [Rnn] - Polargraph only.  Set calibration length of each belt
+  void D8();  // D8 - Polargraph only.  Report calibration values for left and right belts
+  //void D11();  // D11 - Polargraph only.  Makleangelo setup
+  //void D13();  // D13 Znn - Polargraph only.  Set pen angle
 #endif
   //void D14();  // D14 - get machine style
 #if MACHINE_STYLE == SIXI
-  void D15();  // Sixi demo
-  void D17();   // D17 - report sensor values
-  void D18();   // d18 - copy sensor values to motor step positions (set current position)
-  //void D19();  // D19 - toggle continuous D17 reporting
-  //void D20();  // D20 - clear error flags
-  //void D21();  // D21 - toggle software ESTOP
-  void D22();  // report current step count for each axis
+  void D15();  // D15 - Sixi only.  Sixi demo
+  void D17();  // D17 - Sixi only.  report sensor values
+  void D18();  // D18 - Sixi only.  copy sensor values to motor step positions (set current position)
+  //void D19();  // D19 - Sixi only.  toggle continuous D17 reporting
+  //void D20();  // D20 - Sixi only.  clear error flags
+  //void D21();  // D21 - Sixi only.  toggle software ESTOP
+  void D22();  // D22 - Sixi only.  report current step count for each axis
 #endif
   void D50();  // D40 Snn - Set and report strict mode.  where nn=0 for off and 1 for on.
 
   
   void G01();  // G0/G1 [Xn] [Yn] [Zn] [Un] [Vn] [Wn] - linear travel
-  void G02(int8_t clockwise);  // arc
+  void G02(int8_t clockwise);  // G02/G03 arcs
   void G04();  // G04 [Snn] [Pnn] - Wait S milliseconds and P seconds.
-  void G28();  // go home
-  void G90();  // set absolute mode
-  void G91();  // set relative mode
-  void G92();  // teleport
+  void G28();  // G28 - go home
+  void G90();  // G90 - set absolute mode
+  void G91();  // G91 - set relative mode
+  void G92();  // G92 - teleport
 
 
   void M6();  // M6 Tnn - change tool to nn
@@ -95,9 +95,9 @@ public:
   void M100();  // M100 - Print a helpful message to serial.
   void M101();  // M101 Annn Tnnn Bnnn - Change axis A limits to max T and min B.
   void M110();  // M110 Nnn - sets next expected line number to n.
-  void M111();  // M111 Snn - sets parser flags to n.  Combine any valid flags: 0 (relative) 1 (strict) 2 (echo)
-  void M112();  // M112 emergency stop.  Set all PIDS to zero.
-  void M114();  // report current target position
+  void M111();  // M111 - Snn - sets parser flags to n.  Combine any valid flags: 0 (relative) 1 (strict) 2 (echo)
+  void M112();  // M112 - emergency stop.  Set all PIDS to zero.
+  void M114();  // M114 - report current target position
 #ifdef HAS_LCD
   void M117();  // M117 [string] - Display string on the LCD panel.
 #endif
@@ -106,14 +106,14 @@ public:
   void M206();  // M206 [Xn] [Yn] [Zn] [Un] [Vn] [Wn] - set home offsets 
   void M226();  // M226 P[a] S[b] - Wait for pin P to be in state S (1 or 0).
   void M300();  // M300 S[a] P[b] - play frequency a for b milliseconds (if there is a speaker)
-  //void M306();  // adjust PID  M306 L[0...5] [Pn] [In] [Dn] and report new values.
 #if MACHINE_STYLE == SIXI
-  void M428();  // set home position to the current raw angle values (don't use home position to adjust home position!)
+  //void M306();  // M306 L[0...5] [Pn] [In] [Dn] - Sixi only.  adjust PID and report new values.
+  void M428();  // M428 - Sixi only.  set home position to the current raw angle values (don't use home position to adjust home position!)
 #endif
-  void M500();  // save home offsets
-  void M501();  // load home offsets
-  void M502();  // reset the home offsets
-  void M503();  // report the home offsets
+  void M500();  // M500 - save home offsets
+  void M501();  // M501 - load home offsets
+  void M502();  // M502 - reset the home offsets
+  void M503();  // M503 - report the home offsets
 };
 
 extern Parser parser;
