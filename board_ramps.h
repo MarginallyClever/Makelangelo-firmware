@@ -53,6 +53,8 @@
 #define LIMIT_SWITCH_PIN_LEFT     (MOTOR_0_LIMIT_SWITCH_PIN)
 #define LIMIT_SWITCH_PIN_RIGHT    (MOTOR_1_LIMIT_SWITCH_PIN)
 
+#define CLOCK_FREQ                (16000000L)
+
 // LCD pins
 #if LCD_TYPE == LCD_IS_128X64
 // 128x64 full graphics controller
