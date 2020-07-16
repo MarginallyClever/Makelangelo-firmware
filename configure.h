@@ -17,7 +17,7 @@
 //------------------------------------------------------------------------------
 
 #define POLARGRAPH       1  // polargraph like Makelangelo
-#define TRADITIONALXY    3  // gantry 2 axis setup.
+#define TRADITIONALXY    3  // gantry 3 axis setup.
 #define COREXY           2  // gantry CoreXY setup.
 #define ZARPLOTTER       4  // 4 motor, x-shaped 2D motion
 #define SKYCAM           5  // 4 motor, x-shaped 3D motion
@@ -46,12 +46,12 @@
 //------------------------------------------------------------------------------
 
 #define BOARD_RUMBA        1  // Reprap discount Rumba board
-#define BOARD_RAMPS        2  // Arduino Mega + Ramps 1.4
+#define BOARD_RAMPS        2  // Mega2560 + Ramps 1.4
 #define BOARD_SANGUINOLULU 3  // Sanguinolulu
 #define BOARD_TEENSYLU     4  // Teensylu
-#define BOARD_WEMOS        5  // Wemos D1 R2 + cnc shield (see board_wemos.h)
+#define BOARD_WEMOS        5  // Wemos D1 R2 + CNC Shield v3 (see board_wemos.h)
 #define BOARD_SIXI_MEGA    6  // Arduino Mega + custom shield for Sixi 2 robot
-#define BOARD_CNCV3        7  // CNC Shield v3
+#define BOARD_CNCV3        7  // Mega2560 + CNC Shield v3
 
 // default value
 #define MOTHERBOARD BOARD_RUMBA
@@ -88,7 +88,7 @@
 #include "board_teensylu.h"
 #include "board_wemos.h"
 #include "board_sixi_mega.h"
-#include "board_uno_cncv3.h"
+#include "board_cncv3.h"
 
 
 #include "clock.h"
