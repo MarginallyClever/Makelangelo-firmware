@@ -49,7 +49,7 @@ inline void CRITICAL_SECTION_END() {
 // GLOBALS
 //------------------------------------------------------------------------------
 
-Motor motors[NUM_MOTORS + NUM_SERVOS];
+Motor motors[NUM_AXIES];
 #ifndef ESP8266
 Servo servos[NUM_SERVOS];
 #endif
