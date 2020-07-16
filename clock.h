@@ -18,6 +18,10 @@
 
 #endif  // ESP8266
 
+#ifndef CLOCK_FREQ
+#define CLOCK_FREQ                (16000000L)
+#endif
+
 #define TIMER_RATE            ((CLOCK_FREQ)/8)
 
 // TODO a guess.  use real math here!
