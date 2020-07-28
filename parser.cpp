@@ -286,7 +286,7 @@ void Parser::processCommand() {
       case 15:  sixiDemo();  break;
       case 17:  D17();  break;
       case 18:  D18();  break;
-      case 19:  FLIP_BIT(positionErrorFlags,POSITION_ERROR_FLAG_CONTINUOUS);  break; // toggle
+      case 19:  D19();  break;
       case 20:  SET_BIT_OFF(positionErrorFlags,POSITION_ERROR_FLAG_ERROR);
                 SET_BIT_OFF(positionErrorFlags,POSITION_ERROR_FLAG_FIRSTERROR);
                 break;
@@ -479,6 +479,14 @@ void Parser::D18() {
   }
 
   teleport(a);
+}
+
+void Parser::D19() {
+  boolean p = TEST(positionErrorFlags,POSITION_ERROR_FLAG_CONTINUOUS);
+  boolean state = parseNumber('P',p?1:0);
+  SET_BIT(positionErrorFlags,POSITION_ERROR_FLAG_CONTINUOUS,state);
+  Serial.print(F("D19 P"));
+  Serial.println(state?1:0,DEC);
 }
 #endif
 

@@ -8,7 +8,7 @@
 
 #if MOTHERBOARD == BOARD_SIXI_MEGA 
 
-#define SIXI_UNIT1
+//#define SIXI_UNIT1 // for the very first unit made ONLY
 
 // wrong board type set
 #ifndef __AVR_ATmega2560__

@@ -70,7 +70,7 @@ public:
   void D15();  // D15 - Sixi only.  Sixi demo
   void D17();  // D17 - Sixi only.  report sensor values
   void D18();  // D18 - Sixi only.  copy sensor values to motor step positions (set current position)
-  //void D19();  // D19 - Sixi only.  toggle continuous D17 reporting
+  void D19();  // D19 - Sixi only.  toggle continuous D17 reporting
   //void D20();  // D20 - Sixi only.  clear error flags
   //void D21();  // D21 - Sixi only.  toggle software ESTOP
   void D22();  // D22 - Sixi only.  report current step count for each axis
