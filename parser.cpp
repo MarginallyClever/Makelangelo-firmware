@@ -3,12 +3,17 @@
 #include "eeprom.h"
 #include "lcd.h"
 #include "sdcard.h"
-
+#include "MServo.h"
 
 // GLOBALS
 
 Parser parser;
 
+#if MACHINE_STYLE == SIXI
+#ifndef ESP8266
+extern Servo servos[NUM_SERVOS];
+#endif
+#endif  // MACHINE_STYLE == SIXI
 
 uint8_t absolute_mode = 1; // absolute or incremental programming mode?
 uint8_t current_tool = 0;
@@ -427,6 +432,12 @@ void Parser::D17() {
     // 360/(2^14) aka 0.02197265625deg is the minimum sensor resolution.  as such more than 3 decimal places is useless.
     Serial.print(WRAP_DEGREES(sensorManager.sensors[i].angle), 3);
   }
+  
+#if NUM_SERVOS > 0
+  Serial.print(' ');
+  Serial.print((float)servos[0].read(), 2);
+#endif
+
   /*
     if(current_segment==last_segment) {
     // report estimated position
@@ -688,19 +699,21 @@ void Parser::M101() {
 void Parser::M114() {
   wait_for_empty_segment_buffer();
 
+  Serial.print(F("M114"));
   int i;
   for (i = 0; i < NUM_AXIES; ++i) {
+    Serial.print(' ');
     Serial.print(AxisNames[i]);
     Serial.print(axies[i].pos);
-    Serial.print(' ');
   }
 
-  Serial.print(F("F"));
+  Serial.print(F(" F"));
   Serial.print(feed_rate);
-  Serial.print(F("mm/s"));
 
   Serial.print(F(" A"));
-  Serial.println(acceleration);
+  Serial.print(acceleration);
+  
+  Serial.println();
 }
 
 #ifdef HAS_LCD
