@@ -9,7 +9,23 @@ Makelangelo is a polargraph mural drawing robot.  It is intended to teach studen
 This project specifically deals with the firmware: the code in the brain of the robot that receives instructions and moves the motors.  It pairs really well with Makelangelo, a project to give humans a pleasant GUI.
 
 Makelangelo-firmware can also support traditional XY gantries, CoreXY gantries, Zarplotters, Skycams, Delta robots, Stewart platforms, 3 axis arms, and 6 axis arms.
- 	
+
+## Kinematics ##
+
+Makelangelo-firmware can be recompiled to work as one of many different types of CNC:
+
+- Polargraph: wall hanging V shape
+- Traditional: classic XYZ gantry
+- CoreXY: gantry with cross-belt tensioning
+- Zarplotter: X shaped 2D motion
+- Skycam: X shaped 3D motion
+- Delta: 3-4 link rotatry action moving a head parallel to the table below
+- Stewart platform: six link rotary action moving a head above.
+- Arm3: 3DOF palettizing arm
+- Sixi: 6DOF arm
+- Traditional6: like traditional with more axies
+- SCARA: single link, two joint, 2D motion
+
 ## Version ##
 
 Newer versions might be available at https://www.marginallyclever.com/product/makelangelo-firmware/
