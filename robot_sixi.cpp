@@ -54,8 +54,16 @@ void IK(const float *const axies, long *motorStepArray) {
   motorStepArray[3] = J3 * MOTOR_3_STEPS_PER_TURN / 360.0;  // ULNA
   motorStepArray[4] = J4 * MOTOR_4_STEPS_PER_TURN / 360.0;  // WRIST
   motorStepArray[5] = J5 * MOTOR_5_STEPS_PER_TURN / 360.0;  // HAND
+#ifdef HAS_GRIPPER
+  float jT = axies[6] * 255.0/180.0;
+  jT = min(max(jT,0),255);
+  //Serial.print("jT=");
+  //Serial.println(jT);
+  motorStepArray[6] = jT;
+#else
   motorStepArray[6] = axies[6];
-  
+#endif
+
 #ifdef DEBUG_IK
   Serial.print("J=");  Serial.print(J0);
   Serial.print('\t');  Serial.print(J1);
@@ -191,6 +199,25 @@ void SensorManager::updateAll() {
     v = WRAP_DEGREES(v);
     //Serial.print("\tafter=");  Serial.println(v);
     sensors[i].angle = v;
+
+    // if limit testing is on and no problem at the moment
+    if(TEST_LIMITS && !OUT_OF_BOUNDS) {
+      
+      if(v>axies[i].limitMax) {
+        // and the max limit is passed, barf
+        SET_BIT_ON(sensorManager.positionErrorFlags,POSITION_ERROR_FLAG_ERROR);
+        CRITICAL_SECTION_START();
+        Serial.print(motors[i].letter);
+        Serial.println(F(" MAX LIMIT"));
+      }
+      if(v<axies[i].limitMin) {
+        // and the min limit is passed, barf
+        SET_BIT_ON(sensorManager.positionErrorFlags,POSITION_ERROR_FLAG_ERROR);
+        CRITICAL_SECTION_START();
+        Serial.print(motors[i].letter);
+        Serial.println(F(" MIN LIMIT"));
+      }
+    }
   }
 }
 

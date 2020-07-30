@@ -19,9 +19,11 @@
 
 #define NUM_AXIES            (7)
 #define NUM_MOTORS           (6)
-#define NUM_SERVOS           (1)
 #define NUM_TOOLS            (1)
 #define NUM_SENSORS          (6)
+
+#define NUM_SERVOS           (1)
+#define HAS_GRIPPER  // uncomment this to use a gripper
 
 #define MAX_FEEDRATE         (120.0)  // depends on timer interrupt & hardware
 #define MIN_FEEDRATE         (0)
@@ -95,8 +97,8 @@
 // behaviour flags
 #define POSITION_ERROR_FLAG_CONTINUOUS   (0)  // report position (d17) continuously?
 #define POSITION_ERROR_FLAG_ERROR        (1)  // has error occurred?
-#define POSITION_ERROR_FLAG_FIRSTERROR   (2)  // report the error once per occurrence
-#define POSITION_ERROR_FLAG_ESTOP        (3)  // check for error at all?
+#define POSITION_ERROR_FLAG_ESTOP        (2)  // emergency stop!
+#define POSITION_ERROR_FLAG_CHECKLIMIT   (3)  // check limits and throw error if needed (normally only disabled to drive the robot back inside limits)
 
 
 // Sixi 2 DH parameter table
@@ -144,6 +146,9 @@
 
 
 // SENSORS
+#define REPORT_ANGLES_CONTINUOUSLY (TEST(sensorManager.positionErrorFlags,POSITION_ERROR_FLAG_CONTINUOUS))
+#define TEST_LIMITS                (TEST(sensorManager.positionErrorFlags,POSITION_ERROR_FLAG_CHECKLIMIT))
+#define OUT_OF_BOUNDS              (TEST(sensorManager.positionErrorFlags,POSITION_ERROR_FLAG_ERROR))
 
 // use in for(ALL_SENSORS(i)) { //i will be rising
 #define ALL_SENSORS(NN) int NN=0;NN<NUM_SENSORS;++NN

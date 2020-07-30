@@ -26,6 +26,7 @@
 #define ARM3             8  // 3DOF palletizing robot arm.
 #define SIXI             9  // 6DOF robot arm.
 #define TRADITIONAL6    10  // 6 axis machine, no restrictions.
+#define SCARA           11  // 2 axis SCARA.
 
 // default value
 #define MACHINE_STYLE POLARGRAPH
@@ -90,10 +91,10 @@
 #include "board_sixi_mega.h"
 #include "board_cncv3.h"
 
-
 #include "clock.h"
 #include "motor.h"
 #include "parser.h"
+#include "gripper_hande.h"
 
 //------------------------------------------------------------------------------
 // SANITY CHECKS

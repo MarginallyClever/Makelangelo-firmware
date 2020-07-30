@@ -13,6 +13,9 @@
 
 #else  // ESP8266
 
+extern void CRITICAL_SECTION_START();
+extern void CRITICAL_SECTION_END();
+
 // for timer interrupt control
 #define MAX_COUNTER             (65536L)  // 16 bits
 

@@ -241,7 +241,7 @@ void motor_setup() {
     motors[NN].step_pin         = MOTOR_##NN##_STEP_PIN;\
     motors[NN].dir_pin          = MOTOR_##NN##_DIR_PIN;\
     motors[NN].enable_pin       = MOTOR_##NN##_ENABLE_PIN;\
-    motors[NN].limit_switch_pin = MOTOR_##NN##_LIMIT_SWITCH_PIN;\
+    motors[NN].limit_switch_pin = MOTOR_##NN##_LIMIT_SWITCH_PIN;
 
   SETUP_MOT(0)
 #if NUM_MOTORS>1
@@ -844,7 +844,9 @@ inline void isr_internal_pulse() {
 #ifdef ESP8266
       //analogWrite(SERVO0_PIN, global_servoSteps_0);
 #else
+    #if !defined(HAS_GRIPPER)
       servos[0].write(global_servoSteps_0);
+    #endif
 #endif
     }
 #endif
@@ -1004,9 +1006,13 @@ inline uint32_t isr_internal_block() {
 #endif
 #if NUM_SERVOS>0
     global_servoSteps_0 = working_seg->a[NUM_MOTORS].step_count - working_seg->a[NUM_MOTORS].delta_steps;
-    
+
     servoDelta0 = working_seg->a[NUM_MOTORS].absdelta;
     servoOver0 = -(steps_total >> 1);
+    
+    #ifdef HAS_GRIPPER
+      gripper.sendPositionRequest(working_seg->a[NUM_MOTORS].step_count,255,32);
+    #endif
 #endif
 
 #ifdef DEBUG_STEPPING

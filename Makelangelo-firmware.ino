@@ -187,6 +187,17 @@ void lineSafe(float *pos, float new_feed_rate_mms) {
   uint16_t segments = seconds * SEGMENTS_PER_SECOND;
   if(segments<1) segments=1;
   
+#ifdef HAS_GRIPPER
+  // if we have a gripper and only gripper is moving, don't split the movement.
+  if(lenSquared == sq(delta[6])) {
+    Serial.println("only t");
+    segments=1;
+    Serial.print("seconds=");  Serial.println(seconds);
+    Serial.print("len_mm=");  Serial.println(len_mm);
+    Serial.print("new_feed_rate_mms=");  Serial.println(new_feed_rate_mms);
+  }
+#endif
+  
   const float inv_segments = 1.0f / float(segments);
   const float segment_len_mm = len_mm * inv_segments;
   
@@ -299,23 +310,15 @@ void meanwhile() {
 #if MACHINE_STYLE == SIXI
   sensorManager.updateAll();
 
-  if( TEST(positionErrorFlags,POSITION_ERROR_FLAG_ERROR) ) {
-    if( TEST(positionErrorFlags,POSITION_ERROR_FLAG_FIRSTERROR) ) {
-      Serial.println(F("\n\n** POSITION ERROR **\n"));
-      SET_BIT_OFF(positionErrorFlags,POSITION_ERROR_FLAG_FIRSTERROR);
-    }
-  } else {
-    if( TEST(positionErrorFlags,POSITION_ERROR_FLAG_FIRSTERROR) == 0 ) {
-      SET_BIT_ON(positionErrorFlags,POSITION_ERROR_FLAG_FIRSTERROR);
-    }
-  }
-
-  if( TEST(positionErrorFlags,POSITION_ERROR_FLAG_CONTINUOUS) ) {
+  if( REPORT_ANGLES_CONTINUOUSLY ) {
     if( millis() > reportDelay ) {
       reportDelay = millis() + 100;
       parser.D17();
     }
   }
+
+  gripper.update();
+
 #endif
 
 #ifdef DEBUG_STEPPING
@@ -408,6 +411,10 @@ void setup() {
   
 #ifdef MACHINE_HAS_LIFTABLE_PEN
   if (NUM_AXIES >= 3) pos[2] = PEN_UP_ANGLE;
+#endif
+
+#if MACHINE_STYLE==SIXI
+  gripper.setup();
 #endif
 
   teleport(pos);

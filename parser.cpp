@@ -292,10 +292,8 @@ void Parser::processCommand() {
       case 17:  D17();  break;
       case 18:  D18();  break;
       case 19:  D19();  break;
-      case 20:  SET_BIT_OFF(positionErrorFlags,POSITION_ERROR_FLAG_ERROR);
-                SET_BIT_OFF(positionErrorFlags,POSITION_ERROR_FLAG_FIRSTERROR);
-                break;
-      case 21:  FLIP_BIT(positionErrorFlags,POSITION_ERROR_FLAG_ESTOP);  break;  // toggle ESTOP
+      case 20:  SET_BIT_OFF(sensorManager.positionErrorFlags,POSITION_ERROR_FLAG_ERROR);  break;
+      case 21:  FLIP_BIT(sensorManager.positionErrorFlags,POSITION_ERROR_FLAG_ESTOP);  break;  // toggle ESTOP
       case 22:  D22();  break;
 #endif
       //case 50:  D50();  break;
@@ -499,6 +497,21 @@ void Parser::D19() {
   Serial.print(F("D19 P"));
   Serial.println(state?1:0,DEC);
 }
+
+
+void Parser::D20() {
+  SET_BIT_OFF(sensorManager.positionErrorFlags,POSITION_ERROR_FLAG_ERROR);
+}
+
+
+void Parser::D21() {
+  int isOn = parseNumber('P',TEST_LIMITS?1:0);
+  
+  SET_BIT(sensorManager.positionErrorFlags,POSITION_ERROR_FLAG_CHECKLIMIT,isOn);  
+  
+  Serial.print(F("D21 "));
+  Serial.println(TEST_LIMITS?"1":"0");
+}
 #endif
 
 
@@ -510,17 +523,46 @@ void Parser::D19() {
    straight lines.  distance in mm.
 */
 void Parser::G01() {
-  acceleration = parseNumber('A', acceleration);
-  acceleration = min(max(acceleration, (float)MIN_ACCELERATION), (float)MAX_ACCELERATION);
+
+  // if limit testing is on
+  if(TEST_LIMITS) {
+    // and a limit is exceeeded
+    if(TEST(sensorManager.positionErrorFlags,POSITION_ERROR_FLAG_ERROR)) {
+      // refuse to move
+      Serial.println(F("LIMIT ERROR"));
+      return;
+    }
+  }
+      
+  if(hasGCode('A')) {
+    acceleration = parseNumber('A',acceleration);
+    acceleration = min(max(acceleration, (float)MIN_ACCELERATION), (float)MAX_ACCELERATION);
+  }
+  
   float f = parseNumber('F', feed_rate);
   f = min(max(f, (float)MIN_FEEDRATE), (float)MAX_FEEDRATE);
 
+  boolean badAngles=false;
+  
   int i;
   float pos[NUM_AXIES];
-  for (i = 0; i < NUM_AXIES; ++i) {
+  for (ALL_AXIES(i)) {
     float p = axies[i].pos;
     pos[i] = parseNumber(AxisNames[i], (absolute_mode ? p : 0)) + (absolute_mode ? 0 : p);
+    
+    if(pos[i] > axies[i].limitMax) {
+      Serial.print(F("LIMIT MAX "));
+      Serial.println(i);
+      badAngles=1;
+    }
+    if(pos[i] < axies[i].limitMin) {
+      Serial.print(F("LIMIT MIN "));
+      Serial.println(i);
+      badAngles=1;
+    }
   }
+
+  if(badAngles) return;
 
   lineSafe( pos, f );
 }
@@ -673,17 +715,17 @@ void Parser::M101() {
   }
 
 
-  Serial.print(F("("));
+  Serial.print(F("M101 ("));
 
   int i;
-  for (i = 0; i < NUM_AXIES; ++i) {
+  for (ALL_AXIES(i)) {
     Serial.print(axies[i].limitMin);
     if (i < NUM_AXIES - 1)  Serial.print(',');
   }
 
   Serial.print(F(") - ("));
 
-  for (i = 0; i < NUM_AXIES; ++i) {
+  for (ALL_AXIES(i)) {
     Serial.print(axies[i].limitMax);
     if (i < NUM_AXIES - 1)  Serial.print(',');
   }

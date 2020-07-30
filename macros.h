@@ -2,6 +2,9 @@
 
 #include <Arduino.h>
 
+#define TODEGREES  (180.0 / PI)
+#define TORADIANS  (PI / 180.0)
+
 // for assembly in isr inner loop
 #define A(CODE) " " CODE "\n\t"
 
