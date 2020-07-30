@@ -82,6 +82,7 @@
 #include "robot_arm3.h"
 #include "robot_sixi.h"
 #include "robot_traditional6.h"
+#include "robot_scara.h"
 
 #include "board_rumba.h"
 #include "board_ramps.h"

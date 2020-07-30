@@ -44,7 +44,9 @@
 
 // plan long moves as a set of submoves to increase accuracy.  Uncomment to turn this off.
 //#define SUBDIVIDE_LINES
-#define SEGMENTS_PER_SECOND (10)
+#define SEGMENTS_PER_SECOND  (10)
+
+#define MM_PER_STEP          (1)
 
 //------------------------------------------------------------------------------
 // MOTOR DETAILS

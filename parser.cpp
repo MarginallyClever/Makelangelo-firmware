@@ -523,7 +523,7 @@ void Parser::D21() {
    straight lines.  distance in mm.
 */
 void Parser::G01() {
-
+#if MACHINE_STYLE == SIXI
   // if limit testing is on
   if(TEST_LIMITS) {
     // and a limit is exceeeded
@@ -533,7 +533,8 @@ void Parser::G01() {
       return;
     }
   }
-      
+#endif // MACHINE_STYLE == SIXI
+
   if(hasGCode('A')) {
     acceleration = parseNumber('A',acceleration);
     acceleration = min(max(acceleration, (float)MIN_ACCELERATION), (float)MAX_ACCELERATION);

@@ -13,7 +13,7 @@
 
 
 // use law of cosines property to find one interior angle in a triangle.  c=arccos((aa+bb-cc)/(2ab)).
-float lawOfCosines(float,a,b,c) {
+float lawOfCosines(float a,float b,float c) {
   float numerator = sq(a)+sq(b)-sq(c);
   float denominator = 2.0*a*b;
   if(denominator==0) return 0;
@@ -60,8 +60,11 @@ void IK(const float *const cartesian, long *motorStepArray) {
  * @return 0 if no problem, 1 on failure.
  */
 int FK(long *motorStepArray,float *axies) {
-  axies[0] = motorStepArray[0] * MM_PER_STEP_X;
-  axies[1] = motorStepArray[1] * MM_PER_STEP_Y;
+  float a = motorStepArray[0] * MICROSTEP_PER_DEGREE * TORADIANS;
+  float b = motorStepArray[1] * MICROSTEP_PER_DEGREE * TORADIANS;
+  
+  axies[0] = cos(a) * BICEP_LENGTH_MM + cos(a+b) * FOREARM_LENGTH_MM;
+  axies[1] = sin(a) * BICEP_LENGTH_MM + sin(a+b) * FOREARM_LENGTH_MM;
   axies[2] = motorStepArray[NUM_MOTORS];
 }
 
