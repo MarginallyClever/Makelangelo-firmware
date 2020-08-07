@@ -1,5 +1,4 @@
-#ifndef MOTOR_H
-#define MOTOR_H
+#pragma once
 //------------------------------------------------------------------------------
 // Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
@@ -7,30 +6,16 @@
 //------------------------------------------------------------------------------
 
 #include <Arduino.h>
-#ifdef HAS_TMC2130
-#include <TMC2130Stepper.h>
-#include <TMC2130Stepper_REGDEFS.h>
 
-#if TMC2130STEPPER_VERSION < 0x020201
-  #error "Update TMC2130Stepper library to 2.2.1 or newer."
-#endif
-#endif
+#include "macros.h"
+#include "tmc2130.h"
+
 
 //------------------------------------------------------------------------------
 // CONSTANTS
 //------------------------------------------------------------------------------
-#if MACHINE_STYLE == SIXI
-
-#define POSITION_ERROR_FLAG_CONTINUOUS   (1<<0)  // report position (d17) continuously?
-#define POSITION_ERROR_FLAG_ERROR        (1<<1)  // has error occurred?
-#define POSITION_ERROR_FLAG_FIRSTERROR   (1<<2)  // report the error once per occurrence
-#define POSITION_ERROR_FLAG_ESTOP        (1<<3)  // check for error at all?
-
-#endif
 
 #ifdef HAS_TMC2130
-#define STEPPER_DIR_HIGH   LOW
-#define STEPPER_DIR_LOW    HIGH
 #else
 // A4988
 #define STEPPER_DIR_HIGH   HIGH
@@ -39,10 +24,66 @@
 
 
 //------------------------------------------------------------------------------
+// MOVE BUFFERING
+//------------------------------------------------------------------------------
+
+
+// buffering commands
+#ifndef MAX_SEGMENTS
+#define MAX_SEGMENTS         (32)  // number of line segments to buffer ahead. must be a power of two.
+#endif
+
+#define SEGMOD(x)            ((x)&(MAX_SEGMENTS-1))
+
+
+//------------------------------------------------------------------------------
+// step direction
+//------------------------------------------------------------------------------
+
+#ifndef START0
+#define START0 LOW
+#endif
+#ifndef START1
+#define START1 LOW
+#endif
+#ifndef START2
+#define START2 LOW
+#endif
+#ifndef START3
+#define START3 LOW
+#endif
+#ifndef START4
+#define START4 LOW
+#endif
+#ifndef START5
+#define START5 LOW
+#endif
+
+#ifndef END0
+#define END0 HIGH
+#endif
+#ifndef END1
+#define END1 HIGH
+#endif
+#ifndef END2
+#define END2 HIGH
+#endif
+#ifndef END3
+#define END3 HIGH
+#endif
+#ifndef END4
+#define END4 HIGH
+#endif
+#ifndef END5
+#define END5 HIGH
+#endif
+
+//------------------------------------------------------------------------------
 // STRUCTURES
 //------------------------------------------------------------------------------
 
 typedef struct {
+  char letter;
   uint8_t step_pin;
   uint8_t dir_pin;
   uint8_t enable_pin;
@@ -58,7 +99,6 @@ typedef struct {
   uint32_t absdelta;
   int dir;
 #if MACHINE_STYLE == SIXI
-  float distancePerStep;
   float expectedPosition;
   float positionStart;
   float positionEnd;
@@ -98,10 +138,9 @@ typedef struct {
 
 extern Segment line_segments[MAX_SEGMENTS];
 extern Segment *working_seg;
-extern volatile int current_segment;
-extern volatile int last_segment;
+extern volatile int current_segment, last_segment, nonbusy_segment;
 extern int first_segment_delay;
-extern Motor motors[NUM_MOTORS+NUM_SERVOS];
+extern Motor motors[NUM_AXIES];
 extern const char *AxisNames;
 extern const char *MotorNames;
 extern float max_jerk[NUM_MOTORS+NUM_SERVOS];
@@ -110,26 +149,44 @@ extern float max_feedrate_mm_s[NUM_MOTORS+NUM_SERVOS];
 extern uint8_t positionErrorFlags;
 extern uint32_t min_segment_time_us;
 
-
-#ifdef HAS_TMC2130
-extern TMC2130Stepper driver_0;
-extern TMC2130Stepper driver_1;
-#endif
+//------------------------------------------------------------------------------
+// METHODS
+//------------------------------------------------------------------------------
 
 extern void motor_set_step_count(long *a);
 extern void wait_for_empty_segment_buffer();
 extern char segment_buffer_full();
-extern void motor_line(const float * const target_position,float &fr_mm_s);
+extern void motor_line(const float * const target_position,float fr_mm_s,float millimeters);
 extern void motor_engage();
+extern void motor_home();
+extern void enable_stealthChop();
 extern void motor_disengage();
 extern void motor_setup();
 extern void setPenAngle(int arg0);
+extern void clockISRProfile();
 
 extern const int movesPlanned();
 
-//extern FORCE_INLINE Segment *get_current_segment();
-// for reasons I don't understand... if i put this method in the .h file i get compile errors.
-// so I put it here, which forces the externs.
+#ifdef DEBUG_STEPPING
+extern void debug_stepping();
+#endif // DEBUG_STEPPING
+
+FORCE_INLINE const int movesPlanned() {
+  return SEGMOD( last_segment - current_segment );
+}
+
+FORCE_INLINE const int movesPlannedNotBusy() {
+  return SEGMOD( last_segment - nonbusy_segment );
+}
+
+FORCE_INLINE const int get_next_segment(int i) {
+  return SEGMOD( i + 1 ); 
+}
+
+FORCE_INLINE const int get_prev_segment(int i) {
+  return SEGMOD( i - 1 );
+}
+
 FORCE_INLINE Segment *get_current_segment() {
   if (current_segment == last_segment ) return NULL;
   if (first_segment_delay > 0) {
@@ -137,7 +194,11 @@ FORCE_INLINE Segment *get_current_segment() {
     if (movesPlanned() > 3) first_segment_delay = 0;
     return NULL;
   }
-  return &line_segments[current_segment];
-}
 
-#endif // MOTOR_H
+  Segment *block = &line_segments[current_segment];
+  
+  if(block->recalculate_flag!=0) return NULL;  // wait, not ready
+  nonbusy_segment = get_next_segment(current_segment);
+  
+  return block;
+}

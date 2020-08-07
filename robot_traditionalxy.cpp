@@ -43,7 +43,38 @@ int FK(long *motorStepArray,float *axies) {
 
 
 void robot_findHome() {
+  wait_for_empty_segment_buffer();
+  motor_engage();
 
+  findStepDelay();
+
+  Serial.println(F("Finding..."));
+
+  uint8_t i, hits;
+  // back up until all switches are hit
+  do {
+    hits = 0;
+    // for each stepper,
+    for (ALL_MOTORS(i)) {
+      digitalWrite(motors[i].dir_pin, HIGH);
+      // if this switch hasn't been hit yet
+      if (digitalRead(motors[i].limit_switch_pin) == HIGH) {
+        // move "down"
+        Serial.print('|');
+        digitalWrite(motors[i].step_pin, HIGH);
+        digitalWrite(motors[i].step_pin, LOW);
+      } else {
+        ++hits;
+        Serial.print('*');
+      }
+    }
+    Serial.println();
+    pause(step_delay);
+  } while (hits < NUM_MOTORS);
+  Serial.println(F("Found."));
+  
+  float zeros[2] = {0, 0};
+  teleport(zeros);
 }
 
 

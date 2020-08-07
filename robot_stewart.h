@@ -1,5 +1,4 @@
-#ifndef ROBOT_STEWART_H
-#define ROBOT_STEWART_H
+#pragma once
 //------------------------------------------------------------------------------
 // Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
@@ -34,8 +33,7 @@
 
 // plan long moves as a set of submoves to increase accuracy.  Uncomment to turn this off.
 #define SUBDIVIDE_LINES
-// what is the maximum length of a subdivided line?
-#define SEGMENT_MAX_LENGTH_MM  (1)
+#define SEGMENTS_PER_SECOND (10)
 
 #define BICEP_LENGTH         ( 5.000)
 #define FOREARM_LENGTH       (16.750)
@@ -53,6 +51,3 @@
 extern void stewartDemo();
 
 #endif  // #ifdef STEWART
-
-
-#endif  // #ifndef ROBOT_STEWART_H

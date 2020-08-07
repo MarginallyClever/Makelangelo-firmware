@@ -1,5 +1,4 @@
-#ifndef ROBOT_TRADITIONALXY_H
-#define ROBOT_TRADITIONALXY_H
+#pragma once
 //------------------------------------------------------------------------------
 // Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
@@ -18,8 +17,11 @@
 #define PEN_UP_ANGLE         (90)
 #define PEN_DOWN_ANGLE       (50)  // Some steppers don't like 0 degrees
 
+#ifndef NUM_AXIES
 #define NUM_AXIES            (3)  // could be more?
-#define NUM_MOTORS           (2)
+#endif
+
+#define NUM_MOTORS           (3)
 #define NUM_SERVOS           (1)
 #define NUM_TOOLS            (1)
 
@@ -36,8 +38,7 @@
 
 // plan long moves as a set of submoves to increase accuracy.  Uncomment to turn this off.
 //#define SUBDIVIDE_LINES
-// what is the maximum length of a subdivided line?
-#define SEGMENT_MAX_LENGTH_MM  (20)
+#define SEGMENTS_PER_SECOND (10)
 
 // alter these two values to equal gear ratio * motor steps * microstepping for each axis.
 // by default they are set the same as all other robots in the system.
@@ -45,6 +46,3 @@
 #define MM_PER_STEP_Y    MM_PER_STEP
 
 #endif  // #ifdef TRADITIONALXY
-
-
-#endif  // #ifndef ROBOT_TRADITIONALXY_H

@@ -1,5 +1,4 @@
-#ifndef EEPROM_H
-#define EEPROM_H
+#pragma once
 //------------------------------------------------------------------------------
 // Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
@@ -13,63 +12,45 @@
 #define ADDR_VERSION            0                          // 0..255 (1 byte)
 #define ADDR_UUID               (ADDR_VERSION+1)
 #define EEPROM_UUID_LENGTH      (SIZEOF_LONG_BYTES)
+
 #define ADDR_LIMITS             (ADDR_UUID+EEPROM_UUID_LENGTH)
-#define EEPROM_LIMITS_LENGTH    (2*NUM_AXIES*SIZEOF_FLOAT_BYTES)
+#define EEPROM_LIMITS_LENGTH    (NUM_AXIES*2*SIZEOF_FLOAT_BYTES)
+
 #define ADDR_HOME               (ADDR_LIMITS+EEPROM_LIMITS_LENGTH)
-#define EEPROM_LIMITS_HOME      (NUM_AXIES*SIZEOF_FLOAT_BYTES)
-#define ADDR_CALIBRATION_LEFT   (ADDR_HOME+EEPROM_LIMITS_HOME)
-#define ADDR_CALIBRATION_RIGHT  (ADDR_CALIBRATION_LEFT+SIZEOF_FLOAT_BYTES)
+#define EEPROM_HOME_LENGTH      (NUM_AXIES*1*SIZEOF_FLOAT_BYTES)
+
+#define ADDR_CALIBRATION_LEFT   (ADDR_HOME+EEPROM_HOME_LENGTH)
+#define ADDR_CALIBRATION_LENGTH (1*SIZEOF_FLOAT_BYTES)
+#define ADDR_CALIBRATION_RIGHT  (ADDR_CALIBRATION_LEFT+ADDR_CALIBRATION_LENGTH)
+
+#define ADDR_PID                (ADDR_CALIBRATION_RIGHT+ADDR_CALIBRATION_LENGTH)
+#define EEPROM_PID_LENGTH       (NUM_AXIES*3*SIZEOF_FLOAT_BYTES)
 
 
+class Eeprom {
+public:
+  long readLong(int ee);
+  boolean writeLong(int ee, long value);
+  
+  uint8_t loadVersion();
+  void saveUID();
+  uint8_t loadUID();
+  void saveLimits();
+  void loadLimits();
+  
+  /**
+   * @param limits NUM_AXIES pairs of floats.  each pair is one float for max limit and one for min limit.
+   */
+  void adjustLimits(float *limits);
+  
+  void saveHome();
+  void loadHome();
+  
+  void saveCalibration();
+  void loadCalibration();
+  
+  void saveAll();
+  void loadAll();
+};
 
-/**
- * 
- */
-char loadVersion();
-
-/**
- * 
- */
-void saveUID();
-
-/**
- * 
- */
-void saveLimits();
-
-/**
- * 
- */
-void loadLimits();
-
-/**
- * @param limits NUM_AXIES pairs of floats.  each pair is one float for max limit and one for min limit.
- */
-void adjustLimits(float *limits);
-
-/**
- * 
- */
-void saveHome();
-
-/**
- * 
- */
-void loadHome();
-
-/**
- *
- */
-void saveCalibration();
-
-/**
- * 
- */
-void loadCalibration();
-
-/**
- * 
- */
-void loadConfig();
-
-#endif // EEPROM_H
+extern Eeprom eeprom;

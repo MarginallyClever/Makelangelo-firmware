@@ -1,5 +1,4 @@
-#ifndef VECTOR3_H
-#define VECTOR3_H
+#pragma once
 //------------------------------------------------------------------------------
 // Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
@@ -8,7 +7,7 @@
 
 
 
-#include "Arduino.h"
+#include <Arduino.h>
 
 
 class Vector3 {
@@ -291,5 +290,3 @@ public:
     z = m[6] * src.x + m[7] * src.y + m[8] * src.z;
   }
 };
-
-#endif

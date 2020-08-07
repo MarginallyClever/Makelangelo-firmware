@@ -1,5 +1,4 @@
-#ifndef ROBOT_SKYCAM_H
-#define ROBOT_SKYCAM_H
+#pragma once
 //------------------------------------------------------------------------------
 // Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
@@ -33,14 +32,10 @@
 
 // plan long moves as a set of submoves to increase accuracy.  Uncomment to turn this off.
 #define SUBDIVIDE_LINES
-// what is the maximum length of a subdivided line?
-#define SEGMENT_MAX_LENGTH_MM  (2)
+#define SEGMENTS_PER_SECOND (10)
 
 // servo angles for pen control
 #define PEN_UP_ANGLE         (50)
 #define PEN_DOWN_ANGLE       (90)  // Some steppers don't like 0 degrees
 
 #endif  // SKYCAM
-
-
-#endif  // #ifndef ROBOT_SKYCAM_H

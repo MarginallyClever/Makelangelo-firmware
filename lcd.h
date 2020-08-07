@@ -1,5 +1,4 @@
-#ifndef LCD_H
-#define LCD_H
+#pragma once
 //------------------------------------------------------------------------------
 // Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
@@ -15,7 +14,7 @@
 
 //----------------------------------------------------
 
-#ifdef LCD_IS_128X64
+#if LCD_TYPE == LCD_IS_128X64
 
 #define LCD_PIXEL_HEIGHT   64
 #define LCD_PIXEL_WIDTH    128
@@ -34,7 +33,7 @@
 
 //----------------------------------------------------
 
-#ifdef LCD_IS_SMART
+#if LCD_TYPE == LCD_IS_SMART
 
 // there is no practical per-pixel control.
 //#define LCD_PIXEL_HEIGHT   ?
@@ -67,17 +66,13 @@
 #define LCD_MESSAGE_LENGTH (LCD_HEIGHT * LCD_WIDTH + 1)  // we have two lines of 20 characters avialable in 7.16
 #define LCD_DRAW_DELAY     (100)
 #define LCD_TURN_PER_MENU  (3)  // was 5
+#define M117_MAX_LEN       (LCD_MESSAGE_LENGTH/2)
 
-extern char lcd_message[LCD_MESSAGE_LENGTH+1];
-extern char lcd_message_m117[LCD_MESSAGE_LENGTH/2+1];
-extern uint8_t speed_adjust;
-
-
-extern inline void LCD_print(const char *x);
-
-#endif // HAS_LCD
+extern uint8_t speed_adjust;  // used by planner
+extern uint8_t menuStackDepth;
 
 extern void LCD_update();
 extern void LCD_setup();
+extern void LCD_setStatusMessage(char *message);
 
-#endif // LCD_H
+#endif // HAS_LCD

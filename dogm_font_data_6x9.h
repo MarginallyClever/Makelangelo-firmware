@@ -1,5 +1,4 @@
-#ifndef DOGM_FONT_DATA_6X9_H
-#define DOGM_FONT_DATA_6X9_H
+#pragma once
 /**
   Fontname: -Misc-Fixed-Medium-R-Normal--9-90-75-75-C-60-ISO10646-1
   Copyright: Public domain font.  Share and enjoy.
@@ -158,5 +157,3 @@ const u8g_fntpgm_uint8_t u8g_font_6x9[2300] U8G_SECTION(".progmem.u8g_font_6x9")
   4, 8, 8, 6, 1, 254, 128, 128, 224, 144, 144, 224, 128, 128, 4, 8,
   8, 6, 1, 254, 80, 0, 144, 144, 144, 112, 144, 96
 };
-
-#endif  // DOGM_FONT_DATA_6X9_H

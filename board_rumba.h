@@ -1,5 +1,4 @@
-#ifndef BOARD_RUMBA_H
-#define BOARD_RUMBA_H
+#pragma once
 //------------------------------------------------------------------------------
 // Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
@@ -15,31 +14,37 @@
 
 #define MAX_MOTORS                 (6)
 
+#define MOTOR_0_LETTER            'X'
 #define MOTOR_0_DIR_PIN           (16)
 #define MOTOR_0_STEP_PIN          (17)
 #define MOTOR_0_ENABLE_PIN        (48)
 #define MOTOR_0_LIMIT_SWITCH_PIN  (37)
 
+#define MOTOR_1_LETTER            'Y'
 #define MOTOR_1_DIR_PIN           (47)
 #define MOTOR_1_STEP_PIN          (54)
 #define MOTOR_1_ENABLE_PIN        (55)
 #define MOTOR_1_LIMIT_SWITCH_PIN  (36)
 
+#define MOTOR_2_LETTER            'Z'
 #define MOTOR_2_DIR_PIN           (56)
 #define MOTOR_2_STEP_PIN          (57)
 #define MOTOR_2_ENABLE_PIN        (62)
 #define MOTOR_2_LIMIT_SWITCH_PIN  (35)
 
+#define MOTOR_3_LETTER            'U'
 #define MOTOR_3_DIR_PIN           (22)
 #define MOTOR_3_STEP_PIN          (23)
 #define MOTOR_3_ENABLE_PIN        (24)
 #define MOTOR_3_LIMIT_SWITCH_PIN  (34)
 
+#define MOTOR_4_LETTER            'V'
 #define MOTOR_4_DIR_PIN           (25)
 #define MOTOR_4_STEP_PIN          (26)
 #define MOTOR_4_ENABLE_PIN        (27)
 #define MOTOR_4_LIMIT_SWITCH_PIN  (33)
 
+#define MOTOR_5_LETTER            'W'
 #define MOTOR_5_DIR_PIN           (28)
 #define MOTOR_5_STEP_PIN          (29)
 #define MOTOR_5_ENABLE_PIN        (39)
@@ -53,7 +58,7 @@
 
 
 // LCD pins
-#ifdef LCD_IS_128X64
+#if LCD_TYPE == LCD_IS_128X64
 #define BEEPER             44
 #define LCD_PINS_RS        19
 #define LCD_PINS_ENABLE    42
@@ -73,7 +78,7 @@
 #define SDCARDDETECT       49
 #endif
 
-#ifdef LCD_IS_SMART
+#if LCD_TYPE == LCD_IS_SMART
 #define BEEPER             44
 #define LCD_PINS_RS        19
 #define LCD_PINS_ENABLE    42
@@ -96,20 +101,10 @@
 
 #ifdef HAS_TMC2130
 
-#define STALL_VALUE -20 // [-64..63]
-#define CS_PIN_0    30//53  //           17        64  //chip select
-#define CS_PIN_1    31//49  //           17        64  //chip select
+#define CS_PIN_0    30  //chip select
+#define CS_PIN_1    31  //chip select
 
-#define MOTOR_0_LIMIT_SWITCH_PIN  (11)
-#define MOTOR_1_LIMIT_SWITCH_PIN  (12)
-
-#include <Arduino.h>
-
-extern inline uint8_t tmc_transfer8(uint8_t val);
-extern inline uint32_t tmc_transfer16(uint32_t val);
 #endif  // HAS_TMC2130
 
 
 #endif
-
-#endif  // BOARD_RUMBA_H

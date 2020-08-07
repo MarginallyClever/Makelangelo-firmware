@@ -1,3 +1,4 @@
+#pragma once
 /*
   Servo.h - Interrupt driven Servo library for Arduino using 16 bit timers- Version 2
   Copyright (c) 2009 Michael Margolis.  All right reserved.
@@ -42,9 +43,6 @@
    detach()    - Stops an attached servos from pulsing its i/o pin.
  */
 
-#ifndef Servo_h
-#define Servo_h
-
 #ifndef ESP8266
 
 #include <avr/interrupt.h>
@@ -88,9 +86,11 @@ typedef enum { _timer3, _Nbr_16timers } timer16_Sequence_t ;
 typedef enum { _timer3, _Nbr_16timers } timer16_Sequence_t ;
 
 #else  // everything else
-#define _useTimer1
+//#define _useTimer1
+#define _useTimer2
 //#define _useTimer3
-typedef enum { _timer1, _Nbr_16timers } timer16_Sequence_t ;
+//typedef enum { _timer1, _Nbr_16timers } timer16_Sequence_t ;
+typedef enum { _timer2, _Nbr_16timers } timer16_Sequence_t ;
 //typedef enum { _timer3, _Nbr_16timers } timer16_Sequence_t ;
 #endif
 
@@ -135,5 +135,3 @@ private:
 };
 
 #endif // ESP8266
-
-#endif // Servo_h

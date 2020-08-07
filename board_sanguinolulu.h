@@ -1,5 +1,4 @@
-#ifndef BOARD_SANGUINOLULU_H
-#define BOARD_SANGUINOLULU_H
+#pragma once
 //------------------------------------------------------------------------------
 // Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
@@ -9,22 +8,26 @@
 
 #if MOTHERBOARD == BOARD_SANGUINOLULU 
 #define MAX_MOTORS                 (4)
-//x
+
+#define MOTOR_0_LETTER            'X'
 #define MOTOR_0_DIR_PIN           (21)
 #define MOTOR_0_STEP_PIN          (15)
 #define MOTOR_0_ENABLE_PIN        (14)
 #define MOTOR_0_LIMIT_SWITCH_PIN  (18)
-//y
+
+#define MOTOR_1_LETTER            'Y'
 #define MOTOR_1_DIR_PIN           (23)
 #define MOTOR_1_STEP_PIN          (22)
 #define MOTOR_1_ENABLE_PIN        (14)
 #define MOTOR_1_LIMIT_SWITCH_PIN  (19)
-//z
+
+#define MOTOR_2_LETTER            'Z'
 #define MOTOR_2_DIR_PIN           (2)
 #define MOTOR_2_STEP_PIN          (3)
 #define MOTOR_2_ENABLE_PIN        (14)
 #define MOTOR_2_LIMIT_SWITCH_PIN  (20)
-//e
+
+#define MOTOR_3_LETTER            'U'
 #define MOTOR_3_DIR_PIN           (0)
 #define MOTOR_3_STEP_PIN          (1)
 #define MOTOR_3_ENABLE_PIN        (14)
@@ -39,6 +42,3 @@
 #undef HAS_SD
 
 #endif
-
-
-#endif  // BOARD_SANGUINOLULU_H

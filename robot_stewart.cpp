@@ -359,29 +359,29 @@ void robot_findHome() {
   Serial.println(F("Finding..."));
 
   uint8_t i, hits;
-  // back up until all switches are hitG
+  // back up until all switches are hit
   do {
     hits = 0;
     // for each stepper,
-    for (i = 0; i < NUM_MOTORS; ++i) {
+    for (ALL_MOTORS(i)) {
       digitalWrite(motors[i].dir_pin, HIGH);
       // if this switch hasn't been hit yet
       if (digitalRead(motors[i].limit_switch_pin) == HIGH) {
         // move "down"
-        //Serial.print('|');
+        Serial.print('|');
         digitalWrite(motors[i].step_pin, HIGH);
         digitalWrite(motors[i].step_pin, LOW);
       } else {
         ++hits;
-        //Serial.print('*');
+        Serial.print('*');
       }
     }
-    //Serial.println();
+    Serial.println();
     pause(step_delay);
   } while (hits < NUM_MOTORS);
 
   // The arms are 19.69 degrees from straight down when they hit the switcrobot.
-  // @TODO: This could be better customized in firmware.
+  // TODO This could be better customized in firmware.
   uint32_t steps_to_zero = SWITCH_ANGLE * MICROSTEP_PER_DEGREE;
   
   Serial.println(F("Homing..."));

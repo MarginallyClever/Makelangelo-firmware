@@ -14,10 +14,10 @@
 
 #ifdef HAS_LCD
 
-#ifdef LCD_IS_SMART
+#if LCD_TYPE == LCD_IS_SMART
 #include <LiquidCrystal.h>
 #endif
-#ifdef LCD_IS_128X64
+#if LCD_TYPE == LCD_IS_128X64
 #include <Arduino.h>
 #include <U8glib.h>
 #include <SPI.h>
@@ -40,10 +40,10 @@ typedef struct {
 //------------------------------------------------------------------------------
 // GLOBALS
 //------------------------------------------------------------------------------
-#ifdef LCD_IS_SMART
+#if LCD_TYPE == LCD_IS_SMART
 LiquidCrystal lcd(LCD_PINS_RS, LCD_PINS_ENABLE, LCD_PINS_D4, LCD_PINS_D5, LCD_PINS_D6, LCD_PINS_D7);
 #endif
-#ifdef LCD_IS_128X64
+#if LCD_TYPE == LCD_IS_128X64
 // This is not ideal - will not work when board models change.
 U8GLIB_ST7920_128X64_1X u8g(LCD_PINS_D4, LCD_PINS_ENABLE, LCD_PINS_RS);
 #endif
@@ -57,7 +57,7 @@ char lcd_click_old = HIGH;
 char lcd_click_now = 0;
 uint8_t speed_adjust = 100;
 char lcd_message[LCD_MESSAGE_LENGTH + 1];
-char lcd_message_m117[LCD_MESSAGE_LENGTH/2+1];
+char lcd_message_m117[M117_MAX_LEN+1];
 char lcd_dirty=0;
 
 #define MENU_STACK_DEPTH   (5)
@@ -77,7 +77,7 @@ uint8_t ty;
 void (*current_menu)();
 
 
-#ifdef LCD_IS_128X64
+#if LCD_TYPE == LCD_IS_128X64
 /**
    Made with Marlin Bitmap Converter
    http://marlinfw.org/tools/u8glib/converter.html
@@ -132,13 +132,13 @@ const unsigned char logoImage [] PROGMEM = {
 /**
    Clear the screen
 */
-#ifdef LCD_IS_SMART
+#if LCD_TYPE == LCD_IS_SMART
 inline void LCD_clear() {
   for (int i = 0; i < LCD_MESSAGE_LENGTH; ++i) lcd_message[i] = ' ';
   lcd_message[LCD_MESSAGE_LENGTH - 1] = 0;
 }
 #endif
-#ifdef LCD_IS_128X64
+#if LCD_TYPE == LCD_IS_128X64
 inline void LCD_clear() {
   //u8g.firstPage();
   //while( u8g.nextPage() );
@@ -151,7 +151,7 @@ inline void LCD_clear() {
 /**
    print text to the LCD
 */
-#ifdef LCD_IS_SMART
+#if LCD_TYPE == LCD_IS_SMART
 inline void LCD_advance() {
   lcd_posx++;
   if (lcd_posx >= LCD_WIDTH) {
@@ -193,7 +193,7 @@ inline void LCD_print(const char x) {
   LCD_advance();
 }
 #endif
-#ifdef LCD_IS_128X64
+#if LCD_TYPE == LCD_IS_128X64
 #define LCD_print      u8g.print
 #endif
 
@@ -201,10 +201,10 @@ inline void LCD_print(const char x) {
 /**
    Set the row/column of text at which to begin printing
 */
-#ifdef LCD_IS_SMART
+#if LCD_TYPE == LCD_IS_SMART
 #define LCD_setCursor(x,y)   {lcd_posx=x; lcd_posy=y;}
 #endif
-#ifdef LCD_IS_128X64
+#if LCD_TYPE == LCD_IS_128X64
 #define LCD_setCursor(x,y)   u8g.setPrintPos(((x)+1)*FONT_WIDTH,((y)+1)*FONT_HEIGHT)
 #endif
 
@@ -247,7 +247,7 @@ inline void LCD_print(const char x) {
     num_menu_items=0;  \
     screen_position=0;  \
     screen_end = screen_position + LCD_HEIGHT;  \
-    menuStackDepth--;  \
+    if(menuStackDepth>0) menuStackDepth--;  \
     current_menu=menuStack[menuStackDepth].menu;  \
 }
 
@@ -389,7 +389,7 @@ void LCD_find_home() {
 
 void LCD_this_is_home() {
   float offset[NUM_AXIES];
-  for (int i = 0; i < NUM_AXIES; ++i) offset[i] = axies[i].homePos;
+  for(ALL_AXIES(i)) offset[i] = axies[i].homePos;
   teleport(offset);
   MENU_POP();
 }
@@ -397,17 +397,17 @@ void LCD_this_is_home() {
 
 void LCD_go_home() {
   float homes[NUM_AXIES];
-  for (int i = 0; i < NUM_AXIES; ++i) homes[i] = axies[i].homePos;
+  for(ALL_AXIES(i)) homes[i] = axies[i].homePos;
   lineSafe( homes, DEFAULT_FEEDRATE );
   MENU_POP();
 }
 
 // polargraph only - move pen up or down (toggle)
 void LCD_togglePenUp() {
-  float offset[NUM_AXIES];
-  get_end_plus_offset(offset);
-  
-  offset[2] = (offset[2]==PEN_UP_ANGLE) ? PEN_DOWN_ANGLE : PEN_UP_ANGLE;
+  float offset[3];
+  offset[0] = axies[0].pos;
+  offset[1] = axies[1].pos;
+  offset[2] = (axies[2].pos==PEN_UP_ANGLE) ? PEN_DOWN_ANGLE : PEN_UP_ANGLE;
   lineSafe(offset, feed_rate);
   MENU_POP();
 }
@@ -428,11 +428,12 @@ void LCD_drive_menu() {
 void LCD_driveX() {
   if (lcd_click_now) MENU_POP();
 
-  float offset[NUM_AXIES];
-  get_end_plus_offset(offset);
+  float offset[3];
+  offset[0] = axies[0].pos + lcd_turn > 0 ? 1 : -1;
+  offset[1] = axies[1].pos;
+  offset[2] = axies[2].pos;
 
   if (lcd_turn) {
-    offset[0] += lcd_turn > 0 ? 1 : -1;
     lineSafe(offset, feed_rate);
   }
 
@@ -445,11 +446,12 @@ void LCD_driveX() {
 void LCD_driveY() {
   if (lcd_click_now) MENU_POP();
 
-  float offset[NUM_AXIES];
-  get_end_plus_offset(offset);
-
+  float offset[3];
+  offset[0] = axies[0].pos;
+  offset[1] = axies[1].pos + lcd_turn > 0 ? 1 : -1;
+  offset[2] = axies[2].pos;
+    
   if (lcd_turn) {
-    offset[1] += lcd_turn > 0 ? 1 : -1;
     lineSafe(offset, feed_rate);
   }
 
@@ -462,12 +464,13 @@ void LCD_driveY() {
 void LCD_driveZ() {
   if (lcd_click_now) MENU_POP();
 
-  float offset[NUM_AXIES];
-  get_end_plus_offset(offset);
-
+  float offset[3];
+  offset[0] = axies[0].pos;
+  offset[1] = axies[1].pos;
+  offset[2] = axies[2].pos + lcd_turn > 0 ? 1 : -1;
+  
   if (lcd_turn) {
     // protect servo, don't drive beyond physical limits
-    offset[2] += lcd_turn > 0 ? 1 : -1;
     lineSafe(offset, feed_rate);
   }
 
@@ -508,51 +511,37 @@ void LCD_start_menu() {
   if(lcd_turn!=0 || lcd_click_now==1) lcd_dirty=1;
 
   if(lcd_dirty==1) {
-    //Serial.println(millis());
-    //long t0=micros();
-    
     MENU_START
     MENU_BACK("Main");
     
-    root.rewindDirectory();
-    while ( true ) {
-      //long tStart = millis();
-      File entry = root.openNextFile();
-      //long tEnd = millis();
-      //Serial.print(tEnd-tStart);
-      //Serial.print('\t');
-      if (!entry) {
-        // no more files, return to the first file in the directory
-        break;
-      }
-      const char *filename = entry.name();
-      //Serial.print( entry.isDirectory()?">":" " );
-      //Serial.println(filename);
-      if (!entry.isDirectory() && filename[0] != '_') {
+    root.open("/");
+    SdFile entry;
+    char filename[20];
+    while(entry.openNext(&root)) {
+      if (!entry.isSubDir() && !entry.isHidden()) {
+        entry.getName(filename,18);
         MENU_ITEM_START(filename)
         if (menuStack[menuStackDepth].menu_position == ty && lcd_click_now==1) {
           lcd_click_now = 0;
-          SD_StartPrintingFile(filename);
-          MENU_PUSH(LCD_status_menu);
+          // go back to status menu
+          while(menuStackDepth>0) MENU_POP();
+          
+          SD_StartPrintingFile(entry);
+          root.close();
+          return;
         }
         MENU_ITEM_END()
       }
       entry.close();
     }
+    root.close();
     MENU_END
-    
-    //long t1=micros();
-    //Serial.print(menuStack[menuStackDepth].menu_position,DEC);
-    //Serial.print(' ');
-    //Serial.print(num_menu_items,DEC);
-    //Serial.print(' ');
-    //Serial.print(t1-t0);
-    //Serial.println();
+   
     lcd_dirty=0;
   }
   
 #else
-  // i don't know how you got here surfing the LCD panel.
+  // I don't know how you got here surfing the LCD panel.
   // someone messed up in the logic.  Go back to the main menu.
   MENU_POP();
 #endif
@@ -577,13 +566,11 @@ void draw_border(int width, int height, int landscape) {
 
   // get start position
   float start[NUM_AXIES];
-  get_end_plus_offset(start);
-
   float pos[NUM_AXIES];
   // lift pen at current position
-  pos[0] = start[0];
-  pos[1] = start[1];
-  pos[2] = PEN_UP_ANGLE;
+  start[0] = pos[0] = axies[0].pos;
+  start[1] = pos[1] = axies[1].pos;
+  start[2] = pos[2] = PEN_UP_ANGLE;
   lineSafe( pos, feed_rate );
   // move to first corner
   pos[0] = -width;  pos[1] =  height;  lineSafe( pos, feed_rate );
@@ -600,7 +587,7 @@ void draw_border(int width, int height, int landscape) {
 
   // return to start position
   lineSafe( start, feed_rate );
-#endif // NUM_AXIES
+#endif // NUM_AXIES == 3
   MENU_POP();
 }
 
@@ -750,6 +737,22 @@ void LCD_print_float(float v,int padding,int precision) {
 #endif  // HAS_LCD
 
 
+void LCD_setStatusMessage(char *message) {
+#ifdef HAS_LCD
+  char *i=lcd_message_m117;
+  char *m=message;
+  int c=0;
+  while(c<M117_MAX_LEN && *m!=0) {
+    *i=*m;
+    ++i;
+    ++m;
+  }
+  *i=0;
+
+  // pop to top level menu
+  while(menuStackDepth>0) MENU_POP();
+#endif
+}
 
 
 void LCD_update() {
@@ -769,38 +772,36 @@ void LCD_update() {
 
     // update the menu position
     if ( lcd_turn!=0 && num_menu_items > 1 ) {
-      uint8_t originalPosition = menuStack[menuStackDepth].menu_position_sum / LCD_TURN_PER_MENU;
       uint8_t upperBound = num_menu_items * LCD_TURN_PER_MENU;
 
       // potentially change the menu item
-      menuStack[menuStackDepth].menu_position_sum += lcd_turn;
-      // bounding
-      if(menuStack[menuStackDepth].menu_position_sum < 0) menuStack[menuStackDepth].menu_position_sum=0;
-      if(menuStack[menuStackDepth].menu_position_sum >= upperBound) menuStack[menuStackDepth].menu_position_sum = upperBound-1;
+      int8_t newPos = menuStack[menuStackDepth].menu_position_sum + lcd_turn;
+      if(newPos<0) newPos=0;
+      if(newPos >= upperBound) newPos=upperBound-1;
+      menuStack[menuStackDepth].menu_position_sum = newPos;
       
-      uint8_t menu_position = menuStack[menuStackDepth].menu_position_sum / LCD_TURN_PER_MENU;
+      uint8_t newMenuPosition = newPos / LCD_TURN_PER_MENU;
       // check for change
-      if (originalPosition != menu_position) {
+      if (menuStack[menuStackDepth].menu_position != newMenuPosition) {
         lcd_dirty=1;
         LCD_clear();
       }
+      menuStack[menuStackDepth].menu_position = newMenuPosition;
       
       //Serial.println(menu_position);
 
-      if (screen_position > menu_position) screen_position = menu_position;
-      if (screen_position < menu_position - (LCD_HEIGHT - 1)) screen_position = menu_position - (LCD_HEIGHT - 1);
+      if (screen_position > newMenuPosition) screen_position = newMenuPosition;
+      if (screen_position < newMenuPosition - (LCD_HEIGHT - 1)) screen_position = newMenuPosition - (LCD_HEIGHT - 1);
       screen_end = screen_position + LCD_HEIGHT;
-
-      menuStack[menuStackDepth].menu_position = menu_position;
     }
     
     // draw the new screen contents
-    #ifdef LCD_IS_128X64
+    #if LCD_TYPE == LCD_IS_128X64
     u8g.firstPage();
     do {
     #endif
       (*current_menu)();
-    #ifdef LCD_IS_128X64
+    #if LCD_TYPE == LCD_IS_128X64
     } while(u8g.nextPage());
     #endif
     LCD_refresh_display();
@@ -813,7 +814,7 @@ void LCD_update() {
 
 void LCD_refresh_display() {
 #ifdef HAS_LCD
-#ifdef LCD_IS_SMART
+#if LCD_TYPE == LCD_IS_SMART
   char temp[LCD_MESSAGE_LENGTH];
   memcpy(temp + (LCD_WIDTH * 0), lcd_message + (LCD_WIDTH * 0), LCD_WIDTH);
   memcpy(temp + (LCD_WIDTH * 1), lcd_message + (LCD_WIDTH * 2), LCD_WIDTH);
@@ -871,9 +872,7 @@ void LCD_main_menu() {
     }
 #endif
 #if MACHINE_STYLE == POLARGRAPH
-    float offset[NUM_AXIES];
-    get_end_plus_offset(offset);
-    if(offset[2]==PEN_UP_ANGLE) {
+    if(axies[2].pos==PEN_UP_ANGLE) {
       MENU_ACTION("Pen down",LCD_togglePenUp);
     } else {
       MENU_ACTION("Pen up",LCD_togglePenUp);
@@ -912,18 +911,16 @@ void LCD_status_menu() {
   }
   LCD_setCursor( 0, 0);
 
-  // update the current status
-  float offset[NUM_AXIES];
-  get_end_plus_offset(offset);
-
-  LCD_setCursor(0, 0);  LCD_print('X');  LCD_print_float(offset[0],6);
-  LCD_setCursor(9, 0);  LCD_print('Z');  LCD_print_float(offset[2],6);
+  LCD_setCursor(0, 0);  LCD_print('F');  LCD_print_float(feed_rate,6);
+  //LCD_setCursor(0, 0);  LCD_print('X');  LCD_print_float(axies[0].pos,6);
+  //LCD_setCursor(9, 0);  LCD_print('Z');  LCD_print_float(axies[2].pos,6);
 #if MACHINE_STYLE == POLARGRAPH && defined(USE_LIMIT_SWITCH)
   LCD_setCursor(8, 0);  LCD_print(( digitalRead(LIMIT_SWITCH_PIN_LEFT) == LOW ) ? '*' : ' ');
 #endif
 
-  LCD_setCursor(0, 1);  LCD_print('Y');  LCD_print_float(offset[1],6);
-  LCD_setCursor(9, 1);  LCD_print('F');  LCD_print_long(speed_adjust);  LCD_print('%');
+  LCD_setCursor(0, 1);  LCD_print('A');  LCD_print_float(acceleration,6);
+  //LCD_setCursor(0, 1);  LCD_print('Y');  LCD_print_float(axies[1].pos,6);
+  LCD_setCursor(9, 1);  LCD_print('%');  LCD_print_long(speed_adjust);
 #if MACHINE_STYLE == POLARGRAPH && defined(USE_LIMIT_SWITCH)
   LCD_setCursor(8, 1);  LCD_print(( digitalRead(LIMIT_SWITCH_PIN_RIGHT) == LOW ) ? '*' : ' ');
 #endif
@@ -947,10 +944,10 @@ void LCD_status_menu() {
 // initialize the Smart controller LCD panel
 void LCD_setup() {
 #ifdef HAS_LCD
-#ifdef LCD_IS_SMART
+#if LCD_TYPE == LCD_IS_SMART
   lcd.begin(LCD_WIDTH, LCD_HEIGHT);
 #endif
-#ifdef LCD_IS_128X64
+#if LCD_TYPE == LCD_IS_128X64
   u8g.begin();
   u8g.disableCursor();
   u8g.setFont(u8g_font_6x9);
@@ -995,19 +992,19 @@ void LCD_drawSplash() {
   int x2 = (LCD_WIDTH - strlen("marginallyclever.com")) / 2;
   int y2 = y + 1;
 
-#ifdef LCD_IS_128X64
+#if LCD_TYPE == LCD_IS_128X64
   u8g.firstPage();
   do {
 #endif
     LCD_clear();
-#ifdef LCD_IS_128X64
+#if LCD_TYPE == LCD_IS_128X64
     u8g.drawBitmapP((LCD_PIXEL_WIDTH - logoImageWidth) / 2, 0, logoImageWidth / 8, logoImageHeight, logoImage);
 #endif
     LCD_setCursor(x, y);
     LCD_print(message);
     LCD_setCursor(x2, y2);
     LCD_print("marginallyclever.com");
-#ifdef LCD_IS_128X64
+#if LCD_TYPE == LCD_IS_128X64
   } while (u8g.nextPage());
 #endif
   LCD_refresh_display();

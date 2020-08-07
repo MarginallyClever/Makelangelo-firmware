@@ -1,5 +1,4 @@
-#ifndef BOARD_SIXI_MEGA_H
-#define BOARD_SIXI_MEGA_H
+#pragma once
 //------------------------------------------------------------------------------
 // Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
@@ -8,33 +7,47 @@
 
 
 #if MOTHERBOARD == BOARD_SIXI_MEGA 
+
+//#define SIXI_UNIT1 // for the very first unit made ONLY
+
 // wrong board type set
 #ifndef __AVR_ATmega2560__
   #error "Oops!  Make sure you have 'Arduino Mega 2560' selected from the 'Tools -> Boards' menu."
 #endif
 
-#define MAX_MOTORS                 (6)
+#define BAUD                      (57600)  // How fast is the Arduino talking?
 
+#undef HAS_LCD
+#undef HAS_SD
+
+#define MAX_MOTORS                (6)
+
+#define MOTOR_0_LETTER            'X'
 #define MOTOR_0_DIR_PIN           46
 #define MOTOR_0_STEP_PIN          45
 #define MOTOR_0_ENABLE_PIN        47
 
+#define MOTOR_1_LETTER            'Y'
 #define MOTOR_1_DIR_PIN           43
 #define MOTOR_1_STEP_PIN          42
 #define MOTOR_1_ENABLE_PIN        44
 
+#define MOTOR_2_LETTER            'Z'
 #define MOTOR_2_DIR_PIN           40
 #define MOTOR_2_STEP_PIN          39
 #define MOTOR_2_ENABLE_PIN        41
 
+#define MOTOR_3_LETTER            'U'
 #define MOTOR_3_DIR_PIN           37
 #define MOTOR_3_STEP_PIN          36
 #define MOTOR_3_ENABLE_PIN        38
 
+#define MOTOR_4_LETTER            'V'
 #define MOTOR_4_DIR_PIN           34
 #define MOTOR_4_STEP_PIN          33
 #define MOTOR_4_ENABLE_PIN        35
 
+#define MOTOR_5_LETTER            'W'
 #define MOTOR_5_DIR_PIN           31
 #define MOTOR_5_STEP_PIN          30
 #define MOTOR_5_ENABLE_PIN        32
@@ -49,17 +62,6 @@
 
 #define MAX_BOARD_SERVOS          (1)
 #define SERVO0_PIN                (13)
-
-#undef HAS_LCD
-#undef HAS_SD
-
-// SENSORS
-// sensor bits, flags, and masks
-#define BOTTOM_14_MASK       (0x3FFF)
-#define SENSOR_TOTAL_BITS    (16)
-#define SENSOR_DATA_BITS     (15)
-#define SENSOR_ANGLE_BITS    (14)
-#define SENSOR_ANGLE_PER_BIT (360.0/(float)((long)1<<SENSOR_ANGLE_BITS))  // 0.00549316406
 
 // pins
 #define PIN_SENSOR_CSEL_0   8
@@ -82,6 +84,8 @@
 #define PIN_SENSOR_MOSI_3   19
 #define PIN_SENSOR_MISO_3   18
 
+#ifdef SIXI_UNIT1
+// first unit ever
 #define PIN_SENSOR_CSEL_4   29
 #define  PIN_SENSOR_CLK_4   27
 #define PIN_SENSOR_MOSI_4   25
@@ -92,10 +96,18 @@
 #define PIN_SENSOR_MOSI_5   26
 #define PIN_SENSOR_MISO_5   28
 
+#else
+// every unit after the first
+#define PIN_SENSOR_CSEL_4   22
+#define  PIN_SENSOR_CLK_4   24
+#define PIN_SENSOR_MOSI_4   26
+#define PIN_SENSOR_MISO_4   28
 
+#define PIN_SENSOR_CSEL_5   29
+#define  PIN_SENSOR_CLK_5   27
+#define PIN_SENSOR_MOSI_5   25
+#define PIN_SENSOR_MISO_5   23
 
+#endif  // SIXI_UNIT1
 
 #endif  // MOTHERBOARD == BOARD_SIXI_MEGA 
-
-
-#endif  // BOARD_SIXI_MEGA_H

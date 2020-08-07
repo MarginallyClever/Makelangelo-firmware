@@ -7,6 +7,7 @@
 #include "configure.h"
 #include "robot_polargraph.h"
 #include "eeprom.h"
+#include "motor.h"
 
 #if MACHINE_STYLE == POLARGRAPH
 
@@ -24,10 +25,10 @@ void IK(const float *const cartesian, long *motorStepArray) {
   
   dy = cartesian[1] - limit_ymax;
   dx = cartesian[0] - limit_xmin;
-  motorStepArray[0] = lround( sqrt(dx*dx+dy*dy) / MM_PER_STEP );
+  motorStepArray[0] = lroundf( sqrt(dx*dx+dy*dy) / MM_PER_STEP );
   // find length to M2
   dx = limit_xmax - cartesian[0];
-  motorStepArray[1] = lround( sqrt(dx*dx+dy*dy) / MM_PER_STEP );
+  motorStepArray[1] = lroundf( sqrt(dx*dx+dy*dy) / MM_PER_STEP );
   
   motorStepArray[2] = cartesian[2];
 }
@@ -84,9 +85,12 @@ int FK(long *motorStepArray,float *cartesian) {
 
 
 void recordHome() {
-#ifdef USE_LIMIT_SWITCH
+#if defined(CAN_HOME)
   wait_for_empty_segment_buffer();
   motor_engage();
+#ifdef MACHINE_HAS_LIFTABLE_PEN
+  setPenAngle(PEN_UP_ANGLE);
+#endif
   findStepDelay();
 
   Serial.println(F("Record home..."));
@@ -174,51 +178,19 @@ void recordHome() {
   calibrateRight = count[1];
 
   // now we have the count from home position to switches.  record that value.
-  saveCalibration();
+  eeprom.saveCalibration();
   reportCalibration();
 
   // current position is...
-  float axies2[NUM_AXIES];
-  FK(count, axies2);
-  teleport(axies2);
-  where();
-
-  // go home.
-  Serial.println(F("Homing..."));
-
   float offset[NUM_AXIES];
-  get_end_plus_offset(offset);
-  offset[0]=axies[0].homePos;
-  offset[1]=axies[1].homePos;
-  lineSafe(offset, feed_rate);
+  FK(count, offset);
+  teleport(offset);
+  parser.M114();
   Serial.println(F("Done."));
-#endif // USER_LIMIT_SWITCH
+#endif // defined(CAN_HOME)
 }
 
-
-/**
-   If limit switches are installed, move to touch each switch so that the pen holder can move to home position.
-*/
-void robot_findHome() {
-  wait_for_empty_segment_buffer();
-  motor_engage();
-
-  Serial.println(F("Find Home..."));
-
-#ifdef HAS_TMC2130
-  // disable stealthchop
-  driver_0.coolstep_min_speed(0xFFFFF);
-  driver_1.coolstep_min_speed(0xFFFFF);
-  driver_0.diag1_stall(1);
-  driver_1.diag1_stall(1);
-  #ifdef STEALTHCHOP
-  driver_0.stealthChop(0);
-  driver_1.stealthChop(0);
-  #endif // STEALTHCHOP
-#endif
-
-  findStepDelay();
-  
+void polargraph_homeAtSpeed(int delayTime) {
   // reel in the left motor and the right motor out until contact is made.
   digitalWrite(MOTOR_0_DIR_PIN, STEPPER_DIR_LOW);
   digitalWrite(MOTOR_1_DIR_PIN, STEPPER_DIR_LOW);
@@ -244,24 +216,66 @@ void robot_findHome() {
         right = 1;
       }
     }
-    pause(step_delay);
+    pause(delayTime);
   } while (left + right < 2);
+}
 
-#ifdef HAS_TMC2130
-  // re-enable stealthchop
-  driver_0.coolstep_min_speed(0);
-  driver_1.coolstep_min_speed(0);
-  driver_0.diag1_stall(0);
-  driver_1.diag1_stall(0);
-  #ifdef STEALTHCHOP
-  driver_0.stealthChop(1);
-  driver_1.stealthChop(1);
-  #endif // STEALTHCHOP
+
+/**
+ *  If limit switches are installed, move to touch each switch so that the pen holder can move to home position.
+ */
+void robot_findHome() {
+#if defined(CAN_HOME)
+  // do not run this code unless you have the hardware to find home!
+  wait_for_empty_segment_buffer();
+  motor_engage();
+#ifdef MACHINE_HAS_LIFTABLE_PEN
+  setPenAngle(PEN_UP_ANGLE);
 #endif
 
-  // make sure there's no momentum to skip the belt on the pulley.
-  delay(500);
+  Serial.println(F("Find Home..."));
 
+  #ifdef HAS_TMC2130
+  	delay(500);
+  	digitalWrite(MOTOR_0_DIR_PIN, STEPPER_DIR_HIGH);
+  	digitalWrite(MOTOR_1_DIR_PIN, STEPPER_DIR_HIGH);
+  
+  	motor_home();
+    
+  	while(homing == true){
+  		Serial.print(driver_0.TSTEP());
+  		Serial.print("   ");
+  		Serial.print(digitalRead(MOTOR_0_LIMIT_SWITCH_PIN));
+  		Serial.print("   ");
+  		Serial.print(digitalRead(MOTOR_1_LIMIT_SWITCH_PIN));
+  		Serial.print("   ");
+  	  Serial.println("still homing");
+  	}
+  	Serial.println("BOTH EN false");
+  	enable_stealthChop();
+  
+  #else
+
+    findStepDelay();
+    polargraph_homeAtSpeed(step_delay);
+    // make sure there's no momentum to skip the belt on the pulley.
+    delay(500);
+    // back off a bit
+    digitalWrite(MOTOR_0_DIR_PIN, STEPPER_DIR_HIGH);
+    digitalWrite(MOTOR_1_DIR_PIN, STEPPER_DIR_HIGH);
+    for(int i=0;i<500;++i) {
+        digitalWrite(MOTOR_0_STEP_PIN, HIGH);
+        digitalWrite(MOTOR_0_STEP_PIN, LOW);
+      
+        digitalWrite(MOTOR_1_STEP_PIN, HIGH);
+        digitalWrite(MOTOR_1_STEP_PIN, LOW);
+        pause(step_delay*3);
+    }
+    // find it again, but slower
+    polargraph_homeAtSpeed(step_delay*10);
+    
+  #endif  // HAS_TMC2130
+  
   //Serial.println(F("Estimating position..."));
   long count[NUM_MOTORS+NUM_SERVOS];
   count[0] = calibrateLeft/MM_PER_STEP;
@@ -275,30 +289,31 @@ void robot_findHome() {
   float offset[NUM_AXIES];
   FK(count, offset);
   teleport(offset);
+  parser.M114();
 
-  where();
-  get_end_plus_offset(offset);
-
-  // go home.
+  // go home
+  float pos[NUM_AXIES];
   offset[0]=axies[0].homePos;
   offset[1]=axies[1].homePos;
-  offset[2]=axies[2].pos;
-  Serial.print(F("Homing to "));  Serial.print  (axies[0].homePos);
-  Serial.print(',');              Serial.println(axies[1].homePos);
-  //lineSafe(offset, DEFAULT_FEEDRATE);
+  lineSafe( offset, feed_rate );
   
   Serial.println(F("Done."));
+#endif // defined(CAN_HOME)
 }
 
 
 /**
  * Starting from the home position, bump the switches and measure the length of each belt.
  * Does not save the values, only reports them to serial.
+ * @Deprecated
  */
 void calibrateBelts() {
-#ifdef USE_LIMIT_SWITCH
+#if defined(CAN_HOME)
   wait_for_empty_segment_buffer();
   motor_engage();
+#ifdef MACHINE_HAS_LIFTABLE_PEN
+  setPenAngle(PEN_UP_ANGLE);
+#endif
 
   Serial.println(F("Find switches..."));
 
@@ -351,7 +366,7 @@ void calibrateBelts() {
   float axies2[NUM_AXIES];
   FK(steps, axies2);
   teleport(axies2);
-  where();
+  parser.M114();
 
   // go home.
   Serial.println(F("Homing..."));
@@ -362,7 +377,103 @@ void calibrateBelts() {
   offset[1]=axies[1].homePos;
   lineSafe(offset, feed_rate);
   Serial.println(F("Done."));
-#endif // USE_LIMIT_SWITCH
+#endif // defined(CAN_HOME)
+}
+
+
+// convert belt length to cartesian position, save that as home pos.
+void calibrationToPosition() {
+  float axies2[NUM_AXIES];
+  long steps[3];
+  steps[0]=calibrateLeft;
+  steps[1]=calibrateRight;
+  steps[2]=axies[2].pos;
+  FK(steps, axies2);
+    
+  teleport(axies2);
+}
+
+
+/**
+ * D11 makelangelo 6 specific setup call
+ */
+void makelangelo6Setup() {
+  // if you accidentally upload m3 firmware to an m5 then upload it ONCE with this line uncommented.
+  float limits[NUM_AXIES * 2];
+  limits[0] = 707.5 / 2;
+  limits[1] = -707.5 / 2;
+  limits[2] = 500;
+  limits[3] = -500;
+  limits[4] = PEN_UP_ANGLE;
+  limits[5] = PEN_DOWN_ANGLE;
+  eeprom.adjustLimits(limits);
+
+  calibrateLeft = 1025;
+  calibrateRight = 1025;
+  eeprom.saveCalibration();
+  calibrationToPosition();
+  
+  // set home
+  float homePos[NUM_AXIES];
+  homePos[0] = 0;
+  homePos[1] = 0;
+  homePos[2] = 90;
+  setHome(homePos);
+}
+
+
+/**
+   D11 makelangelo 5 specific setup call
+*/
+void makelangelo5Setup() {
+  // if you accidentally upload m3 firmware to an m5 then upload it ONCE with this line uncommented.
+  float limits[NUM_AXIES * 2];
+  limits[0] = 325.0;
+  limits[1] = -325.0;
+  limits[2] = 500;
+  limits[3] = -500;
+  limits[4] = PEN_UP_ANGLE;
+  limits[5] = PEN_DOWN_ANGLE;
+  eeprom.adjustLimits(limits);
+
+  calibrateLeft = 1025;
+  calibrateRight = 1025;
+  eeprom.saveCalibration();
+  calibrationToPosition();
+  
+  // set home
+  float homePos[NUM_AXIES];
+  homePos[0] = 0;
+  homePos[1] = 0;
+  homePos[2] = 90;
+  setHome(homePos);
+}
+
+
+/**
+   D13 makelangelo 3.3 specific setup call
+*/
+void makelangelo33Setup() {
+  float limits[NUM_AXIES * 2];
+  limits[0] = 1000.0;
+  limits[1] = -1000.0;
+  limits[2] = 800;
+  limits[3] = -800;
+  limits[4] = PEN_UP_ANGLE;
+  limits[5] = PEN_DOWN_ANGLE;
+  eeprom.adjustLimits(limits);
+
+  calibrateLeft = 2022;
+  calibrateRight = 2022;
+  eeprom.saveCalibration();
+  calibrationToPosition();
+  
+  // set home
+  float homePos[NUM_AXIES];
+  homePos[0] = 0;
+  homePos[1] = 0;
+  homePos[2] = 90;
+  setHome(homePos);
 }
 
 

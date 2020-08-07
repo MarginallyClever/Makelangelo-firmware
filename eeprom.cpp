@@ -13,20 +13,12 @@
 #include <EEPROM.h>
 #include <Arduino.h>  // for type definitions
 
-/** 
- * from http://www.arduino.cc/cgi-bin/yabb2/YaBB.pl?num=1234477290/3
- */
-void EEPROM_writeLong(int ee, long value) {
-  byte* p = (byte*)(void*)&value;
-  for (uint16_t i = 0; i < sizeof(value); i++)
-  EEPROM.write(ee++, *p++);
-}
+
+extern Eeprom eeprom;
 
 
-/** 
- * from http://www.arduino.cc/cgi-bin/yabb2/YaBB.pl?num=1234477290/3
- */
-long EEPROM_readLong(int ee) {
+// from http://www.arduino.cc/cgi-bin/yabb2/YaBB.pl?num=1234477290/3
+long Eeprom::readLong(int ee) {
   long value = 0;
   byte* p = (byte*)(void*)&value;
   for (uint16_t i = 0; i < sizeof(value); i++)
@@ -35,47 +27,53 @@ long EEPROM_readLong(int ee) {
 }
 
 
-/**
- * 
- */
-char loadVersion() {
+// 2020-01-31 Dan added check to not update EEPROM if value is unchanged.
+// from http://www.arduino.cc/cgi-bin/yabb2/YaBB.pl?num=1234477290/3
+// returns true if the value was changed.
+boolean Eeprom::writeLong(int ee, long value) {
+  if(readLong(ee) == value) return false;
+  
+  byte* p = (byte*)(void*)&value;
+  for (uint16_t i = 0; i < sizeof(value); i++)
+  EEPROM.write(ee++, *p++);
+
+  return true;
+}
+
+
+uint8_t Eeprom::loadVersion() {
   return EEPROM.read(ADDR_VERSION);
 }
 
 
-/**
- * 
- */
-void saveUID() {
+void Eeprom::saveUID() {
   Serial.println(F("Saving UID."));
-  EEPROM_writeLong(ADDR_UUID,(long)robot_uid);
+  writeLong(ADDR_UUID,(long)robot_uid);
+}
+
+uint8_t Eeprom::loadUID() {
+  return EEPROM.read(ADDR_VERSION);
 }
 
 
-/**
- * 
- */
-void saveLimits() {
+void Eeprom::saveLimits() {
   Serial.println(F("Saving limits."));
   int i,j=ADDR_LIMITS;
-  for(i=0;i<NUM_AXIES;++i) {
-    EEPROM_writeLong(j,axies[i].limitMax*100);
+  for(ALL_AXIES(i)) {
+    writeLong(j,axies[i].limitMax*100);
     j+=4;
-    EEPROM_writeLong(j,axies[i].limitMin*100);
+    writeLong(j,axies[i].limitMin*100);
     j+=4;
   }
 }
 
 
-/**
- * 
- */
-void loadLimits() {
+void Eeprom::loadLimits() {
   int i,j=ADDR_LIMITS;
-  for(i=0;i<NUM_AXIES;++i) {
-    axies[i].limitMax = (float)EEPROM_readLong(j)/100.0f;
+  for(ALL_AXIES(i)) {
+    axies[i].limitMax = (float)readLong(j)/100.0f;
     j+=4;
-    axies[i].limitMin = (float)EEPROM_readLong(j)/100.0f;
+    axies[i].limitMin = (float)readLong(j)/100.0f;
     j+=4;
     //Serial.print("Axis ");
     //Serial.print(i);
@@ -91,12 +89,12 @@ void loadLimits() {
 /**
  * @param limits NUM_AXIES*2 floats.  Each pair is one float for max limit and one for min limit.
  */
-void adjustLimits(float *limits) {
+void Eeprom::adjustLimits(float *limits) {
   Serial.println(F("Adjusting limits."));
   int i,j=0;
   int changed=0;
   float v;
-  for(i=0;i<NUM_AXIES;++i) {
+  for(ALL_AXIES(i)) {
     // max test
     v = floor(limits[j]*100.0f)/100.0f;
     if(v != axies[i].limitMax) {
@@ -119,54 +117,50 @@ void adjustLimits(float *limits) {
 }
 
 
-/**
- * 
- */
-void saveHome() {
+void Eeprom::saveHome() {
   Serial.println(F("Saving home."));
   int i,j=ADDR_HOME;
-  for(i=0;i<NUM_AXIES;++i) {
-    EEPROM_writeLong(j,(long)(axies[i].homePos*100.0f));
+  for(ALL_AXIES(i)) {
+    writeLong(j,(long)(axies[i].homePos*100.0f));
     j+=4;
   }
 }
 
 
-/**
- * 
- */
-void loadHome() {
-  int i,j=ADDR_HOME;
-  for(i=0;i<NUM_AXIES;++i) {
-    axies[i].homePos = (float)EEPROM_readLong(j)/100.0f;
+void Eeprom::loadHome() {
+  //Serial.print(F("Loading home:"));
+  int j=ADDR_HOME;
+  for(ALL_AXIES(i)) {
+    axies[i].homePos = (float)readLong(j)/100.0f;
+    //Serial.print(' ');
+    //Serial.print(motors[i].letter);
+    //Serial.print(axies[i].homePos);
     j+=4;
   }
+  //Serial.println();
 }
 
 
-/**
- *
- */
-void saveCalibration() {
+void Eeprom::saveCalibration() {
   Serial.println(F("Saving calibration."));
-  EEPROM_writeLong(ADDR_CALIBRATION_LEFT  ,calibrateLeft  *100);
-  EEPROM_writeLong(ADDR_CALIBRATION_RIGHT ,calibrateRight *100);
+  writeLong(ADDR_CALIBRATION_LEFT  ,calibrateLeft  *100);
+  writeLong(ADDR_CALIBRATION_RIGHT ,calibrateRight *100);
 }
 
 
-/**
- * 
- */
-void loadCalibration() {
-  calibrateLeft   = (float)EEPROM_readLong(ADDR_CALIBRATION_LEFT  )/100.0f;
-  calibrateRight  = (float)EEPROM_readLong(ADDR_CALIBRATION_RIGHT )/100.0f;
+void Eeprom::loadCalibration() {
+  calibrateLeft   = (float)readLong(ADDR_CALIBRATION_LEFT  )/100.0f;
+  calibrateRight  = (float)readLong(ADDR_CALIBRATION_RIGHT )/100.0f;
+}
+
+void Eeprom::saveAll() {
+  saveUID();
+  saveLimits();
+  saveHome();
 }
 
 
-/**
- * 
- */
-void loadConfig() {
+void Eeprom::loadAll() {
   char versionNumber = loadVersion();
   if( versionNumber != FIRMWARE_VERSION ) {
     // If not the current FIRMWARE_VERSION or the FIRMWARE_VERSION is sullied (i.e. unknown data)
@@ -179,7 +173,7 @@ void loadConfig() {
   }
   
   // Retrieve stored configuration
-  robot_uid=EEPROM_readLong(ADDR_UUID);
+  loadUID();
   loadLimits();
   loadHome();
   loadCalibration();
