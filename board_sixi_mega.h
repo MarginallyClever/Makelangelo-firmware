@@ -8,8 +8,6 @@
 
 #if MOTHERBOARD == BOARD_SIXI_MEGA 
 
-//#define SIXI_UNIT1 // for the very first unit made ONLY
-
 // wrong board type set
 #ifndef __AVR_ATmega2560__
   #error "Oops!  Make sure you have 'Arduino Mega 2560' selected from the 'Tools -> Boards' menu."
@@ -84,19 +82,6 @@
 #define PIN_SENSOR_MOSI_3   19
 #define PIN_SENSOR_MISO_3   18
 
-#ifdef SIXI_UNIT1
-// first unit ever
-#define PIN_SENSOR_CSEL_4   29
-#define  PIN_SENSOR_CLK_4   27
-#define PIN_SENSOR_MOSI_4   25
-#define PIN_SENSOR_MISO_4   23
-
-#define PIN_SENSOR_CSEL_5   22
-#define  PIN_SENSOR_CLK_5   24
-#define PIN_SENSOR_MOSI_5   26
-#define PIN_SENSOR_MISO_5   28
-
-#else
 // every unit after the first
 #define PIN_SENSOR_CSEL_4   22
 #define  PIN_SENSOR_CLK_4   24
@@ -107,7 +92,5 @@
 #define  PIN_SENSOR_CLK_5   27
 #define PIN_SENSOR_MOSI_5   25
 #define PIN_SENSOR_MISO_5   23
-
-#endif  // SIXI_UNIT1
 
 #endif  // MOTHERBOARD == BOARD_SIXI_MEGA 
