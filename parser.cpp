@@ -295,6 +295,7 @@ void Parser::processCommand() {
       case 20:  SET_BIT_OFF(sensorManager.positionErrorFlags,POSITION_ERROR_FLAG_ERROR);  break;
       case 21:  FLIP_BIT(sensorManager.positionErrorFlags,POSITION_ERROR_FLAG_ESTOP);  break;  // toggle ESTOP
       case 22:  D22();  break;
+      case 23:  D23();  break;
 #endif
       //case 50:  D50();  break;
       default:  break;
@@ -923,7 +924,39 @@ void Parser::D22() {
   for(ALL_SENSORS(i)) {
     homePos[i] = sensorManager.sensors[i].angle;
   }
-  homePos[1]+=90;
+  // subtract the home position from this position
+  homePos[0]-=0;
+  homePos[1]-=-90;
+  homePos[2]-=0;
+  homePos[3]-=0;
+  homePos[4]-=0;
+  homePos[5]-=0;
+
+  setHome(homePos);
+}
+
+// D23 - Sixi is at the calibration position.  Set the home position accordingly.
+void Parser::D23() {
+  int i;
+  // cancel the current home offsets
+  for(ALL_SENSORS(i)) {
+    axies[i].homePos = 0;
+  }
+  // read the sensor
+  sensorManager.updateAll();
+  // apply the new offsets
+  float homePos[NUM_AXIES];
+  for(ALL_SENSORS(i)) {
+    homePos[i] = sensorManager.sensors[i].angle;
+  }
+  // subtract the calibration from this position
+  homePos[0]-=0;
+  homePos[1]-=-41.3;
+  homePos[2]-=74.5;
+  homePos[3]-=0;
+  homePos[4]-=-33.5;
+  homePos[5]-=0;
+  
   setHome(homePos);
 }
 
