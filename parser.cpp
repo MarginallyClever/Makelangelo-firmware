@@ -513,6 +513,56 @@ void Parser::D21() {
   Serial.print(F("D21 "));
   Serial.println(TEST_LIMITS?"1":"0");
 }
+
+// D22 - reset home position to the current angle values.
+void Parser::D22() {
+  int i;
+  // cancel the current home offsets
+  for(ALL_SENSORS(i)) {
+    axies[i].homePos = 0;
+  }
+  // read the sensor
+  sensorManager.updateAll();
+  // apply the new offsets
+  float homePos[NUM_AXIES];
+  for(ALL_SENSORS(i)) {
+    homePos[i] = sensorManager.sensors[i].angle;
+  }
+  // subtract the home position from this position
+  homePos[0]-=0;
+  homePos[1]-=-90;
+  homePos[2]-=0;
+  homePos[3]-=0;
+  homePos[4]-=0;
+  homePos[5]-=0;
+
+  setHome(homePos);
+}
+
+// D23 - Sixi is at the calibration position.  Set the home position accordingly.
+void Parser::D23() {
+  int i;
+  // cancel the current home offsets
+  for(ALL_SENSORS(i)) {
+    axies[i].homePos = 0;
+  }
+  // read the sensor
+  sensorManager.updateAll();
+  // apply the new offsets
+  float homePos[NUM_AXIES];
+  for(ALL_SENSORS(i)) {
+    homePos[i] = sensorManager.sensors[i].angle;
+  }
+  // subtract the calibration from this position
+  homePos[0]-=0;
+  homePos[1]-=-41.3;
+  homePos[2]-=74.5;
+  homePos[3]-=0;
+  homePos[4]-=-33.5;
+  homePos[5]-=0;
+  
+  setHome(homePos);
+}
 #endif
 
 
@@ -909,56 +959,6 @@ void Parser::M300() {
 
 
 #if MACHINE_STYLE == SIXI
-
-// D22 - reset home position to the current angle values.
-void Parser::D22() {
-  int i;
-  // cancel the current home offsets
-  for(ALL_SENSORS(i)) {
-    axies[i].homePos = 0;
-  }
-  // read the sensor
-  sensorManager.updateAll();
-  // apply the new offsets
-  float homePos[NUM_AXIES];
-  for(ALL_SENSORS(i)) {
-    homePos[i] = sensorManager.sensors[i].angle;
-  }
-  // subtract the home position from this position
-  homePos[0]-=0;
-  homePos[1]-=-90;
-  homePos[2]-=0;
-  homePos[3]-=0;
-  homePos[4]-=0;
-  homePos[5]-=0;
-
-  setHome(homePos);
-}
-
-// D23 - Sixi is at the calibration position.  Set the home position accordingly.
-void Parser::D23() {
-  int i;
-  // cancel the current home offsets
-  for(ALL_SENSORS(i)) {
-    axies[i].homePos = 0;
-  }
-  // read the sensor
-  sensorManager.updateAll();
-  // apply the new offsets
-  float homePos[NUM_AXIES];
-  for(ALL_SENSORS(i)) {
-    homePos[i] = sensorManager.sensors[i].angle;
-  }
-  // subtract the calibration from this position
-  homePos[0]-=0;
-  homePos[1]-=-41.3;
-  homePos[2]-=74.5;
-  homePos[3]-=0;
-  homePos[4]-=-33.5;
-  homePos[5]-=0;
-  
-  setHome(homePos);
-}
 
 // M428 - set home position to the current angle values
 void Parser::M428() {
