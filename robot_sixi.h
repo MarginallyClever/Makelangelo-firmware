@@ -23,7 +23,7 @@
 #define NUM_SENSORS          (6)
 
 #define NUM_SERVOS           (1)
-#define HAS_GRIPPER  // uncomment this to use a gripper
+//#define HAS_GRIPPER  // uncomment this to use a gripper
 
 #define MAX_FEEDRATE         (120.0)  // depends on timer interrupt & hardware
 #define MIN_FEEDRATE         (0)
@@ -93,15 +93,7 @@
 #define END4 LOW
 #define END5 LOW
 
-
-// behaviour flags
-#define POSITION_ERROR_FLAG_CONTINUOUS   (0)  // report position (d17) continuously?
-#define POSITION_ERROR_FLAG_ERROR        (1)  // has error occurred?
-#define POSITION_ERROR_FLAG_ESTOP        (2)  // emergency stop!
-#define POSITION_ERROR_FLAG_CHECKLIMIT   (3)  // check limits and throw error if needed (normally only disabled to drive the robot back inside limits)
-
-
-// Sixi 2 DH parameter table
+// DH parameter table (kinematics)
 #define DH_0_THETA 0
 #define DH_0_ALPHA -90
 #define DH_0_D     19.745
@@ -144,6 +136,11 @@
 #define DH_5_MAX   170
 #define DH_5_MIN   -170
 
+// behaviour flags
+#define POSITION_ERROR_FLAG_CONTINUOUS   (0)  // report position (d17) continuously?
+#define POSITION_ERROR_FLAG_ERROR        (1)  // has error occurred?
+#define POSITION_ERROR_FLAG_ESTOP        (2)  // emergency stop!
+#define POSITION_ERROR_FLAG_CHECKLIMIT   (3)  // check limits and throw error if needed (normally only disabled to drive the robot back inside limits)
 
 // SENSORS
 #define REPORT_ANGLES_CONTINUOUSLY (TEST(sensorManager.positionErrorFlags,POSITION_ERROR_FLAG_CONTINUOUS))
