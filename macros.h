@@ -25,9 +25,9 @@
 #define CBI(NN,BB)          (NN &= ~(1<<BB))
 #endif
 
-#define TEST(NN,BB)         ((NN & (1<<BB)) == (1<<BB))
 #define SET_BIT_ON(NN,BB)   SBI(NN,BB)
 #define SET_BIT_OFF(NN,BB)  CBI(NN,BB)
+#define TEST(NN,BB)         (((NN >> BB)&0x1) == 0x1)
 #define SET_BIT(NN,BB,TF)   do { if(TF) SBI(NN,BB); else CBI(NN,BB); } while(0);
 #define FLIP_BIT(NN,BB)     (NN ^= (1<<BB))
 
