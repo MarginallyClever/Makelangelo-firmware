@@ -170,6 +170,9 @@ void SensorManager::setup() {
   SSP2(4)
   SSP2(5)
 
+  positionErrorFlags=0;
+  SET_BIT_ON(positionErrorFlags,POSITION_ERROR_FLAG_CONTINUOUS);
+
   for(ALL_SENSORS(i)) {
     sensors[i].start();
   }
