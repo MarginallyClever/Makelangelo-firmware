@@ -308,6 +308,8 @@ void setHome(float *pos) {
 
 void meanwhile() {
 #if MACHINE_STYLE == SIXI
+  //Serial.println(REPORT_ANGLES_CONTINUOUSLY?"Y":"N");
+  
   sensorManager.updateAll();
 
   if( REPORT_ANGLES_CONTINUOUSLY ) {
@@ -317,9 +319,11 @@ void meanwhile() {
     }
   }
 
+#if defined(HAS_GRIPPER)
   gripper.update();
-
 #endif
+
+#endif  // MACHINE_STYLE == SIXI
 
 #ifdef DEBUG_STEPPING
   debug_stepping();
@@ -413,7 +417,7 @@ void setup() {
   if (NUM_AXIES >= 3) pos[2] = PEN_UP_ANGLE;
 #endif
 
-#if MACHINE_STYLE==SIXI
+#if MACHINE_STYLE==SIXI && defined(HAS_GRIPPER)
   gripper.setup();
 #endif
 
