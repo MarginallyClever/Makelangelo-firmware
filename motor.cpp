@@ -113,10 +113,6 @@ uint32_t nextMainISR=0;
 const char *MotorNames = "LRUVWT";
 const char *AxisNames = "XYZUVWT";
 
-#if MACHINE_STYLE == SIXI
-uint8_t positionErrorFlags;
-#endif
-
 
 //------------------------------------------------------------------------------
 // METHODS
@@ -337,10 +333,6 @@ void motor_setup() {
 
   working_seg = NULL;
   first_segment_delay = 0;
-#if MACHINE_STYLE == SIXI
-  positionErrorFlags = 0;
-  SET_BIT_ON(positionErrorFlags,POSITION_ERROR_FLAG_CONTINUOUS);
-#endif
 
 #ifndef DEBUG_STEPPING
   // disable global interrupts
@@ -739,7 +731,7 @@ inline void isr_internal_pulse() {
   uint8_t i;
 
 #if MACHINE_STYLE == SIXI
-  if( TEST(positionErrorFlags,POSITION_ERROR_FLAG_ESTOP) ) {
+  if( TEST(sensorManager.positionErrorFlags,POSITION_ERROR_FLAG_ESTOP) ) {
     // check if the sensor position differs from the estimated position.
     float fraction = (float)steps_taken / (float)steps_total;
 
@@ -752,7 +744,7 @@ inline void isr_internal_pulse() {
       if (diff > POSITION_EPSILON) {
         // do nothing while the margin is too big.
         // Only end this condition is stopping the ISR, either via software disable or hardware reset.
-        SET_BIT_ON(positionErrorFlags, POSITION_ERROR_FLAG_ERROR);
+        SET_BIT_ON(sensorManager.positionErrorFlags, POSITION_ERROR_FLAG_ERROR);
         return;
       }
     }

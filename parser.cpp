@@ -453,10 +453,10 @@ void Parser::D17() {
     }*/
 
   Serial.print('\t');
-  //Serial.print(TEST(positionErrorFlags,POSITION_ERROR_FLAG_CONTINUOUS)?'+':'-');
-  Serial.print(TEST(positionErrorFlags,POSITION_ERROR_FLAG_ERROR) ? '+' : '-');
-  //Serial.print(TEST(positionErrorFlags,POSITION_ERROR_FLAG_FIRSTERROR)?'+':'-');
-  //Serial.print(TEST(positionErrorFlags,POSITION_ERROR_FLAG_ESTOP)?'+':'-');
+  //Serial.print(TEST(sensorManager.positionErrorFlags,POSITION_ERROR_FLAG_CONTINUOUS)?'+':'-');
+  Serial.print(TEST(sensorManager.positionErrorFlags,POSITION_ERROR_FLAG_ERROR) ? '+' : '-');
+  //Serial.print(TEST(sensorManager.positionErrorFlags,POSITION_ERROR_FLAG_FIRSTERROR)?'+':'-');
+  //Serial.print(TEST(sensorManager.positionErrorFlags,POSITION_ERROR_FLAG_ESTOP)?'+':'-');
   Serial.println();
 }
 #endif
@@ -492,9 +492,10 @@ void Parser::D18() {
 }
 
 void Parser::D19() {
-  boolean p = TEST(positionErrorFlags,POSITION_ERROR_FLAG_CONTINUOUS);
-  boolean state = parseNumber('P',p?1:0);
-  SET_BIT(positionErrorFlags,POSITION_ERROR_FLAG_CONTINUOUS,state);
+  boolean p = TEST(sensorManager.positionErrorFlags,POSITION_ERROR_FLAG_CONTINUOUS);
+  int state = parseNumber('P',p?1:0);
+  SET_BIT(sensorManager.positionErrorFlags,POSITION_ERROR_FLAG_CONTINUOUS,state);
+  
   Serial.print(F("D19 P"));
   Serial.println(state?1:0,DEC);
 }

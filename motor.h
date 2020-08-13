@@ -146,7 +146,6 @@ extern const char *MotorNames;
 extern float max_jerk[NUM_MOTORS+NUM_SERVOS];
 extern float max_feedrate_mm_s[NUM_MOTORS+NUM_SERVOS];
 
-extern uint8_t positionErrorFlags;
 extern uint32_t min_segment_time_us;
 
 //------------------------------------------------------------------------------
