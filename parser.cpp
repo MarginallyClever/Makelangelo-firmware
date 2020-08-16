@@ -515,13 +515,23 @@ void Parser::D21() {
   Serial.println(TEST_LIMITS?"1":"0");
 }
 
-// D22 - reset home position to the current angle values.
+// D22 - initialize sixi robot EEPROM settings
 void Parser::D22() {
   int i;
   // cancel the current home offsets
   for(ALL_SENSORS(i)) {
     axies[i].homePos = 0;
   }
+
+  // Sixi init limits
+#define SIL(NN)  { axies[NN].limitMax = DH_##NN##_MAX;  axies[NN].limitMin = DH_##NN##_MIN; }
+  SIL(0);
+  SIL(1);
+  SIL(2);
+  SIL(3);
+  SIL(4);
+  SIL(5);
+
   // read the sensor
   sensorManager.updateAll();
   // apply the new offsets
