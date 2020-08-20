@@ -7,6 +7,7 @@
 
 
 #if MOTHERBOARD == BOARD_RUMBA
+
 // wrong board type set
 #ifndef __AVR_ATmega2560__
 #error "Oops!  Make sure you have 'Arduino Mega 2560' selected from the 'Tools -> Boards' menu."

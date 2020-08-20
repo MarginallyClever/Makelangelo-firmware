@@ -73,7 +73,7 @@ public:
   void D19();  // D19 - Sixi only.  toggle continuous D17 reporting
   void D20();  // D20 - Sixi only.  clear error flags
   void D21();  // D21 - Sixi only.  toggle software ESTOP
-  void D22();  // D22 - Sixi only.  reset home position to the current angle values.
+  void D22();  // D22 - Sixi only.  initialize sixi robot EEPROM settings
   void D23();  // D23 - Sixi only.  Sixi is at the calibration point.  Set the home position accordingly.
 #endif
   void D50();  // D40 Snn - Set and report strict mode.  where nn=0 for off and 1 for on.
