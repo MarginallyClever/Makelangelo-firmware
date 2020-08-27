@@ -111,10 +111,9 @@
 #if NUM_SERVOS > MAX_BOARD_SERVOS
 #error "The number of servos needed is more than this board supports."
 #endif
-
-#if NUM_SERVOS + NUM_MOTORS != NUM_AXIES
+#if NUM_MUSCLES != NUM_AXIES
 // not always the case!  Skycam has more motors than axies.
-//#error "NUM_SERVOS + NUM_MOTORS != NUM_AXIES"
+//#error "NUM_MUSCLES != NUM_AXIES"
 #endif
 
 

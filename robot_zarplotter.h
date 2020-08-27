@@ -47,7 +47,7 @@
 // 200 step-per-turn motors move 1.8 degrees per step.  (360/200=1.8)
 // see your stepper motor data sheet for more info.
 #ifndef DEGREES_PER_STEP
-#define DEGREES_PER_STEP     (1.8)
+#define DEGREES_PER_STEP     (0.9)
 #endif
 
 // stepper motor drivers can use microstepping to split steps into fractions of steps for greater precision.

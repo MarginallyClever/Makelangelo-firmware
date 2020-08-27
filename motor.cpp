@@ -49,7 +49,7 @@ inline void CRITICAL_SECTION_END() {
 // GLOBALS
 //------------------------------------------------------------------------------
 
-Motor motors[NUM_AXIES];
+Motor motors[NUM_MOTORS];
 #ifndef ESP8266
 Servo servos[NUM_SERVOS];
 #endif
@@ -70,8 +70,8 @@ uint32_t current_acceleration;
 uint32_t start_feed_rate, end_feed_rate;
 int32_t isr_nominal_rate=-1;
 uint32_t time_accelerating, time_decelerating;
-float max_jerk[NUM_MOTORS + NUM_SERVOS];
-float max_feedrate_mm_s[NUM_MOTORS + NUM_SERVOS];
+float max_jerk[NUM_MUSCLES];
+float max_feedrate_mm_s[NUM_MUSCLES];
 uint8_t isr_step_multiplier = 1;
 uint32_t min_segment_time_us=MIN_SEGMENT_TIME_US;
 
@@ -106,7 +106,7 @@ int global_servoStep_dir_0;
 
 float previous_nominal_speed = 0;
 float previous_safe_speed = 0;
-float previous_speed[NUM_MOTORS + NUM_SERVOS];
+float previous_speed[NUM_MUSCLES];
 
 uint32_t nextMainISR=0;
 
@@ -232,12 +232,14 @@ float max_speed_allowed(const float &acc, const float &target_velocity, const fl
  * set up the pins for each motor
  */
 void motor_setup() {
-  #define SETUP_MOT(NN) \
-    motors[NN].letter           = MOTOR_##NN##_LETTER;\
-    motors[NN].step_pin         = MOTOR_##NN##_STEP_PIN;\
-    motors[NN].dir_pin          = MOTOR_##NN##_DIR_PIN;\
-    motors[NN].enable_pin       = MOTOR_##NN##_ENABLE_PIN;\
-    motors[NN].limit_switch_pin = MOTOR_##NN##_LIMIT_SWITCH_PIN;
+Serial.println("A");
+
+#define SETUP_MOT(NN) \
+  motors[NN].letter           = MOTOR_##NN##_LETTER;\
+  motors[NN].step_pin         = MOTOR_##NN##_STEP_PIN;\
+  motors[NN].dir_pin          = MOTOR_##NN##_DIR_PIN;\
+  motors[NN].enable_pin       = MOTOR_##NN##_ENABLE_PIN;\
+  motors[NN].limit_switch_pin = MOTOR_##NN##_LIMIT_SWITCH_PIN;
 
   SETUP_MOT(0)
 #if NUM_MOTORS>1
@@ -255,6 +257,8 @@ void motor_setup() {
 #if NUM_MOTORS>5
   SETUP_MOT(5)
 #endif
+
+Serial.println("B");
 
   for(ALL_MOTORS(i)) {
     // set the motor pin & scale
@@ -285,7 +289,7 @@ void motor_setup() {
   #endif  // HAS_TMC2130
 
   int i;
-  for(i=0;i<NUM_AXIES;++i) {
+  for(i=0;i<NUM_MUSCLES;++i) {
     max_jerk[i] = MAX_JERK;
     max_feedrate_mm_s[i] = MAX_FEEDRATE;
   }
@@ -296,10 +300,6 @@ void motor_setup() {
 #endif
   max_jerk[NUM_MOTORS] = MAX_JERK_Z;
 #endif
-
-  long steps[NUM_AXIES];
-  memset(steps, 0, (NUM_AXIES)*sizeof(long));
-  motor_set_step_count(steps);
 
   // setup servos
 #if NUM_SERVOS>0
@@ -324,12 +324,20 @@ void motor_setup() {
   servos[4].attach(SERVO4_PIN);
 #endif
 
+Serial.println("C");
+
   current_segment = 0;
   last_segment = 0;
   Segment &old_seg = line_segments[get_prev_segment(last_segment)];
-  for (i = 0; i < NUM_AXIES; ++i) {
+  for(ALL_MUSCLES(i)) {
     old_seg.a[i].step_count = 0;
   }
+
+  long steps[NUM_MUSCLES];
+  memset(steps, 0, (NUM_MUSCLES)*sizeof(long));
+  motor_set_step_count(steps);
+
+Serial.println("D");
 
   working_seg = NULL;
   first_segment_delay = 0;
@@ -636,17 +644,21 @@ void recalculate_acceleration() {
 }
 
 
+/**
+ * Set the step count for each muscle.
+ * @input a array of long values.  NUM_MUSCLES in length.
+ */
 void motor_set_step_count(long *a) {
   wait_for_empty_segment_buffer();
 
   previous_nominal_speed=0;
   previous_safe_speed=0;
-  for (int i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
+  for(ALL_MUSCLES(i)) {
     previous_speed[i] = 0;
   }
 
   Segment &old_seg = line_segments[get_prev_segment(last_segment)];
-  for (int i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
+  for(ALL_MUSCLES(i)) {
     old_seg.a[i].step_count = a[i];
   }
 

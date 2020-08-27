@@ -15,20 +15,20 @@
  * @param motorStepArray a measure of each belt to that plotter position
  */
 void IK(const float *const cartesian, long *motorStepArray) {
-  float left   = axies[0].limitMin;
-  float right  = axies[0].limitMax;
-  float top    = axies[1].limitMax;
-  float bottom = axies[1].limitMin;
+  float left   = axies[0].limitMin+ZARPLOTTER_COMPENSATION;
+  float right  = axies[0].limitMax-ZARPLOTTER_COMPENSATION;
+  float top    = axies[1].limitMax-ZARPLOTTER_COMPENSATION;
+  float bottom = axies[1].limitMin+ZARPLOTTER_COMPENSATION;
   float x = cartesian[0];
   float y = cartesian[1];
   
   float L,R,U,V,dy,dx;
 
   // clockwise from top left.
-  dx = abs(x-left )-ZARPLOTTER_COMPENSATION;  dy = abs(y-top   )-ZARPLOTTER_COMPENSATION;  L = sqrt(dx*dx+dy*dy);  motorStepArray[0] = lround( L / MM_PER_STEP );  // M0 (top left)
-  dx = abs(x-right)-ZARPLOTTER_COMPENSATION;  dy = abs(y-top   )-ZARPLOTTER_COMPENSATION;  R = sqrt(dx*dx+dy*dy);  motorStepArray[1] = lround( R / MM_PER_STEP );  // M1 (top right)
-  dx = abs(x-right)-ZARPLOTTER_COMPENSATION;  dy = abs(y-bottom)-ZARPLOTTER_COMPENSATION;  V = sqrt(dx*dx+dy*dy);  motorStepArray[2] = lround( V / MM_PER_STEP );  // M3 (bottom right)
-  dx = abs(x-left )-ZARPLOTTER_COMPENSATION;  dy = abs(y-bottom)-ZARPLOTTER_COMPENSATION;  U = sqrt(dx*dx+dy*dy);  motorStepArray[3] = lround( U / MM_PER_STEP );  // M2 (bottom left)
+  dx = x-left ;  dy = y-top   ;  L = sqrt(dx*dx+dy*dy);  motorStepArray[0] = lroundf( L / MM_PER_STEP );  // M0 (top left)
+  dx = x-right;  dy = y-top   ;  R = sqrt(dx*dx+dy*dy);  motorStepArray[1] = lroundf( R / MM_PER_STEP );  // M1 (top right)
+  dx = x-right;  dy = y-bottom;  V = sqrt(dx*dx+dy*dy);  motorStepArray[2] = lroundf( V / MM_PER_STEP );  // M3 (bottom right)
+  dx = x-left ;  dy = y-bottom;  U = sqrt(dx*dx+dy*dy);  motorStepArray[3] = lroundf( U / MM_PER_STEP );  // M2 (bottom left)
   
   motorStepArray[NUM_MOTORS] = cartesian[2];
 /*

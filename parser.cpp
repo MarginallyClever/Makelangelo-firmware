@@ -795,8 +795,7 @@ void Parser::M114() {
   wait_for_empty_segment_buffer();
 
   Serial.print(F("M114"));
-  int i;
-  for (i = 0; i < NUM_AXIES; ++i) {
+  for (ALL_AXIES(i)) {
     Serial.print(' ');
     Serial.print(AxisNames[i]);
     Serial.print(axies[i].pos);

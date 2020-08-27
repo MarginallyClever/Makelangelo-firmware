@@ -55,3 +55,6 @@ FORCE_INLINE float WRAP_RADIANS(float n) {
 
 // use in for(ALL_MOTORS(i)) { //i will be rising
 #define ALL_MOTORS(NN) int NN=0;NN<NUM_MOTORS;++NN
+
+// use in for(ALL_MUSCLES(i)) { //i will be rising
+#define ALL_MUSCLES(NN) int NN=0;NN<NUM_MUSCLES;++NN
