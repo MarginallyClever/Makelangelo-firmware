@@ -23,11 +23,12 @@ void IK(const float *const cartesian, long *motorStepArray) {
   float y = cartesian[1];
   
   float L,R,U,V,dy,dx;
-  
+
+  // clockwise from top left.
   dx = abs(x-left )-ZARPLOTTER_COMPENSATION;  dy = abs(y-top   )-ZARPLOTTER_COMPENSATION;  L = sqrt(dx*dx+dy*dy);  motorStepArray[0] = lround( L / MM_PER_STEP );  // M0 (top left)
   dx = abs(x-right)-ZARPLOTTER_COMPENSATION;  dy = abs(y-top   )-ZARPLOTTER_COMPENSATION;  R = sqrt(dx*dx+dy*dy);  motorStepArray[1] = lround( R / MM_PER_STEP );  // M1 (top right)
-  dx = abs(x-left )-ZARPLOTTER_COMPENSATION;  dy = abs(y-bottom)-ZARPLOTTER_COMPENSATION;  U = sqrt(dx*dx+dy*dy);  motorStepArray[2] = lround( U / MM_PER_STEP );  // M2 (bottom left)
-  dx = abs(x-right)-ZARPLOTTER_COMPENSATION;  dy = abs(y-bottom)-ZARPLOTTER_COMPENSATION;  V = sqrt(dx*dx+dy*dy);  motorStepArray[3] = lround( V / MM_PER_STEP );  // M3 (bottom right)
+  dx = abs(x-right)-ZARPLOTTER_COMPENSATION;  dy = abs(y-bottom)-ZARPLOTTER_COMPENSATION;  V = sqrt(dx*dx+dy*dy);  motorStepArray[2] = lround( V / MM_PER_STEP );  // M3 (bottom right)
+  dx = abs(x-left )-ZARPLOTTER_COMPENSATION;  dy = abs(y-bottom)-ZARPLOTTER_COMPENSATION;  U = sqrt(dx*dx+dy*dy);  motorStepArray[3] = lround( U / MM_PER_STEP );  // M2 (bottom left)
   
   motorStepArray[NUM_MOTORS] = cartesian[2];
 /*
