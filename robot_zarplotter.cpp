@@ -25,11 +25,24 @@ void IK(const float *const cartesian, long *motorStepArray) {
   float L,R,U,V,dy,dx;
 
   // clockwise from top left.
-  dx = x-left ;  dy = y-top   ;  L = sqrt(dx*dx+dy*dy);  motorStepArray[0] = lroundf( L / MM_PER_STEP );  // M0 (top left)
-  dx = x-right;  dy = y-top   ;  R = sqrt(dx*dx+dy*dy);  motorStepArray[1] = lroundf( R / MM_PER_STEP );  // M1 (top right)
-  dx = x-right;  dy = y-bottom;  V = sqrt(dx*dx+dy*dy);  motorStepArray[2] = lroundf( V / MM_PER_STEP );  // M3 (bottom right)
-  dx = x-left ;  dy = y-bottom;  U = sqrt(dx*dx+dy*dy);  motorStepArray[3] = lroundf( U / MM_PER_STEP );  // M2 (bottom left)
-  
+  dx = x-left ;  dy = y-top   ;  motorStepArray[0] = lroundf( (sqrt(sq(dx)+sq(dy))) / MM_PER_STEP );  // M0 (top left)
+  dx = x-right;  dy = y-top   ;  motorStepArray[1] = lroundf( (sqrt(sq(dx)+sq(dy))) / MM_PER_STEP );  // M1 (top right)
+  dx = x-right;  dy = y-bottom;  motorStepArray[2] = lroundf( (sqrt(sq(dx)+sq(dy))) / MM_PER_STEP );  // M2 (bottom right)
+  dx = x-left ;  dy = y-bottom;  motorStepArray[3] = lroundf( (sqrt(sq(dx)+sq(dy))) / MM_PER_STEP );  // M3 (bottom left)
+/*
+  Serial.print(x);
+  Serial.print('\t');
+  Serial.print(y);
+  Serial.print('\t');
+  Serial.print(motorStepArray[0]);
+  Serial.print('\t');
+  Serial.print(motorStepArray[1]);
+  Serial.print('\t');
+  Serial.print(motorStepArray[2]);
+  Serial.print('\t');
+  Serial.print(motorStepArray[3]);
+  Serial.print('\n');
+  */
   motorStepArray[NUM_MOTORS] = cartesian[2];
 /*
   Serial.print(cartesian[0]);  Serial.print('\t');

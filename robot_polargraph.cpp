@@ -25,10 +25,10 @@ void IK(const float *const cartesian, long *motorStepArray) {
   
   dy = cartesian[1] - top;
   dx = cartesian[0] - left;
-  motorStepArray[0] = lroundf( sqrt(dx*dx+dy*dy) / MM_PER_STEP );
+  motorStepArray[0] = lroundf( sqrt(sq(dx)+sq(dy)) / MM_PER_STEP );
   // find length to M2
   dx = right - cartesian[0];
-  motorStepArray[1] = lroundf( sqrt(dx*dx+dy*dy) / MM_PER_STEP );
+  motorStepArray[1] = lroundf( sqrt(sq(dx)+sq(dy)) / MM_PER_STEP );
   
   motorStepArray[2] = cartesian[2];
 }

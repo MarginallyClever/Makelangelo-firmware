@@ -23,22 +23,20 @@
 
 #define MAX_ACCELERATION     (500.0)
 #define MIN_ACCELERATION     (0.0)
-#define DEFAULT_ACCELERATION (180.0)
+#define DEFAULT_ACCELERATION (500.0)
 
 #define MAX_JERK             (10.0)
 #define MAX_Z_JERK           (0.3)
 
-#define ZARPLOTTER_MOTOR_SIZE   (45.0f) // mm
-#define ZARPLOTTER_COMPENSATION ( + ZARPLOTTER_MOTOR_SIZE)
-
-// plan long moves as a set of submoves to increase accuracy.  Uncomment to turn this off.
-#define SUBDIVIDE_LINES
-// what is the maximum length of a subdivided line?
-#define SEGMENT_MAX_LENGTH_MM  (2)
+#define ZARPLOTTER_MOTOR_SIZE   (50.0f) // mm
+#define ZARPLOTTER_COMPENSATION (ZARPLOTTER_MOTOR_SIZE)
 
 // servo angles for pen control
 #define PEN_UP_ANGLE         (50)
 #define PEN_DOWN_ANGLE       (90)  // Some steppers don't like 0 degrees
+
+// plan long moves as a set of submoves to increase accuracy.  Uncomment to turn this off.
+#define SUBDIVIDE_LINES
 
 #define MAX_SEGMENTS         (16)  // override the default to save RAM
 #define SEGMENTS_PER_SECOND  (40)
@@ -72,5 +70,6 @@
 #endif
 #define STEPS_PER_TURN       (NORMAL_MOTOR_STEPS * MICROSTEPS)
 #define MM_PER_STEP          (PULLEY_PITCH/STEPS_PER_TURN)
+#define STEPS_PER_MM         (STEPS_PER_TURN/PULLEY_PITCH)
 
 #endif  // ZARPLOTTER
