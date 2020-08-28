@@ -39,7 +39,7 @@
 #define SUBDIVIDE_LINES
 
 #define MAX_SEGMENTS         (16)  // override the default to save RAM
-#define SEGMENTS_PER_SECOND  (40)
+#define SEGMENTS_PER_SECOND  (10)
 
 // 400 step-per-turn motors move 0.9 degrees per step.  (360/400=0.9).  Marginallyclever.com default.
 // 200 step-per-turn motors move 1.8 degrees per step.  (360/200=1.8)
