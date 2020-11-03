@@ -42,3 +42,5 @@ Network Trash Folder
 Temporary Items
 .apdisk
 local_config.h
+.vscode
+.pio
