@@ -96,8 +96,8 @@ public:
   void M100();  // M100 - Print a helpful message to serial.
   void M101();  // M101 Annn Tnnn Bnnn - Change axis A limits to max T and min B.
   void M110();  // M110 Nnn - sets next expected line number to n.
-  void M111();  // M111 - Snn - sets parser flags to n.  Combine any valid flags: 0 (relative) 1 (strict) 2 (echo)
-  void M112();  // M112 - emergency stop.  Set all PIDS to zero.
+  //void M111();  // M111 - Snn - sets parser flags to n.  Combine any valid flags: 0 (relative) 1 (strict) 2 (echo)
+  void M112();  // M112 - emergency stop.
   void M114();  // M114 - report current target position
 #ifdef HAS_LCD
   void M117();  // M117 [string] - Display string on the LCD panel.

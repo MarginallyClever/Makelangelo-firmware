@@ -226,13 +226,13 @@ static FORCE_INLINE uint16_t MultiU24X32toH16(uint32_t longIn1, uint32_t longIn2
 float max_speed_allowed(const float &acc, const float &target_velocity, const float &distance) {
   return sqrt( sq(target_velocity) - 2 * acc * distance );
 }
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////TEST
-void gripperUpdate(float currentGripperCmd){
-  if (currentGripperCmd >= 1){
-    digitalWrite(TEST_GRIPPER_PIN, HIGH);
-  } else {
-    digitalWrite(TEST_GRIPPER_PIN, LOW);
-  }
+
+
+/**
+ * Adjust the gripper position. 0 for closed, anything else for open.
+ */
+void gripperUpdate(float currentGripperCmd) {
+  digitalWrite(TEST_GRIPPER_PIN, ( currentGripperCmd > 0 ) ? LOW : HIGH );
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////

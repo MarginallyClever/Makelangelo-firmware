@@ -154,11 +154,6 @@ extern float max_feedrate_mm_s[NUM_MUSCLES];
 
 extern uint32_t min_segment_time_us;
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////TEST
-//extern float lastGripperCmd;
-extern void gripperUpdate(float currentGripperCmd);
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 //------------------------------------------------------------------------------
 // METHODS
 //------------------------------------------------------------------------------
@@ -176,6 +171,9 @@ extern void setPenAngle(int arg0);
 extern void clockISRProfile();
 
 extern const int movesPlanned();
+
+// TEST JIN
+extern void gripperUpdate(float currentGripperCmd);
 
 #ifdef DEBUG_STEPPING
 extern void debug_stepping();
