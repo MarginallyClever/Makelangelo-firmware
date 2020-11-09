@@ -705,7 +705,7 @@ void motor_set_step_count(long *a) {
  **/
 void motor_onestep(int motor) {
 #ifdef VERBOSE
-  Serial.print(motorNames[motor]);
+  Serial.print(MotorNames[motor]);
 #endif
 
   digitalWrite(motors[motor].step_pin, HIGH);
