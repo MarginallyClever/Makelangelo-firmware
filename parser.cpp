@@ -578,6 +578,15 @@ void Parser::D23() {
 }
 #endif
 
+// D50 Snn - Set and report strict mode.  where nn=0 for off and 1 for on.
+void Parser::D50() {
+  int oldValue=IS_STRICT();
+  int newValue=parseNumber('S',oldValue);
+  SET_BIT(parserFlags,FLAG_STRICT,newValue);
+  Serial.print(F("D50 S"));
+  Serial.println(newValue?1:0);
+}
+
 
 // G commands
 

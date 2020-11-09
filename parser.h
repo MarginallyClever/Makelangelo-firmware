@@ -76,7 +76,7 @@ public:
   void D22();  // D22 - Sixi only.  initialize sixi robot EEPROM settings
   void D23();  // D23 - Sixi only.  Sixi is at the calibration point.  Set the home position accordingly.
 #endif
-  void D50();  // D40 Snn - Set and report strict mode.  where nn=0 for off and 1 for on.
+  void D50();  // D50 Snn - Set and report strict mode.  where nn=0 for off and 1 for on.
 
   
   void G01();  // G0/G1 [Xn] [Yn] [Zn] [Un] [Vn] [Wn] - linear travel
