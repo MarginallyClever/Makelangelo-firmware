@@ -1,4 +1,3 @@
-
 //------------------------------------------------------------------------------
 // Makelangelo - firmware for various robot kinematic models
 // dan@marginallycelver.com 2013-12-26
@@ -278,21 +277,19 @@ void arc(float cx, float cy, float *destination, char clockwise, float new_feed_
 
 
 /**
-   Instantly move the virtual plotter position.  Does not check if the move is valid.
-*/
+ * Instantly move the virtual plotter position.  Does not check if the move is valid.
+ */
 void teleport(float *pos) {
   wait_for_empty_segment_buffer();
 
-  //Serial.println("Teleport");
+  //Serial.println(F("Teleport"));
   for(ALL_AXIES(i)) {
     axies[i].pos = pos[i];
     //Serial.println(pos[i]);
   }
 
-  long steps[NUM_AXIES];
-  
+  long steps[NUM_MUSCLES];
   IK(pos, steps);
-  
   motor_set_step_count(steps);
 }
 

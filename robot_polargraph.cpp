@@ -19,16 +19,16 @@
 void IK(const float *const cartesian, long *motorStepArray) {
   float dy,dx;
   // find length to M1
-  float limit_xmin = axies[0].limitMin;
-  float limit_xmax = axies[0].limitMax;
-  float limit_ymax = axies[1].limitMax;
+  float left = axies[0].limitMin;
+  float right = axies[0].limitMax;
+  float top = axies[1].limitMax;
   
-  dy = cartesian[1] - limit_ymax;
-  dx = cartesian[0] - limit_xmin;
-  motorStepArray[0] = lroundf( sqrt(dx*dx+dy*dy) / MM_PER_STEP );
+  dy = cartesian[1] - top;
+  dx = cartesian[0] - left;
+  motorStepArray[0] = lroundf( sqrt(sq(dx)+sq(dy)) / MM_PER_STEP );
   // find length to M2
-  dx = limit_xmax - cartesian[0];
-  motorStepArray[1] = lroundf( sqrt(dx*dx+dy*dy) / MM_PER_STEP );
+  dx = right - cartesian[0];
+  motorStepArray[1] = lroundf( sqrt(sq(dx)+sq(dy)) / MM_PER_STEP );
   
   motorStepArray[2] = cartesian[2];
 }
@@ -36,18 +36,18 @@ void IK(const float *const cartesian, long *motorStepArray) {
 
 /** 
  * Forward Kinematics - turns step counts into XY coordinates
- * @param motorStepArray a measure of each belt to that plotter position.  NUM_MOTORS+NUM_SERVOS long.
+ * @param motorStepArray a measure of each belt to that plotter position.  NUM_MUSCLES long.
  * @param axies the resulting cartesian coordinate. NUM_AXIES long.
  * @return 0 if no problem, 1 on failure.
  */
 int FK(long *motorStepArray,float *cartesian) {
-  float limit_xmin = axies[0].limitMin;
-  float limit_xmax = axies[0].limitMax;
-  float limit_ymax = axies[1].limitMax;
+  float left = axies[0].limitMin;
+  float right = axies[0].limitMax;
+  float top = axies[1].limitMax;
   
   // use law of cosines: theta = acos((a*a+b*b-c*c)/(2*a*b));
   float a = (float)motorStepArray[0] * MM_PER_STEP;
-  float b = (limit_xmax-limit_xmin);
+  float b = (right-left);
   float c = (float)motorStepArray[1] * MM_PER_STEP;
 
   // slow, uses trig
@@ -55,16 +55,16 @@ int FK(long *motorStepArray,float *cartesian) {
   // or cc - aa - bb = -2ab * cos( theta )
   // or ( aa + bb - cc ) / ( 2ab ) = cos( theta );
   // or theta = acos((aa+bb-cc)/(2ab));
-  // so  x = cos(theta)*l1 + limit_xmin;
-  // and y = sin(theta)*l1 + limit_ymax;
+  // so  x = cos(theta)*l1 + left;
+  // and y = sin(theta)*l1 + top;
   // and we know that cos(acos(i)) = i
   // and we know that sin(acos(i)) = sqrt(1-i*i)
-  // so y = sin(  acos((aa+bb-cc)/(2ab))  )*l1 + limit_ymax;
+  // so y = sin(  acos((aa+bb-cc)/(2ab))  )*l1 + top;
   float theta = ((a*a+b*b-c*c)/(2.0*a*b));
   
-  cartesian[0] = theta * a + limit_xmin;
+  cartesian[0] = theta * a + left;
   /*
-  Serial.print("ymax=");   Serial.println(limit_ymax);
+  Serial.print("ymax=");   Serial.println(top);
   Serial.print("theta=");  Serial.println(theta);
   Serial.print("a=");      Serial.println(a);
   Serial.print("b=");      Serial.println(b);
@@ -72,7 +72,7 @@ int FK(long *motorStepArray,float *cartesian) {
   Serial.print("S0=");     Serial.println(motorStepArray[0]);
   Serial.print("S1=");     Serial.println(motorStepArray[1]);
   */
-  cartesian[1] = limit_ymax - sqrt( 1.0 - theta * theta ) * a;
+  cartesian[1] = top - sqrt( 1.0 - theta * theta ) * a;
   cartesian[2] = motorStepArray[2];
   /*
   Serial.print("C0=");      Serial.println(cartesian[0]);
@@ -99,7 +99,7 @@ void recordHome() {
   digitalWrite(MOTOR_1_DIR_PIN, LOW);
   int left = 0;
   int right = 0;
-  long count[NUM_MOTORS+NUM_SERVOS];
+  long count[NUM_MUSCLES];
 
   // we start at home position, so we know (x,y)->(left,right) value here.
   float homes[NUM_AXIES];
@@ -277,7 +277,7 @@ void robot_findHome() {
   #endif  // HAS_TMC2130
   
   //Serial.println(F("Estimating position..."));
-  long count[NUM_MOTORS+NUM_SERVOS];
+  long count[NUM_MUSCLES];
   count[0] = calibrateLeft/MM_PER_STEP;
   count[1] = calibrateRight/MM_PER_STEP;
   count[2] = axies[2].pos;
@@ -321,7 +321,7 @@ void calibrateBelts() {
   digitalWrite(MOTOR_0_DIR_PIN, LOW);
   digitalWrite(MOTOR_1_DIR_PIN, LOW);
   int left = 0, right = 0;
-  long steps[NUM_MOTORS+NUM_SERVOS];
+  long steps[NUM_MUSCLES];
   float homePos[NUM_AXIES];
   homePos[0]=axies[0].homePos;
   homePos[1]=axies[1].homePos;

@@ -23,6 +23,8 @@
 #endif
 
 
+#define NUM_MUSCLES (NUM_MOTORS+NUM_SERVOS)
+
 //------------------------------------------------------------------------------
 // MOVE BUFFERING
 //------------------------------------------------------------------------------
@@ -78,6 +80,10 @@
 #define END5 HIGH
 #endif
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////TEST
+#define TEST_GRIPPER_PIN          (12)
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 //------------------------------------------------------------------------------
 // STRUCTURES
 //------------------------------------------------------------------------------
@@ -103,11 +109,11 @@ typedef struct {
   float positionStart;
   float positionEnd;
 #endif
-} SegmentAxis;
+} Muscle;
 
 
 typedef struct {
-  SegmentAxis a[NUM_MOTORS+NUM_SERVOS];
+  Muscle a[NUM_MUSCLES];
 
   float distance;         // mm
   float nominal_speed;    // mm/s
@@ -140,11 +146,11 @@ extern Segment line_segments[MAX_SEGMENTS];
 extern Segment *working_seg;
 extern volatile int current_segment, last_segment, nonbusy_segment;
 extern int first_segment_delay;
-extern Motor motors[NUM_AXIES];
+extern Motor motors[NUM_MOTORS];
 extern const char *AxisNames;
 extern const char *MotorNames;
-extern float max_jerk[NUM_MOTORS+NUM_SERVOS];
-extern float max_feedrate_mm_s[NUM_MOTORS+NUM_SERVOS];
+extern float max_jerk[NUM_MUSCLES];
+extern float max_feedrate_mm_s[NUM_MUSCLES];
 
 extern uint32_t min_segment_time_us;
 
@@ -165,6 +171,9 @@ extern void setPenAngle(int arg0);
 extern void clockISRProfile();
 
 extern const int movesPlanned();
+
+// TEST JIN
+extern void gripperUpdate(float currentGripperCmd);
 
 #ifdef DEBUG_STEPPING
 extern void debug_stepping();

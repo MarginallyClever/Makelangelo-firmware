@@ -1,4 +1,3 @@
-
 #include "configure.h"
 #include "eeprom.h"
 #include "lcd.h"
@@ -102,6 +101,9 @@ char Parser::checkLineNumberAndCRCisOK() {
 
     // next time around, wait for the next line number.
     lineNumber++;
+  } else if(IS_STRICT) {
+    Serial.print(F("NOLINENUM"));
+    return 0;
   }
 
   // is there a checksum?
@@ -114,7 +116,7 @@ char Parser::checkLineNumberAndCRCisOK() {
     }
   }
 
-  if(found==-1) {
+  if(IS_STRICT && found==-1) {
     Serial.println("NOCHECKSUM");
     return 0;
   }
@@ -198,7 +200,7 @@ void Parser::update() {
 void Parser::processCommand() {
   if( serialBuffer[0] == '\0' || serialBuffer[0] == ';' ) return; // blank lines
 
-  if(IS_STRICT && !checkLineNumberAndCRCisOK()) return; // message garbled
+  if(!checkLineNumberAndCRCisOK()) return; // message garbled
 
   // remove any trailing semicolon.
   int last = strlen(serialBuffer) - 1;
@@ -225,6 +227,7 @@ void Parser::processCommand() {
       case 100:  M100();  break;
       case 101:  M101();  break;
       case 110:  lineNumber = parseNumber('N', lineNumber);  break;
+      case 112:  M112();  break;
       case 114:  M114();  break;
 #ifdef HAS_LCD
       case 117:  M117();  break;
@@ -297,7 +300,8 @@ void Parser::processCommand() {
       case 22:  D22();  break;
       case 23:  D23();  break;
 #endif
-      //case 50:  D50();  break;
+      case 50:  D50();  break;
+      case 51:  D51();  break;
       default:  break;
     }
     return;
@@ -597,6 +601,11 @@ void Parser::G01() {
   }
 #endif // MACHINE_STYLE == SIXI
 
+  if(hasGCode('T')) {
+    float toolStatus = parseNumber('T',0);
+    gripperUpdate(toolStatus);
+  }
+
   if(hasGCode('A')) {
     acceleration = parseNumber('A',acceleration);
     acceleration = min(max(acceleration, (float)MIN_ACCELERATION), (float)MAX_ACCELERATION);
@@ -798,15 +807,30 @@ void Parser::M101() {
 
 
 /**
-   M114
-   Print the X,Y,Z, feedrate, acceleration, and home position
-*/
+ * M112
+ * Emergency stop
+ */
+void Parser::M112() {
+  // clear segment buffer
+  last_segment = current_segment;
+#ifdef HAS_LCD
+  LCD_setStatusMessage("ESTOP - PLEASE RESET")
+#endif
+  // stop clock
+  CRITICAL_SECTION_START();
+  // do nothing
+}
+
+
+/**
+ * M114
+ * Print the X,Y,Z, feedrate, acceleration, and home position
+ */
 void Parser::M114() {
   wait_for_empty_segment_buffer();
 
   Serial.print(F("M114"));
-  int i;
-  for (i = 0; i < NUM_AXIES; ++i) {
+  for (ALL_AXIES(i)) {
     Serial.print(' ');
     Serial.print(AxisNames[i]);
     Serial.print(axies[i].pos);

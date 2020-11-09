@@ -53,6 +53,7 @@
 #define BOARD_WEMOS        5  // Wemos D1 R2 + CNC Shield v3 (see board_wemos.h)
 #define BOARD_SIXI_MEGA    6  // Arduino Mega + custom shield for Sixi 2 robot
 #define BOARD_CNCV3        7  // Mega2560 + CNC Shield v3
+#define BOARD_ESP32        8  // ESP32 + Marginally Clever Polargraph PCB.
 
 // default value
 #define MOTHERBOARD BOARD_RUMBA
@@ -91,6 +92,9 @@
 #include "board_wemos.h"
 #include "board_sixi_mega.h"
 #include "board_cncv3.h"
+#include "board_esp32.h"
+
+#include <Arduino.h>
 
 #include "clock.h"
 #include "motor.h"
@@ -107,10 +111,9 @@
 #if NUM_SERVOS > MAX_BOARD_SERVOS
 #error "The number of servos needed is more than this board supports."
 #endif
-
-#if NUM_SERVOS + NUM_MOTORS != NUM_AXIES
+#if NUM_MUSCLES != NUM_AXIES
 // not always the case!  Skycam has more motors than axies.
-//#error "NUM_SERVOS + NUM_MOTORS != NUM_AXIES"
+//#error "NUM_MUSCLES != NUM_AXIES"
 #endif
 
 

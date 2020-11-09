@@ -41,8 +41,8 @@
 #define LIMIT_SWITCH_PIN_RIGHT    (MOTOR_1_LIMIT_SWITCH_PIN)
 
 #define HAS_WIFI
-#define WIFI_SSID_NAME "CSIS VAN #1"    // WiFi AP SSID Name
-#define WIFI_SSID_PASS "TDPJYGZEDH123"  // WiFi AP SSID Password
+#define WIFI_SSID_NAME ""  // WiFi AP SSID Name - put this in your local_config.h
+#define WIFI_SSID_PASS ""  // WiFi AP SSID Password - put this in your local_config.h
 
 #define CLOCK_FREQ            (80000000L)
 

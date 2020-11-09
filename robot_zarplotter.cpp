@@ -15,20 +15,34 @@
  * @param motorStepArray a measure of each belt to that plotter position
  */
 void IK(const float *const cartesian, long *motorStepArray) {
-  float left   = axies[0].limitMin;
-  float right  = axies[0].limitMax;
-  float top    = axies[1].limitMax;
-  float bottom = axies[1].limitMin;
+  float left   = axies[0].limitMin+ZARPLOTTER_COMPENSATION;
+  float right  = axies[0].limitMax-ZARPLOTTER_COMPENSATION;
+  float top    = axies[1].limitMax-ZARPLOTTER_COMPENSATION;
+  float bottom = axies[1].limitMin+ZARPLOTTER_COMPENSATION;
   float x = cartesian[0];
   float y = cartesian[1];
   
   float L,R,U,V,dy,dx;
-  
-  dx = abs(x-left )-ZARPLOTTER_COMPENSATION;  dy = abs(y-top   )-ZARPLOTTER_COMPENSATION;  L = sqrt(dx*dx+dy*dy);  motorStepArray[0] = lround( L / MM_PER_STEP );  // M0 (top left)
-  dx = abs(x-right)-ZARPLOTTER_COMPENSATION;  dy = abs(y-top   )-ZARPLOTTER_COMPENSATION;  R = sqrt(dx*dx+dy*dy);  motorStepArray[1] = lround( R / MM_PER_STEP );  // M1 (top right)
-  dx = abs(x-left )-ZARPLOTTER_COMPENSATION;  dy = abs(y-bottom)-ZARPLOTTER_COMPENSATION;  U = sqrt(dx*dx+dy*dy);  motorStepArray[2] = lround( U / MM_PER_STEP );  // M2 (bottom left)
-  dx = abs(x-right)-ZARPLOTTER_COMPENSATION;  dy = abs(y-bottom)-ZARPLOTTER_COMPENSATION;  V = sqrt(dx*dx+dy*dy);  motorStepArray[3] = lround( V / MM_PER_STEP );  // M3 (bottom right)
-  
+
+  // clockwise from top left.
+  dx = x-left ;  dy = y-top   ;  motorStepArray[0] = lroundf( (sqrt(sq(dx)+sq(dy))) / MM_PER_STEP );  // M0 (top left)
+  dx = x-right;  dy = y-top   ;  motorStepArray[1] = lroundf( (sqrt(sq(dx)+sq(dy))) / MM_PER_STEP );  // M1 (top right)
+  dx = x-right;  dy = y-bottom;  motorStepArray[2] = lroundf( (sqrt(sq(dx)+sq(dy))) / MM_PER_STEP );  // M2 (bottom right)
+  dx = x-left ;  dy = y-bottom;  motorStepArray[3] = lroundf( (sqrt(sq(dx)+sq(dy))) / MM_PER_STEP );  // M3 (bottom left)
+/*
+  Serial.print(x);
+  Serial.print('\t');
+  Serial.print(y);
+  Serial.print('\t');
+  Serial.print(motorStepArray[0]);
+  Serial.print('\t');
+  Serial.print(motorStepArray[1]);
+  Serial.print('\t');
+  Serial.print(motorStepArray[2]);
+  Serial.print('\t');
+  Serial.print(motorStepArray[3]);
+  Serial.print('\n');
+  */
   motorStepArray[NUM_MOTORS] = cartesian[2];
 /*
   Serial.print(cartesian[0]);  Serial.print('\t');
