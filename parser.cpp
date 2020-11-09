@@ -523,10 +523,8 @@ void Parser::D21() {
 void Parser::D22() {
   int i;
   // cancel the current home offsets
-  for(ALL_SENSORS(i)) {
-    axies[i].homePos = 0;
-  }
-
+  M502();
+  
   // Sixi init limits
 #define SIL(NN)  { axies[NN].limitMax = DH_##NN##_MAX;  axies[NN].limitMin = DH_##NN##_MIN; }
   SIL(0);
@@ -544,23 +542,23 @@ void Parser::D22() {
     homePos[i] = sensorManager.sensors[i].angle;
   }
   // subtract the home position from this position
-  homePos[0]-=0;
-  homePos[1]-=-90;
-  homePos[2]-=0;
-  homePos[3]-=0;
-  homePos[4]-=0;
-  homePos[5]-=0;
+  homePos[0]+=0;
+  homePos[1]+=-90;
+  homePos[2]+=0;
+  homePos[3]+=0;
+  homePos[4]+=0;
+  homePos[5]+=0;
 
   setHome(homePos);
 }
 
 // D23 - Sixi is at the calibration position.  Set the home position accordingly.
 void Parser::D23() {
+  Serial.println(F("D23"));
   int i;
   // cancel the current home offsets
-  for(ALL_SENSORS(i)) {
-    axies[i].homePos = 0;
-  }
+  M502();
+  
   // read the sensor
   sensorManager.updateAll();
   // apply the new offsets
@@ -569,12 +567,12 @@ void Parser::D23() {
     homePos[i] = sensorManager.sensors[i].angle;
   }
   // subtract the calibration from this position
-  homePos[0]-=0;
-  homePos[1]-=-41.3;
-  homePos[2]-=74.5;
-  homePos[3]-=0;
-  homePos[4]-=-33.5;
-  homePos[5]-=0;
+  homePos[0]+=0;
+  homePos[1]+=-41.3;
+  homePos[2]+=74.5;
+  homePos[3]+=0;
+  homePos[4]+=-33.5;
+  homePos[5]+=0;
   
   setHome(homePos);
 }
@@ -814,7 +812,7 @@ void Parser::M112() {
   // clear segment buffer
   last_segment = current_segment;
 #ifdef HAS_LCD
-  LCD_setStatusMessage("ESTOP - PLEASE RESET")
+  LCD_setStatusMessage("ESTOP - PLEASE RESET");
 #endif
   // stop clock
   CRITICAL_SECTION_START();
