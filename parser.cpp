@@ -1014,11 +1014,5 @@ void Parser::M502() {
 
 // M503 - report all settings
 void Parser::M503() {
-  Serial.print(F("M503"));
-  for (ALL_MOTORS(i)) {
-    Serial.print(' ');
-    Serial.print(motors[i].letter);
-    Serial.print(axies[i].homePos);
-  }
-  Serial.println();
+  eeprom.reportAll();
 }

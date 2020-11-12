@@ -180,5 +180,26 @@ void Eeprom::loadAll() {
 }
 
 void Eeprom::reportAll() {
-  
+  // M100 includes Model, UID, build date, build time, and wifi settings (if any).
+  parser.M100();
+  // report limits
+  parser.M101();
+  // feedreate, acceleration, and home position
+  parser.M114();
+#if MACHINE_STYLE == POLARGRAPH
+  // belt calibration
+  parser.D8();
+#endif
+#if MACHINE_STYLE == SIXI
+  // Sixi only home angle values
+  Serial.print(F("Home angles "));
+  for (ALL_MOTORS(i)) {
+    Serial.print(' ');
+    Serial.print(motors[i].letter);
+    Serial.print(axies[i].homePos);
+  }
+  Serial.println();
+  // current angle values
+  parser.D17();
+#endif
 }
