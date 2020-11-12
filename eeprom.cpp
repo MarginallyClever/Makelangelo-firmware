@@ -180,9 +180,13 @@ void Eeprom::loadAll() {
 }
 
 void Eeprom::reportAll() {
-  // M100 includes Model, UID, build date, build time, and wifi settings (if any).
-  parser.M100();
-  // report limits
+  // model and UID
+  sayModelAndUID();
+  // firmware version
+  D5();
+  // build date & time
+  sayBuildDateAndTime();
+  // limits
   parser.M101();
   // feedreate, acceleration, and home position
   parser.M114();
