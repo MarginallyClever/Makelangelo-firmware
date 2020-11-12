@@ -60,12 +60,11 @@ public:
   void D5();  // D5 - report current firmware version
   void D6();  // D6 [Xnn] [Ynn] [Znn] [Unn] [Vnn] [Wnn] - Set home position for each axis.
 #if MACHINE_STYLE == POLARGRAPH
-  void D7();  // D7 [Lnn] [Rnn] - Polargraph only.  Set calibration length of each belt
-  void D8();  // D8 - Polargraph only.  Report calibration values for left and right belts
-  //void D11();  // D11 - Polargraph only.  Makleangelo setup
+  void D7();  // D7 [Lnn] [Rnn] - Polargraph only.  Set calibration length of each belt (mm)
+  void D8();  // D8 - Polargraph only.  Report calibration values for left and right belts (mm)
   //void D13();  // D13 Znn - Polargraph only.  Set pen angle
 #endif
-  //void D14();  // D14 - get machine style
+  void D14();  // D14 - get machine style
 #if MACHINE_STYLE == SIXI
   void D15();  // D15 - Sixi only.  Sixi demo
   void D17();  // D17 - Sixi only.  report sensor values for each axis.
@@ -73,7 +72,6 @@ public:
   void D19();  // D19 - Sixi only.  toggle continuous D17 reporting
   void D20();  // D20 - Sixi only.  clear error flags
   void D21();  // D21 - Sixi only.  toggle software ESTOP
-  void D22();  // D22 - Sixi only.  initialize sixi robot EEPROM settings
   void D23();  // D23 - Sixi only.  Sixi is at the calibration point.  Set the home position accordingly.
 #endif
   void D50();  // D50 Snn - Set and report strict mode.  where nn=0 for off and 1 for on.
@@ -111,10 +109,10 @@ public:
   //void M306();  // M306 L[0...5] [Pn] [In] [Dn] - Sixi only.  adjust PID and report new values.
   void M428();  // M428 - Sixi only.  set home position to the current raw angle values (don't use home position to adjust home position!)
 #endif
-  void M500();  // M500 - save home offsets
-  void M501();  // M501 - load home offsets
-  void M502();  // M502 - reset the home offsets
-  void M503();  // M503 - report the home offsets
+  void M500();  // M500 - save settings
+  void M501();  // M501 - reload settings
+  void M502();  // M502 - factory reset
+  void M503();  // M503 - report all EEPROM settings
 };
 
 extern Parser parser;

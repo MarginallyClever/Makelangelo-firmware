@@ -51,6 +51,7 @@ public:
   
   void saveAll();
   void loadAll();
+  void reportAll();
 };
 
 extern Eeprom eeprom;

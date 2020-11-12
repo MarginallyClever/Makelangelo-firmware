@@ -183,6 +183,8 @@ class SensorManager {
 public:
   SensorAS5147 sensors[NUM_SENSORS];
   uint8_t positionErrorFlags;
+
+  void resetAll();
   
   void updateAll();
   void setup();
@@ -199,6 +201,7 @@ public:
 extern SensorManager sensorManager;
 
 extern void sixiDemo();
+extern void sixiSetup();
 
 
 #endif  // #ifdef SIXI

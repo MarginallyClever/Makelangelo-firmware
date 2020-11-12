@@ -269,24 +269,13 @@ void Parser::processCommand() {
         Serial.println(MACHINE_HARDWARE_VERSION);
         break;
 #if MACHINE_STYLE == POLARGRAPH
-#if MACHINE_HARDWARE_VERSION == MAKELANGELO_6
-      case 11:  makelangelo6Setup();  break;
-#endif
-#if MACHINE_HARDWARE_VERSION == MAKELANGELO_5
-      case 11:  makelangelo5Setup();  break;
-#endif
-#if MACHINE_HARDWARE_VERSION == MAKELANGELO_3_3
-      case 11:  makelangelo33Setup();  break;
-#endif
+      case 11:  D11();
       //case 12:  recordHome();  break;
 #endif
 #ifdef MACHINE_HAS_LIFTABLE_PEN
       case 13:  setPenAngle(parseNumber('Z', axies[2].pos));  break;
 #endif
-      case 14:  // get machine style
-        Serial.print(F("D14 "));
-        Serial.println(MACHINE_STYLE_NAME);
-        break;
+      case 14:  D14();  break;
 #if MACHINE_STYLE == STEWART
       case 15:  stewartDemo();  break;
 #endif
@@ -297,11 +286,9 @@ void Parser::processCommand() {
       case 19:  D19();  break;
       case 20:  SET_BIT_OFF(sensorManager.positionErrorFlags,POSITION_ERROR_FLAG_ERROR);  break;
       case 21:  FLIP_BIT(sensorManager.positionErrorFlags,POSITION_ERROR_FLAG_ESTOP);  break;  // toggle ESTOP
-      case 22:  D22();  break;
       case 23:  D23();  break;
 #endif
       case 50:  D50();  break;
-      case 51:  D51();  break;
       default:  break;
     }
     return;
@@ -426,6 +413,13 @@ void Parser::D8() {
 #endif
 
 
+void Parser::D14() {
+  // get machine style
+  Serial.print(F("D14 "));
+  Serial.println(MACHINE_STYLE_NAME);
+}
+
+
 #if MACHINE_STYLE == SIXI
 // D17 report the 6 axis sensor values from the Sixi robot arm.
 void Parser::D17() {
@@ -467,9 +461,7 @@ void Parser::D17() {
 
 
 #if MACHINE_STYLE == SIXI
-/**
-   D18 copy sensor values to motor step positions.
-*/
+// D18 copy sensor values to motor step positions.
 void Parser::D18() {
   wait_for_empty_segment_buffer();
   
@@ -519,46 +511,13 @@ void Parser::D21() {
   Serial.println(TEST_LIMITS?"1":"0");
 }
 
-// D22 - initialize sixi robot EEPROM settings
-void Parser::D22() {
-  int i;
-  // cancel the current home offsets
-  M502();
-  
-  // Sixi init limits
-#define SIL(NN)  { axies[NN].limitMax = DH_##NN##_MAX;  axies[NN].limitMin = DH_##NN##_MIN; }
-  SIL(0);
-  SIL(1);
-  SIL(2);
-  SIL(3);
-  SIL(4);
-  SIL(5);
-
-  // read the sensor
-  sensorManager.updateAll();
-  // apply the new offsets
-  float homePos[NUM_AXIES];
-  for(ALL_SENSORS(i)) {
-    homePos[i] = sensorManager.sensors[i].angle;
-  }
-  // subtract the home position from this position
-  homePos[0]+=0;
-  homePos[1]+=-90;
-  homePos[2]+=0;
-  homePos[3]+=0;
-  homePos[4]+=0;
-  homePos[5]+=0;
-
-  setHome(homePos);
-}
 
 // D23 - Sixi is at the calibration position.  Set the home position accordingly.
 void Parser::D23() {
   Serial.println(F("D23"));
   int i;
   // cancel the current home offsets
-  M502();
-  
+  sensorManager.resetAll();
   // read the sensor
   sensorManager.updateAll();
   // apply the new offsets
@@ -580,12 +539,13 @@ void Parser::D23() {
 
 // D50 Snn - Set and report strict mode.  where nn=0 for off and 1 for on.
 void Parser::D50() {
-  int oldValue=IS_STRICT();
+  int oldValue=IS_STRICT;
   int newValue=parseNumber('S',oldValue);
   SET_BIT(parserFlags,FLAG_STRICT,newValue);
   Serial.print(F("D50 S"));
   Serial.println(newValue?1:0);
 }
+
 
 
 // G commands
@@ -1005,7 +965,7 @@ void Parser::M300() {
 // M428 - set home position to the current angle values
 void Parser::M428() {
   // cancel the current home offsets
-  M502();
+  sensorManager.resetAll();
 
   // read the sensor
   sensorManager.updateAll();
@@ -1019,35 +979,40 @@ void Parser::M428() {
 #endif
 
 
-// M500 - save home offsets
+// M500 - save settings
 void Parser::M500() {
-  eeprom.saveHome();
+  eeprom.saveAll();
 }
 
 
-// M501 - load home offsets
+// M501 - reload settings
 void Parser::M501() {
-  eeprom.loadHome();
+  eeprom.loadAll();
 }
 
 
-// M502 - reset the home offsets
+// M502 - factory reset
 void Parser::M502() {
-#if MACHINE_STYLE == SIXI
-#define SHP(NN)  if(NUM_MOTORS>NN) axies[NN].homePos = DH_##NN##_THETA;
-  SHP(0)
-  SHP(1)
-  SHP(2)
-  SHP(3)
-  SHP(4)
-  SHP(5)
-
-  D18();
+#if MACHINE_STYLE == POLARGRAPH
+  // these are found in robot_polargraph.cpp
+#if MACHINE_HARDWARE_VERSION == MAKELANGELO_6
+  makelangelo6Setup();
 #endif
+#if MACHINE_HARDWARE_VERSION == MAKELANGELO_5
+  makelangelo5Setup();
+#endif
+#if MACHINE_HARDWARE_VERSION == MAKELANGELO_3_3
+  makelangelo33Setup();
+#endif
+#endif  // MACHINE_STYLE == POLARGRAPH
+
+#if MACHINE_STYLE == SIXI
+  sixiSetup();
+#endif // MACHINE_STYLE == SIXI
 }
 
 
-// M503 - report the home offsets
+// M503 - report all settings
 void Parser::M503() {
   Serial.print(F("M503"));
   for (ALL_MOTORS(i)) {

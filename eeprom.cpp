@@ -178,3 +178,7 @@ void Eeprom::loadAll() {
   loadHome();
   loadCalibration();
 }
+
+void Eeprom::reportAll() {
+  
+}

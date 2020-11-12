@@ -225,6 +225,19 @@ void SensorManager::updateAll() {
 }
 
 
+void SensorManager::resetAll() {
+#define SHP(NN)  if(NUM_MOTORS>NN) axies[NN].homePos = DH_##NN##_THETA;
+  SHP(0)
+  SHP(1)
+  SHP(2)
+  SHP(3)
+  SHP(4)
+  SHP(5)
+
+  parser.D18();
+}
+
+
 void reportError() {
   wait_for_empty_segment_buffer();
   sensorManager.updateAll();
@@ -464,5 +477,38 @@ void sixiDemo() {
   sixiDemo3();
 }
 
+
+// M502 - sixi robot factory reset
+void sixiSetup() {
+  // cancel the current home offsets
+  sensorManager.resetAll();
+  
+  // Sixi init limits
+#define SIL(NN)  { axies[NN].limitMax = DH_##NN##_MAX;  axies[NN].limitMin = DH_##NN##_MIN; }
+  SIL(0);
+  SIL(1);
+  SIL(2);
+  SIL(3);
+  SIL(4);
+  SIL(5);
+
+  // read the sensor
+  sensorManager.updateAll();
+  // apply the new offsets
+  float homePos[NUM_AXIES];
+  int i;
+  for(ALL_SENSORS(i)) {
+    homePos[i] = sensorManager.sensors[i].angle;
+  }
+  // subtract the home position from this position
+  homePos[0]+=0;
+  homePos[1]+=-90;
+  homePos[2]+=0;
+  homePos[3]+=0;
+  homePos[4]+=0;
+  homePos[5]+=0;
+
+  setHome(homePos);
+}
 
 #endif
