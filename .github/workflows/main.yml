@@ -78,6 +78,23 @@ jobs:
             robot: TRADITIONAL6
           - board: BOARD_ESP32
             robot: SCARA
+            # BOARD_SIXI_MEGA only meant for sixi
+          - board: BOARD_SIXI_MEGA
+            robot: POLARGRAPH
+          - board: BOARD_SIXI_MEGA
+            robot: TRADITIONALXY
+          - board: BOARD_SIXI_MEGA
+            robot: COREXY
+          - board: BOARD_SIXI_MEGA
+            robot: ZARPLOTTER
+          - board: BOARD_SIXI_MEGA
+            robot: SKYCAM
+          - board: BOARD_SIXI_MEGA
+            robot: STEWART
+          - board: BOARD_SIXI_MEGA
+            robot: TRADITIONAL6
+          - board: BOARD_SIXI_MEGA
+            robot: SCARA
             
     runs-on: windows-latest
     steps:
