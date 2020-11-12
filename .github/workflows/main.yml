@@ -6,8 +6,8 @@ jobs:
   build:
     strategy:
       matrix:
-        robot: [POLARGRAPH, TRADITIONALXY, COREXY, ZARPLOTTER, SKYCAM, DELTA, STEWART, ARM3, SIXI, TRADITIONAL6, SCARA]
         board: [BOARD_RUMBA, BOARD_RAMPS, BOARD_SIXI_MEGA, BOARD_CNCV3, BOARD_WEMOS, BOARD_ESP32]
+        robot: [POLARGRAPH, TRADITIONALXY, COREXY, ZARPLOTTER, SKYCAM, DELTA, STEWART, ARM3, SIXI, TRADITIONAL6, SCARA]
         # we cannot complie BOARD_TEENSYLU or BOARD_SANGUINOLULU at this time.
         include:
           - board: BOARD_RUMBA
@@ -29,6 +29,10 @@ jobs:
             arduino-platform: esp32:esp32
             fqbn: esp32:esp32:lolin32
         exclude:
+          - board: BOARD_RUMBA
+            robot: SIXI
+          - board: BOARD_RAMPS
+            robot: SIXI
             # WEMOS anything over 3 motors
           - board: BOARD_CNCV3
             robot: COREXY
