@@ -7,8 +7,8 @@ jobs:
     strategy:
       matrix:
         robot: [POLARGRAPH, TRADITIONALXY, COREXY, ZARPLOTTER, SKYCAM, DELTA, STEWART, ARM3, SIXI, TRADITIONAL6, SCARA]
-        board: [BOARD_RUMBA, BOARD_RAMPS, BOARD_SIXI_MEGA, BOARD_CNCV3, BOARD_SANGUINOLULU, BOARD_WEMOS, BOARD_ESP32]
-        # we cannot complie BOARD_TEENSYLU at this time.
+        board: [BOARD_RUMBA, BOARD_RAMPS, BOARD_SIXI_MEGA, BOARD_CNCV3, BOARD_WEMOS, BOARD_ESP32]
+        # we cannot complie BOARD_TEENSYLU or BOARD_SANGUINOLULU at this time.
         include:
           - board: BOARD_RUMBA
             arduino-platform: arduino:avr
@@ -22,9 +22,6 @@ jobs:
           - board: BOARD_CNCV3
             arduino-platform: arduino:avr
             fqbn: arduino:avr:mega
-          - board: BOARD_SANGUINOLULU
-            arduino-platform: Sanguino:avr
-            fqbn: Sanguino:avr:sanguino
           - board: BOARD_WEMOS
             arduino-platform: esp8266:esp8266
             fqbn: esp8266:esp8266:lolin32
@@ -47,13 +44,6 @@ jobs:
             robot: TRADITIONAL6
           - board: BOARD_CNCV3
             robot: SCARA
-            # WEMOS anything over 4 motors
-          - board: BOARD_SANGUINOLULU
-            robot: STEWART
-          - board: BOARD_SANGUINOLULU
-            robot: SIXI
-          - board: BOARD_SANGUINOLULU
-            robot: TRADITIONAL6
             # WEMOS anything over 2 motors
           - board: BOARD_WEMOS 
             robot: COREXY
