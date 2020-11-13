@@ -175,7 +175,7 @@ void recordHome() {
   calibrateRight = count[1];
 
   // now we have the count from home position to switches.  record that value.
-  eeprom.saveCalibration();
+  eepromManager.saveCalibration();
   reportCalibration();
 
   // current position is...
@@ -403,11 +403,11 @@ void makelangelo6Setup() {
   limits[3] = -500;
   limits[4] = PEN_UP_ANGLE;
   limits[5] = PEN_DOWN_ANGLE;
-  eeprom.adjustLimits(limits);
+  eepromManager.adjustLimits(limits);
 
   calibrateLeft = 1025;
   calibrateRight = 1025;
-  eeprom.saveCalibration();
+  eepromManager.saveCalibration();
   calibrationToPosition();
   
   // set home
@@ -431,11 +431,11 @@ void makelangelo5Setup() {
   limits[3] = -500;
   limits[4] = PEN_UP_ANGLE;
   limits[5] = PEN_DOWN_ANGLE;
-  eeprom.adjustLimits(limits);
+  eepromManager.adjustLimits(limits);
 
   calibrateLeft = 1025;
   calibrateRight = 1025;
-  eeprom.saveCalibration();
+  eepromManager.saveCalibration();
   calibrationToPosition();
   
   // set home
@@ -458,11 +458,11 @@ void makelangelo33Setup() {
   limits[3] = -800;
   limits[4] = PEN_UP_ANGLE;
   limits[5] = PEN_DOWN_ANGLE;
-  eeprom.adjustLimits(limits);
+  eepromManager.adjustLimits(limits);
 
   calibrateLeft = 2022;
   calibrateRight = 2022;
-  eeprom.saveCalibration();
+  eepromManager.saveCalibration();
   calibrationToPosition();
   
   // set home
