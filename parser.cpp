@@ -268,10 +268,6 @@ void Parser::processCommand() {
         Serial.print(F("D10 V"));
         Serial.println(MACHINE_HARDWARE_VERSION);
         break;
-#if MACHINE_STYLE == POLARGRAPH
-      case 11:  D11();
-      //case 12:  recordHome();  break;
-#endif
 #ifdef MACHINE_HAS_LIFTABLE_PEN
       case 13:  setPenAngle(parseNumber('Z', axies[2].pos));  break;
 #endif
