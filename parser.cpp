@@ -1,5 +1,5 @@
 #include "configure.h"
-#include "eeprom.h"
+#include "eepromManager.h"
 #include "lcd.h"
 #include "sdcard.h"
 #include "MServo.h"
@@ -208,7 +208,7 @@ void Parser::processCommand() {
 
   if( !strncmp(serialBuffer, "UID", 3) ) {
     robot_uid = atoi(strchr(serialBuffer, ' ') + 1);
-    eeprom.saveUID();
+    managedEeprom.saveUID();
   }
 
   int16_t cmd;
@@ -263,7 +263,7 @@ void Parser::processCommand() {
       case  7:  D7();  break;
       case  8:  D8();  break;
 #endif
-      case  9:  eeprom.saveCalibration();  break;
+      case  9:  managedEeprom.saveCalibration();  break;
       case 10:  // get hardware version
         Serial.print(F("D10 V"));
         Serial.println(MACHINE_HARDWARE_VERSION);
@@ -361,7 +361,7 @@ void Parser::D0() {
    report current firmware version
 */
 void Parser::D5() {
-  char versionNumber = eeprom.loadVersion();
+  char versionNumber = managedEeprom.loadVersion();
 
   Serial.print(F("Firmware v"));
   Serial.println(versionNumber, DEC);
@@ -745,7 +745,7 @@ void Parser::M101() {
       changed = true;
     }
     if (changed == true) {
-      eeprom.saveLimits();
+      managedEeprom.saveLimits();
     }
   }
 
@@ -977,13 +977,13 @@ void Parser::M428() {
 
 // M500 - save settings
 void Parser::M500() {
-  eeprom.saveAll();
+  managedEeprom.saveAll();
 }
 
 
 // M501 - reload settings
 void Parser::M501() {
-  eeprom.loadAll();
+  managedEeprom.loadAll();
 }
 
 
@@ -1010,5 +1010,5 @@ void Parser::M502() {
 
 // M503 - report all settings
 void Parser::M503() {
-  eeprom.reportAll();
+  managedEeprom.reportAll();
 }

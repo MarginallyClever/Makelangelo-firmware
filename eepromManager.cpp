@@ -14,7 +14,7 @@
 #include <Arduino.h>  // for type definitions
 
 
-extern eepromManager eeprom_w;
+extern eepromManager managedEeprom;
 
 
 // from http://www.arduino.cc/cgi-bin/yabb2/YaBB.pl?num=1234477290/3
