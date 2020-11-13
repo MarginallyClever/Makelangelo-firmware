@@ -181,11 +181,11 @@ void Eeprom::loadAll() {
 
 void Eeprom::reportAll() {
   // model and UID
-  sayModelAndUID();
+  parser.sayModelAndUID();
   // firmware version
-  D5();
+  parser.D5();
   // build date & time
-  sayBuildDateAndTime();
+  parser.sayBuildDateAndTime();
   // limits
   parser.M101();
   // feedreate, acceleration, and home position
