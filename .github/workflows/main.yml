@@ -6,28 +6,13 @@ jobs:
   build:
     strategy:
       matrix:
-        board: [BOARD_RUMBA, BOARD_RAMPS, BOARD_WEMOS, BOARD_SIXI_MEGA, BOARD_CNCV3, BOARD_ESP32]
-        robot: [POLARGRAPH, TRADITIONALXY, COREXY, ZARPLOTTER, SKYCAM, DELTA, STEWART, ARM3, SIXI, TRADITIONAL6, SCARA]
+        board: [BOARD_RUMBA] #, BOARD_RAMPS, BOARD_WEMOS, BOARD_SIXI_MEGA, BOARD_CNCV3, BOARD_ESP32]
+        robot: [POLARGRAPH] #, TRADITIONALXY, COREXY, ZARPLOTTER, SKYCAM, DELTA, STEWART, ARM3, SIXI, TRADITIONAL6, SCARA]
         # we cannot compile BOARD_TEENSYLU or BOARD_SANGUINOLULU at this time.
         include:
           - board: BOARD_RUMBA
             arduino-platform: arduino:avr
             fqbn: arduino:avr:mega
-          - board: BOARD_RAMPS
-            arduino-platform: arduino:avr
-            fqbn: arduino:avr:mega
-          - board: BOARD_SIXI_MEGA
-            arduino-platform: arduino:avr
-            fqbn: arduino:avr:mega
-          - board: BOARD_CNCV3
-            arduino-platform: arduino:avr
-            fqbn: arduino:avr:mega
-          - board: BOARD_WEMOS
-            arduino-platform: esp8266:esp8266
-            fqbn: esp8266:esp8266:lolin32
-          - board: BOARD_ESP32
-            arduino-platform: esp32:esp32
-            fqbn: esp32:esp32:lolin32
         exclude:
           - board: BOARD_RUMBA
             robot: SIXI
@@ -107,7 +92,7 @@ jobs:
           - board: BOARD_SIXI_MEGA
             robot: SCARA
             
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       # First of all, we clone the repo using the checkout action.
       - name: Checkout
@@ -117,6 +102,7 @@ jobs:
       # configure the Arduino CLI on the system.
       - name: Setup Arduino CLI
         uses: arduino/setup-arduino-cli@v1.1.0
+        
       # We then install the platform, which one will be determined
       # dynamically by the build matrix.
       - name: Install platform
@@ -124,10 +110,25 @@ jobs:
           arduino-cli core update-index
           
       - name: Add core(s)
-        run:
-          arduino-cli core install ${{ matrix.arduino-platform }} --additional-urls http://arduino.esp8266.com/stable/package_esp8266com_index.json --additional-urls https://dl.espressif.com/dl/package_esp32_index.json
+        run: arduino-cli core install ${{ matrix.arduino-platform }} --additional-urls http://arduino.esp8266.com/stable/package_esp8266com_index.json --additional-urls https://dl.espressif.com/dl/package_esp32_index.json
+        
+      - name: Add SDFat
+        run: arduino-cli lib install SdFat
+        
+      - name: Add TMC2130Stepper
+        run: arduino-cli lib install TMC2130Stepper
+      
+      - name: Add LiquidCrystal
+        run: arduino-cli lib install LiquidCrystal
+          
+      - name: Add local_config.h
+        uses: DamianReeves/write-file-action@v1.0
+        with:
+          path: ./local_config.h
+          contents: "#pragma once\n#undef MOTHERBOARD\n#define MOTHERBOARD ${{matrix.board}}\n#undef MACHINE_STYLE\n#define MACHINE_STYLE ${{matrix.robot}}"
+          write-mode: overwrite 
           
       # Finally, we compile the sketch, using the FQBN that was set
       # in the build matrix.
       - name: Compile Sketch
-        run: arduino-cli compile --fqbn ${{ matrix.fqbn }}  --build-property 'compiler.cpp.extra_flags="-D BOARD_TYPE=${{matrix.board}}" "-D MACHINE_STYLE=${{matrix.robot}}"' ./Makelangelo-firmware.ino
+        run: arduino-cli compile --fqbn ${{ matrix.fqbn }} ./Makelangelo-firmware.ino
