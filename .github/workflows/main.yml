@@ -92,7 +92,7 @@ jobs:
           - board: BOARD_SIXI_MEGA
             robot: SCARA
             
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
       # First of all, we clone the repo using the checkout action.
       - name: Checkout
