@@ -6,8 +6,8 @@ jobs:
   build:
     strategy:
       matrix:
-        board: [BOARD_RUMBA, BOARD_RAMPS, BOARD_SIXI_MEGA, BOARD_CNCV3, BOARD_ESP32]
-        # we cannot compile BOARD_WEMOS, BOARD_TEENSYLU, or BOARD_SANGUINOLULU at this time.
+        board: [BOARD_RUMBA, BOARD_RAMPS, BOARD_SIXI_MEGA, BOARD_ESP32]
+        # we cannot compile BOARD_WEMOS, BOARD_TEENSYLU, BOARD_CNCV3, or BOARD_SANGUINOLULU at this time.
         robot: [POLARGRAPH, TRADITIONALXY, COREXY, ZARPLOTTER, SKYCAM, DELTA, STEWART, ARM3, SIXI, TRADITIONAL6, SCARA]
         include:
           - board: BOARD_RUMBA
@@ -17,9 +17,6 @@ jobs:
             arduino-platform: arduino:avr
             fqbn: arduino:avr:mega
           - board: BOARD_SIXI_MEGA
-            arduino-platform: arduino:avr
-            fqbn: arduino:avr:mega
-          - board: BOARD_CNCV3
             arduino-platform: arduino:avr
             fqbn: arduino:avr:mega
           - board: BOARD_ESP32
