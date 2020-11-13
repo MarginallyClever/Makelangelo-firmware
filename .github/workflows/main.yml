@@ -117,6 +117,7 @@ jobs:
       # configure the Arduino CLI on the system.
       - name: Setup Arduino CLI
         uses: arduino/setup-arduino-cli@v1.1.0
+        
       # We then install the platform, which one will be determined
       # dynamically by the build matrix.
       - name: Install platform
@@ -127,11 +128,11 @@ jobs:
         run:
           arduino-cli core install ${{ matrix.arduino-platform }} --additional-urls http://arduino.esp8266.com/stable/package_esp8266com_index.json --additional-urls https://dl.espressif.com/dl/package_esp32_index.json
           
-      - name: Add local_config.h
-        uses: "finnp/create-file-action@master"
-        env:
-          FILE_NAME: "local_config.h"
-          FILE_DATA: "#pragma once\n#undef MOTHERBOARD\n#define MOTHERBOARD ${{matrix.board}}\n#undef MACHINE_STYLE\n#define MACHINE_STYLE=${{matrix.robot}}"
+      - name: Add local_config.huses: DamianReeves/write-file-action
+        with:
+          path: ./local_config.h
+          contents: |
+            echo "#pragma once\n#undef MOTHERBOARD\n#define MOTHERBOARD ${{matrix.board}}\n#undef MACHINE_STYLE\n#define MACHINE_STYLE=${{matrix.robot}}"
           
       # Finally, we compile the sketch, using the FQBN that was set
       # in the build matrix.
