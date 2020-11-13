@@ -94,6 +94,8 @@
 #include "board_cncv3.h"
 #include "board_esp32.h"
 
+#include "configMotors.h"
+
 #include <Arduino.h>
 
 #include "clock.h"
