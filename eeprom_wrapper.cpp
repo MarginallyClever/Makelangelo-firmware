@@ -9,16 +9,16 @@
 //------------------------------------------------------------------------------
 #include "configure.h"
 #include "motor.h"
-#include "eeprom.h"
+#include "eeprom_wrapper.h"
 #include <EEPROM.h>
 #include <Arduino.h>  // for type definitions
 
 
-extern Eeprom eeprom;
+extern eeprom_wrapper eeprom_w;
 
 
 // from http://www.arduino.cc/cgi-bin/yabb2/YaBB.pl?num=1234477290/3
-long Eeprom::readLong(int ee) {
+long eeprom_wrapper::readLong(int ee) {
   long value = 0;
   byte* p = (byte*)(void*)&value;
   for (uint16_t i = 0; i < sizeof(value); i++)
@@ -30,7 +30,7 @@ long Eeprom::readLong(int ee) {
 // 2020-01-31 Dan added check to not update EEPROM if value is unchanged.
 // from http://www.arduino.cc/cgi-bin/yabb2/YaBB.pl?num=1234477290/3
 // returns true if the value was changed.
-boolean Eeprom::writeLong(int ee, long value) {
+boolean eeprom_wrapper::writeLong(int ee, long value) {
   if(readLong(ee) == value) return false;
   
   byte* p = (byte*)(void*)&value;
@@ -41,22 +41,22 @@ boolean Eeprom::writeLong(int ee, long value) {
 }
 
 
-uint8_t Eeprom::loadVersion() {
+uint8_t eeprom_wrapper::loadVersion() {
   return EEPROM.read(ADDR_VERSION);
 }
 
 
-void Eeprom::saveUID() {
+void eeprom_wrapper::saveUID() {
   Serial.println(F("Saving UID."));
   writeLong(ADDR_UUID,(long)robot_uid);
 }
 
-uint8_t Eeprom::loadUID() {
+uint8_t eeprom_wrapper::loadUID() {
   return EEPROM.read(ADDR_VERSION);
 }
 
 
-void Eeprom::saveLimits() {
+void eeprom_wrapper::saveLimits() {
   Serial.println(F("Saving limits."));
   int i,j=ADDR_LIMITS;
   for(ALL_AXIES(i)) {
@@ -68,7 +68,7 @@ void Eeprom::saveLimits() {
 }
 
 
-void Eeprom::loadLimits() {
+void eeprom_wrapper::loadLimits() {
   int i,j=ADDR_LIMITS;
   for(ALL_AXIES(i)) {
     axies[i].limitMax = (float)readLong(j)/100.0f;
@@ -89,7 +89,7 @@ void Eeprom::loadLimits() {
 /**
  * @param limits NUM_AXIES*2 floats.  Each pair is one float for max limit and one for min limit.
  */
-void Eeprom::adjustLimits(float *limits) {
+void eeprom_wrapper::adjustLimits(float *limits) {
   Serial.println(F("Adjusting limits."));
   int i,j=0;
   int changed=0;
@@ -117,7 +117,7 @@ void Eeprom::adjustLimits(float *limits) {
 }
 
 
-void Eeprom::saveHome() {
+void eeprom_wrapper::saveHome() {
   Serial.println(F("Saving home."));
   int i,j=ADDR_HOME;
   for(ALL_AXIES(i)) {
@@ -127,7 +127,7 @@ void Eeprom::saveHome() {
 }
 
 
-void Eeprom::loadHome() {
+void eeprom_wrapper::loadHome() {
   //Serial.print(F("Loading home:"));
   int j=ADDR_HOME;
   for(ALL_AXIES(i)) {
@@ -141,26 +141,26 @@ void Eeprom::loadHome() {
 }
 
 
-void Eeprom::saveCalibration() {
+void eeprom_wrapper::saveCalibration() {
   Serial.println(F("Saving calibration."));
   writeLong(ADDR_CALIBRATION_LEFT  ,calibrateLeft  *100);
   writeLong(ADDR_CALIBRATION_RIGHT ,calibrateRight *100);
 }
 
 
-void Eeprom::loadCalibration() {
+void eeprom_wrapper::loadCalibration() {
   calibrateLeft   = (float)readLong(ADDR_CALIBRATION_LEFT  )/100.0f;
   calibrateRight  = (float)readLong(ADDR_CALIBRATION_RIGHT )/100.0f;
 }
 
-void Eeprom::saveAll() {
+void eeprom_wrapper::saveAll() {
   saveUID();
   saveLimits();
   saveHome();
 }
 
 
-void Eeprom::loadAll() {
+void eeprom_wrapper::loadAll() {
   char versionNumber = loadVersion();
   if( versionNumber != FIRMWARE_VERSION ) {
     // If not the current FIRMWARE_VERSION or the FIRMWARE_VERSION is sullied (i.e. unknown data)
@@ -179,7 +179,7 @@ void Eeprom::loadAll() {
   loadCalibration();
 }
 
-void Eeprom::reportAll() {
+void eeprom_wrapper::reportAll() {
   // model and UID
   parser.sayModelAndUID();
   // firmware version

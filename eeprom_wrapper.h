@@ -27,7 +27,7 @@
 #define EEPROM_PID_LENGTH       (NUM_AXIES*3*SIZEOF_FLOAT_BYTES)
 
 
-class Eeprom {
+class eeprom_wrapper {
 public:
   long readLong(int ee);
   boolean writeLong(int ee, long value);
@@ -54,4 +54,4 @@ public:
   void reportAll();
 };
 
-extern Eeprom eeprom;
+extern eeprom_wrapper eeprom_w;
