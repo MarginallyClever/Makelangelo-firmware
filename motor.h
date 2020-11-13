@@ -171,6 +171,7 @@ extern void setPenAngle(int arg0);
 extern void clockISRProfile();
 
 extern const int movesPlanned();
+extern void motor_onestep(int motor);
 
 // TEST JIN
 extern void gripperUpdate(float currentGripperCmd);
