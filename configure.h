@@ -101,6 +101,8 @@
 #include "clock.h"
 #include "motor.h"
 #include "parser.h"
+#include "eepromManager.h"
+
 #include "gripper_hande.h"
 
 //------------------------------------------------------------------------------
