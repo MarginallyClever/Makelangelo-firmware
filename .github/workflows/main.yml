@@ -132,7 +132,9 @@ jobs:
         
       - name: Add TMC2130Stepper
         run: arduino-cli lib install TMC2130Stepper
-          
+      
+      - name: Add LiquidCrystal
+        run: arduino-cli lib install LiquidCrystal
           
       - name: Add local_config.h
         uses: DamianReeves/write-file-action@v1.0
