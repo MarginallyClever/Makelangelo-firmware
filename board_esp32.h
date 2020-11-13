@@ -13,7 +13,7 @@
 #if MOTHERBOARD == BOARD_ESP32 
 
 // wrong board type set
-#ifndef ESP8266
+#ifndef ESP32
   #error "Oops!  Make sure you have 'ESP32 D1 R1' selected from the 'Tools -> Boards' menu."
 #endif
 

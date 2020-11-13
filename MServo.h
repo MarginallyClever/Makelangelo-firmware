@@ -43,7 +43,7 @@
    detach()    - Stops an attached servos from pulsing its i/o pin.
  */
 
-#ifndef ESP8266
+#if !defined( ESP8266 ) && !defined( ESP32 )
 
 #include <avr/interrupt.h>
 #include <Arduino.h>
@@ -134,4 +134,4 @@ private:
    int8_t max;                       // maximum is this value times 4 added to MAX_PULSE_WIDTH
 };
 
-#endif // ESP8266
+#endif // !defined( ESP8266 ) && !defined( ESP32 )

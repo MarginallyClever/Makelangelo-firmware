@@ -17,6 +17,46 @@
 #define TAN30   (1.0/SQRT3)
 
 
+
+/** 
+ * inverse kinematics helper function.  calculates angle theta1 (for YZ-pane) 
+ * @param x0 
+ * @param y0 
+ * @param z0 
+ * @param theta to be filled with newly calculated angle
+ * @return 1 on failure, 0 on success
+ */
+int delta_calcAngleYZ(float x0, float y0, float z0, long &theta) {
+  float y1 = -0.5 * TAN30 * CENTER_TO_SHOULDER;  // f/2 * tg 30
+  
+  z0-= CENTER_TO_FLOOR;
+   
+  y0 -= 0.5 * TAN30 * EFFECTOR_TO_WRIST;  // shift center to edge
+  // z = a + b*y
+  float a = (x0*x0 + y0*y0 + z0*z0 +SHOULDER_TO_ELBOW*SHOULDER_TO_ELBOW - ELBOW_TO_WRIST*ELBOW_TO_WRIST - y1*y1)/(2.0*z0);
+  float b = (y1-y0)/z0;
+
+  //Serial.print("a=");  Serial.println(a);
+  //Serial.print("b=");  Serial.println(b);
+
+  // discriminant
+  float d = -(a+b*y1)*(a+b*y1)+SHOULDER_TO_ELBOW*(b*b*SHOULDER_TO_ELBOW+SHOULDER_TO_ELBOW); 
+  //Serial.print("d=");  Serial.println(d);
+  if (d < 0) return 1; // non-existing povar.  return error, theta
+
+
+  float yj = (y1 - a*b - sqrt(d))/(b*b + 1); // choosing outer povar
+  float zj = a + b*yj;
+  theta = atan(-zj/(y1 - yj)) * 180.0/PI + ((yj>y1)?180.0:0.0);
+  theta *= MICROSTEP_PER_DEGREE;
+  
+  //Serial.print("yj=");  Serial.println(yj);
+  //Serial.print("zj=");  Serial.println(zj);
+  //Serial.print("theta=");  Serial.println(theta);
+
+  return 0;  // return error, theta
+}
+
 /**
  * Inverse Kinematics turns XY coordinates into step counts from each motor
  * @param axies the cartesian coordinate
@@ -109,46 +149,6 @@ int FK(long *motorStepArray,float *axies) {
   axies[1]=y0;
   axies[2]=z0;
   return 0;
-}
-
-
-/** 
- * inverse kinematics helper function.  calculates angle theta1 (for YZ-pane) 
- * @param x0 
- * @param y0 
- * @param z0 
- * @param theta to be filled with newly calculated angle
- * @return 1 on failure, 0 on success
- */
-int delta_calcAngleYZ(float x0, float y0, float z0, long &theta) {
-  float y1 = -0.5 * TAN30 * CENTER_TO_SHOULDER;  // f/2 * tg 30
-  
-  z0-= CENTER_TO_FLOOR;
-   
-  y0 -= 0.5 * TAN30 * EFFECTOR_TO_WRIST;  // shift center to edge
-  // z = a + b*y
-  float a = (x0*x0 + y0*y0 + z0*z0 +SHOULDER_TO_ELBOW*SHOULDER_TO_ELBOW - ELBOW_TO_WRIST*ELBOW_TO_WRIST - y1*y1)/(2.0*z0);
-  float b = (y1-y0)/z0;
-
-  //Serial.print("a=");  Serial.println(a);
-  //Serial.print("b=");  Serial.println(b);
-
-  // discriminant
-  float d = -(a+b*y1)*(a+b*y1)+SHOULDER_TO_ELBOW*(b*b*SHOULDER_TO_ELBOW+SHOULDER_TO_ELBOW); 
-  //Serial.print("d=");  Serial.println(d);
-  if (d < 0) return 1; // non-existing povar.  return error, theta
-
-
-  float yj = (y1 - a*b - sqrt(d))/(b*b + 1); // choosing outer povar
-  float zj = a + b*yj;
-  theta = atan(-zj/(y1 - yj)) * 180.0/PI + ((yj>y1)?180.0:0.0);
-  theta *= MICROSTEP_PER_DEGREE;
-  
-  //Serial.print("yj=");  Serial.println(yj);
-  //Serial.print("zj=");  Serial.println(zj);
-  //Serial.print("theta=");  Serial.println(theta);
-
-  return 0;  // return error, theta
 }
 
 
