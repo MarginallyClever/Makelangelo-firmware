@@ -97,6 +97,8 @@ jobs:
           - board: BOARD_SIXI_MEGA
             robot: SKYCAM
           - board: BOARD_SIXI_MEGA
+            robot: DELTA
+          - board: BOARD_SIXI_MEGA
             robot: STEWART
           - board: BOARD_SIXI_MEGA
             robot: ARM3
@@ -120,9 +122,9 @@ jobs:
       - name: Install platform
         run: |
           arduino-cli core update-index
-          arduino-cli core install ${{ matrix.arduino-platform }}
+          arduino-cli core install ${{ matrix.arduino-platform }} --additional_urls http://arduino.esp8266.com/stable/package_esp8266com_index.json
           
       # Finally, we compile the sketch, using the FQBN that was set
       # in the build matrix.
       - name: Compile Sketch
-        run: arduino-cli compile --fqbn ${{ matrix.fqbn }} --additional_urls http://arduino.esp8266.com/stable/package_esp8266com_index.json --build-property 'compiler.cpp.extra_flags="-D BOARD_TYPE=${{matrix.board}}" "-D MACHINE_STYLE=${{matrix.robot}}"' ./Makelangelo-firmware.ino
+        run: arduino-cli compile --fqbn ${{ matrix.fqbn }}  --build-property 'compiler.cpp.extra_flags="-D BOARD_TYPE=${{matrix.board}}" "-D MACHINE_STYLE=${{matrix.robot}}"' ./Makelangelo-firmware.ino
