@@ -97,6 +97,8 @@ jobs:
           - board: BOARD_SIXI_MEGA
             robot: STEWART
           - board: BOARD_SIXI_MEGA
+            robot: ARM3
+          - board: BOARD_SIXI_MEGA
             robot: TRADITIONAL6
           - board: BOARD_SIXI_MEGA
             robot: SCARA
@@ -110,7 +112,7 @@ jobs:
       # We use the arduino/setup-arduino-cli action to install and
       # configure the Arduino CLI on the system.
       - name: Setup Arduino CLI
-        uses: arduino/setup-arduino-cli@v1.0.0
+        uses: arduino/setup-arduino-cli@v1.1.0
       # We then install the platform, which one will be determined
       # dynamically by the build matrix.
       - name: Install platform
