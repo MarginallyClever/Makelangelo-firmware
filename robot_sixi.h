@@ -158,7 +158,7 @@
 #define SENSOR_ANGLE_PER_BIT (360.0/(float)((long)1<<SENSOR_ANGLE_BITS))  // 0.02197265625
 
 
-#include <arduino.h>  // for uint8_t
+#include <Arduino.h>  // for uint8_t
 
 class SensorAS5147 {
 public:
