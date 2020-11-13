@@ -12,7 +12,7 @@
 #include "motor.h"
 #include "sdcard.h"
 #include "lcd.h"
-#include "eeprom.h"
+#include "eeprom_wrapper.h"
 
 #include <SPI.h>  // pkm fix for Arduino 1.5
 
@@ -306,7 +306,7 @@ void setHome(float *pos) {
   for (i = 0; i < NUM_AXIES; ++i) {
     axies[i].homePos = pos[i];
   }
-  eeprom.saveHome();
+  eeprom_w.saveHome();
 }
 
 
@@ -394,7 +394,7 @@ void reportAllMotors() {
 void setup() {
   parser.start();
     
-  eeprom.loadAll();
+  eeprom_w.loadAll();
 
   //unitTestWrapDegrees();
   //unitTestBitMacros();
