@@ -34,6 +34,28 @@
 #define PULLEY_PITCH         (40.0)
 
 
+#if NORMAL_MOTOR_STEPS == 200
+#define DEFAULT_FEEDRATE     (180.0)
+#define DEFAULT_ACCELERATION (150.0)
+#define DEGREES_PER_STEP     (1.8)
+#endif
+#if NORMAL_MOTOR_STEPS == 400
+#define DEFAULT_FEEDRATE     (100.0)
+#define DEFAULT_ACCELERATION (150.0)
+#define DEGREES_PER_STEP     (0.9)
+#endif
+
+
+// These numbers are calculated from the above.  No need to change these.
+#ifndef NORMAL_MOTOR_STEPS
+#define NORMAL_MOTOR_STEPS   (360.0/DEGREES_PER_STEP)
+#endif
+#define STEPS_PER_TURN       (NORMAL_MOTOR_STEPS * MICROSTEPS)
+#define MM_PER_STEP          (PULLEY_PITCH/STEPS_PER_TURN)
+#define STEPS_PER_MM         (STEPS_PER_TURN/PULLEY_PITCH)
+#define MICROSTEP_PER_DEGREE (STEPS_PER_TURN/360.0)
+
+
 // known machine configurations
 #define DELTA_STYLE_MARGINALLYCLEVER_V8  1
 #define DELTA_STYLE_JUDAH                2
@@ -64,28 +86,6 @@
 
 #define MAX_JERK             (10.0)
 #define MAX_Z_JERK           (0.3)
-
-
-#if NORMAL_MOTOR_STEPS == 200
-#define DEFAULT_FEEDRATE     (180.0)
-#define DEFAULT_ACCELERATION (150.0)
-#define DEGREES_PER_STEP     (1.8)
-#endif
-#if NORMAL_MOTOR_STEPS == 400
-#define DEFAULT_FEEDRATE     (100.0)
-#define DEFAULT_ACCELERATION (150.0)
-#define DEGREES_PER_STEP     (0.9)
-#endif
-
-
-// These numbers are calculated from the above.  No need to change these.
-#ifndef NORMAL_MOTOR_STEPS
-#define NORMAL_MOTOR_STEPS   (360.0/DEGREES_PER_STEP)
-#endif
-#define STEPS_PER_TURN       (NORMAL_MOTOR_STEPS * MICROSTEPS)
-#define MM_PER_STEP          (PULLEY_PITCH/STEPS_PER_TURN)
-#define STEPS_PER_MM         (STEPS_PER_TURN/PULLEY_PITCH)
-#define MICROSTEP_PER_DEGREE (STEPS_PER_TURN/360.0)
 
 
 #if DELTA_STYLE  == DELTA_STYLE_MARGINALLYCLEVER_V8
