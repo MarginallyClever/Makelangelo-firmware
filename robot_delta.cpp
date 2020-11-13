@@ -5,7 +5,6 @@
 //------------------------------------------------------------------------------
 
 #include "configure.h"
-#include "robot_delta.h"
 
 #if MACHINE_STYLE == DELTA
 

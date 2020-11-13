@@ -5,7 +5,6 @@
 //------------------------------------------------------------------------------
 
 #include "configure.h"
-#include "robot_stewart.h"
 
 #if MACHINE_STYLE == STEWART
 
