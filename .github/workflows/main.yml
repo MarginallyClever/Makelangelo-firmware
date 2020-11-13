@@ -6,8 +6,8 @@ jobs:
   build:
     strategy:
       matrix:
-        board: [BOARD_RUMBA, BOARD_RAMPS, BOARD_WEMOS, BOARD_SIXI_MEGA, BOARD_CNCV3, BOARD_ESP32]
-        robot: [POLARGRAPH, TRADITIONALXY, COREXY, ZARPLOTTER, SKYCAM, DELTA, STEWART, ARM3, SIXI, TRADITIONAL6, SCARA]
+        board: [BOARD_RUMBA] #, BOARD_RAMPS, BOARD_WEMOS, BOARD_SIXI_MEGA, BOARD_CNCV3, BOARD_ESP32]
+        robot: [POLARGRAPH] #, TRADITIONALXY, COREXY, ZARPLOTTER, SKYCAM, DELTA, STEWART, ARM3, SIXI, TRADITIONAL6, SCARA]
         # we cannot compile BOARD_TEENSYLU or BOARD_SANGUINOLULU at this time.
         include:
           - board: BOARD_RUMBA
@@ -124,9 +124,12 @@ jobs:
         run: |
           arduino-cli core update-index
           
-      - name: Add core(s)
+      - name: Add dependencies(s)
         run:
           arduino-cli core install ${{ matrix.arduino-platform }} --additional-urls http://arduino.esp8266.com/stable/package_esp8266com_index.json --additional-urls https://dl.espressif.com/dl/package_esp32_index.json
+          arduino-cli lib install SdFat
+          arduino-cli lib install TMC2130Stepper
+          
           
       - name: Add local_config.h
         uses: DamianReeves/write-file-action@v1.0
