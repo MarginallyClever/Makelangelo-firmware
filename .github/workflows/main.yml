@@ -13,21 +13,6 @@ jobs:
           - board: BOARD_RUMBA
             arduino-platform: arduino:avr
             fqbn: arduino:avr:mega
-          - board: BOARD_RAMPS
-            arduino-platform: arduino:avr
-            fqbn: arduino:avr:mega
-          - board: BOARD_SIXI_MEGA
-            arduino-platform: arduino:avr
-            fqbn: arduino:avr:mega
-          - board: BOARD_CNCV3
-            arduino-platform: arduino:avr
-            fqbn: arduino:avr:mega
-          - board: BOARD_WEMOS
-            arduino-platform: esp8266:esp8266
-            fqbn: esp8266:esp8266:lolin32
-          - board: BOARD_ESP32
-            arduino-platform: esp32:esp32
-            fqbn: esp32:esp32:lolin32
         exclude:
           - board: BOARD_RUMBA
             robot: SIXI
