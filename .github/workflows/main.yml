@@ -31,8 +31,13 @@ jobs:
         exclude:
           - board: BOARD_RUMBA
             robot: SIXI
+            # BOARD_RAMPS can only handle 5 motors
           - board: BOARD_RAMPS
             robot: SIXI
+          - board: BOARD_RAMPS
+            robot: STEWART
+          - board: BOARD_RAMPS
+            robot: TRADITIONAL6
             # WEMOS anything over 3 motors
           - board: BOARD_CNCV3
             robot: COREXY
@@ -116,4 +121,4 @@ jobs:
       # Finally, we compile the sketch, using the FQBN that was set
       # in the build matrix.
       - name: Compile Sketch
-        run: arduino-cli compile --fqbn ${{ matrix.fqbn }} ./Makelangelo-firmware.ino
+        run: arduino-cli compile --fqbn ${{ matrix.fqbn }} --build-property 'compiler.cpp.extra_flags="-D BOARD_TYPE=${{matrix.board}}" "-D MACHINE_STYLE=${{matrix.robot}}"' ./Makelangelo-firmware.ino
