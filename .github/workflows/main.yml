@@ -6,9 +6,9 @@ jobs:
   build:
     strategy:
       matrix:
-        board: [BOARD_RUMBA, BOARD_RAMPS, BOARD_SIXI_MEGA, BOARD_CNCV3, BOARD_WEMOS, BOARD_ESP32]
+        board: [BOARD_RUMBA, BOARD_RAMPS, BOARD_WEMOS, BOARD_SIXI_MEGA, BOARD_CNCV3, BOARD_ESP32]
         robot: [POLARGRAPH, TRADITIONALXY, COREXY, ZARPLOTTER, SKYCAM, DELTA, STEWART, ARM3, SIXI, TRADITIONAL6, SCARA]
-        # we cannot complie BOARD_TEENSYLU or BOARD_SANGUINOLULU at this time.
+        # we cannot compile BOARD_TEENSYLU or BOARD_SANGUINOLULU at this time.
         include:
           - board: BOARD_RUMBA
             arduino-platform: arduino:avr
@@ -62,6 +62,8 @@ jobs:
             robot: SKYCAM
           - board: BOARD_WEMOS
             robot: STEWART
+          - board: BOARD_WEMOS
+            robot: DELTA
           - board: BOARD_WEMOS
             robot: SIXI
           - board: BOARD_WEMOS
@@ -123,4 +125,4 @@ jobs:
       # Finally, we compile the sketch, using the FQBN that was set
       # in the build matrix.
       - name: Compile Sketch
-        run: arduino-cli compile --fqbn ${{ matrix.fqbn }} --build-property 'compiler.cpp.extra_flags="-D BOARD_TYPE=${{matrix.board}}" "-D MACHINE_STYLE=${{matrix.robot}}"' ./Makelangelo-firmware.ino
+        run: arduino-cli compile --fqbn ${{ matrix.fqbn }} --additional_urls http://arduino.esp8266.com/stable/package_esp8266com_index.json --build-property 'compiler.cpp.extra_flags="-D BOARD_TYPE=${{matrix.board}}" "-D MACHINE_STYLE=${{matrix.robot}}"' ./Makelangelo-firmware.ino
