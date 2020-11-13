@@ -125,8 +125,8 @@ jobs:
         uses: DamianReeves/write-file-action@v1.0
         with:
           path: ./local_config.h
-          contents: |
-            echo "#pragma once\n#undef MOTHERBOARD\n#define MOTHERBOARD ${{matrix.board}}\n#undef MACHINE_STYLE\n#define MACHINE_STYLE=${{matrix.robot}}"
+          contents: "#pragma once\n#undef MOTHERBOARD\n#define MOTHERBOARD ${{matrix.board}}\n#undef MACHINE_STYLE\n#define MACHINE_STYLE=${{matrix.robot}}"
+          write-mode: overwrite 
           
       # Finally, we compile the sketch, using the FQBN that was set
       # in the build matrix.
