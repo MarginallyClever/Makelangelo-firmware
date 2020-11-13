@@ -122,6 +122,9 @@ jobs:
       - name: Install platform
         run: |
           arduino-cli core update-index
+          
+      - name: Add core(s)
+        run:
           arduino-cli core install ${{ matrix.arduino-platform }} --additional-urls http://arduino.esp8266.com/stable/package_esp8266com_index.json
           
       # Finally, we compile the sketch, using the FQBN that was set
