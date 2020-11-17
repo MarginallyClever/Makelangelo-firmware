@@ -12,9 +12,9 @@
             "type": "platformio-debug",
             "request": "launch",
             "name": "PIO Debug",
-            "executable": "e:/_DATEN/Alexander/Forschung/2020/SIXI-2/Makelangelo-firmware/.pio/build/megaatmega2560/firmware.elf",
+            "executable": "d:/SynologyDrive/05_Geräte_Maschinen/10_SIXI-2/Makelangelo-firmware/.pio/build/megaatmega2560/firmware.elf",
             "projectEnvName": "megaatmega2560",
-            "toolchainBinDir": "C:/Users/Alexander/.platformio/packages/toolchain-atmelavr/bin",
+            "toolchainBinDir": "C:/Users/Admin/.platformio/packages/toolchain-atmelavr/bin",
             "preLaunchTask": {
                 "type": "PlatformIO",
                 "task": "Pre-Debug"
@@ -25,9 +25,9 @@
             "type": "platformio-debug",
             "request": "launch",
             "name": "PIO Debug (skip Pre-Debug)",
-            "executable": "e:/_DATEN/Alexander/Forschung/2020/SIXI-2/Makelangelo-firmware/.pio/build/megaatmega2560/firmware.elf",
+            "executable": "d:/SynologyDrive/05_Geräte_Maschinen/10_SIXI-2/Makelangelo-firmware/.pio/build/megaatmega2560/firmware.elf",
             "projectEnvName": "megaatmega2560",
-            "toolchainBinDir": "C:/Users/Alexander/.platformio/packages/toolchain-atmelavr/bin",
+            "toolchainBinDir": "C:/Users/Admin/.platformio/packages/toolchain-atmelavr/bin",
             "internalConsoleOptions": "openOnSessionStart"
         }
     ]
