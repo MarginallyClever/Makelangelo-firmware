@@ -5,9 +5,10 @@
 //------------------------------------------------------------------------------
 
 #include "configure.h"
-#include "robot_arm3.h"
 
 #if MACHINE_STYLE == ARM3
+
+#include "Vector3.h"
 
 /**
  * Inverse Kinematics turns XY coordinates into step counts from each motor

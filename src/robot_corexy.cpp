@@ -5,7 +5,6 @@
 //------------------------------------------------------------------------------
 
 #include "configure.h"
-#include "robot_corexy.h"
 
 #if MACHINE_STYLE == COREXY
 

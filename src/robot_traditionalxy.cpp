@@ -5,7 +5,6 @@
 //------------------------------------------------------------------------------
 
 #include "configure.h"
-#include "robot_traditionalxy.h"
 
 #if MACHINE_STYLE == TRADITIONALXY
 

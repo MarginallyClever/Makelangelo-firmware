@@ -1,0 +1,14 @@
+syntax: glob
+.DS_Store
+delay_x.h
+thirdparty libraries/TinyWireM_/keywords.txt
+thirdparty libraries/TinyWireM_/library.properties
+thirdparty libraries/TinyWireM_/README.md
+thirdparty libraries/TinyWireM_/TinyWireM.cpp
+thirdparty libraries/TinyWireM_/TinyWireM.h
+thirdparty libraries/TinyWireM_/USI_TWI_Master.cpp
+thirdparty libraries/TinyWireM_/USI_TWI_Master.h
+thirdparty libraries/TinyWireM_/examples/AT24_EEPROM/AT24_EEPROM.ino
+thirdparty libraries/TinyWireM_/examples/Tiny85_Temp/Tiny85_Temp.pde
+thirdparty libraries/TinyWireM_/examples/Tiny85_Temp_LCD/Tiny85_Temp_LCD.pde
+thirdparty libraries/TinyWireM_/examples/Tiny85_Temp_LCD_RTC/Tiny85_Temp_LCD_RTC.pde

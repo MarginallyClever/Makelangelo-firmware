@@ -5,7 +5,6 @@
 //------------------------------------------------------------------------------
 
 #include "configure.h"
-#include "robot_scara.h"
 
 #if MACHINE_STYLE == SCARA
 

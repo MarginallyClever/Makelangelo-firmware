@@ -62,12 +62,26 @@
 // YOUR CHANGES GO HERE
 //------------------------------------------------------------------------------
 
-#if __has_include("local_config.h")
-// Your local changes go here.
-// Do not send your local_config.h in a pull request.  Thank you!
-#include "local_config.h"
-#endif
+#ifdef PIO                             // Check if it should be compiled in Platformio (DPIO variable is set in platformio.ini)
+  #ifdef HEADER_RUMBA
+    #if __has_include("configs/local_rumba_config.h")
+      #include "configs/local_rumba_config.h"
+    #endif
+  #endif
 
+  #ifdef HEADER_RAMPS
+    #if __has_include("configs/local_ramps_config.h")
+      #include "configs/local_ramps_config.h"
+    #endif
+  #endif
+#else
+  // This is used when compiling with Arduino IDE
+  #if __has_include("local_config.h")
+  // Your local changes go here.
+  // Do not send your local_config.h in a pull request.  Thank you!
+  #include "local_config.h"
+  #endif
+#endif
 
 //------------------------------------------------------------------------------
 // 
@@ -94,11 +108,15 @@
 #include "board_cncv3.h"
 #include "board_esp32.h"
 
+#include "configMotors.h"
+
 #include <Arduino.h>
 
 #include "clock.h"
 #include "motor.h"
 #include "parser.h"
+#include "eepromManager.h"
+
 #include "gripper_hande.h"
 
 //------------------------------------------------------------------------------

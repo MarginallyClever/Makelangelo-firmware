@@ -5,7 +5,6 @@
 //------------------------------------------------------------------------------
 
 #include "configure.h"
-#include "robot_skycam.h"
 
 #if MACHINE_STYLE == SKYCAM
 

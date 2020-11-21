@@ -5,7 +5,6 @@
 //------------------------------------------------------------------------------
 
 #include "configure.h"
-#include "robot_zarplotter.h"
 
 #if MACHINE_STYLE == ZARPLOTTER
 

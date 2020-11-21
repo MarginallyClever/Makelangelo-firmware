@@ -5,9 +5,6 @@
 //------------------------------------------------------------------------------
 
 #include "configure.h"
-#include "robot_polargraph.h"
-#include "eepromManager.h"
-#include "motor.h"
 
 #if MACHINE_STYLE == POLARGRAPH
 
@@ -178,7 +175,7 @@ void recordHome() {
   calibrateRight = count[1];
 
   // now we have the count from home position to switches.  record that value.
-  managedEeprom.saveCalibration();
+  eepromManager.saveCalibration();
   reportCalibration();
 
   // current position is...
@@ -406,11 +403,11 @@ void makelangelo6Setup() {
   limits[3] = -500;
   limits[4] = PEN_UP_ANGLE;
   limits[5] = PEN_DOWN_ANGLE;
-  managedEeprom.adjustLimits(limits);
+  eepromManager.adjustLimits(limits);
 
   calibrateLeft = 1025;
   calibrateRight = 1025;
-  managedEeprom.saveCalibration();
+  eepromManager.saveCalibration();
   calibrationToPosition();
   
   // set home
@@ -434,11 +431,11 @@ void makelangelo5Setup() {
   limits[3] = -500;
   limits[4] = PEN_UP_ANGLE;
   limits[5] = PEN_DOWN_ANGLE;
-  managedEeprom.adjustLimits(limits);
+  eepromManager.adjustLimits(limits);
 
   calibrateLeft = 1025;
   calibrateRight = 1025;
-  managedEeprom.saveCalibration();
+  eepromManager.saveCalibration();
   calibrationToPosition();
   
   // set home
@@ -461,11 +458,11 @@ void makelangelo33Setup() {
   limits[3] = -800;
   limits[4] = PEN_UP_ANGLE;
   limits[5] = PEN_DOWN_ANGLE;
-  managedEeprom.adjustLimits(limits);
+  eepromManager.adjustLimits(limits);
 
   calibrateLeft = 2022;
   calibrateRight = 2022;
-  managedEeprom.saveCalibration();
+  eepromManager.saveCalibration();
   calibrationToPosition();
   
   // set home
