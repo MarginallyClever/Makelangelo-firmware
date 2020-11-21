@@ -62,13 +62,20 @@
 // YOUR CHANGES GO HERE
 //------------------------------------------------------------------------------
 
-#ifdef PIO                             // Check if it compiled on Platformio (DPIO variable is set in platformio.ini)
+#ifdef PIO                             // Check if it should be compiled in Platformio (DPIO variable is set in platformio.ini)
   #ifdef HEADER_RUMBA
     #if __has_include("configs/local_rumba_config.h")
       #include "configs/local_rumba_config.h"
     #endif
   #endif
+
+  #ifdef HEADER_RAMPS
+    #if __has_include("configs/local_ramps_config.h")
+      #include "configs/local_ramps_config.h"
+    #endif
+  #endif
 #else
+  // This is used when compiling with Arduino IDE
   #if __has_include("local_config.h")
   // Your local changes go here.
   // Do not send your local_config.h in a pull request.  Thank you!
