@@ -13,7 +13,7 @@
 #include "sdcard.h"
 #include "lcd.h"
 
-#include <SPI.h>  // pkm fix for Arduino 1.5
+#include <SPI.h>
 
 #include "Vector3.h"
 
