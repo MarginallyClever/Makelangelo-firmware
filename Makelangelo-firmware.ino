@@ -12,11 +12,16 @@
 #include "motor.h"
 #include "sdcard.h"
 #include "lcd.h"
-
 #include <SPI.h>
-
 #include "Vector3.h"
 
+#ifdef PIO  
+  //------------------------------------------------------------------------------
+  // PLATFORMIO (needs build_flags = -DPIO) in platformio.ini
+  //------------------------------------------------------------------------------
+  #define XSTR(x) #x        //Macro conversion for build_flags
+  #define STR(x) XSTR(x)
+#endif
 
 //------------------------------------------------------------------------------
 // GLOBALS

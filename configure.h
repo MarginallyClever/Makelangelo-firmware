@@ -62,12 +62,19 @@
 // YOUR CHANGES GO HERE
 //------------------------------------------------------------------------------
 
-#if __has_include("local_config.h")
-// Your local changes go here.
-// Do not send your local_config.h in a pull request.  Thank you!
-#include "local_config.h"
+#ifdef PIO                             // Check if it compiled on Platformio (DPIO variable is set in platformio.ini)
+  #ifdef HEADER_RUMBA
+    #if __has_include("configs/local_rumba_config.h")
+      #include "configs/local_rumba_config.h"
+    #endif
+  #endif
+#else
+  #if __has_include("local_config.h")
+  // Your local changes go here.
+  // Do not send your local_config.h in a pull request.  Thank you!
+  #include "local_config.h"
+  #endif
 #endif
-
 
 //------------------------------------------------------------------------------
 // 
