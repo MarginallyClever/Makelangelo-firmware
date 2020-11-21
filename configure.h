@@ -68,10 +68,39 @@
       #include "configs/local_rumba_config.h"
     #endif
   #endif
-
   #ifdef HEADER_RAMPS
     #if __has_include("configs/local_ramps_config.h")
       #include "configs/local_ramps_config.h"
+    #endif
+  #endif
+  #ifdef HEADER_CNCV3
+    #if __has_include("configs/local_cncv3_config.h")
+      #include "configs/local_cncv3_config.h"
+    #endif
+  #endif
+  #ifdef HEADER_MKS
+    #if __has_include("configs/local_mks_config.h")
+      #include "configs/local_mks_config.h"
+    #endif
+  #endif
+  #ifdef HEADER_SANGUINOLULU
+    #if __has_include("configs/local_sanguinolulu_config.h")
+      #include "configs/local_sanguinolulu_config.h"
+    #endif
+  #endif
+  #ifdef HEADER_WEMOS
+    #if __has_include("configs/local_wemos_config.h")
+      #include "configs/local_wemos_config.h"
+    #endif
+  #endif
+  #ifdef HEADER_ESP32
+    #if __has_include("configs/local_esp32_config.h")
+      #include "configs/local_esp32_config.h"
+    #endif
+  #endif
+  #ifdef HEADER_M5STACK
+    #if __has_include("configs/local_m5stack_config.h")
+      #include "configs/local_m5stack_config.h"
     #endif
   #endif
 #else
@@ -102,11 +131,13 @@
 #include "board_rumba.h"
 #include "board_ramps.h"
 #include "board_sanguinolulu.h"
-#include "board_teensylu.h"
 #include "board_wemos.h"
 #include "board_sixi_mega.h"
+#include "board_mks.h"
 #include "board_cncv3.h"
+
 #include "board_esp32.h"
+#include "board_m5stack.h"
 
 #include "configMotors.h"
 
