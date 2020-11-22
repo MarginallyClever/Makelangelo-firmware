@@ -415,11 +415,11 @@ void setPenAngle(int arg0) {
 
 #if NUM_SERVOS>0
   // this is commented out because compiler segfault for unknown reasons.
-  //#ifndef ESP8266
-  //  servos[0].write(arg0);
-  //#else
-  analogWrite(SERVO0_PIN, arg0);
-  //#endif  // ESP8266
+  #ifndef ESP8266
+    servos[0].write(arg0);
+  #else
+    analogWrite(SERVO0_PIN, arg0);
+  #endif  // ESP8266
 #endif // NUM_SERVOS>0
 }
 
