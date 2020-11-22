@@ -203,5 +203,7 @@ extern SensorManager sensorManager;
 extern void sixiDemo();
 extern void sixiSetup();
 
+extern void gripperUpdate(float currentGripperCmd);
+
 
 #endif  // #ifdef SIXI

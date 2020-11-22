@@ -114,6 +114,23 @@ void SensorAS5147::start() {
   
   digitalWrite(pin_CSEL,HIGH);
   digitalWrite(pin_MOSI,HIGH);
+
+#ifdef HAS_GRIPPER
+  pinMode(TEST_GRIPPER_PIN, OUTPUT);
+  digitalWrite(TEST_GRIPPER_PIN, LOW);
+#endif
+}
+
+
+
+
+/**
+ * Adjust the gripper position. 0 for closed, anything else for open.
+ */
+void gripperUpdate(float currentGripperCmd) {
+#ifdef HAS_GRIPPER
+  digitalWrite(TEST_GRIPPER_PIN, ( currentGripperCmd > 0 ) ? LOW : HIGH );
+#endif
 }
 
 

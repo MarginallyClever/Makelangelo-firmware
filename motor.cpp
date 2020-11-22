@@ -9,7 +9,7 @@
 
 #include "configure.h"
 #include "motor.h"
-#include "MServo.h"
+#include "mservo.h"
 #include "lcd.h"
 #include "speed_lookuptable.h"
 
@@ -33,7 +33,6 @@ inline void CRITICAL_SECTION_START() {
 inline void CRITICAL_SECTION_END() {
   SREG = _sreg;
 }
-
 
 #endif
 
@@ -227,14 +226,6 @@ float max_speed_allowed(const float &acc, const float &target_velocity, const fl
   return sqrt( sq(target_velocity) - 2 * acc * distance );
 }
 
-
-/**
- * Adjust the gripper position. 0 for closed, anything else for open.
- */
-void gripperUpdate(float currentGripperCmd) {
-  digitalWrite(TEST_GRIPPER_PIN, ( currentGripperCmd > 0 ) ? LOW : HIGH );
-}
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -303,10 +294,7 @@ Serial.println("B");
     max_jerk[i] = MAX_JERK;
     max_feedrate_mm_s[i] = MAX_FEEDRATE;
   }
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////TEST
-pinMode(TEST_GRIPPER_PIN, OUTPUT);
-digitalWrite(TEST_GRIPPER_PIN, LOW);
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  
 
 #if MACHINE_STYLE == POLARGRAPH
 #ifdef MAX_FEEDRATE_Z
