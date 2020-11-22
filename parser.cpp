@@ -128,7 +128,7 @@ char Parser::checkLineNumberAndCRCisOK() {
   }
   c++; // skip *
   int against = strtod(serialBuffer + c, NULL);
-  if ( checksum != against ) {
+  if(found!=-1 && checksum != against ) {
     Serial.print("BADCHECKSUM calc=");
     Serial.print(checksum);
     Serial.print(" sent=");
