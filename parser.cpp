@@ -563,10 +563,12 @@ void Parser::G01() {
   }
 #endif // MACHINE_STYLE == SIXI
 
+#ifdef HAS_GRIPPER
   if(hasGCode('T')) {
     float toolStatus = parseNumber('T',0);
     gripperUpdate(toolStatus);
   }
+#endif
 
   if(hasGCode('A')) {
     acceleration = parseNumber('A',acceleration);
