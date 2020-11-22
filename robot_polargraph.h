@@ -53,6 +53,7 @@
 #define HAS_SD
 #define HAS_LCD
 #endif
+
 #if MACHINE_HARDWARE_VERSION == MAKELANGELO_3_3
 #ifndef MAX_SEGMENTS
 #define MAX_SEGMENTS         (32)
@@ -61,6 +62,7 @@
 #define HAS_SD
 #define HAS_LCD
 #endif
+
 #if MACHINE_HARDWARE_VERSION == MAKELANGELO_5
 #ifndef MAX_SEGMENTS
 #define MAX_SEGMENTS         (32)
@@ -69,6 +71,7 @@
 #define HAS_SD
 #define HAS_LCD
 #endif
+
 #if MACHINE_HARDWARE_VERSION == MAKELANGELO_6
 #ifndef MAX_SEGMENTS
 #define MAX_SEGMENTS         (16)
