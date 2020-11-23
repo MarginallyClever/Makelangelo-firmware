@@ -50,21 +50,16 @@ Newer versions might be available at https://www.marginallyclever.com/product/ma
 ## Note ##
 
 Unless otherwise stated in the code, the default units of measurement are millimeters (mm), kilograms (kg), and seconds (s).
+
+## Dependencies ##
+
+Makelangelo-firmware depends on a few other libraries.  SPI, EEPROM, LiquidCrystal, and SdFat.  The Adafruit SdFAT library will NOT work, use the Greiman edition.
+
 ## Instructions ##
 
-- Make sure the parent folder is called Makelangelo-firmware.
-- Open Makelangelo-firmware/Makelangelo-firmware.ino in arduino
-- in Makelangelo-firmware/configure.h make sure BOARD_TYPE and MACHINE_STYLE are set for your board and machine style
-  - For Makelangelo 3 or Makelangelo 5, choose POLARGRAPH
-- For Makelangelo robots, in Makelangelo-firmware/polargraph.h, set
-  for Makelangelo 3 #define MACHINE_HARDWARE_VERSION 3 
-  for Makelangelo 5 #define MACHINE_HARDWARE_VERSION 5
-- Tools > board > set type for your flavor of arduino 
-- Tools > port > set the connection for your arudio
-- upload
+https://mcr.dozuki.com/Guide/How+to+update+Makelangelo+firmware/4?lang=en
 
-For developers, please see
-https://github.com/MarginallyClever/Makelangelo/wiki/Home/
+For developers, please see https://github.com/MarginallyClever/Makelangelo/wiki/Home/
 
 ## Get help ##
 
