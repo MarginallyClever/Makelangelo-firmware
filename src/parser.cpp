@@ -128,7 +128,7 @@ char Parser::checkLineNumberAndCRCisOK() {
   }
   c++; // skip *
   int against = strtod(serialBuffer + c, NULL);
-  if ( checksum != against ) {
+  if(found!=-1 && checksum != against ) {
     Serial.print("BADCHECKSUM calc=");
     Serial.print(checksum);
     Serial.print(" sent=");
@@ -563,10 +563,12 @@ void Parser::G01() {
   }
 #endif // MACHINE_STYLE == SIXI
 
+#ifdef HAS_GRIPPER
   if(hasGCode('T')) {
     float toolStatus = parseNumber('T',0);
     gripperUpdate(toolStatus);
   }
+#endif
 
   if(hasGCode('A')) {
     acceleration = parseNumber('A',acceleration);

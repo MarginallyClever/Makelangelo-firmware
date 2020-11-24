@@ -15,6 +15,8 @@
 
 #define BAUD                      (57600)  // How fast is the Arduino talking?
 
+#define CLOCK_FREQ                (16000000L)
+
 #undef HAS_LCD
 #undef HAS_SD
 
@@ -92,5 +94,10 @@
 #define  PIN_SENSOR_CLK_5   27
 #define PIN_SENSOR_MOSI_5   25
 #define PIN_SENSOR_MISO_5   23
+
+
+#ifdef HAS_GRIPPER
+#define TEST_GRIPPER_PIN          (12)
+#endif
 
 #endif  // MOTHERBOARD == BOARD_SIXI_MEGA 

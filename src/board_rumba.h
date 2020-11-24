@@ -13,6 +13,8 @@
 #error "Oops!  Make sure you have 'Arduino Mega 2560' selected from the 'Tools -> Boards' menu."
 #endif
 
+#define CLOCK_FREQ                (16000000L)
+
 #define MAX_MOTORS                 (6)
 
 #define MOTOR_0_LETTER            'X'

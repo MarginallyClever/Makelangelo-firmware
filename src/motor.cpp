@@ -34,7 +34,6 @@ inline void CRITICAL_SECTION_END() {
   SREG = _sreg;
 }
 
-
 #endif
 
 //------------------------------------------------------------------------------
@@ -227,14 +226,6 @@ float max_speed_allowed(const float &acc, const float &target_velocity, const fl
   return sqrt( sq(target_velocity) - 2 * acc * distance );
 }
 
-
-/**
- * Adjust the gripper position. 0 for closed, anything else for open.
- */
-void gripperUpdate(float currentGripperCmd) {
-  digitalWrite(TEST_GRIPPER_PIN, ( currentGripperCmd > 0 ) ? LOW : HIGH );
-}
-
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -303,10 +294,7 @@ Serial.println("B");
     max_jerk[i] = MAX_JERK;
     max_feedrate_mm_s[i] = MAX_FEEDRATE;
   }
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////TEST
-pinMode(TEST_GRIPPER_PIN, OUTPUT);
-digitalWrite(TEST_GRIPPER_PIN, LOW);
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  
 
 #if MACHINE_STYLE == POLARGRAPH
 #ifdef MAX_FEEDRATE_Z
@@ -427,11 +415,11 @@ void setPenAngle(int arg0) {
 
 #if NUM_SERVOS>0
   // this is commented out because compiler segfault for unknown reasons.
-  //#ifndef ESP8266
-  //  servos[0].write(arg0);
-  //#else
-  analogWrite(SERVO0_PIN, arg0);
-  //#endif  // ESP8266
+  #ifndef ESP8266
+    servos[0].write(arg0);
+  #else
+    analogWrite(SERVO0_PIN, arg0);
+  #endif  // ESP8266
 #endif // NUM_SERVOS>0
 }
 

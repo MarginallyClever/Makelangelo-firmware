@@ -22,7 +22,7 @@ We use github to host code, to track issues and feature requests, as well as acc
 
 We Use [Github Flow](https://guides.github.com/introduction/flow/index.html), So All Code Changes Happen Through Pull Requests. We actively welcome your pull requests:
 
-1. Fork the repo and create your branch from `master`.
+1. Fork the repo and create your branch from `master`.  Your new branch should have a highly descriptive name, please.
 2. Write tests for your code.
 3. Write code that passes your tests.
 3. If you've changed APIs, update the documentation.

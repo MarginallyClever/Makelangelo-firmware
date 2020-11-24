@@ -80,10 +80,6 @@
 #define END5 HIGH
 #endif
 
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////TEST
-#define TEST_GRIPPER_PIN          (12)
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 //------------------------------------------------------------------------------
 // STRUCTURES
 //------------------------------------------------------------------------------
@@ -172,9 +168,6 @@ extern void clockISRProfile();
 
 extern const int movesPlanned();
 extern void motor_onestep(int motor);
-
-// TEST JIN
-extern void gripperUpdate(float currentGripperCmd);
 
 #ifdef DEBUG_STEPPING
 extern void debug_stepping();
