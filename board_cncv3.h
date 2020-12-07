@@ -5,17 +5,13 @@
 // Please see http://www.github.com/MarginallyClever/makelangeloFirmware for more information.
 //------------------------------------------------------------------------------
 
-// https://www.instructables.com/id/Programming-the-WeMos-Using-Arduino-SoftwareIDE/
-
 // cnc shield pins: https://blog.protoneer.co.nz/arduino-cnc-shield/arduino-cnc-shield-scematics-v3-xx/
-// WEMOS D1 R2 pins: https://protosupplies.com/wp-content/uploads/2018/07/Wemos-D1-Pin-Differences.pdf.jpg
-// WEMOS D1 R2 board type should be set to "LOLIN(WEMOS) R1 D2 & mini"
 
 #if MOTHERBOARD == BOARD_CNCV3 
 
 // wrong board type set
-#ifndef __AVR_ATmega328P__
-  #error "Oops!  Make sure you have 'Arduino UNO' selected from the 'Tools -> Boards' menu."
+#ifndef __AVR_ATmega2560__
+  #error "Oops!  Make sure you have 'Arduino Mega or Mega 2560' selected from the 'Tools -> Boards' menu."
 #endif
 
 
