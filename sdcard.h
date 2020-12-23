@@ -11,8 +11,8 @@
 #include "SdFat.h"
 
 
-//extern File root;
-extern SdFile root;
+extern File root;
+
 extern char sd_inserted;
 extern char sd_printing_now;
 extern char sd_printing_paused;
@@ -20,6 +20,6 @@ extern char sd_printing_paused;
 extern void SD_check();
 extern void SD_setup();
 extern void SD_listFiles();
-extern void SD_StartPrintingFile(SdFile toPrint);
+extern void SD_StartPrintingFile(File toPrint);
 
 #endif  // HAS_SD

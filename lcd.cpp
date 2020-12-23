@@ -212,18 +212,20 @@ inline void LCD_print(const char x) {
 
 // Convenience macros that make it easier to generate menus
 
-#define MENU_START \
+#define MENU_START() \
   LCD_clear(); \
   ty=0;
 
-#define MENU_END \
+#define MENU_END() \
   num_menu_items=ty; \
 
-#define MENU_ITEM_START(key) \
+#define MENU_ITEM_START2(symbol,key) \
   if(ty>=screen_position && ty<screen_end) { \
     LCD_setCursor(0,ty-screen_position); \
-    LCD_print((menuStack[menuStackDepth].menu_position==ty)?'>':' '); \
+    LCD_print((menuStack[menuStackDepth].menu_position==ty)?symbol:' '); \
     LCD_print(key); \
+
+#define MENU_ITEM_START(key) MENU_ITEM_START2('>',key)
 
 #define MENU_ITEM_END() \
   } \
@@ -262,7 +264,7 @@ inline void LCD_print(const char x) {
   MENU_ITEM_END()
 
 #define MENU_BACK(menu_label) \
-  MENU_ITEM_START(menu_label) \
+  MENU_ITEM_START2('<',menu_label) \
   if(menuStack[menuStackDepth].menu_position==ty && lcd_click_now) MENU_POP(); \
   MENU_ITEM_END()
 
@@ -413,7 +415,7 @@ void LCD_togglePenUp() {
 }
 
 void LCD_drive_menu() {
-  MENU_START
+  MENU_START()
   MENU_BACK("Main");
   MENU_ACTION("Disable motors", LCD_disable_motors);
   MENU_ACTION("Enable motors", LCD_enable_motors);
@@ -421,7 +423,7 @@ void LCD_drive_menu() {
   MENU_SUBMENU("Y", LCD_driveY);
   MENU_SUBMENU("Z", LCD_driveZ);
   MENU_SUBMENU("Feedrate", LCD_driveF);
-  MENU_END
+  MENU_END()
 }
 
 
@@ -502,40 +504,39 @@ void LCD_start_menu() {
 #ifdef HAS_SD
   if (!sd_inserted) MENU_POP();
 
-  /*
-    Serial.print(menuStack[menuStackDepth].menu_position    );  Serial.print("\t");  // 0
-    Serial.print(menuStack[menuStackDepth].menu_position_sum);  Serial.print("\t");  // 1
-    Serial.print(screen_position  );  Serial.print("\t");  // 0
-    Serial.print(num_menu_items   );  Serial.print("\n");  // 8
-  */
   if(lcd_turn!=0 || lcd_click_now==1) lcd_dirty=1;
 
   if(lcd_dirty==1) {
-    MENU_START
+    //Serial.print(menuStack[menuStackDepth].menu_position    );  Serial.print("\t");  // 0
+    //Serial.print(menuStack[menuStackDepth].menu_position_sum);  Serial.print("\t");  // 1
+    //Serial.print(screen_position  );  Serial.print("\t");  // 0
+    //Serial.print(num_menu_items   );  Serial.print("\n");  // 8
+
+    MENU_START()
     MENU_BACK("Main");
     
-    root.open("/");
-    SdFile entry;
+    root.rewindDirectory();
+    File entry;
     char filename[20];
     while(entry.openNext(&root)) {
       if (!entry.isSubDir() && !entry.isHidden()) {
         entry.getName(filename,18);
         MENU_ITEM_START(filename)
-        if (menuStack[menuStackDepth].menu_position == ty && lcd_click_now==1) {
+        if(menuStack[menuStackDepth].menu_position == ty && lcd_click_now==1) {
           lcd_click_now = 0;
+          lcd_dirty = 0;
+          
           // go back to status menu
           while(menuStackDepth>0) MENU_POP();
           
           SD_StartPrintingFile(entry);
-          root.close();
           return;
         }
         MENU_ITEM_END()
       }
       entry.close();
     }
-    root.close();
-    MENU_END
+    MENU_END()
    
     lcd_dirty=0;
   }
@@ -630,7 +631,7 @@ void draw_USlegal_landscape() {
 }
 
 void LCD_draw_border() {
-  MENU_START
+  MENU_START()
   MENU_BACK("Main");
   MENU_ACTION("A2 portrait", draw_A2_portrait);
   MENU_ACTION("A3 portrait", draw_A3_portrait);
@@ -645,7 +646,7 @@ void LCD_draw_border() {
   MENU_ACTION("A5 landscape", draw_A5_landscape);
   MENU_ACTION("US legal landscape", draw_USlegal_landscape);
   MENU_ACTION("US letter landscape", draw_USletter_landscape);
-  MENU_END
+  MENU_END()
 }
 
 
@@ -830,7 +831,7 @@ void LCD_refresh_display() {
 
 void LCD_settings_menu() {
 #ifdef HAS_LCD
-  MENU_START
+  MENU_START()
   MENU_BACK("Main");
   
 #if MACHINE_STYLE == POLARGRAPH
@@ -843,7 +844,7 @@ void LCD_settings_menu() {
   MENU_FLOAT("Belt L", calibrateLeft);
   MENU_FLOAT("Belt R", calibrateRight);
 #endif
-  MENU_END
+  MENU_END()
 #endif
 }
 
@@ -852,7 +853,7 @@ void LCD_main_menu() {
 #ifdef HAS_LCD
   lcd_dirty=1;
   
-  MENU_START
+  MENU_START()
 
   MENU_BACK("Info screen");
 #ifdef HAS_SD
@@ -893,7 +894,7 @@ void LCD_main_menu() {
   }
 #endif
   MENU_ACTION("Settings", LCD_settings_menu);
-  MENU_END
+  MENU_END()
 #endif  // HAS_LCD
 }
 
@@ -901,7 +902,7 @@ void LCD_main_menu() {
 // display the current machine position and feed rate on the LCD.
 void LCD_status_menu() {
 #ifdef HAS_LCD
-  MENU_START
+  MENU_START()
 
   // on click go to the main menu
   if (lcd_click_now) MENU_PUSH(LCD_main_menu);
@@ -936,7 +937,7 @@ void LCD_status_menu() {
   
   LCD_setCursor(0,2);  LCD_print(lcd_message_m117);
 
-  MENU_END
+  MENU_END()
 #endif  // HAS_LCD
 }
 
@@ -964,7 +965,7 @@ void LCD_setup() {
   digitalWrite(BTN_EN2, HIGH);
   digitalWrite(BTN_ENC, HIGH);
   current_menu = LCD_status_menu;
-  menuStack[menuStackDepth].menu_position_sum = 1;  /* 20160313-NM-Added so the clicking without any movement will display a menu */
+  menuStack[menuStackDepth].menu_position_sum = 1;  // 20160313-NM-Added so the clicking without any movement will display a menu
   menuStack[menuStackDepth].menu = current_menu; 
 
   LCD_drawSplash();

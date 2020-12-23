@@ -233,8 +233,6 @@ float max_speed_allowed(const float &acc, const float &target_velocity, const fl
  * set up the pins for each motor
  */
 void motor_setup() {
-Serial.println("A");
-
 #define SETUP_MOT(NN) \
   motors[NN].letter           = MOTOR_##NN##_LETTER;\
   motors[NN].step_pin         = MOTOR_##NN##_STEP_PIN;\
@@ -258,8 +256,6 @@ Serial.println("A");
 #if NUM_MOTORS>5
   SETUP_MOT(5)
 #endif
-
-Serial.println("B");
 
   for(ALL_MOTORS(i)) {
     // set the motor pin & scale
@@ -326,8 +322,6 @@ Serial.println("B");
   servos[4].attach(SERVO4_PIN);
 #endif
 
-Serial.println("C");
-
   current_segment = 0;
   last_segment = 0;
   Segment &old_seg = line_segments[get_prev_segment(last_segment)];
@@ -338,8 +332,6 @@ Serial.println("C");
   long steps[NUM_MUSCLES];
   memset(steps, 0, (NUM_MUSCLES)*sizeof(long));
   motor_set_step_count(steps);
-
-Serial.println("D");
 
   working_seg = NULL;
   first_segment_delay = 0;
