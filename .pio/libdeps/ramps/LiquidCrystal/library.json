@@ -1,0 +1,18 @@
+{
+    "name": "LiquidCrystal",
+    "keywords": "lcd, hd44780",
+    "description": "LiquidCrystal Library is faster and extensable, compatible with the original LiquidCrystal library",
+    "authors": {
+        "name": "F Malpartida",
+        "url": "https://bitbucket.org/fmalpartida"
+    },
+    "repository":
+    {
+      "type": "hg",
+      "url": "https://bitbucket.org/fmalpartida/new-liquidcrystal"
+    },
+    "version": "1.5.0",
+    "exclude": ["def", "thirdparty libraries", "utility/docs", "doxygen*"],
+    "frameworks": "arduino",
+    "platforms": "atmelavr,espressif8266,espressif32"
+}

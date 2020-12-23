@@ -1,0 +1,71 @@
+{
+    "configurations": [
+        {
+            "name": "!!! WARNING !!! AUTO-GENERATED FILE, PLEASE DO NOT MODIFY IT AND USE https://docs.platformio.org/page/projectconf/section_env_build.html#build-flags"
+        },
+        {
+            "name": "Win32",
+            "includePath": [
+                "c:/Users/aggra/Documents/GitHub/Makelangelo-firmware/include",
+                "c:/Users/aggra/Documents/GitHub/Makelangelo-firmware/src",
+                "C:/Users/aggra/.platformio/packages/framework-arduino-avr/libraries/EEPROM/src",
+                "c:/Users/aggra/Documents/GitHub/Makelangelo-firmware/.pio/libdeps/rumba/LiquidCrystal",
+                "c:/Users/aggra/Documents/GitHub/Makelangelo-firmware/.pio/libdeps/rumba/U8glib/src",
+                "c:/Users/aggra/Documents/GitHub/Makelangelo-firmware/.pio/libdeps/rumba/U8g2/src",
+                "C:/Users/aggra/.platformio/packages/framework-arduino-avr/libraries/Wire/src",
+                "c:/Users/aggra/Documents/GitHub/Makelangelo-firmware/.pio/libdeps/rumba/TMCStepper/src",
+                "C:/Users/aggra/.platformio/packages/framework-arduino-avr/libraries/SoftwareSerial/src",
+                "c:/Users/aggra/Documents/GitHub/Makelangelo-firmware/.pio/libdeps/rumba/TMC2130Stepper/src",
+                "c:/Users/aggra/Documents/GitHub/Makelangelo-firmware/.pio/libdeps/rumba/SdFat/src",
+                "C:/Users/aggra/.platformio/packages/framework-arduino-avr/libraries/SPI/src",
+                "C:/Users/aggra/.platformio/packages/framework-arduino-avr/cores/arduino",
+                "C:/Users/aggra/.platformio/packages/framework-arduino-avr/variants/mega",
+                "C:/Users/aggra/.platformio/packages/framework-arduino-avr/libraries/HID/src",
+                "C:/Users/aggra/.platformio/packages/tool-unity",
+                ""
+            ],
+            "browse": {
+                "limitSymbolsToIncludedHeaders": true,
+                "path": [
+                    "c:/Users/aggra/Documents/GitHub/Makelangelo-firmware/include",
+                    "c:/Users/aggra/Documents/GitHub/Makelangelo-firmware/src",
+                    "C:/Users/aggra/.platformio/packages/framework-arduino-avr/libraries/EEPROM/src",
+                    "c:/Users/aggra/Documents/GitHub/Makelangelo-firmware/.pio/libdeps/rumba/LiquidCrystal",
+                    "c:/Users/aggra/Documents/GitHub/Makelangelo-firmware/.pio/libdeps/rumba/U8glib/src",
+                    "c:/Users/aggra/Documents/GitHub/Makelangelo-firmware/.pio/libdeps/rumba/U8g2/src",
+                    "C:/Users/aggra/.platformio/packages/framework-arduino-avr/libraries/Wire/src",
+                    "c:/Users/aggra/Documents/GitHub/Makelangelo-firmware/.pio/libdeps/rumba/TMCStepper/src",
+                    "C:/Users/aggra/.platformio/packages/framework-arduino-avr/libraries/SoftwareSerial/src",
+                    "c:/Users/aggra/Documents/GitHub/Makelangelo-firmware/.pio/libdeps/rumba/TMC2130Stepper/src",
+                    "c:/Users/aggra/Documents/GitHub/Makelangelo-firmware/.pio/libdeps/rumba/SdFat/src",
+                    "C:/Users/aggra/.platformio/packages/framework-arduino-avr/libraries/SPI/src",
+                    "C:/Users/aggra/.platformio/packages/framework-arduino-avr/cores/arduino",
+                    "C:/Users/aggra/.platformio/packages/framework-arduino-avr/variants/mega",
+                    "C:/Users/aggra/.platformio/packages/framework-arduino-avr/libraries/HID/src",
+                    "C:/Users/aggra/.platformio/packages/tool-unity",
+                    ""
+                ]
+            },
+            "defines": [
+                "PLATFORMIO=50003",
+                "ARDUINO_AVR_MEGA2560",
+                "HEADER_RUMBA",
+                "PIO",
+                "F_CPU=16000000L",
+                "ARDUINO_ARCH_AVR",
+                "ARDUINO=10808",
+                "__AVR_ATmega2560__",
+                ""
+            ],
+            "intelliSenseMode": "gcc-x64",
+            "cStandard": "c11",
+            "cppStandard": "c++11",
+            "compilerPath": "C:/Users/aggra/.platformio/packages/toolchain-atmelavr/bin/avr-gcc.exe",
+            "compilerArgs": [
+                "-mmcu=atmega2560",
+                ""
+            ]
+        }
+    ],
+    "version": 4
+}
