@@ -167,8 +167,7 @@ void EEPROMManager::loadAll() {
     // Update the version number
     EEPROM.write(ADDR_VERSION,FIRMWARE_VERSION);
 #if MAKELANGELO_HARDWARE_VERSION == 5 || MAKELANGELO_HARDWARE_VERSION == 6
-    adjustDimensions(50,-50,-32.5,32.5);
-    saveCalibration();
+    parser.M502();
 #endif
   }
   

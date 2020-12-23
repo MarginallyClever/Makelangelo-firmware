@@ -420,7 +420,7 @@ void makelangelo6Setup() {
 
 
 /**
-   D11 makelangelo 5 specific setup call
+ * makelangelo 5 specific setup call
 */
 void makelangelo5Setup() {
   // if you accidentally upload m3 firmware to an m5 then upload it ONCE with this line uncommented.
