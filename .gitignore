@@ -42,3 +42,6 @@ Network Trash Folder
 Temporary Items
 .apdisk
 local_config.h
+
+# folder created by platformio
+.pio
