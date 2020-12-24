@@ -7,7 +7,14 @@
 
 #if MACHINE_STYLE == SIXI
 
-#define MOTHERBOARD BOARD_SIXI_MEGA  // forced
+#if(MOTHERBOARD == BOARD_SIXI_32)
+  //do nothing
+  #define MOTHERBOARD BOARD_SIXI_32
+#else
+  #define MOTHERBOARD BOARD_SIXI_MEGA  // force only if the board is not defined as SIXI_32
+#endif
+
+
 
 #define MACHINE_STYLE_NAME           "SIXI"
 #define MACHINE_HARDWARE_VERSION     6  // yellow sixi 2019
@@ -41,7 +48,9 @@
 
 //#define HAS_LCD
 #define HAS_SD
-#define MOTHERBOARD BOARD_SIXI_MEGA  // sixi only supports one motherboard right now
+
+//cad435: this is not needed as it is already defined above!!
+//#define MOTHERBOARD BOARD_SIXI_MEGA  // sixi only supports one motherboard right now
 
 
 #define MOTOR_STEPS_PER_TURN          (200.0)  // motor full steps * microstepping setting

@@ -12,12 +12,12 @@
             "type": "platformio-debug",
             "request": "launch",
             "name": "PIO Debug",
-            "executable": "c:/Users/aggra/Documents/GitHub/Makelangelo-firmware/.pio/build/rumba/firmware.elf",
-            "projectEnvName": "rumba",
-            "toolchainBinDir": "C:/Users/aggra/.platformio/packages/toolchain-atmelavr/bin",
+            "executable": "e:/_DATEN/Alexander/Forschung/2020/SIXI-2/Makelangelo-firmware/.pio/build/ramps/firmware.elf",
+            "projectEnvName": "ramps",
+            "toolchainBinDir": "C:/Users/Alexander/.platformio/packages/toolchain-atmelavr/bin",
             "preLaunchTask": {
                 "type": "PlatformIO",
-                "task": "Pre-Debug (rumba)"
+                "task": "Pre-Debug (ramps)"
             },
             "internalConsoleOptions": "openOnSessionStart"
         },
@@ -25,9 +25,9 @@
             "type": "platformio-debug",
             "request": "launch",
             "name": "PIO Debug (skip Pre-Debug)",
-            "executable": "c:/Users/aggra/Documents/GitHub/Makelangelo-firmware/.pio/build/rumba/firmware.elf",
-            "projectEnvName": "rumba",
-            "toolchainBinDir": "C:/Users/aggra/.platformio/packages/toolchain-atmelavr/bin",
+            "executable": "e:/_DATEN/Alexander/Forschung/2020/SIXI-2/Makelangelo-firmware/.pio/build/ramps/firmware.elf",
+            "projectEnvName": "ramps",
+            "toolchainBinDir": "C:/Users/Alexander/.platformio/packages/toolchain-atmelavr/bin",
             "internalConsoleOptions": "openOnSessionStart"
         }
     ]

@@ -45,7 +45,11 @@
 
 #if !defined( ESP8266 ) && !defined( ESP32 )
 
-#include <avr/interrupt.h>
+//only include when AVR Boards in use
+#if defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
+  #include <avr/interrupt.h>
+#endif
+
 #include <Arduino.h>
 #include <inttypes.h>
 
@@ -84,6 +88,16 @@ typedef enum { _timer3, _Nbr_16timers } timer16_Sequence_t ;
 //#define _useTimer1
 //typedef enum { _timer3, _timer1, _Nbr_16timers } timer16_Sequence_t ;
 typedef enum { _timer3, _Nbr_16timers } timer16_Sequence_t ;
+
+#elif defined(__STM32F4__) //for STM32F405 Boards
+#define _useTimer5
+//#define _useTimer1
+#define _useTimer3
+#define _useTimer4
+//typedef enum { _timer5, _timer1, _timer3, _timer4, _Nbr_16timers } timer16_Sequence_t ;
+typedef enum { _timer5, _timer3, _timer4, _Nbr_16timers } timer16_Sequence_t ;
+#error "STMF4 defined!"
+
 
 #else  // everything else
 //#define _useTimer1

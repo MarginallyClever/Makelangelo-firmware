@@ -29,7 +29,7 @@
 #define SCARA           11  // 2 axis SCARA.
 
 // default value
-#define MACHINE_STYLE POLARGRAPH
+#define MACHINE_STYLE SIXI
 
 //------------------------------------------------------------------------------
 // LCD panels supported
@@ -55,9 +55,10 @@
 #define BOARD_CNCV3        7  // Mega2560 + CNC Shield v3
 #define BOARD_ESP32        8  // ESP32 + Marginally Clever Polargraph PCB.
 #define BOARD_SKRPRO       9  // SKR Pro 1.2
+#define BOARD_SIXI_32      10 //emerging mainboard for sixi2???
 
 // default value
-#define MOTHERBOARD BOARD_RUMBA
+#define MOTHERBOARD BOARD_SIXI_MEGA
 
 //------------------------------------------------------------------------------
 // YOUR CHANGES GO HERE
@@ -74,26 +75,27 @@
 // 
 //------------------------------------------------------------------------------
 
-#include "robot_polargraph.h"
-#include "robot_traditionalxy.h"
-#include "robot_corexy.h"
-#include "robot_zarplotter.h"
-#include "robot_skycam.h"
-#include "robot_delta.h"
-#include "robot_stewart.h"
-#include "robot_arm3.h"
-#include "robot_sixi.h"
-#include "robot_traditional6.h"
-#include "robot_scara.h"
+#include "robots/robot_polargraph.h"
+#include "robots/robot_traditionalxy.h"
+#include "robots/robot_corexy.h"
+#include "robots/robot_zarplotter.h"
+#include "robots/robot_skycam.h"
+#include "robots/robot_delta.h"
+#include "robots/robot_stewart.h"
+#include "robots/robot_arm3.h"
+#include "robots/robot_sixi.h"
+#include "robots/robot_traditional6.h"
+#include "robots/robot_scara.h"
 
-#include "board_rumba.h"
-#include "board_ramps.h"
-#include "board_sanguinolulu.h"
-#include "board_teensylu.h"
-#include "board_wemos.h"
-#include "board_sixi_mega.h"
-#include "board_cncv3.h"
-#include "board_esp32.h"
+#include "boards/board_rumba.h"
+#include "boards/board_ramps.h"
+#include "boards/board_sanguinolulu.h"
+#include "boards/board_teensylu.h"
+#include "boards/board_wemos.h"
+#include "boards/board_sixi_mega.h"
+#include "boards/board_cncv3.h"
+#include "boards/board_esp32.h"
+#include "boards/board_sixi_32.h"
 
 #include "configMotors.h"
 
