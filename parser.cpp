@@ -991,16 +991,8 @@ void Parser::M501() {
 // M502 - factory reset
 void Parser::M502() {
 #if MACHINE_STYLE == POLARGRAPH
-  // these are found in robot_polargraph.cpp
-#if MACHINE_HARDWARE_VERSION == MAKELANGELO_6
-  makelangelo6Setup();
-#endif
-#if MACHINE_HARDWARE_VERSION == MAKELANGELO_5
-  makelangelo5Setup();
-#endif
-#if MACHINE_HARDWARE_VERSION == MAKELANGELO_3_3
-  makelangelo33Setup();
-#endif
+  // found in robot_polargraph.cpp
+  polargraphReset();
 #endif  // MACHINE_STYLE == POLARGRAPH
 
 #if MACHINE_STYLE == SIXI

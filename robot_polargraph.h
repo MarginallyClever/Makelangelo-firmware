@@ -10,10 +10,12 @@
 #define MACHINE_STYLE_NAME       "POLARGRAPH"
 
 // supported versions of makelangelo polargraph robot
-#define MAKELANGELO_3    3
-#define MAKELANGELO_3_3  4  // Makelangelo Huge
-#define MAKELANGELO_5    5
-#define MAKELANGELO_6    6  // for testing
+#define MAKELANGELO_CUSTOM   0  // Your DIY machine
+#define MAKELANGELO_3        3
+#define MAKELANGELO_3_3      4  // Makelangelo Huge
+#define MAKELANGELO_5        5
+#define MAKELANGELO_6        6  // for testing
+
 
 #define MACHINE_HARDWARE_VERSION   MAKELANGELO_5  // Change me
 
@@ -95,11 +97,8 @@ extern void recordHome();
 // convert belt length to cartesian position, save that as home pos.
 extern void calibrationToPosition();
 
-extern void makelangelo6Setup();
-
-extern void makelangelo5Setup();
-
-extern void makelangelo33Setup();
+// M503 factory reset
+extern void polargraphReset();
 
 
 #endif  // #ifdef POLARGRAPH

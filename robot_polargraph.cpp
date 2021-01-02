@@ -390,11 +390,10 @@ void calibrationToPosition() {
   teleport(axies2);
 }
 
-
 /**
- * D11 makelangelo 6 specific setup call
+ * makelangelo 6 specific setup call
  */
-void makelangelo6Setup() {
+inline void polargraphResetM6() {
   // if you accidentally upload m3 firmware to an m5 then upload it ONCE with this line uncommented.
   float limits[NUM_AXIES * 2];
   limits[0] = 707.5 / 2;
@@ -421,8 +420,8 @@ void makelangelo6Setup() {
 
 /**
  * makelangelo 5 specific setup call
-*/
-void makelangelo5Setup() {
+ */
+inline void polargraphResetM5() {
   // if you accidentally upload m3 firmware to an m5 then upload it ONCE with this line uncommented.
   float limits[NUM_AXIES * 2];
   limits[0] = 325.0;
@@ -448,9 +447,9 @@ void makelangelo5Setup() {
 
 
 /**
-   D13 makelangelo 3.3 specific setup call
-*/
-void makelangelo33Setup() {
+ * makelangelo 3.3 specific setup call
+ */
+inline void polargraphResetM33() {
   float limits[NUM_AXIES * 2];
   limits[0] = 1000.0;
   limits[1] = -1000.0;
@@ -474,6 +473,22 @@ void makelangelo33Setup() {
 }
 
 
+/**
+ * M503 factory reset
+ */
+void polargraphReset() {
+#if MACHINE_HARDWARE_VERSION == MAKELANGELO_6
+  polargraphResetM6();
+#endif
+#if MACHINE_HARDWARE_VERSION == MAKELANGELO_5
+  polargraphResetM5();
+#endif
+#if MACHINE_HARDWARE_VERSION == MAKELANGELO_3_3
+  polargraphResetM33();
+#endif
+}
+
+// called once at startup
 void robot_setup() {
 }
 
