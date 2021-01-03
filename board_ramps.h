@@ -58,22 +58,35 @@
 // 128x64 full graphics controller
 #define BEEPER             37
 
+#ifdef USING_12864_WITH_ENCODER_INTERRUPTS
+// these alternate pins might help - see https://www.marginallyclever.com/forums/topic/using-reprap-kit-from-amazon-ramps-1-6-lcd-display/#post-22131
+// these settings worked with my Mega 2560/Ramps 1.4 and are needed for using encoder interrupts since the interrupts use D18 and D19 
+#define LCD_PINS_RS        16
+#define LCD_PINS_ENABLE    17
+#define LCD_PINS_D4        23
+#else
+
 #define LCD_PINS_RS        19
 #define LCD_PINS_ENABLE    42
 #define LCD_PINS_D4        18
-// these alternate pins might help - see https://www.marginallyclever.com/forums/topic/using-reprap-kit-from-amazon-ramps-1-6-lcd-display/#post-22131
-//#define LCD_PINS_RS        16
-//#define LCD_PINS_ENABLE    17
-//#define LCD_PINS_D4        23
+#endif
 
 #define LCD_PINS_D5        25
 #define LCD_PINS_D6        27
 #define LCD_PINS_D7        29
 
 // Encoder rotation values
-#define BTN_EN1            31
-#define BTN_EN2            33
+#ifdef USING_12864_WITH_ENCODER_INTERRUPTS
+#define BTN_EN1            18    // solder a jumper from D33 on the display connector to D18 on the RAMPS 1.4 board
+#define BTN_EN1_OLD        33    // this pin is still connected and has to be set to an input
+#define BTN_EN2            19    // solder a jumper from D31 on the display connector to D19 on the RAMPS 1.4 board
+#define BTN_EN2_OLD        31    // this pin is still connected and has to be set to an input
+#define BTN_ENC            35    // did not modify code / jumper board to add an interrupt for the button function
+#else
+#define BTN_EN1            33
+#define BTN_EN2            31
 #define BTN_ENC            35
+#endif
 
 // SD card settings
 #define SDPOWER            -1

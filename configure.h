@@ -40,7 +40,9 @@
 #define LCD_IS_SMART   2  // reprapdiscount Smart LCD Controller (including XXL model)
 
 // default value
-#define LCD_TYPE LCD_IS_SMART
+#define LCD_TYPE LCD_IS_128X64
+
+#define USING_12864_WITH_ENCODER_INTERRUPTS
 
 //------------------------------------------------------------------------------
 // Microcontrollers supported
@@ -56,7 +58,7 @@
 #define BOARD_ESP32        8  // ESP32 + Marginally Clever Polargraph PCB.
 
 // default value
-#define MOTHERBOARD BOARD_RUMBA
+#define MOTHERBOARD BOARD_RAMPS
 
 //------------------------------------------------------------------------------
 // YOUR CHANGES GO HERE

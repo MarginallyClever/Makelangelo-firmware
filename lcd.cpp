@@ -50,8 +50,8 @@ U8GLIB_ST7920_128X64_1X u8g(LCD_PINS_D4, LCD_PINS_ENABLE, LCD_PINS_RS);
 
 uint32_t lcd_draw_delay  = 0;
 
-int lcd_rot_old  = 0;
 int lcd_turn     = 0;
+int lcd_turns_to_process = 0;
 int lcd_posx = 0, lcd_posy = 0;
 char lcd_click_old = HIGH;
 char lcd_click_now = 0;
@@ -73,6 +73,7 @@ uint8_t num_menu_items = 0;
 // counter used when drawing menus
 uint8_t ty;
 
+extern float sd_percent_complete;
 
 void (*current_menu)();
 
@@ -282,7 +283,7 @@ inline void LCD_print(const char x) {
 
 #define MENU_FLOAT(key,value) \
   MENU_ITEM_START(key) \
-  LCD_print_float(value,LCD_WIDTH-1-strlen(key)); \
+  LCD_print_float(value, LCD_WIDTH - 2 - strlen(key)); \
   if(menuStack[menuStackDepth].menu_position==ty && lcd_click_now) { \
     update_key = key; \
     update_val = (void *)&(value); \
@@ -315,7 +316,9 @@ void *update_val;
 
 
 void LCD_read() {
-  long now = millis();
+#ifndef USING_12864_WITH_ENCODER_INTERRUPTS
+  static int lcd_rot_old = 0;
+  unsigned long now = millis();
   
   if(ELAPSED(now,next_lcd_read)) {
     // detect potentiometer changes
@@ -344,6 +347,7 @@ void LCD_read() {
     
     lcd_rot_old = buttons;
   }
+#endif
 
   // find click state
   int btn = digitalRead(BTN_ENC);
@@ -430,12 +434,16 @@ void LCD_drive_menu() {
 void LCD_driveX() {
   if (lcd_click_now) MENU_POP();
 
+  // if knob was spun quickly, then increment quicker
+  int multiplier = 1;
+  if ( lcd_turns_to_process > 2 ) multiplier = 10;
+  
   float offset[3];
-  offset[0] = axies[0].pos + lcd_turn > 0 ? 1 : -1;
+  offset[0] = axies[0].pos + (lcd_turns_to_process * multiplier);
   offset[1] = axies[1].pos;
   offset[2] = axies[2].pos;
 
-  if (lcd_turn) {
+  if (lcd_turns_to_process) {
     lineSafe(offset, feed_rate);
   }
 
@@ -448,12 +456,16 @@ void LCD_driveX() {
 void LCD_driveY() {
   if (lcd_click_now) MENU_POP();
 
+  // if knob was spun quickly, then increment quicker
+  int multiplier = 1;
+  if ( lcd_turns_to_process > 2 ) multiplier = 10;
+
   float offset[3];
   offset[0] = axies[0].pos;
-  offset[1] = axies[1].pos + lcd_turn > 0 ? 1 : -1;
+  offset[1] = axies[1].pos + (lcd_turns_to_process * multiplier);
   offset[2] = axies[2].pos;
     
-  if (lcd_turn) {
+  if (lcd_turns_to_process) {
     lineSafe(offset, feed_rate);
   }
 
@@ -466,12 +478,16 @@ void LCD_driveY() {
 void LCD_driveZ() {
   if (lcd_click_now) MENU_POP();
 
+  // if knob was spun quickly, then increment quicker
+  int multiplier = 1;
+  if ( lcd_turns_to_process > 2 ) multiplier = 10;
+
   float offset[3];
   offset[0] = axies[0].pos;
   offset[1] = axies[1].pos;
-  offset[2] = axies[2].pos + lcd_turn > 0 ? 1 : -1;
+  offset[2] = axies[2].pos + (lcd_turns_to_process * multiplier);
   
-  if (lcd_turn) {
+  if (lcd_turns_to_process) {
     // protect servo, don't drive beyond physical limits
     lineSafe(offset, feed_rate);
   }
@@ -485,14 +501,16 @@ void LCD_driveZ() {
 void LCD_driveF() {
   if (lcd_click_now) MENU_POP();
 
-  if (lcd_turn) {
-    // protect servo, don't drive beyond physical limits
-    float newF = feed_rate + lcd_turn > 0 ? 1 : -1;
-    if (newF < MIN_FEEDRATE) newF = MIN_FEEDRATE;
-    if (newF > MAX_FEEDRATE) newF = MAX_FEEDRATE;
-    // move
-    feed_rate = newF;
-  }
+  // if knob was spun quickly, then increment quicker
+  int multiplier = 1;
+  if ( lcd_turns_to_process > 2 ) multiplier = 10;
+
+  // protect servo, don't drive beyond physical limits
+  float newF = feed_rate + (lcd_turns_to_process * multiplier);
+  if (newF < MIN_FEEDRATE) newF = MIN_FEEDRATE;
+  if (newF > MAX_FEEDRATE) newF = MAX_FEEDRATE;
+  // move
+  feed_rate = newF;
 
   LCD_setCursor( 0, 0);
   LCD_print('F');
@@ -504,9 +522,9 @@ void LCD_start_menu() {
 #ifdef HAS_SD
   if (!sd_inserted) MENU_POP();
 
-  if(lcd_turn!=0 || lcd_click_now==1) lcd_dirty=1;
+  if( lcd_turns_to_process != 0 || lcd_click_now == 1 ) lcd_dirty=1;
 
-  if(lcd_dirty==1) {
+  if( lcd_dirty == 1 ) {
     //Serial.print(menuStack[menuStackDepth].menu_position    );  Serial.print("\t");  // 0
     //Serial.print(menuStack[menuStackDepth].menu_position_sum);  Serial.print("\t");  // 1
     //Serial.print(screen_position  );  Serial.print("\t");  // 0
@@ -514,7 +532,7 @@ void LCD_start_menu() {
 
     MENU_START()
     MENU_BACK("Main");
-    
+
     root.rewindDirectory();
     File entry;
     char filename[20];
@@ -524,7 +542,6 @@ void LCD_start_menu() {
         MENU_ITEM_START(filename)
         if(menuStack[menuStackDepth].menu_position == ty && lcd_click_now==1) {
           lcd_click_now = 0;
-          lcd_dirty = 0;
           
           // go back to status menu
           while(menuStackDepth>0) MENU_POP();
@@ -536,9 +553,8 @@ void LCD_start_menu() {
       }
       entry.close();
     }
+
     MENU_END()
-   
-    lcd_dirty=0;
   }
   
 #else
@@ -652,27 +668,31 @@ void LCD_draw_border() {
 
 void LCD_update_long() {
   if (lcd_click_now) MENU_POP();
-  
-  if (lcd_turn) {
-    long *f=(long*)update_val;
-    // protect servo, don't drive beyond physical limits
-    *f = lcd_turn > 0 ? 1 : -1;
-  }
+
+  // if knob was spun quickly, then increment quicker
+  int multiplier = 1;
+  if ( lcd_turns_to_process > 2 ) multiplier = 10;
+
+  long *f=(long*)update_val;
+  // protect servo, don't drive beyond physical limits
+  *f += (lcd_turns_to_process * multiplier);
   
   LCD_setCursor( 0, 0);
   LCD_print(update_key);
-  LCD_print_long(*(long*)update_val,LCD_WIDTH-1-strlen(update_key));
+  LCD_print_long( *(long*)update_val, LCD_WIDTH - 1 - strlen( update_key ) );
 }
 
 
 void LCD_update_float() {
   if (lcd_click_now) MENU_POP();
-  
-  if (lcd_turn) {
-    float *f=(float*)update_val;
-    // protect servo, don't drive beyond physical limits
-    *f += lcd_turn > 0 ? 0.01 : -0.01;
-  }
+
+  // if knob was spun quickly, then increment quicker
+  int multiplier = 1;
+  if ( lcd_turns_to_process > 2 ) multiplier = 10;
+
+  float *f=(float*)update_val;
+  // protect servo, don't drive beyond physical limits
+  *f += (lcd_turns_to_process * multiplier * 0.01);
   
   LCD_setCursor( 0, 0);
   LCD_print(update_key);
@@ -760,7 +780,11 @@ void LCD_update() {
 #ifdef HAS_LCD
   LCD_read();
   
-  if (millis() >= lcd_draw_delay ) {
+  if ( millis() >= lcd_draw_delay ) {
+
+    // get the current number of turns since it could change while this function runs if using interrupts
+    lcd_turns_to_process = lcd_turn;
+
     lcd_draw_delay = millis() + LCD_DRAW_DELAY;
 
     //Serial.print(lcd_turn,DEC);
@@ -772,11 +796,11 @@ void LCD_update() {
     //Serial.print('\n');
 
     // update the menu position
-    if ( lcd_turn!=0 && num_menu_items > 1 ) {
+    if ( lcd_turns_to_process != 0 && num_menu_items > 1 ) {
       uint8_t upperBound = num_menu_items * LCD_TURN_PER_MENU;
 
       // potentially change the menu item
-      int8_t newPos = menuStack[menuStackDepth].menu_position_sum + lcd_turn;
+      int8_t newPos = menuStack[menuStackDepth].menu_position_sum + lcd_turns_to_process;
       if(newPos<0) newPos=0;
       if(newPos >= upperBound) newPos=upperBound-1;
       menuStack[menuStackDepth].menu_position_sum = newPos;
@@ -802,12 +826,17 @@ void LCD_update() {
     do {
     #endif
       (*current_menu)();
-    #if LCD_TYPE == LCD_IS_128X64
+
+      // reset.  must come after first (*current_menu)() because it might be used there, 
+      // and it should only be used once there if nextPage makes this loop.  (damn globals...)
+      lcd_turn -= lcd_turns_to_process; 
+      lcd_turns_to_process = 0;
+
+#if LCD_TYPE == LCD_IS_128X64
     } while(u8g.nextPage());
-    #endif
+#endif
     LCD_refresh_display();
 
-    lcd_turn = 0;  // reset.  must come after (*current_menu)() because it might be used there.  (damn globals...)
   }
 #endif  // HAS_LCD
 }
@@ -906,9 +935,8 @@ void LCD_status_menu() {
 
   // on click go to the main menu
   if (lcd_click_now) MENU_PUSH(LCD_main_menu);
-
-  if (lcd_turn) {
-    speed_adjust += lcd_turn;
+  if (lcd_turns_to_process) {
+    speed_adjust += lcd_turns_to_process;
   }
   LCD_setCursor( 0, 0);
 
@@ -926,14 +954,14 @@ void LCD_status_menu() {
   LCD_setCursor(8, 1);  LCD_print(( digitalRead(LIMIT_SWITCH_PIN_RIGHT) == LOW ) ? '*' : ' ');
 #endif
 
-  //LCD_setCursor( 1, 15);
+  LCD_setCursor( 1, 15);
   //if (sd_printing_now == true && sd_printing_paused==false) {
-  //if (sd_printing_now == true) {
-    //LCD_print_float(sd_percent_complete);
-    //LCD_print('%');
-  //} else {
-    //LCD_print("          ");
-  //}
+  if (sd_printing_now == true) {
+    LCD_print_float(sd_percent_complete);
+    LCD_print('%');
+  } else {
+    LCD_print("          ");
+  }
   
   LCD_setCursor(0,2);  LCD_print(lcd_message_m117);
 
@@ -941,6 +969,56 @@ void LCD_status_menu() {
 #endif  // HAS_LCD
 }
 
+#ifdef USING_12864_WITH_ENCODER_INTERRUPTS
+void encoderInt()
+{
+  unsigned long debounceTime = 30; // milliseconds
+  static int lcd_rot_old = -1;
+
+    // detect potentiometer changes
+    buttons = (( digitalRead( BTN_EN1 ) == LOW ? 0 : 1 ) << BLEN_A )
+            | (( digitalRead( BTN_EN2 ) == LOW ? 0 : 1 ) << BLEN_B );
+
+    // 0 to 2 to 3 transition indicates rotating clockwise, 0 to 1 to 3 transition indicates counter clockwise
+
+    // start of a sequence
+    if ( lcd_rot_old == -1 && buttons == 0 )
+    {
+      lcd_rot_old = buttons;
+    }
+    else if ( lcd_rot_old == buttons )
+    {
+       // double read, do nothing
+    }
+    else if ( lcd_rot_old == 0 && buttons == 2 )
+    {
+       // 2nd value in clockwise turn
+       lcd_rot_old = buttons;
+    }
+    else if ( lcd_rot_old == 0 && buttons == 1 )
+    {
+       // 2nd value in counter clockwise turn
+       lcd_rot_old = buttons;
+    }
+    else if ( lcd_rot_old == 2 && buttons == 3 )
+    {
+      // final value in clockwise turn
+      lcd_turn++;
+      lcd_rot_old = -1;
+    }
+    else if ( lcd_rot_old == 1 && buttons == 3 )
+    {
+      // final value in counter clockwise turn
+      lcd_turn--;
+      lcd_rot_old = -1;
+    }
+    else
+    {
+      // bad sequence of values, start looking for the beginning of a sequence again
+      lcd_rot_old = -1;
+    }
+}
+#endif
 
 // initialize the Smart controller LCD panel
 void LCD_setup() {
@@ -958,6 +1036,13 @@ void LCD_setup() {
   pinMode(BEEPER, OUTPUT);
   digitalWrite(BEEPER, LOW);
 
+#ifdef USING_12864_WITH_ENCODER_INTERRUPTS
+  // set original pins as inputs, but do not enable their pull-ups
+  // new pins that are interruptable will enable pull-ups
+  pinMode(BTN_EN1_OLD, INPUT);
+  pinMode(BTN_EN2_OLD, INPUT);
+#endif
+
   pinMode(BTN_EN1, INPUT);
   pinMode(BTN_EN2, INPUT);
   pinMode(BTN_ENC, INPUT);
@@ -967,6 +1052,12 @@ void LCD_setup() {
   current_menu = LCD_status_menu;
   menuStack[menuStackDepth].menu_position_sum = 1;  // 20160313-NM-Added so the clicking without any movement will display a menu
   menuStack[menuStackDepth].menu = current_menu; 
+
+#ifdef USING_12864_WITH_ENCODER_INTERRUPTS
+  // get interupts from the jumpered pins
+  attachInterrupt(digitalPinToInterrupt(BTN_EN1), encoderInt, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(BTN_EN2), encoderInt, CHANGE);
+#endif
 
   LCD_drawSplash();
   
