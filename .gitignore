@@ -45,3 +45,4 @@ local_config.h
 
 # folder created by platformio
 .pio
+/.metadata/

@@ -206,7 +206,10 @@ inline void LCD_print(const char x) {
 #define LCD_setCursor(x,y)   {lcd_posx=x; lcd_posy=y;}
 #endif
 #if LCD_TYPE == LCD_IS_128X64
-#define LCD_setCursor(x,y)   u8g.setPrintPos(((x)+1)*FONT_WIDTH,((y)+1)*FONT_HEIGHT)
+// y needs a +1 because it defines the pixel location of the *bottom* of the character, not the top
+// x does not need +1 because it defines the left side if the character
+// having +1 on x means that made LCD_WIDTH calc wrong and pushes all text to the right
+#define LCD_setCursor(x,y)   u8g.setPrintPos((x)*FONT_WIDTH, (y+1)*FONT_HEIGHT)
 #endif
 
 
@@ -283,7 +286,7 @@ inline void LCD_print(const char x) {
 
 #define MENU_FLOAT(key,value) \
   MENU_ITEM_START(key) \
-  LCD_print_float(value, LCD_WIDTH - 2 - strlen(key)); \
+  LCD_print_float(value, LCD_WIDTH - 1 - strlen(key)); \
   if(menuStack[menuStackDepth].menu_position==ty && lcd_click_now) { \
     update_key = key; \
     update_val = (void *)&(value); \
@@ -436,7 +439,7 @@ void LCD_driveX() {
 
   // if knob was spun quickly, then increment quicker
   int multiplier = 1;
-  if ( lcd_turns_to_process > 2 ) multiplier = 10;
+  if ( abs( lcd_turns_to_process ) > 2 ) multiplier = 10;
   
   float offset[3];
   offset[0] = axies[0].pos + (lcd_turns_to_process * multiplier);
@@ -458,7 +461,7 @@ void LCD_driveY() {
 
   // if knob was spun quickly, then increment quicker
   int multiplier = 1;
-  if ( lcd_turns_to_process > 2 ) multiplier = 10;
+  if ( abs( lcd_turns_to_process ) > 2 ) multiplier = 10;
 
   float offset[3];
   offset[0] = axies[0].pos;
@@ -480,7 +483,7 @@ void LCD_driveZ() {
 
   // if knob was spun quickly, then increment quicker
   int multiplier = 1;
-  if ( lcd_turns_to_process > 2 ) multiplier = 10;
+  if ( abs( lcd_turns_to_process ) > 2 ) multiplier = 10;
 
   float offset[3];
   offset[0] = axies[0].pos;
@@ -503,7 +506,7 @@ void LCD_driveF() {
 
   // if knob was spun quickly, then increment quicker
   int multiplier = 1;
-  if ( lcd_turns_to_process > 2 ) multiplier = 10;
+  if ( abs( lcd_turns_to_process ) > 2 ) multiplier = 10;
 
   // protect servo, don't drive beyond physical limits
   float newF = feed_rate + (lcd_turns_to_process * multiplier);
@@ -537,6 +540,7 @@ void LCD_start_menu() {
     File entry;
     char filename[20];
     while(entry.openNext(&root)) {
+
       if (!entry.isSubDir() && !entry.isHidden()) {
         entry.getName(filename,18);
         MENU_ITEM_START(filename)
@@ -671,7 +675,7 @@ void LCD_update_long() {
 
   // if knob was spun quickly, then increment quicker
   int multiplier = 1;
-  if ( lcd_turns_to_process > 2 ) multiplier = 10;
+  if ( abs( lcd_turns_to_process ) > 2 ) multiplier = 10;
 
   long *f=(long*)update_val;
   // protect servo, don't drive beyond physical limits
@@ -688,7 +692,7 @@ void LCD_update_float() {
 
   // if knob was spun quickly, then increment quicker
   int multiplier = 1;
-  if ( lcd_turns_to_process > 2 ) multiplier = 10;
+  if ( abs( lcd_turns_to_process ) > 2 ) multiplier = 10;
 
   float *f=(float*)update_val;
   // protect servo, don't drive beyond physical limits
@@ -767,6 +771,7 @@ void LCD_setStatusMessage(char *message) {
     *i=*m;
     ++i;
     ++m;
+    c++;  // increment the counter so you don't corrupt memory
   }
   *i=0;
 
@@ -962,8 +967,22 @@ void LCD_status_menu() {
   } else {
     LCD_print("          ");
   }
-  
-  LCD_setCursor(0,2);  LCD_print(lcd_message_m117);
+
+#if LCD_TYPE == LCD_IS_128X64
+   // wrap M117 message so that can be read
+   char *m = lcd_message_m117;
+   int yPos = 2;
+   while ( m < lcd_message_m117 + strlen( lcd_message_m117 ) )
+   {
+      LCD_setCursor( 0, yPos );
+      LCD_print( m );
+      m += LCD_WIDTH;
+      yPos++;
+   }
+
+#else
+   LCD_setCursor(0,2); LCD_print(lcd_message_m117);
+#endif
 
   MENU_END()
 #endif  // HAS_LCD
