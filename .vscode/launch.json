@@ -12,12 +12,13 @@
             "type": "platformio-debug",
             "request": "launch",
             "name": "PIO Debug",
-            "executable": "c:/Users/aggra/Documents/GitHub/Makelangelo-firmware/.pio/build/rumba/firmware.elf",
-            "projectEnvName": "rumba",
-            "toolchainBinDir": "C:/Users/aggra/.platformio/packages/toolchain-atmelavr/bin",
+            "executable": "c:/Users/aggra/Documents/GitHub/Makelangelo-firmware/.pio/build/BIGTREE_SKR_PRO/firmware.elf",
+            "projectEnvName": "BIGTREE_SKR_PRO",
+            "toolchainBinDir": "C:/Users/aggra/.platformio/packages/toolchain-gccarmnoneeabi/bin",
+            "svdPath": "C:/Users/aggra/.platformio/platforms/ststm32@6.1.1/misc/svd/STM32F40x.svd",
             "preLaunchTask": {
                 "type": "PlatformIO",
-                "task": "Pre-Debug (rumba)"
+                "task": "Pre-Debug (BIGTREE_SKR_PRO)"
             },
             "internalConsoleOptions": "openOnSessionStart"
         },
@@ -25,9 +26,10 @@
             "type": "platformio-debug",
             "request": "launch",
             "name": "PIO Debug (skip Pre-Debug)",
-            "executable": "c:/Users/aggra/Documents/GitHub/Makelangelo-firmware/.pio/build/rumba/firmware.elf",
-            "projectEnvName": "rumba",
-            "toolchainBinDir": "C:/Users/aggra/.platformio/packages/toolchain-atmelavr/bin",
+            "executable": "c:/Users/aggra/Documents/GitHub/Makelangelo-firmware/.pio/build/BIGTREE_SKR_PRO/firmware.elf",
+            "projectEnvName": "BIGTREE_SKR_PRO",
+            "toolchainBinDir": "C:/Users/aggra/.platformio/packages/toolchain-gccarmnoneeabi/bin",
+            "svdPath": "C:/Users/aggra/.platformio/platforms/ststm32@6.1.1/misc/svd/STM32F40x.svd",
             "internalConsoleOptions": "openOnSessionStart"
         }
     ]

@@ -13,6 +13,10 @@
 #include "lcd.h"
 #include "speed_lookuptable.h"
 
+#if !defined( USE_ALT_SERVO )
+#include <Servo.h>
+#endif
+
 //------------------------------------------------------------------------------
 // MACROS
 //------------------------------------------------------------------------------
@@ -523,7 +527,7 @@ void segment_update_trapezoid(Segment *s, const float &entry_factor, const float
   int32_t plateau_steps = s->steps_total - accelerate_steps - decelerate_steps;
   if (plateau_steps < 0) {
     const float accelerate_steps_float = ceil( intersection_distance( intial_rate, final_rate, accel, s->steps_total ) );
-    accelerate_steps = min( (uint32_t)max( accelerate_steps_float, 0 ), s->steps_total );
+    accelerate_steps = min( ((uint32_t)max( accelerate_steps_float, 0.0f )), s->steps_total );
     plateau_steps = 0;
   }
   s->accel_until = accelerate_steps;
@@ -1094,7 +1098,7 @@ ISR(TIMER1_COMPA_vect) {
 #endif // DEBUG_STEPPING
 
     uint32_t interval = nextMainISR;
-    interval = min(MAX_OCR1A_VALUE,interval);
+    interval = min((uint32_t)MAX_OCR1A_VALUE,interval);
     nextMainISR -= interval;
 
     next_isr_ticks += interval;
@@ -1186,7 +1190,7 @@ void motor_line(const float * const target_position, float fr_mm_s,float millime
 #if MACHINE_STYLE == POLARGRAPH
   float oldX = axies[0].pos;
   float oldY = axies[1].pos;
-  float oldZ = axies[2].pos;
+  //float oldZ = axies[2].pos;
 #endif
 
   // record the new target position & feed rate for the next movement.

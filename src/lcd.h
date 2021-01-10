@@ -73,6 +73,6 @@ extern uint8_t menuStackDepth;
 
 extern void LCD_update();
 extern void LCD_setup();
-extern void LCD_setStatusMessage(char *message);
+extern void LCD_setStatusMessage(const char *message);
 
 #endif // HAS_LCD

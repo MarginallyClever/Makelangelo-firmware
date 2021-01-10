@@ -49,4 +49,6 @@
 #undef HAS_SD  
 #undef HAS_LCD
 
+#define USE_ALT_SERVO
+
 #endif // MOTHERBOARD == BOARD_WEMOS 

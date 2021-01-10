@@ -737,10 +737,10 @@ void LCD_print_float(float v,int padding,int precision) {
 #endif  // HAS_LCD
 
 
-void LCD_setStatusMessage(char *message) {
+void LCD_setStatusMessage(const char *message) {
 #ifdef HAS_LCD
   char *i=lcd_message_m117;
-  char *m=message;
+  const char *m=message;
   int c=0;
   while(c<M117_MAX_LEN && *m!=0) {
     *i=*m;

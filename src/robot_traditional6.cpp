@@ -31,6 +31,7 @@ int FK(long *motorStepArray,float *axies) {
   for(ALL_AXIES(i)) {
     axies[i] = motorStepArray[i] * MM_PER_STEP;
   }
+  return 0;
 }
 
 
@@ -42,7 +43,7 @@ void robot_findHome() {
 
   Serial.println(F("Finding..."));
 
-  uint8_t i, hits;
+  uint8_t hits;
   // back up until all switches are hit
   do {
     hits = 0;

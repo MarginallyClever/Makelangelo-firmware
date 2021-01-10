@@ -289,7 +289,6 @@ void robot_findHome() {
   parser.M114();
 
   // go home
-  float pos[NUM_AXIES];
   offset[0]=axies[0].homePos;
   offset[1]=axies[1].homePos;
   lineSafe( offset, feed_rate );

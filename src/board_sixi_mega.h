@@ -100,4 +100,6 @@
 #define TEST_GRIPPER_PIN          (12)
 #endif
 
+#define USE_ALT_SERVO
+
 #endif  // MOTHERBOARD == BOARD_SIXI_MEGA 
