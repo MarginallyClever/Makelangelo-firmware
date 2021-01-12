@@ -489,8 +489,7 @@ void polargraphReset() {
 }
 
 // called once at startup
-void robot_setup() {
-}
+void robot_setup() {}
 
 
 #endif  // POLARGRAPH

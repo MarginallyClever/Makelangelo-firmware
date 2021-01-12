@@ -5,8 +5,8 @@
 
 
 // choose one of the following
-//#define NORMAL_MOTOR_STEPS   200  // 1.8 degrees per step
-#define NORMAL_MOTOR_STEPS   400  // 0.9 degrees per step
+#define NORMAL_MOTOR_STEPS   200  // 1.8 degrees per step
+//#define NORMAL_MOTOR_STEPS   400  // 0.9 degrees per step
 
 
 // stepper motor drivers can use microstepping to split steps into fractions of steps for greater precision.
