@@ -43,6 +43,10 @@
 #define MAX_JERK             (8.0)
 #define MAX_JERK_Z           (0.3)
 
+//choose either 400 (0.9 degrees per step)
+//           or 200 (1.8 degrees per step)
+#define NORMAL_MOTOR_STEPS   400  // 0.9 degrees per step
+
 // uncomment this line to adjust acceleration based on pen position
 #define DYNAMIC_ACCELERATION
 

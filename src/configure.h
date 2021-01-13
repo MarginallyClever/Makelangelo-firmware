@@ -75,27 +75,85 @@
 // 
 //------------------------------------------------------------------------------
 
-#include "robots/robot_polargraph.h"
-#include "robots/robot_traditionalxy.h"
-#include "robots/robot_corexy.h"
-#include "robots/robot_zarplotter.h"
-#include "robots/robot_skycam.h"
-#include "robots/robot_delta.h"
-#include "robots/robot_stewart.h"
-#include "robots/robot_arm3.h"
-#include "robots/robot_sixi.h"
-#include "robots/robot_traditional6.h"
-#include "robots/robot_scara.h"
 
-#include "boards/board_rumba.h"
-#include "boards/board_ramps.h"
-#include "boards/board_sanguinolulu.h"
-#include "boards/board_teensylu.h"
-#include "boards/board_wemos.h"
-#include "boards/board_sixi_mega.h"
-#include "boards/board_cncv3.h"
-#include "boards/board_esp32.h"
-#include "boards/board_sixi_32.h"
+//used robots
+#if MACHINE_STYLE == POLARGRAPH 
+  #include "robots/robot_polargraph.h" //"Makelangelo"
+#endif
+#if MACHINE_STYLE == SIXI
+  #include "robots/robot_sixi.h"
+#endif
+#if MACHINE_STYLE == TRADITIONALXY
+  #include "robots/robot_traditionalxy.h"
+#endif
+#if MACHINE_STYLE == STEWART
+  #include "robots/robot_stewart.h"
+#endif
+
+
+//unused ?
+#if MACHINE_STYLE == COREXY
+  #include "robots/robot_corexy.h"
+#endif
+
+#if MACHINE_STYLE == ZARPLOTTER
+  #include "robots/robot_zarplotter.h"
+#endif
+
+#if MACHINE_STYLE == SKYCAM
+  #include "robots/robot_skycam.h"
+#endif
+
+#if MACHINE_STYLE == DELTA
+  #include "robots/robot_delta.h"
+#endif
+#if MACHINE_STYLE == ARM3
+  #include "robots/robot_arm3.h"
+#endif
+#if MACHINE_STYLE == TRADITIONAL6
+  #include "robots/robot_traditional6.h"
+#endif
+#if MACHINE_STYLE == SCARA
+  #include "robots/robot_scara.h"
+#endif
+
+
+
+
+
+
+
+#if MOTHERBOARD == SCARA
+  #include "robots/robot_scara.h"
+#endif
+#if MOTHERBOARD == BOARD_RUMBA
+  #include "boards/board_rumba.h"
+#endif
+#if MOTHERBOARD == BOARD_RAMPS
+  #include "boards/board_ramps.h"
+#endif
+#if MOTHERBOARD == BOARD_SANGUINOLULU
+  #include "boards/board_sanguinolulu.h"
+#endif
+#if MOTHERBOARD == BOARD_TEENSYLU
+  #include "boards/board_teensylu.h"
+#endif
+#if MOTHERBOARD == BOARD_WEMOS
+  #include "boards/board_wemos.h"
+#endif
+#if MOTHERBOARD == BOARD_SIXI_MEGA
+  #include "boards/board_sixi_mega.h"
+#endif
+#if MOTHERBOARD == BOARD_CNCV3
+  #include "boards/board_cncv3.h"
+#endif
+#if MOTHERBOARD == BOARD_ESP32
+  #include "boards/board_esp32.h"
+#endif
+#if MOTHERBOARD == BOARD_SIXI_32
+  #include "boards/board_sixi_32.h"
+#endif
+
 
 #include "configMotors.h"
 

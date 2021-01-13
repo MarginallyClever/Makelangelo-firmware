@@ -49,7 +49,7 @@
                 ]
             },
             "defines": [
-                "PLATFORMIO=50004",
+                "PLATFORMIO=50005",
                 "ARDUINO_AVR_MEGA2560",
                 "HEADER_RAMPS",
                 "PIO",

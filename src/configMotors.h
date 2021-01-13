@@ -4,9 +4,11 @@
  */
 
 
-// choose one of the following
-//#define NORMAL_MOTOR_STEPS   200  // 1.8 degrees per step
-#define NORMAL_MOTOR_STEPS   400  // 0.9 degrees per step
+// choose one of the following (if not already defined in robot_<x>.h)
+#ifndef NORMAL_MOTOR_STEPS
+    //#define NORMAL_MOTOR_STEPS   200  // 1.8 degrees per step
+    #define NORMAL_MOTOR_STEPS   400  // 0.9 degrees per step
+#endif
 
 
 // stepper motor drivers can use microstepping to split steps into fractions of steps for greater precision.
@@ -27,23 +29,39 @@
 #define PULLEY_PITCH         (40.0)
 
 
+//if default steps are not defined in in robot_<x>.h, safe-define them here
 #if NORMAL_MOTOR_STEPS == 200
-#define DEFAULT_FEEDRATE     (180.0)
-#define DEFAULT_ACCELERATION (150.0)
-#define DEGREES_PER_STEP     (1.8)
+    #ifndef DEFAULT_FEEDRATE
+        #define DEFAULT_FEEDRATE     (180.0)
+    #endif
+    #ifndef DEFAULT_ACCELERATION
+        #define DEFAULT_ACCELERATION (150.0)
+    #endif
+    #ifndef DEGREES_PER_STEP
+        #define DEGREES_PER_STEP     (1.8)
+    #endif
 #endif
 #if NORMAL_MOTOR_STEPS == 400
-#define DEFAULT_FEEDRATE     (100.0)
-#define DEFAULT_ACCELERATION (150.0)
-#define DEGREES_PER_STEP     (0.9)
+    #ifndef DEFAULT_FEEDRATE
+        #define DEFAULT_FEEDRATE     (100.0)
+    #endif
+    #ifndef DEFAULT_ACCELERATION
+        #define DEFAULT_ACCELERATION (150.0)
+    #endif
+    #ifndef DEGREES_PER_STEP
+        #define DEGREES_PER_STEP     (0.9)
+    #endif
 #endif
 
 
-// These numbers are calculated from the above.  No need to change these.
+// These numbers are calculated from the above.  No need to change these. Only define them if they are not already defined in in robot_<x>.h
 #ifndef NORMAL_MOTOR_STEPS
-#define NORMAL_MOTOR_STEPS   (360.0/DEGREES_PER_STEP)
+    #define NORMAL_MOTOR_STEPS   (360.0/DEGREES_PER_STEP)
 #endif
+#ifndef MM_PER_STEP
+    #define MM_PER_STEP          (PULLEY_PITCH/STEPS_PER_TURN)
+#endif
+
 #define STEPS_PER_TURN       (NORMAL_MOTOR_STEPS * MICROSTEPS)
-#define MM_PER_STEP          (PULLEY_PITCH/STEPS_PER_TURN)
 #define STEPS_PER_MM         (STEPS_PER_TURN/PULLEY_PITCH)
 #define MICROSTEP_PER_DEGREE (STEPS_PER_TURN/360.0)

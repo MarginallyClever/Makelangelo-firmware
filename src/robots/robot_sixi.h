@@ -44,7 +44,14 @@
 
 #define MAX_SEGMENTS         (16)  // override the default to save RAM
 #define DEGREES_PER_STEP     (1.8)
+//choose either 400 (0.9 degrees per step)
+//           or 200 (1.8 degrees per step)
+#define NORMAL_MOTOR_STEPS   400  // 0.9 degrees per step
 #define MICROSTEPS           (1.0)
+
+
+
+
 
 //#define HAS_LCD
 #define HAS_SD
