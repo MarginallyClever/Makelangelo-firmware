@@ -43,5 +43,17 @@ Temporary Items
 .apdisk
 local_config.h
 
-# PlatformIO build-objectfiles
-.pio/build/
+### PlatformIO ###
+.pioenvs
+.piolibdeps
+.clang_complete
+.gcc-flags.json
+.pio
+
+# Editor stuff
+
+### VisualStudioCode ###
+.vscode/*
+!.vscode/tasks.json
+!.vscode/launch.json
+*.code-workspace
