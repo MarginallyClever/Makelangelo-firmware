@@ -1,0 +1,45 @@
+﻿---
+BasedOnStyle: Google
+AlignAfterOpenBracket: Align
+AlignConsecutiveAssignments: 'true'
+AlignConsecutiveDeclarations: 'false'
+AlignConsecutiveMacros: 'true'
+AlignEscapedNewlines: Left
+AllowAllArgumentsOnNextLine: 'true'
+AllowAllParametersOfDeclarationOnNextLine: 'true'
+AllowShortBlocksOnASingleLine: 'true'
+AllowShortCaseLabelsOnASingleLine: 'false'
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: WithoutElse
+AllowShortLoopsOnASingleLine: 'true'
+AlwaysBreakBeforeMultilineStrings: 'false'
+BinPackArguments: 'true'
+BinPackParameters: 'true'
+BreakBeforeBraces: Attach
+BreakBeforeTernaryOperators: 'true'
+BreakConstructorInitializers: BeforeComma
+BreakStringLiterals: 'true'
+ColumnLimit: '120'
+CompactNamespaces: 'false'
+Cpp11BracedListStyle: 'false'
+FixNamespaceComments: 'true'
+IndentCaseLabels: 'true'
+IndentPPDirectives: AfterHash
+IndentWidth: '2'
+IndentWrappedFunctionNames: 'true'
+KeepEmptyLinesAtTheStartOfBlocks: 'false'
+Language: Cpp
+MaxEmptyLinesToKeep: '1'
+NamespaceIndentation: All
+SortIncludes: 'false'
+SpaceAfterCStyleCast: 'false'
+SpaceAfterLogicalNot: 'false'
+SpaceBeforeAssignmentOperators: 'true'
+SpaceBeforeCpp11BracedList: 'true'
+SpaceBeforeRangeBasedForLoopColon: 'true'
+SpaceInEmptyParentheses: 'false'
+SpacesInAngles: 'false'
+TabWidth: '2'
+UseTab: Never
+
+...

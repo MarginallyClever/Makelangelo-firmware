@@ -53,7 +53,4 @@ local_config.h
 # Editor stuff
 
 ### VisualStudioCode ###
-.vscode/*
-!.vscode/tasks.json
-!.vscode/launch.json
-*.code-workspace
+.vscode
