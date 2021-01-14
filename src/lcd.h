@@ -10,30 +10,30 @@
 //------------------------------------------------------------------------------
 #ifdef HAS_LCD
 
-#include <Arduino.h>
+#  include <Arduino.h>
 
 //----------------------------------------------------
 
-#if LCD_TYPE == LCD_IS_128X64
+#  if LCD_TYPE == LCD_IS_128X64
 
-#define LCD_PIXEL_HEIGHT   64
-#define LCD_PIXEL_WIDTH    128
+#    define LCD_PIXEL_HEIGHT 64
+#    define LCD_PIXEL_WIDTH  128
 
 // depends on the font selected
-#define FONT_HEIGHT        9
-#define FONT_WIDTH         6
+#    define FONT_HEIGHT 9
+#    define FONT_WIDTH  6
 
 // # of characters
-#define LCD_HEIGHT         (LCD_PIXEL_HEIGHT/FONT_HEIGHT)  // 64/9=7
-#define LCD_WIDTH          (LCD_PIXEL_WIDTH/FONT_WIDTH)    // 128/6=21
+#    define LCD_HEIGHT (LCD_PIXEL_HEIGHT / FONT_HEIGHT)  // 64/9=7
+#    define LCD_WIDTH  (LCD_PIXEL_WIDTH / FONT_WIDTH)    // 128/6=21
 
-#include "dogm_font_data_6x9.h"
+#    include "dogm_font_data_6x9.h"
 
-#endif
+#  endif
 
 //----------------------------------------------------
 
-#if LCD_TYPE == LCD_IS_SMART
+#  if LCD_TYPE == LCD_IS_SMART
 
 // there is no practical per-pixel control.
 //#define LCD_PIXEL_HEIGHT   ?
@@ -44,29 +44,28 @@
 //#define FONT_WIDTH         ?
 
 // # of characters
-#define LCD_HEIGHT         4
-#define LCD_WIDTH          20
+#    define LCD_HEIGHT 4
+#    define LCD_WIDTH  20
 
-#endif
+#  endif
 
 //------------------------------------------------------------------------------
 // Stuff that's calculated automatically OR the same for all models.
 //------------------------------------------------------------------------------
 
+#  define BLEN_C 2
+#  define BLEN_B 1
+#  define BLEN_A 0
 
-#define BLEN_C             2
-#define BLEN_B             1
-#define BLEN_A             0
-  
-#define ENCROT0            0
-#define ENCROT1            2
-#define ENCROT2            3
-#define ENCROT3            1
+#  define ENCROT0 0
+#  define ENCROT1 2
+#  define ENCROT2 3
+#  define ENCROT3 1
 
-#define LCD_MESSAGE_LENGTH (LCD_HEIGHT * LCD_WIDTH + 1)  // we have two lines of 20 characters avialable in 7.16
-#define LCD_DRAW_DELAY     (100)
-#define LCD_TURN_PER_MENU  (3)  // was 5
-#define M117_MAX_LEN       (LCD_MESSAGE_LENGTH/2)
+#  define LCD_MESSAGE_LENGTH (LCD_HEIGHT * LCD_WIDTH + 1)  // we have two lines of 20 characters avialable in 7.16
+#  define LCD_DRAW_DELAY     (100)
+#  define LCD_TURN_PER_MENU  (3)  // was 5
+#  define M117_MAX_LEN       (LCD_MESSAGE_LENGTH / 2)
 
 extern uint8_t speed_adjust;  // used by planner
 extern uint8_t menuStackDepth;
@@ -75,4 +74,4 @@ extern void LCD_update();
 extern void LCD_setup();
 extern void LCD_setStatusMessage(const char *message);
 
-#endif // HAS_LCD
+#endif  // HAS_LCD

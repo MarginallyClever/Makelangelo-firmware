@@ -11,19 +11,18 @@
 #include "lcd.h"
 #include "sdcard.h"
 
-
 #ifdef HAS_LCD
 
-#if LCD_TYPE == LCD_IS_SMART
-#include <LiquidCrystal.h>
-#endif
-#if LCD_TYPE == LCD_IS_128X64
-#include <Arduino.h>
-#include <U8glib.h>
-#include <SPI.h>
-#include <Wire.h>
-#include "dogm_font_data_6x9.h"
-#endif
+#  if LCD_TYPE == LCD_IS_SMART
+#    include <LiquidCrystal.h>
+#  endif
+#  if LCD_TYPE == LCD_IS_128X64
+#    include <Arduino.h>
+#    include <U8glib.h>
+#    include <SPI.h>
+#    include <Wire.h>
+#    include "dogm_font_data_6x9.h"
+#  endif
 
 //------------------------------------------------------------------------------
 // STRUCTURES
@@ -40,29 +39,29 @@ typedef struct {
 //------------------------------------------------------------------------------
 // GLOBALS
 //------------------------------------------------------------------------------
-#if LCD_TYPE == LCD_IS_SMART
+#  if LCD_TYPE == LCD_IS_SMART
 LiquidCrystal lcd(LCD_PINS_RS, LCD_PINS_ENABLE, LCD_PINS_D4, LCD_PINS_D5, LCD_PINS_D6, LCD_PINS_D7);
-#endif
-#if LCD_TYPE == LCD_IS_128X64
+#  endif
+#  if LCD_TYPE == LCD_IS_128X64
 // This is not ideal - will not work when board models change.
 U8GLIB_ST7920_128X64_1X u8g(LCD_PINS_D4, LCD_PINS_ENABLE, LCD_PINS_RS);
-#endif
+#  endif
 
-uint32_t lcd_draw_delay  = 0;
+uint32_t lcd_draw_delay = 0;
 
-int lcd_rot_old  = 0;
-int lcd_turn     = 0;
+int lcd_rot_old = 0;
+int lcd_turn    = 0;
 int lcd_posx = 0, lcd_posy = 0;
-char lcd_click_old = HIGH;
-char lcd_click_now = 0;
+char lcd_click_old   = HIGH;
+char lcd_click_now   = 0;
 uint8_t speed_adjust = 100;
 char lcd_message[LCD_MESSAGE_LENGTH + 1];
-char lcd_message_m117[M117_MAX_LEN+1];
-char lcd_dirty=0;
+char lcd_message_m117[M117_MAX_LEN + 1];
+char lcd_dirty = 0;
 
-#define MENU_STACK_DEPTH   (5)
+#  define MENU_STACK_DEPTH (5)
 MenuState menuStack[MENU_STACK_DEPTH];
-uint8_t menuStackDepth=0;
+uint8_t menuStackDepth = 0;
 
 // first line of menu visible on the LCD
 uint8_t screen_position = 0;
@@ -73,11 +72,9 @@ uint8_t num_menu_items = 0;
 // counter used when drawing menus
 uint8_t ty;
 
-
 void (*current_menu)();
 
-
-#if LCD_TYPE == LCD_IS_128X64
+#  if LCD_TYPE == LCD_IS_128X64
 /**
    Made with Marlin Bitmap Converter
    http://marlinfw.org/tools/u8glib/converter.html
@@ -86,44 +83,44 @@ void (*current_menu)();
    Filesize: 906 Bytes
    Size bitmap: 108 bytes
 */
-#define logoImageWidth 32
-#define logoImageHeight 32
+#    define logoImageWidth  32
+#    define logoImageHeight 32
 
-const unsigned char logoImage [] PROGMEM = {
-  0x00, 0x60, 0x00, 0x00, // .........##.....................
-  0x00, 0xF0, 0x00, 0x00, // ........####....................
-  0x03, 0x10, 0x00, 0x00, // ......##...#....................
-  0x01, 0x60, 0x00, 0x00, // .......#.##.....................
-  0x01, 0xC0, 0x00, 0x00, // .......###......................
-  0x00, 0x9F, 0xF0, 0x00, // ........#..#########............
-  0x00, 0xF0, 0x3C, 0x00, // ........####......####..........
-  0x01, 0xC0, 0x3F, 0x00, // .......###........######........
-  0x03, 0x00, 0x1F, 0x80, // ......##...........######.......
-  0x06, 0x00, 0x1F, 0xC0, // .....##............#######......
-  0x0C, 0x02, 0x0F, 0xE0, // ....##........#.....#######.....
-  0x08, 0x06, 0x0F, 0xE0, // ....#........##.....#######.....
-  0x18, 0x02, 0x0F, 0xF0, // ...##.........#.....########....
-  0x10, 0x02, 0x0F, 0xF0, // ...#..........#.....########....
-  0x31, 0x80, 0x07, 0xF0, // ..##...##............#######....
-  0x23, 0x80, 0x07, 0xF8, // ..#...###............########...
-  0x23, 0x00, 0x07, 0xF8, // ..#...##.............########...
-  0x23, 0x00, 0x07, 0xF8, // ..#...##.............########...
-  0x23, 0x00, 0x07, 0xF8, // ..#...##.............########...
-  0x21, 0x80, 0x07, 0xF8, // ..#....##............########...
-  0x20, 0x00, 0x07, 0xF8, // ..#..................########...
-  0x30, 0x00, 0x37, 0xF8, // ..##..............##.########...
-  0x30, 0x00, 0x63, 0xF0, // ..##.............##...######....
-  0x10, 0x00, 0x63, 0xF0, // ...#.............##...######....
-  0x18, 0x00, 0x63, 0xF0, // ...##............##...######....
-  0x08, 0x60, 0x37, 0xE0, // ....#....##.......##.######.....
-  0x04, 0x20, 0x0F, 0xC0, // .....#....#.........######......
-  0x06, 0x00, 0x1F, 0xC0, // .....##............#######......
-  0x03, 0x00, 0x1F, 0x80, // ......##...........######.......
-  0x00, 0xC0, 0x3E, 0x00, // ........##........#####.........
-  0x00, 0x70, 0x3C, 0x00, // .........###......####..........
-  0x00, 0x1F, 0xE0, 0x00 // ...........########.............
+const unsigned char logoImage[] PROGMEM = {
+  0x00, 0x60, 0x00, 0x00,  // .........##.....................
+  0x00, 0xF0, 0x00, 0x00,  // ........####....................
+  0x03, 0x10, 0x00, 0x00,  // ......##...#....................
+  0x01, 0x60, 0x00, 0x00,  // .......#.##.....................
+  0x01, 0xC0, 0x00, 0x00,  // .......###......................
+  0x00, 0x9F, 0xF0, 0x00,  // ........#..#########............
+  0x00, 0xF0, 0x3C, 0x00,  // ........####......####..........
+  0x01, 0xC0, 0x3F, 0x00,  // .......###........######........
+  0x03, 0x00, 0x1F, 0x80,  // ......##...........######.......
+  0x06, 0x00, 0x1F, 0xC0,  // .....##............#######......
+  0x0C, 0x02, 0x0F, 0xE0,  // ....##........#.....#######.....
+  0x08, 0x06, 0x0F, 0xE0,  // ....#........##.....#######.....
+  0x18, 0x02, 0x0F, 0xF0,  // ...##.........#.....########....
+  0x10, 0x02, 0x0F, 0xF0,  // ...#..........#.....########....
+  0x31, 0x80, 0x07, 0xF0,  // ..##...##............#######....
+  0x23, 0x80, 0x07, 0xF8,  // ..#...###............########...
+  0x23, 0x00, 0x07, 0xF8,  // ..#...##.............########...
+  0x23, 0x00, 0x07, 0xF8,  // ..#...##.............########...
+  0x23, 0x00, 0x07, 0xF8,  // ..#...##.............########...
+  0x21, 0x80, 0x07, 0xF8,  // ..#....##............########...
+  0x20, 0x00, 0x07, 0xF8,  // ..#..................########...
+  0x30, 0x00, 0x37, 0xF8,  // ..##..............##.########...
+  0x30, 0x00, 0x63, 0xF0,  // ..##.............##...######....
+  0x10, 0x00, 0x63, 0xF0,  // ...#.............##...######....
+  0x18, 0x00, 0x63, 0xF0,  // ...##............##...######....
+  0x08, 0x60, 0x37, 0xE0,  // ....#....##.......##.######.....
+  0x04, 0x20, 0x0F, 0xC0,  // .....#....#.........######......
+  0x06, 0x00, 0x1F, 0xC0,  // .....##............#######......
+  0x03, 0x00, 0x1F, 0x80,  // ......##...........######.......
+  0x00, 0xC0, 0x3E, 0x00,  // ........##........#####.........
+  0x00, 0x70, 0x3C, 0x00,  // .........###......####..........
+  0x00, 0x1F, 0xE0, 0x00   // ...........########.............
 };
-#endif
+#  endif
 
 //------------------------------------------------------------------------------
 // MACROS
@@ -132,34 +129,32 @@ const unsigned char logoImage [] PROGMEM = {
 /**
    Clear the screen
 */
-#if LCD_TYPE == LCD_IS_SMART
+#  if LCD_TYPE == LCD_IS_SMART
 inline void LCD_clear() {
   for (int i = 0; i < LCD_MESSAGE_LENGTH; ++i) lcd_message[i] = ' ';
   lcd_message[LCD_MESSAGE_LENGTH - 1] = 0;
 }
-#endif
-#if LCD_TYPE == LCD_IS_128X64
+#  endif
+#  if LCD_TYPE == LCD_IS_128X64
 inline void LCD_clear() {
-  //u8g.firstPage();
-  //while( u8g.nextPage() );
+  // u8g.firstPage();
+  // while( u8g.nextPage() );
   u8g.setColorIndex(0);
   u8g.drawBox(0, 0, LCD_PIXEL_WIDTH, LCD_PIXEL_HEIGHT);
   u8g.setColorIndex(1);
 }
-#endif
+#  endif
 
 /**
    print text to the LCD
 */
-#if LCD_TYPE == LCD_IS_SMART
+#  if LCD_TYPE == LCD_IS_SMART
 inline void LCD_advance() {
   lcd_posx++;
   if (lcd_posx >= LCD_WIDTH) {
     lcd_posx = 0;
     lcd_posy++;
-    if (lcd_posy >= LCD_HEIGHT) {
-      lcd_posy = 0;
-    }
+    if (lcd_posy >= LCD_HEIGHT) { lcd_posy = 0; }
   }
 }
 
@@ -171,7 +166,7 @@ inline void LCD_print(const char *x) {
   }
 }
 
-//inline void LCD_print(const __FlashStringHelper *x) {
+// inline void LCD_print(const __FlashStringHelper *x) {
 //  LCD_print((const PROGMEM char*)x);
 //}
 
@@ -192,102 +187,103 @@ inline void LCD_print(const char x) {
   lcd_message[lcd_posy * LCD_WIDTH + lcd_posx] = x;
   LCD_advance();
 }
-#endif
-#if LCD_TYPE == LCD_IS_128X64
-#define LCD_print      u8g.print
-#endif
-
+#  endif
+#  if LCD_TYPE == LCD_IS_128X64
+#    define LCD_print u8g.print
+#  endif
 
 /**
    Set the row/column of text at which to begin printing
 */
-#if LCD_TYPE == LCD_IS_SMART
-#define LCD_setCursor(x,y)   {lcd_posx=x; lcd_posy=y;}
-#endif
-#if LCD_TYPE == LCD_IS_128X64
-#define LCD_setCursor(x,y)   u8g.setPrintPos(((x)+1)*FONT_WIDTH,((y)+1)*FONT_HEIGHT)
-#endif
-
-
+#  if LCD_TYPE == LCD_IS_SMART
+#    define LCD_setCursor(x, y) \
+      {                         \
+        lcd_posx = x;           \
+        lcd_posy = y;           \
+      }
+#  endif
+#  if LCD_TYPE == LCD_IS_128X64
+#    define LCD_setCursor(x, y) u8g.setPrintPos(((x) + 1) * FONT_WIDTH, ((y) + 1) * FONT_HEIGHT)
+#  endif
 
 // Convenience macros that make it easier to generate menus
 
-#define MENU_START \
-  LCD_clear(); \
-  ty=0;
+#  define MENU_START \
+    LCD_clear();     \
+    ty = 0;
 
-#define MENU_END \
-  num_menu_items=ty; \
+#  define MENU_END num_menu_items = ty;
 
-#define MENU_ITEM_START(key) \
-  if(ty>=screen_position && ty<screen_end) { \
-    LCD_setCursor(0,ty-screen_position); \
-    LCD_print((menuStack[menuStackDepth].menu_position==ty)?'>':' '); \
-    LCD_print(key); \
+#  define MENU_ITEM_START(key)                                                \
+    if (ty >= screen_position && ty < screen_end) {                           \
+      LCD_setCursor(0, ty - screen_position);                                 \
+      LCD_print((menuStack[menuStackDepth].menu_position == ty) ? '>' : ' '); \
+      LCD_print(key);
 
-#define MENU_ITEM_END() \
-  } \
-  ++ty;
+#  define MENU_ITEM_END() \
+    }                     \
+    ++ty;
 
-#define MENU_PUSH(new_menu) {  \
-    lcd_click_now=0;  \
-    num_menu_items=0;  \
-    screen_position=0;  \
-    screen_end = screen_position + LCD_HEIGHT;  \
-    menuStackDepth++;  \
-    menuStack[menuStackDepth].menu_position=0;  \
-    menuStack[menuStackDepth].menu_position_sum=0;  \
-    menuStack[menuStackDepth].menu = new_menu;  \
-    current_menu=new_menu;  \
-    return;  \
-  }
+#  define MENU_PUSH(new_menu)                                 \
+    {                                                         \
+      lcd_click_now   = 0;                                    \
+      num_menu_items  = 0;                                    \
+      screen_position = 0;                                    \
+      screen_end      = screen_position + LCD_HEIGHT;         \
+      menuStackDepth++;                                       \
+      menuStack[menuStackDepth].menu_position     = 0;        \
+      menuStack[menuStackDepth].menu_position_sum = 0;        \
+      menuStack[menuStackDepth].menu              = new_menu; \
+      current_menu                                = new_menu; \
+      return;                                                 \
+    }
 
-#define MENU_POP() {  \
-    lcd_click_now=0;  \
-    num_menu_items=0;  \
-    screen_position=0;  \
-    screen_end = screen_position + LCD_HEIGHT;  \
-    if(menuStackDepth>0) menuStackDepth--;  \
-    current_menu=menuStack[menuStackDepth].menu;  \
-}
+#  define MENU_POP()                                  \
+    {                                                 \
+      lcd_click_now   = 0;                            \
+      num_menu_items  = 0;                            \
+      screen_position = 0;                            \
+      screen_end      = screen_position + LCD_HEIGHT; \
+      if (menuStackDepth > 0) menuStackDepth--;       \
+      current_menu = menuStack[menuStackDepth].menu;  \
+    }
 
-#define MENU_LABEL(menu_label) \
-  MENU_ITEM_START(menu_label) \
-  if(menuStack[menuStackDepth].menu_position==ty && lcd_click_now) lcd_click_now=0;\
-  MENU_ITEM_END()
+#  define MENU_LABEL(menu_label)                                                           \
+    MENU_ITEM_START(menu_label)                                                            \
+    if (menuStack[menuStackDepth].menu_position == ty && lcd_click_now) lcd_click_now = 0; \
+    MENU_ITEM_END()
 
-#define MENU_SUBMENU(menu_label,menu_method) \
-  MENU_ITEM_START(menu_label) \
-  if(menuStack[menuStackDepth].menu_position==ty && lcd_click_now) MENU_PUSH(menu_method); \
-  MENU_ITEM_END()
+#  define MENU_SUBMENU(menu_label, menu_method)                                                 \
+    MENU_ITEM_START(menu_label)                                                                 \
+    if (menuStack[menuStackDepth].menu_position == ty && lcd_click_now) MENU_PUSH(menu_method); \
+    MENU_ITEM_END()
 
-#define MENU_BACK(menu_label) \
-  MENU_ITEM_START(menu_label) \
-  if(menuStack[menuStackDepth].menu_position==ty && lcd_click_now) MENU_POP(); \
-  MENU_ITEM_END()
+#  define MENU_BACK(menu_label)                                                     \
+    MENU_ITEM_START(menu_label)                                                     \
+    if (menuStack[menuStackDepth].menu_position == ty && lcd_click_now) MENU_POP(); \
+    MENU_ITEM_END()
 
-#define MENU_ACTION(menu_label,menu_method) MENU_SUBMENU(menu_label,menu_method)
+#  define MENU_ACTION(menu_label, menu_method) MENU_SUBMENU(menu_label, menu_method)
 
-#define MENU_LONG(key,value) \
-  MENU_ITEM_START(key) \
-  LCD_print_long(value); \
-  if(menuStack[menuStackDepth].menu_position==ty && lcd_click_now) { \
-    update_key = key; \
-    update_val = (void *)&(value); \
-    MENU_PUSH(LCD_update_long); \
-  } \
-  MENU_ITEM_END()
+#  define MENU_LONG(key, value)                                           \
+    MENU_ITEM_START(key)                                                  \
+    LCD_print_long(value);                                                \
+    if (menuStack[menuStackDepth].menu_position == ty && lcd_click_now) { \
+      update_key = key;                                                   \
+      update_val = (void *)&(value);                                      \
+      MENU_PUSH(LCD_update_long);                                         \
+    }                                                                     \
+    MENU_ITEM_END()
 
-#define MENU_FLOAT(key,value) \
-  MENU_ITEM_START(key) \
-  LCD_print_float(value,LCD_WIDTH-1-strlen(key)); \
-  if(menuStack[menuStackDepth].menu_position==ty && lcd_click_now) { \
-    update_key = key; \
-    update_val = (void *)&(value); \
-    MENU_PUSH(LCD_update_float); \
-  } \
-  MENU_ITEM_END()
-
+#  define MENU_FLOAT(key, value)                                          \
+    MENU_ITEM_START(key)                                                  \
+    LCD_print_float(value, LCD_WIDTH - 1 - strlen(key));                  \
+    if (menuStack[menuStackDepth].menu_position == ty && lcd_click_now) { \
+      update_key = key;                                                   \
+      update_val = (void *)&(value);                                      \
+      MENU_PUSH(LCD_update_float);                                        \
+    }                                                                     \
+    MENU_ITEM_END()
 
 //------------------------------------------------------------------------------
 // METHODS
@@ -301,72 +297,104 @@ void LCD_driveX();
 void LCD_driveY();
 void LCD_driveZ();
 void LCD_driveF();
-void LCD_print_float(float v,int padding=0,int precision=2);
-void LCD_print_long(long v,int padding=0);
+void LCD_print_float(float v, int padding = 0, int precision = 2);
+void LCD_print_long(long v, int padding = 0);
 void LCD_refresh_display();
 void LCD_draw_border();
 
-int buttons=0;
-unsigned long next_lcd_read=0;
+int buttons                 = 0;
+unsigned long next_lcd_read = 0;
 const char *update_key;
 void *update_val;
 
-
 void LCD_read() {
   long now = millis();
-  
-  if(ELAPSED(now,next_lcd_read)) {
+
+  if (ELAPSED(now, next_lcd_read)) {
     // detect potentiometer changes
-    buttons = ((digitalRead(BTN_EN1) == LOW) << BLEN_A)
-            | ((digitalRead(BTN_EN2) == LOW) << BLEN_B);
-    next_lcd_read=now+30;
+    buttons       = ((digitalRead(BTN_EN1) == LOW) << BLEN_A) | ((digitalRead(BTN_EN2) == LOW) << BLEN_B);
+    next_lcd_read = now + 30;
   }
-  
+
   // potentiometer uses grey code.  Pattern is 0 3 1 2
   if (lcd_rot_old != buttons) {
     switch (buttons) {
-      case ENCROT0:  switch( lcd_rot_old ) { case ENCROT3: lcd_turn++; break; case ENCROT1: lcd_turn--; break; } break;
-      case ENCROT1:  switch( lcd_rot_old ) { case ENCROT0: lcd_turn++; break; case ENCROT2: lcd_turn--; break; } break;
-      case ENCROT2:  switch( lcd_rot_old ) { case ENCROT1: lcd_turn++; break; case ENCROT3: lcd_turn--; break; } break;
-      case ENCROT3:  switch( lcd_rot_old ) { case ENCROT2: lcd_turn++; break; case ENCROT0: lcd_turn--; break; } break;
+      case ENCROT0:
+        switch (lcd_rot_old) {
+          case ENCROT3:
+            lcd_turn++;
+            break;
+          case ENCROT1:
+            lcd_turn--;
+            break;
+        }
+        break;
+      case ENCROT1:
+        switch (lcd_rot_old) {
+          case ENCROT0:
+            lcd_turn++;
+            break;
+          case ENCROT2:
+            lcd_turn--;
+            break;
+        }
+        break;
+      case ENCROT2:
+        switch (lcd_rot_old) {
+          case ENCROT1:
+            lcd_turn++;
+            break;
+          case ENCROT3:
+            lcd_turn--;
+            break;
+        }
+        break;
+      case ENCROT3:
+        switch (lcd_rot_old) {
+          case ENCROT2:
+            lcd_turn++;
+            break;
+          case ENCROT0:
+            lcd_turn--;
+            break;
+        }
+        break;
     }
     // for debugging potentiometer
     {
-      //if(lcd_turn !=0) Serial.print(lcd_turn>0?'+':'-');
-      //else Serial.print(' ');
-      //Serial.print(millis());     Serial.print('\t');
-      //Serial.print(lcd_rot_old);  Serial.print('\t');
-      //Serial.print(buttons);      Serial.print('\t');
-      //Serial.print(lcd_turn);     Serial.print('\n');
+      // if(lcd_turn !=0) Serial.print(lcd_turn>0?'+':'-');
+      // else Serial.print(' ');
+      // Serial.print(millis());     Serial.print('\t');
+      // Serial.print(lcd_rot_old);  Serial.print('\t');
+      // Serial.print(buttons);      Serial.print('\t');
+      // Serial.print(lcd_turn);     Serial.print('\n');
     }
-    
+
     lcd_rot_old = buttons;
   }
 
   // find click state
   int btn = digitalRead(BTN_ENC);
-  if ( btn != lcd_click_old && btn == HIGH ) {
+  if (btn != lcd_click_old && btn == HIGH) {
     // when button is released
     lcd_click_now = true;
   }
   lcd_click_old = btn;
 }
 
-
 void LCD_pause() {
   // TODO: if pen down before pause, lift pen on pause, lower pen on unpause.
   // problem: machine does not know what is pen up or down.
-#ifdef HAS_SD
+#  ifdef HAS_SD
   sd_printing_paused = (sd_printing_paused == true ? false : true);
-#endif
+#  endif
   MENU_POP();
 }
 
-
 void LCD_stop() {
-#ifdef HAS_SD
+#  ifdef HAS_SD
   sd_printing_now = false;
-#endif
+#  endif
   MENU_POP();
 }
 
@@ -380,25 +408,22 @@ void LCD_enable_motors() {
   MENU_POP();
 }
 
-
 void LCD_find_home() {
   robot_findHome();
   MENU_POP();
 }
 
-
 void LCD_this_is_home() {
   float offset[NUM_AXIES];
-  for(ALL_AXIES(i)) offset[i] = axies[i].homePos;
+  for (ALL_AXIES(i)) offset[i] = axies[i].homePos;
   teleport(offset);
   MENU_POP();
 }
 
-
 void LCD_go_home() {
   float homes[NUM_AXIES];
-  for(ALL_AXIES(i)) homes[i] = axies[i].homePos;
-  lineSafe( homes, DEFAULT_FEEDRATE );
+  for (ALL_AXIES(i)) homes[i] = axies[i].homePos;
+  lineSafe(homes, DEFAULT_FEEDRATE);
   MENU_POP();
 }
 
@@ -407,7 +432,7 @@ void LCD_togglePenUp() {
   float offset[3];
   offset[0] = axies[0].pos;
   offset[1] = axies[1].pos;
-  offset[2] = (axies[2].pos==PEN_UP_ANGLE) ? PEN_DOWN_ANGLE : PEN_UP_ANGLE;
+  offset[2] = (axies[2].pos == PEN_UP_ANGLE) ? PEN_DOWN_ANGLE : PEN_UP_ANGLE;
   lineSafe(offset, feed_rate);
   MENU_POP();
 }
@@ -424,7 +449,6 @@ void LCD_drive_menu() {
   MENU_END
 }
 
-
 void LCD_driveX() {
   if (lcd_click_now) MENU_POP();
 
@@ -433,15 +457,12 @@ void LCD_driveX() {
   offset[1] = axies[1].pos;
   offset[2] = axies[2].pos;
 
-  if (lcd_turn) {
-    lineSafe(offset, feed_rate);
-  }
+  if (lcd_turn) { lineSafe(offset, feed_rate); }
 
-  LCD_setCursor( 0, 0);
+  LCD_setCursor(0, 0);
   LCD_print('X');
   LCD_print_float(offset[0]);
 }
-
 
 void LCD_driveY() {
   if (lcd_click_now) MENU_POP();
@@ -450,16 +471,13 @@ void LCD_driveY() {
   offset[0] = axies[0].pos;
   offset[1] = axies[1].pos + lcd_turn > 0 ? 1 : -1;
   offset[2] = axies[2].pos;
-    
-  if (lcd_turn) {
-    lineSafe(offset, feed_rate);
-  }
 
-  LCD_setCursor( 0, 0);
+  if (lcd_turn) { lineSafe(offset, feed_rate); }
+
+  LCD_setCursor(0, 0);
   LCD_print('Y');
   LCD_print_float(offset[1]);
 }
-
 
 void LCD_driveZ() {
   if (lcd_click_now) MENU_POP();
@@ -468,17 +486,16 @@ void LCD_driveZ() {
   offset[0] = axies[0].pos;
   offset[1] = axies[1].pos;
   offset[2] = axies[2].pos + lcd_turn > 0 ? 1 : -1;
-  
+
   if (lcd_turn) {
     // protect servo, don't drive beyond physical limits
     lineSafe(offset, feed_rate);
   }
 
-  LCD_setCursor( 0, 0);
+  LCD_setCursor(0, 0);
   LCD_print('Z');
   LCD_print_float(offset[2]);
 }
-
 
 void LCD_driveF() {
   if (lcd_click_now) MENU_POP();
@@ -492,14 +509,13 @@ void LCD_driveF() {
     feed_rate = newF;
   }
 
-  LCD_setCursor( 0, 0);
+  LCD_setCursor(0, 0);
   LCD_print('F');
   LCD_print_float(feed_rate);
 }
 
-
 void LCD_start_menu() {
-#ifdef HAS_SD
+#  ifdef HAS_SD
   if (!sd_inserted) MENU_POP();
 
   /*
@@ -508,24 +524,24 @@ void LCD_start_menu() {
     Serial.print(screen_position  );  Serial.print("\t");  // 0
     Serial.print(num_menu_items   );  Serial.print("\n");  // 8
   */
-  if(lcd_turn!=0 || lcd_click_now==1) lcd_dirty=1;
+  if (lcd_turn != 0 || lcd_click_now == 1) lcd_dirty = 1;
 
-  if(lcd_dirty==1) {
+  if (lcd_dirty == 1) {
     MENU_START
     MENU_BACK("Main");
-    
+
     root.open("/");
     SdFile entry;
     char filename[20];
-    while(entry.openNext(&root)) {
+    while (entry.openNext(&root)) {
       if (!entry.isSubDir() && !entry.isHidden()) {
-        entry.getName(filename,18);
+        entry.getName(filename, 18);
         MENU_ITEM_START(filename)
-        if (menuStack[menuStackDepth].menu_position == ty && lcd_click_now==1) {
+        if (menuStack[menuStackDepth].menu_position == ty && lcd_click_now == 1) {
           lcd_click_now = 0;
           // go back to status menu
-          while(menuStackDepth>0) MENU_POP();
-          
+          while (menuStackDepth > 0) MENU_POP();
+
           SD_StartPrintingFile(entry);
           root.close();
           return;
@@ -536,20 +552,19 @@ void LCD_start_menu() {
     }
     root.close();
     MENU_END
-   
-    lcd_dirty=0;
+
+    lcd_dirty = 0;
   }
-  
-#else
+
+#  else
   // I don't know how you got here surfing the LCD panel.
   // someone messed up in the logic.  Go back to the main menu.
   MENU_POP();
-#endif
+#  endif
 }
 
-
 void draw_border(int width, int height, int landscape) {
-#if NUM_AXIES == 3
+#  if NUM_AXIES == 3
   LCD_clear();
   LCD_setCursor(0, 0);
   LCD_print("Drawing border...");
@@ -560,8 +575,8 @@ void draw_border(int width, int height, int landscape) {
   if (landscape == 1) {
     // swap the two values.
     int temp = width;
-    width = height;
-    height = temp;
+    width    = height;
+    height   = temp;
   }
 
   // get start position
@@ -571,23 +586,34 @@ void draw_border(int width, int height, int landscape) {
   start[0] = pos[0] = axies[0].pos;
   start[1] = pos[1] = axies[1].pos;
   start[2] = pos[2] = PEN_UP_ANGLE;
-  lineSafe( pos, feed_rate );
+  lineSafe(pos, feed_rate);
   // move to first corner
-  pos[0] = -width;  pos[1] =  height;  lineSafe( pos, feed_rate );
+  pos[0] = -width;
+  pos[1] = height;
+  lineSafe(pos, feed_rate);
   // lower pen
   pos[2] = PEN_DOWN_ANGLE;
-  lineSafe( pos, feed_rate );
+  lineSafe(pos, feed_rate);
   // move around border
-  pos[0] =  width;  pos[1] =  height;  lineSafe( pos, feed_rate );
-  pos[0] =  width;  pos[1] = -height;  lineSafe( pos, feed_rate );
-  pos[0] = -width;  pos[1] = -height;  lineSafe( pos, feed_rate );
-  pos[0] = -width;  pos[1] =  height;  lineSafe( pos, feed_rate );
+  pos[0] = width;
+  pos[1] = height;
+  lineSafe(pos, feed_rate);
+  pos[0] = width;
+  pos[1] = -height;
+  lineSafe(pos, feed_rate);
+  pos[0] = -width;
+  pos[1] = -height;
+  lineSafe(pos, feed_rate);
+  pos[0] = -width;
+  pos[1] = height;
+  lineSafe(pos, feed_rate);
   // lift pen
-  pos[2] = PEN_UP_ANGLE;  lineSafe( pos, feed_rate );
+  pos[2] = PEN_UP_ANGLE;
+  lineSafe(pos, feed_rate);
 
   // return to start position
-  lineSafe( start, feed_rate );
-#endif // NUM_AXIES == 3
+  lineSafe(start, feed_rate);
+#  endif  // NUM_AXIES == 3
   MENU_POP();
 }
 
@@ -648,87 +674,81 @@ void LCD_draw_border() {
   MENU_END
 }
 
-
 void LCD_update_long() {
   if (lcd_click_now) MENU_POP();
-  
+
   if (lcd_turn) {
-    long *f=(long*)update_val;
+    long *f = (long *)update_val;
     // protect servo, don't drive beyond physical limits
     *f = lcd_turn > 0 ? 1 : -1;
   }
-  
-  LCD_setCursor( 0, 0);
-  LCD_print(update_key);
-  LCD_print_long(*(long*)update_val,LCD_WIDTH-1-strlen(update_key));
-}
 
+  LCD_setCursor(0, 0);
+  LCD_print(update_key);
+  LCD_print_long(*(long *)update_val, LCD_WIDTH - 1 - strlen(update_key));
+}
 
 void LCD_update_float() {
   if (lcd_click_now) MENU_POP();
-  
+
   if (lcd_turn) {
-    float *f=(float*)update_val;
+    float *f = (float *)update_val;
     // protect servo, don't drive beyond physical limits
     *f += lcd_turn > 0 ? 0.01 : -0.01;
   }
-  
-  LCD_setCursor( 0, 0);
+
+  LCD_setCursor(0, 0);
   LCD_print(update_key);
-  LCD_print_float(*(float*)update_val,LCD_WIDTH-1-strlen(update_key));
+  LCD_print_float(*(float *)update_val, LCD_WIDTH - 1 - strlen(update_key));
 }
 
-
 // right-justified long
-void LCD_print_long(long v,int padding) {
+void LCD_print_long(long v, int padding) {
   char buf[10];
-  itoa(v,buf,10);
+  itoa(v, buf, 10);
   char *e = buf;
-  while(*e!=0) ++e;
-  
-  int x = e-buf;
-  while(x<padding) {
+  while (*e != 0) ++e;
+
+  int x = e - buf;
+  while (x < padding) {
     LCD_print(' ');
     x++;
   }
   LCD_print(buf);
 }
 
-
 // right justified float
 // @param v value to display
 // @param padding right justify so that the total width is padding characters
 // @param precision number of places right of the decimal
-void LCD_print_float(float v,int padding,int precision) {
+void LCD_print_float(float v, int padding, int precision) {
   char buf[10];
   // do the whole part
   int wholePart = (int)v;
-  itoa(wholePart,buf,10);
+  itoa(wholePart, buf, 10);
 
   // do the faction part.
-  v-=wholePart;
-  if(v<0) {
-    v=-v;
-  }
-  
+  v -= wholePart;
+  if (v < 0) { v = -v; }
+
   char *e = buf;
-  
-  if(precision>0) {
-    while(*e!=0) ++e;
+
+  if (precision > 0) {
+    while (*e != 0) ++e;
     // add decimal
-    *e++='.';
-    while(precision>0) {
-      v*=10;
+    *e++ = '.';
+    while (precision > 0) {
+      v *= 10;
       wholePart = (int)v;
-      *e++ = '0'+wholePart;
-      v-=wholePart;
+      *e++      = '0' + wholePart;
+      v -= wholePart;
       --precision;
     }
-    *e=0;
+    *e = 0;
   }
 
-  int x = e-buf;
-  while(x<padding) {
+  int x = e - buf;
+  while (x < padding) {
     LCD_print(' ');
     x++;
   }
@@ -736,74 +756,72 @@ void LCD_print_float(float v,int padding,int precision) {
 }
 #endif  // HAS_LCD
 
-
 void LCD_setStatusMessage(const char *message) {
 #ifdef HAS_LCD
-  char *i=lcd_message_m117;
-  const char *m=message;
-  int c=0;
-  while(c<M117_MAX_LEN && *m!=0) {
-    *i=*m;
+  char *i       = lcd_message_m117;
+  const char *m = message;
+  int c         = 0;
+  while (c < M117_MAX_LEN && *m != 0) {
+    *i = *m;
     ++i;
     ++m;
   }
-  *i=0;
+  *i = 0;
 
   // pop to top level menu
-  while(menuStackDepth>0) MENU_POP();
+  while (menuStackDepth > 0) MENU_POP();
 #endif
 }
-
 
 void LCD_update() {
 #ifdef HAS_LCD
   LCD_read();
-  
-  if (millis() >= lcd_draw_delay ) {
+
+  if (millis() >= lcd_draw_delay) {
     lcd_draw_delay = millis() + LCD_DRAW_DELAY;
 
-    //Serial.print(lcd_turn,DEC);
-    //Serial.print('\t');  Serial.print(menuStack[menuStackDepth].menu_position,DEC);
-    //Serial.print('\t');  Serial.print(menuStack[menuStackDepth].menu_position_sum,DEC);
-    //Serial.print('\t');  Serial.print(screen_position,DEC);
-    //Serial.print('\t');  Serial.print(screen_end,DEC);
-    //Serial.print('\t');  Serial.print(num_menu_items,DEC);
-    //Serial.print('\n');
+    // Serial.print(lcd_turn,DEC);
+    // Serial.print('\t');  Serial.print(menuStack[menuStackDepth].menu_position,DEC);
+    // Serial.print('\t');  Serial.print(menuStack[menuStackDepth].menu_position_sum,DEC);
+    // Serial.print('\t');  Serial.print(screen_position,DEC);
+    // Serial.print('\t');  Serial.print(screen_end,DEC);
+    // Serial.print('\t');  Serial.print(num_menu_items,DEC);
+    // Serial.print('\n');
 
     // update the menu position
-    if ( lcd_turn!=0 && num_menu_items > 1 ) {
+    if (lcd_turn != 0 && num_menu_items > 1) {
       uint8_t upperBound = num_menu_items * LCD_TURN_PER_MENU;
 
       // potentially change the menu item
       int8_t newPos = menuStack[menuStackDepth].menu_position_sum + lcd_turn;
-      if(newPos<0) newPos=0;
-      if(newPos >= upperBound) newPos=upperBound-1;
+      if (newPos < 0) newPos = 0;
+      if (newPos >= upperBound) newPos = upperBound - 1;
       menuStack[menuStackDepth].menu_position_sum = newPos;
-      
+
       uint8_t newMenuPosition = newPos / LCD_TURN_PER_MENU;
       // check for change
       if (menuStack[menuStackDepth].menu_position != newMenuPosition) {
-        lcd_dirty=1;
+        lcd_dirty = 1;
         LCD_clear();
       }
       menuStack[menuStackDepth].menu_position = newMenuPosition;
-      
-      //Serial.println(menu_position);
+
+      // Serial.println(menu_position);
 
       if (screen_position > newMenuPosition) screen_position = newMenuPosition;
       if (screen_position < newMenuPosition - (LCD_HEIGHT - 1)) screen_position = newMenuPosition - (LCD_HEIGHT - 1);
       screen_end = screen_position + LCD_HEIGHT;
     }
-    
-    // draw the new screen contents
-    #if LCD_TYPE == LCD_IS_128X64
+
+// draw the new screen contents
+#  if LCD_TYPE == LCD_IS_128X64
     u8g.firstPage();
     do {
-    #endif
+#  endif
       (*current_menu)();
-    #if LCD_TYPE == LCD_IS_128X64
-    } while(u8g.nextPage());
-    #endif
+#  if LCD_TYPE == LCD_IS_128X64
+    } while (u8g.nextPage());
+#  endif
     LCD_refresh_display();
 
     lcd_turn = 0;  // reset.  must come after (*current_menu)() because it might be used there.  (damn globals...)
@@ -811,78 +829,73 @@ void LCD_update() {
 #endif  // HAS_LCD
 }
 
-
 void LCD_refresh_display() {
 #ifdef HAS_LCD
-#if LCD_TYPE == LCD_IS_SMART
+#  if LCD_TYPE == LCD_IS_SMART
   char temp[LCD_MESSAGE_LENGTH];
   memcpy(temp + (LCD_WIDTH * 0), lcd_message + (LCD_WIDTH * 0), LCD_WIDTH);
   memcpy(temp + (LCD_WIDTH * 1), lcd_message + (LCD_WIDTH * 2), LCD_WIDTH);
   memcpy(temp + (LCD_WIDTH * 2), lcd_message + (LCD_WIDTH * 1), LCD_WIDTH);
   memcpy(temp + (LCD_WIDTH * 3), lcd_message + (LCD_WIDTH * 3), LCD_WIDTH);
-  for (int i = 0; i < LCD_MESSAGE_LENGTH-1; ++i) {
-    lcd.write(temp[i]);
-  }
-#endif
+  for (int i = 0; i < LCD_MESSAGE_LENGTH - 1; ++i) { lcd.write(temp[i]); }
+#  endif
 #endif  // HAS_LCD
 }
-
 
 void LCD_settings_menu() {
 #ifdef HAS_LCD
   MENU_START
   MENU_BACK("Main");
-  
-#if MACHINE_STYLE == POLARGRAPH
+
+#  if MACHINE_STYLE == POLARGRAPH
   MENU_FLOAT("Home X", axies[0].homePos);
   MENU_FLOAT("Home Y", axies[1].homePos);
-  MENU_FLOAT("Left",   axies[0].limitMin);
-  MENU_FLOAT("Right",  axies[0].limitMax);
-  MENU_FLOAT("Top",    axies[1].limitMax);
+  MENU_FLOAT("Left", axies[0].limitMin);
+  MENU_FLOAT("Right", axies[0].limitMax);
+  MENU_FLOAT("Top", axies[1].limitMax);
   MENU_FLOAT("Bottom", axies[1].limitMin);
   MENU_FLOAT("Belt L", calibrateLeft);
   MENU_FLOAT("Belt R", calibrateRight);
-#endif
+#  endif
   MENU_END
 #endif
 }
 
-
 void LCD_main_menu() {
 #ifdef HAS_LCD
-  lcd_dirty=1;
-  
+  lcd_dirty = 1;
+
   MENU_START
 
   MENU_BACK("Info screen");
-#ifdef HAS_SD
+#  ifdef HAS_SD
   if (!sd_printing_now) {
-#endif
-#ifdef USE_LIMIT_SWITCH
+#  endif
+#  ifdef USE_LIMIT_SWITCH
     MENU_ACTION("Find home", LCD_find_home);
-#else
-    MENU_ACTION("This is home", LCD_this_is_home);
-    MENU_ACTION("Go home", LCD_go_home);
-#endif
-#ifdef HAS_SD
+#  else
+  MENU_ACTION("This is home", LCD_this_is_home);
+  MENU_ACTION("Go home", LCD_go_home);
+#  endif
+#  ifdef HAS_SD
     if (sd_inserted) {
       MENU_SUBMENU("Print from SD card", LCD_start_menu);
     } else {
       MENU_LABEL("No SD card");
     }
-#endif
-#if MACHINE_STYLE == POLARGRAPH
-    if(axies[2].pos==PEN_UP_ANGLE) {
-      MENU_ACTION("Pen down",LCD_togglePenUp);
+#  endif
+#  if MACHINE_STYLE == POLARGRAPH
+    if (axies[2].pos == PEN_UP_ANGLE) {
+      MENU_ACTION("Pen down", LCD_togglePenUp);
     } else {
-      MENU_ACTION("Pen up",LCD_togglePenUp);
+      MENU_ACTION("Pen up", LCD_togglePenUp);
     }
-#endif
-#if NUM_AXIES == 3
+#  endif
+#  if NUM_AXIES == 3
     MENU_SUBMENU("Draw border", LCD_draw_border);
-#endif
+#  endif
     MENU_SUBMENU("Drive", LCD_drive_menu);
-#ifdef HAS_SD
+#  ifdef HAS_SD
   } else {
     if (sd_printing_paused) {
       MENU_ACTION("Unpause", LCD_pause);
@@ -891,12 +904,11 @@ void LCD_main_menu() {
     }
     MENU_ACTION("Stop", LCD_stop);
   }
-#endif
+#  endif
   MENU_ACTION("Settings", LCD_settings_menu);
   MENU_END
 #endif  // HAS_LCD
 }
-
 
 // display the current machine position and feed rate on the LCD.
 void LCD_status_menu() {
@@ -906,53 +918,59 @@ void LCD_status_menu() {
   // on click go to the main menu
   if (lcd_click_now) MENU_PUSH(LCD_main_menu);
 
-  if (lcd_turn) {
-    speed_adjust += lcd_turn;
-  }
-  LCD_setCursor( 0, 0);
+  if (lcd_turn) { speed_adjust += lcd_turn; }
+  LCD_setCursor(0, 0);
 
-  LCD_setCursor(0, 0);  LCD_print('F');  LCD_print_float(feed_rate,6);
-  //LCD_setCursor(0, 0);  LCD_print('X');  LCD_print_float(axies[0].pos,6);
-  //LCD_setCursor(9, 0);  LCD_print('Z');  LCD_print_float(axies[2].pos,6);
-#if MACHINE_STYLE == POLARGRAPH && defined(USE_LIMIT_SWITCH)
-  LCD_setCursor(8, 0);  LCD_print(( digitalRead(LIMIT_SWITCH_PIN_LEFT) == LOW ) ? '*' : ' ');
-#endif
+  LCD_setCursor(0, 0);
+  LCD_print('F');
+  LCD_print_float(feed_rate, 6);
+  // LCD_setCursor(0, 0);  LCD_print('X');  LCD_print_float(axies[0].pos,6);
+  // LCD_setCursor(9, 0);  LCD_print('Z');  LCD_print_float(axies[2].pos,6);
+#  if MACHINE_STYLE == POLARGRAPH && defined(USE_LIMIT_SWITCH)
+  LCD_setCursor(8, 0);
+  LCD_print((digitalRead(LIMIT_SWITCH_PIN_LEFT) == LOW) ? '*' : ' ');
+#  endif
 
-  LCD_setCursor(0, 1);  LCD_print('A');  LCD_print_float(acceleration,6);
-  //LCD_setCursor(0, 1);  LCD_print('Y');  LCD_print_float(axies[1].pos,6);
-  LCD_setCursor(9, 1);  LCD_print('%');  LCD_print_long(speed_adjust);
-#if MACHINE_STYLE == POLARGRAPH && defined(USE_LIMIT_SWITCH)
-  LCD_setCursor(8, 1);  LCD_print(( digitalRead(LIMIT_SWITCH_PIN_RIGHT) == LOW ) ? '*' : ' ');
-#endif
+  LCD_setCursor(0, 1);
+  LCD_print('A');
+  LCD_print_float(acceleration, 6);
+  // LCD_setCursor(0, 1);  LCD_print('Y');  LCD_print_float(axies[1].pos,6);
+  LCD_setCursor(9, 1);
+  LCD_print('%');
+  LCD_print_long(speed_adjust);
+#  if MACHINE_STYLE == POLARGRAPH && defined(USE_LIMIT_SWITCH)
+  LCD_setCursor(8, 1);
+  LCD_print((digitalRead(LIMIT_SWITCH_PIN_RIGHT) == LOW) ? '*' : ' ');
+#  endif
 
-  //LCD_setCursor( 1, 15);
-  //if (sd_printing_now == true && sd_printing_paused==false) {
-  //if (sd_printing_now == true) {
-    //LCD_print_float(sd_percent_complete);
-    //LCD_print('%');
+  // LCD_setCursor( 1, 15);
+  // if (sd_printing_now == true && sd_printing_paused==false) {
+  // if (sd_printing_now == true) {
+  // LCD_print_float(sd_percent_complete);
+  // LCD_print('%');
   //} else {
-    //LCD_print("          ");
+  // LCD_print("          ");
   //}
-  
-  LCD_setCursor(0,2);  LCD_print(lcd_message_m117);
+
+  LCD_setCursor(0, 2);
+  LCD_print(lcd_message_m117);
 
   MENU_END
 #endif  // HAS_LCD
 }
 
-
 // initialize the Smart controller LCD panel
 void LCD_setup() {
 #ifdef HAS_LCD
-#if LCD_TYPE == LCD_IS_SMART
+#  if LCD_TYPE == LCD_IS_SMART
   lcd.begin(LCD_WIDTH, LCD_HEIGHT);
-#endif
-#if LCD_TYPE == LCD_IS_128X64
+#  endif
+#  if LCD_TYPE == LCD_IS_128X64
   u8g.begin();
   u8g.disableCursor();
   u8g.setFont(u8g_font_6x9);
   //  u8g.setFont(u8g_font_helvR08);
-#endif
+#  endif
 
   pinMode(BEEPER, OUTPUT);
   digitalWrite(BEEPER, LOW);
@@ -964,17 +982,17 @@ void LCD_setup() {
   digitalWrite(BTN_EN2, HIGH);
   digitalWrite(BTN_ENC, HIGH);
   current_menu = LCD_status_menu;
-  menuStack[menuStackDepth].menu_position_sum = 1;  /* 20160313-NM-Added so the clicking without any movement will display a menu */
-  menuStack[menuStackDepth].menu = current_menu; 
+  menuStack[menuStackDepth].menu_position_sum =
+      1; /* 20160313-NM-Added so the clicking without any movement will display a menu */
+  menuStack[menuStackDepth].menu = current_menu;
 
   LCD_drawSplash();
-  
+
   LCD_read();
-  lcd_turn=0;
+  lcd_turn = 0;
   LCD_clear();
 #endif  // HAS_LCD
 }
-
 
 #ifdef HAS_LCD
 void LCD_drawSplash() {
@@ -983,30 +1001,33 @@ void LCD_drawSplash() {
   char mhv[12];
   itoa(MACHINE_HARDWARE_VERSION, mhv, 10);
   char *ptr = message;
-  strcpy(ptr, MACHINE_STYLE_NAME );  ptr += strlen(MACHINE_STYLE_NAME);
-  strcpy(ptr, " v" );                ptr += strlen(" v");
-  strcpy(ptr, mhv );                 ptr += strlen(mhv);
+  strcpy(ptr, MACHINE_STYLE_NAME);
+  ptr += strlen(MACHINE_STYLE_NAME);
+  strcpy(ptr, " v");
+  ptr += strlen(" v");
+  strcpy(ptr, mhv);
+  ptr += strlen(mhv);
 
-  int x = (LCD_WIDTH - strlen(message)) / 2;
-  int y = LCD_HEIGHT - 2;
+  int x  = (LCD_WIDTH - strlen(message)) / 2;
+  int y  = LCD_HEIGHT - 2;
   int x2 = (LCD_WIDTH - strlen("marginallyclever.com")) / 2;
   int y2 = y + 1;
 
-#if LCD_TYPE == LCD_IS_128X64
+#  if LCD_TYPE == LCD_IS_128X64
   u8g.firstPage();
   do {
-#endif
+#  endif
     LCD_clear();
-#if LCD_TYPE == LCD_IS_128X64
+#  if LCD_TYPE == LCD_IS_128X64
     u8g.drawBitmapP((LCD_PIXEL_WIDTH - logoImageWidth) / 2, 0, logoImageWidth / 8, logoImageHeight, logoImage);
-#endif
+#  endif
     LCD_setCursor(x, y);
     LCD_print(message);
     LCD_setCursor(x2, y2);
     LCD_print("marginallyclever.com");
-#if LCD_TYPE == LCD_IS_128X64
+#  if LCD_TYPE == LCD_IS_128X64
   } while (u8g.nextPage());
-#endif
+#  endif
   LCD_refresh_display();
   delay(2500);
 }

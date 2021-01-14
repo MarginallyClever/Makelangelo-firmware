@@ -1,6 +1,0 @@
-#pragma once
-
-#undef MACHINE_STYLE
-#define MACHINE_STYLE SIXI
-#undef MOTHERBOARD
-#define MOTHERBOARD BOARD_SIXI_MEGA
