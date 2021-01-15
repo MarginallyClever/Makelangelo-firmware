@@ -107,7 +107,6 @@ float previous_nominal_speed = 0;
 float previous_safe_speed = 0;
 float previous_speed[NUM_MUSCLES];
 
-uint32_t nextMainISR=0;
 
 const char *MotorNames = "LRUVWT";
 const char *AxisNames = "XYZUVWT";
@@ -692,19 +691,57 @@ void motor_onestep(int motor) {
   digitalWrite(motors[motor].step_pin, LOW);
 }
 
+ 
+//#define TIMER_READ_ADD_AND_STORE_CYCLES 13UL
+//#define ISR_START_STEPPER_CYCLES        57UL
+
+#define ISR_BASE_CYCLES                 1200UL//752UL
+#define ISR_LOOP_BASE_CYCLES            32UL
+#define ISR_STEPPER_CYCLES              88UL
+#define F_CPU                           CLOCK_FREQ
+#define MIN_ISR_LOOP_CYCLES             (ISR_STEPPER_CYCLES * NUM_MOTORS)
+#define MAXIMUM_STEPPER_RATE            500000UL
+#define MINIMUM_STEPPER_PULSE           1UL
+  
+#define _MIN_STEPPER_PULSE_CYCLES(N) max(  (F_CPU / MAXIMUM_STEPPER_RATE),  (F_CPU / 500000UL) * (N) )
+  
+#define MIN_STEPPER_PULSE_CYCLES       _MIN_STEPPER_PULSE_CYCLES(MINIMUM_STEPPER_PULSE)
+#define ISR_LOOP_CYCLES                (ISR_LOOP_BASE_CYCLES + (long)max(MIN_STEPPER_PULSE_CYCLES, MIN_ISR_LOOP_CYCLES))
+  
+#define ISR_EXECUTION_CYCLES(R)  (  ( (ISR_BASE_CYCLES) + ((ISR_LOOP_CYCLES) * (R)) ) / (R) )
+
+// The maximum allowable stepping frequency when doing x128-x1 stepping (in Hz)
+#define MAX_STEP_ISR_FREQUENCY_128X ((F_CPU) / ISR_EXECUTION_CYCLES(128))
+#define MAX_STEP_ISR_FREQUENCY_64X  ((F_CPU) / ISR_EXECUTION_CYCLES(64))
+#define MAX_STEP_ISR_FREQUENCY_32X  ((F_CPU) / ISR_EXECUTION_CYCLES(32))
+#define MAX_STEP_ISR_FREQUENCY_16X  ((F_CPU) / ISR_EXECUTION_CYCLES(16))
+#define MAX_STEP_ISR_FREQUENCY_8X   ((F_CPU) / ISR_EXECUTION_CYCLES(8))
+#define MAX_STEP_ISR_FREQUENCY_4X   ((F_CPU) / ISR_EXECUTION_CYCLES(4))
+#define MAX_STEP_ISR_FREQUENCY_2X   ((F_CPU) / ISR_EXECUTION_CYCLES(2))
+#define MAX_STEP_ISR_FREQUENCY_1X   ((F_CPU) / ISR_EXECUTION_CYCLES(1))
 
 /**
    Set the clock 2 timer frequency.
    @input desired_freq_hz the desired frequency
-   Different clock sources can be selected for each timer independently.
-   To calculate the timer frequency (for example 2Hz using timer1) you will need:
 */
-FORCE_INLINE unsigned short calc_timer(uint32_t desired_freq_hz, uint8_t*loops) {
+FORCE_INLINE static unsigned short calc_timer(uint32_t desired_freq_hz, uint8_t * loops) {
   uint32_t timer;
   uint8_t step_multiplier = 1;
-
   int idx=0;
-  while( idx<6 && desired_freq_hz > 10000 ) {
+  
+  // The stepping frequency limits for each multistepping rate
+  static const uint32_t limit[] PROGMEM = {
+    (  MAX_STEP_ISR_FREQUENCY_1X     ),
+    (  MAX_STEP_ISR_FREQUENCY_2X >> 1),
+    (  MAX_STEP_ISR_FREQUENCY_4X >> 2),
+    (  MAX_STEP_ISR_FREQUENCY_8X >> 3),
+    ( MAX_STEP_ISR_FREQUENCY_16X >> 4),
+    ( MAX_STEP_ISR_FREQUENCY_32X >> 5),
+    ( MAX_STEP_ISR_FREQUENCY_64X >> 6),
+    (MAX_STEP_ISR_FREQUENCY_128X >> 7)
+  };
+
+  while( idx<7 && desired_freq_hz > (uint32_t)pgm_read_dword(&limit[idx]) ) {
     step_multiplier <<= 1;
     desired_freq_hz >>= 1;
     idx++;
@@ -713,6 +750,7 @@ FORCE_INLINE unsigned short calc_timer(uint32_t desired_freq_hz, uint8_t*loops) 
   
   if( desired_freq_hz < CLOCK_MIN_STEP_FREQUENCY ) desired_freq_hz = CLOCK_MIN_STEP_FREQUENCY;
   desired_freq_hz -= CLOCK_MIN_STEP_FREQUENCY;
+  
   if(desired_freq_hz >= 8 *256) {
     const uint8_t tmp_step_rate = (desired_freq_hz & 0x00FF);
     const uint16_t table_address = (uint16_t)&speed_lookuptable_fast[(uint8_t)(desired_freq_hz >> 8)][0],
@@ -1056,11 +1094,14 @@ void itr() {
 #else
 ISR(TIMER1_COMPA_vect) {
 #endif // ESP8266
+  static uint32_t nextMainISR=0;
+  
   //#ifndef __AVR__
     // Disable interrupts, to avoid ISR preemption while we reprogram the period
     // (AVR enters the ISR with global interrupts disabled, so no need to do it here)
     CRITICAL_SECTION_START();
   //#endif
+  
   // set the timer interrupt value as big as possible so there's little chance it triggers while i'm still in the ISR.
   CLOCK_ADJUST(MAX_OCR1A_VALUE);
 
@@ -1085,8 +1126,7 @@ ISR(TIMER1_COMPA_vect) {
 #endif
 #endif // DEBUG_STEPPING
 
-    uint32_t interval = nextMainISR;
-    interval = min(MAX_OCR1A_VALUE,interval);
+    uint32_t interval = min(MAX_OCR1A_VALUE,nextMainISR);
     nextMainISR -= interval;
 
     next_isr_ticks += interval;
@@ -1274,24 +1314,25 @@ void motor_line(const float * const target_position, float fr_mm_s,float millime
     // We only consider the XY plane.
     // Special thanks to https://www.reddit.com/user/zebediah49 for his math help.
 
-    // normal vectors pointing from plotter to motor
-    float R1x = axies[0].limitMin - oldX;  // to left
-    float R1y = axies[1].limitMax - oldY;  // to top
-    float Rlen = sqrt(sq(R1x) + sq(R1y));//old_seg.a[0].step_count * MM_PER_STEP;
-    R1x /= Rlen;
-    R1y /= Rlen;
-
-    float R2x = axies[0].limitMax - oldX;  // to right
-    float R2y = axies[1].limitMax - oldY;  // to top
-    Rlen = sqrt(sq(R2x) + sq(R2y));//old_seg.a[1].step_count * MM_PER_STEP;
-    R2x /= Rlen;
-    R2y /= Rlen;
-
     // if T is your target direction unit vector,
     float Tx = target_position[0] - oldX;
     float Ty = target_position[1] - oldY;
-    Rlen = sqrt(sq(Tx) + sq(Ty));
+    float Rlen = sq(Tx) + sq(Ty);  // always >=0
     if (Rlen > 0) {
+      Rlen = sqrt(Rlen);
+      // normal vectors pointing from plotter to motor
+      float R1x = axies[0].limitMin - oldX;  // to left
+      float R1y = axies[1].limitMax - oldY;  // to top
+      float Rlen1 = sqrt(sq(R1x) + sq(R1y));//old_seg.a[0].step_count * MM_PER_STEP;
+      R1x /= Rlen1;
+      R1y /= Rlen1;
+
+      float R2x = axies[0].limitMax - oldX;  // to right
+      float R2y = axies[1].limitMax - oldY;  // to top
+      float Rlen2 = sqrt(sq(R2x) + sq(R2y));//old_seg.a[1].step_count * MM_PER_STEP;
+      R2x /= Rlen2;
+      R2y /= Rlen2;
+      
       // only affects XY non-zero movement.  Servo is not touched.
       Tx /= Rlen;
       Ty /= Rlen;
