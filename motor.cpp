@@ -419,17 +419,17 @@ void recalculate_reverse_kernel(Segment *const current, const Segment *next) {
   if (current == NULL) return;
 
   const float entry_speed_max2 = current->entry_speed_max;
-  if (current->entry_speed != entry_speed_max2 || (next && next->recalculate_flag) ) {
+  if (current->entry_speed != entry_speed_max2 || (next && TEST(next->flags,BIT_FLAG_RECALCULATE)) ) {
     // If nominal length true, max junction speed is guaranteed to be reached. Only compute
     // for max allowable speed if block is decelerating and nominal length is false.
-    const float new_entry_speed = current->nominal_length_flag
+    const float new_entry_speed = TEST(current->flags, BIT_FLAG_NOMINAL)
                                   ? entry_speed_max2
                                   : min( entry_speed_max2, max_speed_allowed(-current->acceleration, (next ? next->entry_speed : MIN_FEEDRATE), current->distance) );
 
-    if (current->entry_speed != new_entry_speed ) {
-      current->recalculate_flag = true;
-      if(current->busy) {
-        current->recalculate_flag = false;
+    if( current->entry_speed != new_entry_speed ) {
+      SET_BIT_ON(current->flags, BIT_FLAG_RECALCULATE);
+      if( TEST(current->flags, BIT_FLAG_BUSY) ) {
+        SET_BIT_OFF(current->flags, BIT_FLAG_RECALCULATE);
       } else {
         current->entry_speed = new_entry_speed;
       }
@@ -461,13 +461,13 @@ void recalculate_forward_kernel(const Segment *prev, Segment *const current) {
   // full speed change within the block, we need to adjust the entry speed accordingly. Entry
   // speeds have already been reset, maximized, and reverse planned by reverse planner.
   // If nominal length is true, max junction speed is guaranteed to be reached. No need to recheck.
-  if (!prev->nominal_length_flag && prev->entry_speed < current->entry_speed) {
+  if( !TEST(prev->flags,BIT_FLAG_NOMINAL) && prev->entry_speed < current->entry_speed ) {
     const float new_entry_speed2 = max_speed_allowed(-prev->acceleration, prev->entry_speed, prev->distance);
     // Check for junction speed change
     if (new_entry_speed2 < current->entry_speed) {
-      current->recalculate_flag = true;
-      if (current->busy) {
-        current->recalculate_flag = false;
+      SET_BIT_ON(current->flags, BIT_FLAG_RECALCULATE);
+      if(TEST(current->flags, BIT_FLAG_BUSY)) {
+        SET_BIT_OFF(current->flags, BIT_FLAG_RECALCULATE);
       } else {
         current->entry_speed = new_entry_speed2;
       }
@@ -531,20 +531,22 @@ void recalculate_trapezoids() {
 
   float current_entry_speed = 0, next_entry_speed = 0;
 
-  while (s != last_segment) {
+  while(s != last_segment) {
     next = &line_segments[s];
     next_entry_speed = next->entry_speed;
-    if (current) {
+    if(current) {
       // Recalculate if current block entry or exit junction speed has changed.
-      if ( current->recalculate_flag || next->recalculate_flag ) {
-        current->recalculate_flag=true;
-        if (!current->busy) {
+      if( TEST(current->flags,BIT_FLAG_RECALCULATE) || TEST(next->flags,BIT_FLAG_RECALCULATE) ) {
+        SET_BIT_ON( current->flags, BIT_FLAG_RECALCULATE );
+        if( !TEST(current->flags, BIT_FLAG_BUSY) ) {
           // NOTE: Entry and exit factors always > 0 by all previous logic operations.
           const float inom = 1.0 / current->nominal_speed;
           segment_update_trapezoid(current, current_entry_speed * inom, next_entry_speed * inom);
         }
       }
-      current->recalculate_flag = false; // Reset current only to ensure next trapezoid is computed
+      // Reset current only to ensure next trapezoid is computed
+      SET_BIT_OFF(current->flags,BIT_FLAG_RECALCULATE);
+      
     }
     s = get_next_segment(s);
     current_entry_speed = next_entry_speed;
@@ -553,12 +555,12 @@ void recalculate_trapezoids() {
 
   // Last/newest block in buffer. Make sure the last block always ends motion.
   if (next) {
-    next->recalculate_flag = true;
-    if(!current->busy) {
+    SET_BIT_ON(next->flags,BIT_FLAG_RECALCULATE);
+    if( !TEST(current->flags,BIT_FLAG_BUSY) ) {
       const float inom = 1.0 / next->nominal_speed;
       segment_update_trapezoid(next, next_entry_speed * inom, MIN_FEEDRATE * inom);
     }
-    next->recalculate_flag = false;
+    SET_BIT_OFF(next->flags,BIT_FLAG_RECALCULATE);
   }
 }
 
@@ -619,9 +621,9 @@ void describe_segments() {
     Serial.print(F("\t"));   Serial.print(next->steps_total);
     //Serial.print(F("\t"));   Serial.print(next->steps_taken);
 
-    Serial.print(F("\t"));   Serial.print(next->nominal_length_flag != 0 ? 'Y' : 'N');
-    Serial.print(F("\t"));   Serial.print(next->recalculate_flag != 0 ? 'Y' : 'N');
-    Serial.print(F("\t"));   Serial.print(next->busy != 0 ? 'Y' : 'N');
+    Serial.print(F("\t"));   Serial.print(TEST(next->flags,BIT_FLAG_NOMINAL) != 0 ? 'Y' : 'N');
+    Serial.print(F("\t"));   Serial.print(TEST(next->flags,BIT_FLAG_RECALCULATE) != 0 ? 'Y' : 'N');
+    Serial.print(F("\t"));   Serial.print(TEST(next->flags,BIT_FLAG_BUSY) != 0 ? 'Y' : 'N');
     Serial.println();
     s = get_next_segment(s);
   }
@@ -965,7 +967,7 @@ inline uint32_t isr_internal_block() {
     if ( working_seg == NULL ) return interval;  // buffer empty
     
     // New segment!
-    working_seg->busy = true;
+    SET_BIT_OFF(working_seg->flags,BIT_FLAG_BUSY);
 
     // set the direction pins
     digitalWrite( MOTOR_0_DIR_PIN, working_seg->a[0].dir );
@@ -1264,7 +1266,7 @@ void motor_line(const float * const target_position, float fr_mm_s,float millime
   // No steps?  No work!  Stop now.
   if ( new_seg.steps_total < MIN_STEPS_PER_SEGMENT ) return;
 
-  new_seg.busy = false;
+  SET_BIT_OFF(new_seg.flags,BIT_FLAG_BUSY);
   new_seg.distance = distance_mm;
   float inverse_distance_mm = 1.0 / distance_mm;
   float inverse_secs = fr_mm_s * inverse_distance_mm;
@@ -1461,8 +1463,8 @@ void motor_line(const float * const target_position, float fr_mm_s,float millime
 
   new_seg.entry_speed_max = vmax_junction;
   new_seg.entry_speed = min(vmax_junction, allowable_speed);
-  new_seg.nominal_length_flag = ( allowable_speed >= new_seg.nominal_speed );
-  new_seg.recalculate_flag = true;
+  SET_BIT( new_seg.flags, BIT_FLAG_NOMINAL, ( allowable_speed >= new_seg.nominal_speed ) );
+  SET_BIT_ON( new_seg.flags, BIT_FLAG_RECALCULATE );
 
   previous_nominal_speed = new_seg.nominal_speed;
   for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {

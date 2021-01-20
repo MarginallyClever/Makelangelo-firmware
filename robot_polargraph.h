@@ -35,7 +35,7 @@
 #define NUM_TOOLS            (1)
 
 #define MAX_FEEDRATE         (1000.0)  // depends on timer interrupt & hardware
-#define MIN_FEEDRATE         (0.0)
+#define MIN_FEEDRATE         (0.05)
 
 #define MAX_FEEDRATE_Z       (2000.0)  // depends on timer interrupt & hardware
 
@@ -58,7 +58,7 @@
 
 #if MACHINE_HARDWARE_VERSION == MAKELANGELO_3_3
 #ifndef MAX_SEGMENTS
-#define MAX_SEGMENTS         (32)
+#define MAX_SEGMENTS         (16)
 #endif
 #define USE_LIMIT_SWITCH
 #define HAS_SD
@@ -67,7 +67,7 @@
 
 #if MACHINE_HARDWARE_VERSION == MAKELANGELO_5
 #ifndef MAX_SEGMENTS
-#define MAX_SEGMENTS         (32)
+#define MAX_SEGMENTS         (8)
 #endif
 #define USE_LIMIT_SWITCH
 #define HAS_SD
