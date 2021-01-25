@@ -8,7 +8,7 @@
 
 #if MACHINE_STYLE == ARM3
 
-#  include "Vector3.h"
+#  include "vector3.h"
 
 /**
  * Inverse Kinematics turns XY coordinates into step counts from each motor

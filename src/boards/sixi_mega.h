@@ -17,7 +17,10 @@
 #  define CLOCK_FREQ (16000000L)
 
 #  undef HAS_LCD
-#  undef HAS_SD
+
+#  ifdef HAS_SD
+#    undef HAS_SD
+#  endif
 
 #  define MAX_MOTORS (6)
 
