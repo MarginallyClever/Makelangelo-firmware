@@ -8,7 +8,7 @@
 
 #if MACHINE_STYLE == SIXI
 
-#  include "Vector3.h"
+#  include "vector3.h"
 
 //#define DEBUG_IK
 
