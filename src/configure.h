@@ -29,7 +29,9 @@
 #define SCARA         11  // 2 axis SCARA.
 
 // default value
-#define MACHINE_STYLE TRADITIONAL6
+#ifndef MACHINE_STYLE
+#define MACHINE_STYLE POLARGRAPH
+#endif
 
 //------------------------------------------------------------------------------
 // LCD panels supported
@@ -57,7 +59,9 @@
 #define BOARD_SKRPRO1_2    9  // SKR Pro 1.2
 
 // default value
+#ifndef MOTHERBOARD
 #define MOTHERBOARD BOARD_RUMBA
+#endif
 
 //------------------------------------------------------------------------------
 // YOUR CHANGES GO HERE
