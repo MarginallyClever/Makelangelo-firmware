@@ -43,5 +43,14 @@ Temporary Items
 .apdisk
 local_config.h
 
-# folder created by platformio
+### PlatformIO ###
+.pioenvs
+.piolibdeps
+.clang_complete
+.gcc-flags.json
 .pio
+
+# Editor stuff
+
+### VisualStudioCode ###
+.vscode
