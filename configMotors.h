@@ -44,7 +44,18 @@
 #define NORMAL_MOTOR_STEPS   (360.0/DEGREES_PER_STEP)
 #endif
 
+#ifndef STEPS_PER_TURN
 #define STEPS_PER_TURN       (NORMAL_MOTOR_STEPS * MICROSTEPS)
+#endif
+
+#ifndef MM_PER_STEP
 #define MM_PER_STEP          (PULLEY_PITCH/STEPS_PER_TURN)
+#endif
+
+#ifndef STEPS_PER_MM
 #define STEPS_PER_MM         (STEPS_PER_TURN/PULLEY_PITCH)
+#endif
+
+#ifndef MICROSTEP_PER_DEGREE
 #define MICROSTEP_PER_DEGREE (STEPS_PER_TURN/360.0)
+#endif

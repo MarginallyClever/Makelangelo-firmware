@@ -21,29 +21,54 @@
 #define NUM_AXIES            (3)  // could be more?
 #endif
 
+#ifndef NUM_MOTORS
 #define NUM_MOTORS           (3)
+#endif
+
+#ifndef NUM_SERVOS
 #define NUM_SERVOS           (1)
+#endif
+
+#ifndef NUM_TOOLS
 #define NUM_TOOLS            (1)
+#endif
 
+#ifndef MAX_FEEDRATE
 #define MAX_FEEDRATE         (100.0)  // depends on timer interrupt & hardware
-#define MIN_FEEDRATE         (0.0)
-#define DEFAULT_FEEDRATE     (90.0)
+#endif
 
+#ifndef MIN_FEEDRATE
+#define MIN_FEEDRATE         (0.0)
+#endif
+
+#ifndef DEFAULT_FEEDRATE
+#define DEFAULT_FEEDRATE     (90.0)
+#endif
+
+#ifndef MAX_ACCELERATION
 #define MAX_ACCELERATION     (500.0)
+#endif
+
 #define MIN_ACCELERATION     (0.0)
+
+#ifndef DEFAULT_ACCELERATION
 #define DEFAULT_ACCELERATION (180.0)
+#endif
 
 #define MAX_JERK             (10.0)
 #define MAX_Z_JERK           (0.3)
 
-// plan long moves as a set of submoves to increase accuracy.  Uncomment to turn this off.
-//#define SUBDIVIDE_LINES
-#define SEGMENTS_PER_SECOND (10)
+#define SEGMENTS_PER_SECOND (5)
 
 // alter these two values to equal gear ratio * motor steps * microstepping for each axis.
 // by default they are set the same as all other robots in the system.
+#ifndef MM_PER_STEP_X
 #define MM_PER_STEP_X    MM_PER_STEP
+#endif
+
+#ifndef MM_PER_STEP_Y
 #define MM_PER_STEP_Y    MM_PER_STEP
+#endif
 
 
 #endif  // #ifdef TRADITIONALXY

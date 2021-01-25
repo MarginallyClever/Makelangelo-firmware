@@ -50,7 +50,9 @@ inline void CRITICAL_SECTION_END() {
 
 Motor motors[NUM_MOTORS];
 #ifndef ESP8266
+#if NUM_SERVOS>0
 Servo servos[NUM_SERVOS];
+#endif
 #endif
 
 Segment line_segments[MAX_SEGMENTS];

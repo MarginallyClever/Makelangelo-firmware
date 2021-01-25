@@ -482,6 +482,7 @@ void Parser::D18() {
   teleport(a);
 }
 
+// D19 - Sixi only.  toggle continuous D17 reporting
 void Parser::D19() {
   boolean p = TEST(sensorManager.positionErrorFlags,POSITION_ERROR_FLAG_CONTINUOUS);
   int state = parseNumber('P',p?1:0);

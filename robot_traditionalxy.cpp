@@ -58,13 +58,10 @@ void robot_findHome() {
       digitalWrite(motors[i].dir_pin, HIGH);
       // if this switch hasn't been hit yet
       if (digitalRead(motors[i].limit_switch_pin) == HIGH) {
-        // move "down"
-        Serial.print('|');
         digitalWrite(motors[i].step_pin, HIGH);
         digitalWrite(motors[i].step_pin, LOW);
       } else {
         ++hits;
-        Serial.print('*');
       }
     }
     Serial.println();
