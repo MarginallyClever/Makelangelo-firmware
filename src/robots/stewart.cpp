@@ -8,7 +8,7 @@
 
 #if MACHINE_STYLE == STEWART
 
-#  include "Vector3.h"
+#  include "vector3.h"
 
 #  define NUM_ARMS (6)
 
