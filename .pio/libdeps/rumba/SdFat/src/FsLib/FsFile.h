@@ -54,7 +54,7 @@ class FsBaseFile {
     *
     * \return true if a file is open.
     */
-  operator bool() {return isOpen();}
+  operator bool() const {return isOpen();}
   /** \return number of bytes available from the current position to EOF
    *   or INT_MAX if more than INT_MAX bytes are available.
    */
@@ -63,7 +63,7 @@ class FsBaseFile {
            m_xFile ? m_xFile->available() : 0;
   }
 
-  /** Set writeError to zero */
+  /** Clear writeError. */
   void clearWriteError() {
     if (m_fFile) m_fFile->clearWriteError();
     if (m_xFile) m_xFile->clearWriteError();
@@ -74,13 +74,27 @@ class FsBaseFile {
    * \return true for success or false for failure.
    */
   bool close();
+  /** Check for contiguous file and return its raw sector range.
+   *
+   * \param[out] bgnSector the first sector address for the file.
+   * \param[out] endSector the last  sector address for the file.
+   *
+   * Set contiguous flag for FAT16/FAT32 files.
+   * Parameters may be nullptr.
+   *
+   * \return true for success or false for failure.
+   */
+  bool contiguousRange(uint32_t* bgnSector, uint32_t* endSector) {
+    return m_fFile ? m_fFile->contiguousRange(bgnSector, endSector) :
+           m_xFile ? m_xFile->contiguousRange(bgnSector, endSector) : false;
+  }
   /** \return The current position for a file or directory. */
-  uint64_t curPosition() {
+  uint64_t curPosition() const {
     return m_fFile ? m_fFile->curPosition() :
            m_xFile ? m_xFile->curPosition() : 0;
   }
   /** \return Directory entry index. */
-  uint32_t dirIndex() {
+  uint32_t dirIndex() const {
     return m_fFile ? m_fFile->dirIndex() :
            m_xFile ? m_xFile->dirIndex() : 0;
   }
@@ -102,7 +116,7 @@ class FsBaseFile {
   /** get position for streams
    * \param[out] pos struct to receive position
    */
-  void fgetpos(fspos_t* pos) {
+  void fgetpos(fspos_t* pos) const {
     if (m_fFile) m_fFile->fgetpos(pos);
     if (m_xFile) m_xFile->fgetpos(pos);
   }
@@ -131,9 +145,14 @@ class FsBaseFile {
            m_xFile ? m_xFile->fgets(str, num, delim) : -1;
   }
   /** \return The total number of bytes in a file. */
-  uint64_t fileSize() {
+  uint64_t fileSize() const {
     return m_fFile ? m_fFile->fileSize() :
            m_xFile ? m_xFile->fileSize() : 0;
+  }
+  /** \return Address of first sector or zero for empty file. */
+  uint32_t firstSector() const {
+    return m_fFile ? m_fFile->firstSector() :
+           m_xFile ? m_xFile->firstSector() : 0;
   }
   /** Ensure that any bytes written to the file are saved to the SD card. */
   void flush() {sync();}
@@ -144,10 +163,43 @@ class FsBaseFile {
     if (m_fFile) m_fFile->fsetpos(pos);
     if (m_xFile) m_xFile->fsetpos(pos);
   }
+  /** Get a file's access date and time.
+   *
+   * \param[out] pdate Packed date for directory entry.
+   * \param[out] ptime Packed time for directory entry.
+   *
+   * \return true for success or false for failure.
+   */
+  bool getAccessDateTime(uint16_t* pdate, uint16_t* ptime) {
+    return m_fFile ? m_fFile->getAccessDateTime(pdate, ptime) :
+           m_xFile ? m_xFile->getAccessDateTime(pdate, ptime) : false;
+  }
+  /** Get a file's create date and time.
+   *
+   * \param[out] pdate Packed date for directory entry.
+   * \param[out] ptime Packed time for directory entry.
+   *
+   * \return true for success or false for failure.
+   */
+  bool getCreateDateTime(uint16_t* pdate, uint16_t* ptime) {
+    return m_fFile ? m_fFile->getCreateDateTime(pdate, ptime) :
+           m_xFile ? m_xFile->getCreateDateTime(pdate, ptime) : false;
+  }
   /** \return All error bits. */
   uint8_t getError() {
     return m_fFile ? m_fFile->getError() :
            m_xFile ? m_xFile->getError() : 0XFF;
+  }
+  /** Get a file's Modify date and time.
+   *
+   * \param[out] pdate Packed date for directory entry.
+   * \param[out] ptime Packed time for directory entry.
+   *
+   * \return true for success or false for failure.
+   */
+  bool getModifyDateTime(uint16_t* pdate, uint16_t* ptime) {
+    return m_fFile ? m_fFile->getModifyDateTime(pdate, ptime) :
+           m_xFile ? m_xFile->getModifyDateTime(pdate, ptime) : false;
   }
   /**
    * Get a file's name followed by a zero byte.
@@ -165,28 +217,46 @@ class FsBaseFile {
   }
 
   /** \return value of writeError */
-  bool getWriteError() {
+  bool getWriteError() const {
     return m_fFile ? m_fFile->getWriteError() :
            m_xFile ? m_xFile->getWriteError() : true;
   }
+  /**
+   * Check for BlockDevice busy.
+   *
+   * \return true if busy else false.
+   */
+  bool isBusy() {
+    return m_fFile ? m_fFile->isBusy() :
+           m_xFile ? m_xFile->isBusy() : true;
+  }
+  /** \return True if the file is contiguous. */
+  bool isContiguous() const {
+#if USE_FAT_FILE_FLAG_CONTIGUOUS
+    return m_fFile ? m_fFile->isContiguous() :
+           m_xFile ? m_xFile->isContiguous() : false;
+#else  // USE_FAT_FILE_FLAG_CONTIGUOUS
+    return m_xFile ? m_xFile->isContiguous() : false;
+#endif  // USE_FAT_FILE_FLAG_CONTIGUOUS
+  }
   /** \return True if this is a directory else false. */
-  bool isDir() {
+  bool isDir() const {
     return m_fFile ? m_fFile->isDir() :
            m_xFile ? m_xFile->isDir() : false;
   }
   /** This function reports if the current file is a directory or not.
    * \return true if the file is a directory.
    */
-  bool isDirectory() {return isDir();}
+  bool isDirectory() const {return isDir();}
   /** \return True if this is a hidden file else false. */
-  bool isHidden() {
+  bool isHidden() const {
     return m_fFile ? m_fFile->isHidden() :
            m_xFile ? m_xFile->isHidden() : false;
   }
   /** \return True if this is an open file/directory else false. */
-  bool isOpen() {return m_fFile || m_xFile;}
+  bool isOpen() const {return m_fFile || m_xFile;}
   /** \return True if this is a subdirectory file else false. */
-  bool isSubDir() {
+  bool isSubDir() const {
     return m_fFile ? m_fFile->isSubDir() :
            m_xFile ? m_xFile->isSubDir() : false;
   }
@@ -417,7 +487,7 @@ class FsBaseFile {
            m_xFile ? m_xFile->preAllocate(length) : false;
   }
   /** \return the current file position. */
-  uint64_t position() {return curPosition();}
+  uint64_t position() const {return curPosition();}
    /** Print a number followed by a field terminator.
    * \param[in] value The number to be printed.
    * \param[in] term The field terminator.  Use '\\n' for CR LF.
@@ -578,7 +648,7 @@ class FsBaseFile {
            m_xFile ? m_xFile->seekSet(pos) : false;
   }
   /** \return the file's size. */
-  uint64_t size() {return fileSize();}
+  uint64_t size() const {return fileSize();}
   /** The sync() call causes all modified data and directory fields
    * to be written to the storage device.
    *
@@ -593,7 +663,7 @@ class FsBaseFile {
    * \param[in] flags Values for \a flags are constructed by a bitwise-inclusive
    * OR of flags from the following list
    *
-   * T_ACCESS - Set the file's last access date.
+   * T_ACCESS - Set the file's last access date and time.
    *
    * T_CREATE - Set the file's creation date and time.
    *

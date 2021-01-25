@@ -30,87 +30,15 @@
  */
 #include "../common/SysCall.h"
 #include "../common/BlockDevice.h"
+#include "../common/FsCache.h"
 #include "ExFatConfig.h"
 #include "ExFatTypes.h"
 /** Type for exFAT partition */
 const uint8_t FAT_TYPE_EXFAT = 64;
 
 class ExFatFile;
+
 //==============================================================================
-/**
- * \class FsCache
- * \brief Sector cache.
- */
-class FsCache {
- public:
-  /** Cached sector is dirty */
-  static const uint8_t CACHE_STATUS_DIRTY = 1;
-  /** Cache sector status bits */
-  static const uint8_t CACHE_STATUS_MASK = CACHE_STATUS_DIRTY;
-  /** Sync existing sector but do not read new sector. */
-  static const uint8_t CACHE_OPTION_NO_READ = 2;
-  /** Cache sector for read. */
-  static const uint8_t CACHE_FOR_READ = 0;
-  /** Cache sector for write. */
-  static const uint8_t CACHE_FOR_WRITE = CACHE_STATUS_DIRTY;
-  /** Reserve cache sector for write - do not read from sector device. */
-  static const uint8_t CACHE_RESERVE_FOR_WRITE
-    = CACHE_STATUS_DIRTY | CACHE_OPTION_NO_READ;
-
-  FsCache() : m_blockDev(nullptr) {
-    invalidate();
-  }
-
-  /** \return Cache sector address. */
-  uint8_t* cacheBuffer() {
-    return m_cacheBuffer;
-  }
-  /** \return Clear the cache and returns a pointer to the cache. */
-  uint8_t* clear() {
-    if (isDirty() && !sync()) {
-      return nullptr;
-    }
-    invalidate();
-    return m_cacheBuffer;
-  }
-  /** Set current sector dirty. */
-  void dirty() {
-    m_status |= CACHE_STATUS_DIRTY;
-  }
-  /** Initialize the cache.
-   * \param[in] blockDev Block device for this partition.
-   */
-  void init(BlockDevice* blockDev) {
-    m_blockDev = blockDev;
-    invalidate();
-  }
-  /** Invalidate current cache sector. */
-  void invalidate();
-  /** \return dirty status */
-  bool isDirty() {
-    return m_status & CACHE_STATUS_DIRTY;
-  }
-  /** \return Logical sector number for cached sector. */
-  uint32_t sector() {
-    return m_sector;
-  }
-  /** Fill cache with sector data.
-   * \param[in] sector Sector to read.
-   * \param[in] option mode for cached sector.
-   * \return Address of cached sector. */
-  uint8_t* get(uint32_t sector, uint8_t option);
-  /** Write current sector if dirty.
-   * \return true for success or false for failure.
-   */
-  bool sync();
-
- private:
-  uint8_t m_status;
-  BlockDevice* m_blockDev;
-  uint32_t m_sector;
-  uint8_t m_cacheBuffer[512];
-};
-//=============================================================================
 /**
  * \class ExFatPartition
  * \brief Access exFat partitions on raw file devices.
@@ -119,15 +47,15 @@ class ExFatPartition {
  public:
   ExFatPartition() : m_fatType(0) {}
   /** \return the number of bytes in a cluster. */
-  uint32_t bytesPerCluster() {return m_bytesPerCluster;}
+  uint32_t bytesPerCluster() const {return m_bytesPerCluster;}
   /** \return the power of two for bytesPerCluster. */
-  uint8_t bytesPerClusterShift() {
+  uint8_t bytesPerClusterShift() const {
     return m_bytesPerSectorShift + m_sectorsPerClusterShift;
   }
   /** \return the number of bytes in a sector. */
-  uint16_t bytesPerSector() {return m_bytesPerSector;}
+  uint16_t bytesPerSector() const {return m_bytesPerSector;}
   /** \return the power of two for bytesPerSector. */
-  uint8_t bytesPerSectorShift() {return m_bytesPerSectorShift;}
+  uint8_t bytesPerSectorShift() const {return m_bytesPerSectorShift;}
 
   /** Clear the cache and returns a pointer to the cache.  Not for normal apps.
    * \return A pointer to the cache buffer or zero if an error occurs.
@@ -136,13 +64,13 @@ class ExFatPartition {
     return m_dataCache.clear();
   }
   /** \return the cluster count for the partition. */
-  uint32_t clusterCount() {return m_clusterCount;}
+  uint32_t clusterCount() const {return m_clusterCount;}
   /** \return the cluster heap start sector. */
-  uint32_t clusterHeapStartSector() {return m_clusterHeapStartSector;}
+  uint32_t clusterHeapStartSector() const {return m_clusterHeapStartSector;}
   /** \return the FAT length in sectors */
-  uint32_t fatLength() {return m_fatLength;}
+  uint32_t fatLength() const {return m_fatLength;}
   /** \return the FAT start sector number. */
-  uint32_t fatStartSector() {return m_fatStartSector;}
+  uint32_t fatStartSector() const {return m_fatStartSector;}
   /** \return Type FAT_TYPE_EXFAT for exFAT partition or zero for error. */
   uint8_t fatType() const {return m_fatType;}
   /** \return the free cluster count. */
@@ -157,18 +85,24 @@ class ExFatPartition {
    * \return true for success or false for failure.
    */
   bool init(BlockDevice* dev, uint8_t part);
+  /**
+   * Check for BlockDevice busy.
+   *
+   * \return true if busy else false.
+   */
+  bool isBusy() {return m_blockDev->isBusy();}
   /** \return the root directory start cluster number. */
-  uint32_t rootDirectoryCluster() {return m_rootDirectoryCluster;}
+  uint32_t rootDirectoryCluster() const {return m_rootDirectoryCluster;}
   /** \return the root directory length. */
   uint32_t rootLength();
   /** \return the number of sectors in a cluster. */
-  uint32_t sectorsPerCluster() {return 1UL << m_sectorsPerClusterShift;}
+  uint32_t sectorsPerCluster() const {return 1UL << m_sectorsPerClusterShift;}
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
   // Use sectorsPerCluster(). blocksPerCluster() will be removed in the future.
   uint32_t blocksPerCluster() __attribute__ ((deprecated)) {return sectorsPerCluster();} //NOLINT
 #endif  // DOXYGEN_SHOULD_SKIP_THIS
   /** \return the power of two for sectors per cluster. */
-  uint8_t  sectorsPerClusterShift() {return m_sectorsPerClusterShift;}
+  uint8_t  sectorsPerClusterShift() const {return m_sectorsPerClusterShift;}
   //----------------------------------------------------------------------------
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
   void checkUpcase(print_t* pr);
@@ -218,7 +152,7 @@ class ExFatPartition {
   uint32_t dataCacheSector() {return m_dataCache.sector();}
   bool dataCacheSync() {return m_dataCache.sync();}
   //----------------------------------------------------------------------------
-  uint32_t clusterMask() {return m_clusterMask;}
+  uint32_t clusterMask() const {return m_clusterMask;}
   uint32_t clusterStartSector(uint32_t cluster) {
     return m_clusterHeapStartSector +
            ((cluster - 2) << m_sectorsPerClusterShift);
@@ -229,9 +163,21 @@ class ExFatPartition {
   bool fatPut(uint32_t cluster, uint32_t value);
   uint32_t chainSize(uint32_t cluster);
   bool freeChain(uint32_t cluster);
-  uint16_t sectorMask() {return m_sectorMask;}
+  uint16_t sectorMask() const {return m_sectorMask;}
   bool syncDevice() {
     return m_blockDev->syncDevice();
+  }
+  bool cacheSafeRead(uint32_t sector, uint8_t* dst) {
+    return m_dataCache.cacheSafeRead(sector, dst);
+  }
+  bool cacheSafeWrite(uint32_t sector, const uint8_t* src) {
+    return m_dataCache.cacheSafeWrite(sector, src);
+  }
+  bool cacheSafeRead(uint32_t sector, uint8_t* dst, size_t count) {
+    return m_dataCache.cacheSafeRead(sector, dst, count);
+  }
+  bool cacheSafeWrite(uint32_t sector, const uint8_t* src, size_t count) {
+     return m_dataCache.cacheSafeWrite(sector, src, count);
   }
   bool readSector(uint32_t sector, uint8_t* dst) {
     return m_blockDev->readSector(sector, dst);
@@ -239,14 +185,6 @@ class ExFatPartition {
   bool writeSector(uint32_t sector, const uint8_t* src) {
     return m_blockDev->writeSector(sector, src);
   }
-#if USE_MULTI_SECTOR_IO
-  bool readSectors(uint32_t sector, uint8_t* dst, size_t count) {
-    return m_blockDev->readSectors(sector, dst, count);
-  }
-  bool writeSectors(uint32_t sector, const uint8_t* src, size_t count) {
-    return m_blockDev->writeSectors(sector, src, count);
-  }
-#endif  // USE_MULTI_SECTOR_IO
   //----------------------------------------------------------------------------
   static const uint8_t  m_bytesPerSectorShift = 9;
   static const uint16_t m_bytesPerSector = 512;

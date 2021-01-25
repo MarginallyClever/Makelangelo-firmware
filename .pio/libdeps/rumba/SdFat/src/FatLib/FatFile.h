@@ -70,7 +70,6 @@ struct FatPos_t {
   uint32_t position;
   /** cluster for position */
   uint32_t cluster;
-  FatPos_t() : position(0), cluster(0) {}
 };
 //------------------------------------------------------------------------------
 /** Expression for path name separator. */
@@ -150,19 +149,56 @@ class FatFile {
     m_error &= ~WRITE_ERROR;
   }
   /** \return Directory entry index. */
-  uint16_t dirIndex() {return m_dirIndex;}
-  /** \return All error bits. */
-  uint8_t getError() {
-    return m_error;
+  uint16_t dirIndex() const {return m_dirIndex;}
+  /** Get a file's access date.
+   *
+   * \param[out] pdate Packed date for directory entry.
+   *
+   * \return true for success or false for failure.
+   */
+  bool getAccessDate(uint16_t* pdate);
+  /** Get a file's access date and time.
+   *
+   * \param[out] pdate Packed date for directory entry.
+   * \param[out] ptime return zero since FAT has no time.
+   *
+   * This function is for comparability in FsFile.
+   *
+   * \return true for success or false for failure.
+   */
+  bool getAccessDateTime(uint16_t* pdate, uint16_t* ptime) {
+    if (!getAccessDate(pdate)) {
+      return false;
+    }
+    *ptime = 0;
+    return true;
   }
+  /** Get a file's create date and time.
+   *
+   * \param[out] pdate Packed date for directory entry.
+   * \param[out] ptime Packed time for directory entry.
+   *
+   * \return true for success or false for failure.
+   */
+  bool getCreateDateTime(uint16_t* pdate, uint16_t* ptime);
+  /** \return All error bits. */
+  uint8_t getError() const {return m_error;}
+  /** Get a file's modify date and time.
+   *
+   * \param[out] pdate Packed date for directory entry.
+   * \param[out] ptime Packed time for directory entry.
+   *
+   * \return true for success or false for failure.
+   */
+  bool getModifyDateTime(uint16_t* pdate, uint16_t* ptime);
   /** \return value of writeError */
-  bool getWriteError() {
+  bool getWriteError() const {
     return isOpen() ? m_error & WRITE_ERROR : true;
   }
   /** get position for streams
    * \param[out] pos struct to receive position
    */
-  void fgetpos(fspos_t* pos);
+  void fgetpos(fspos_t* pos) const;
   /** set position for streams
    * \param[in] pos struct with value for new position
    */
@@ -196,6 +232,8 @@ class FatFile {
    * \param[out] bgnSector the first sector address for the file.
    * \param[out] endSector the last  sector address for the file.
    *
+   * Set the contiguous flag if the file is contiguous.
+   * The parameters may be nullptr to only set the flag.
    * \return true for success or false for failure.
    */
   bool contiguousRange(uint32_t* bgnSector, uint32_t* endSector);
@@ -203,7 +241,7 @@ class FatFile {
   /** Create and open a new contiguous file of a specified size.
    *
    * \param[in] dirFile The directory where the file will be created.
-   * \param[in] path A path with a validfile name.
+   * \param[in] path A path with a valid file name.
    * \param[in] size The desired file size.
    *
    * \return true for success or false for failure.
@@ -212,7 +250,7 @@ class FatFile {
                         const char* path, uint32_t size);
   /** Create and open a new contiguous file of a specified size.
    *
-   * \param[in] path A path with a validfile name.
+   * \param[in] path A path with a valid file name.
    * \param[in] size The desired file size.
    *
    * \return true for success or false for failure.
@@ -223,9 +261,7 @@ class FatFile {
   uint32_t curCluster() const {return m_curCluster;}
 
   /** \return The current position for a file or directory. */
-  uint32_t curPosition() const {
-    return m_curPosition;
-  }
+  uint32_t curPosition() const {return m_curPosition;}
 
   /** Return a file's directory entry.
    *
@@ -263,8 +299,8 @@ class FatFile {
    * Get a string from a file.
    *
    * fgets() reads bytes from a file into the array pointed to by \a str, until
-   * \a num - 1 bytes are read, or a delimiter is read and transferred to \a str,
-   * or end-of-file is encountered. The string is then terminated
+   * \a num - 1 bytes are read, or a delimiter is read and transferred to
+   * \a str, or end-of-file is encountered. The string is then terminated
    * with a null byte.
    *
    * fgets() deletes CR, '\\r', from the string.  This insures only a '\\n'
@@ -277,17 +313,16 @@ class FatFile {
    * \param[in] delim Optional set of delimiters. The default is "\n".
    *
    * \return For success fgets() returns the length of the string in \a str.
-   * If no data is read, fgets() returns zero for EOF or -1 if an error occurred.
+   * If no data is read, fgets() returns zero for EOF or -1 if an error
+   * occurred.
    */
   int fgets(char* str, int num, char* delim = nullptr);
 
   /** \return The total number of bytes in a file. */
-  uint32_t fileSize() const {
-    return m_fileSize;
-  }
+  uint32_t fileSize() const {return m_fileSize;}
   /** \return first sector of file or zero for empty file. */
   uint32_t firstBlock() const {return firstSector();}
-  /** \return first sector of file or zero for empty file. */
+  /** \return Address of first sector or zero for empty file. */
   uint32_t firstSector() const;
   /**
    * Get a file's name followed by a zero byte.
@@ -307,62 +342,42 @@ class FatFile {
    * \return true for success or false for failure.
    */
   bool getSFN(char* name);
+  /**
+   * Check for BlockDevice busy.
+   *
+   * \return true if busy else false.
+   */
+  bool isBusy();
 #if USE_FAT_FILE_FLAG_CONTIGUOUS
     /** \return True if the file is contiguous. */
   bool isContiguous() const {return m_flags & FILE_FLAG_CONTIGUOUS;}
 #endif  // USE_FAT_FILE_FLAG_CONTIGUOUS
   /** \return True if this is a directory. */
-  bool isDir() const {
-    return m_attributes & FILE_ATTR_DIR;
-  }
+  bool isDir() const {return m_attributes & FILE_ATTR_DIR;}
   /** \return True if this is a normal file. */
-  bool isFile() const {
-    return m_attributes & FILE_ATTR_FILE;
-  }
+  bool isFile() const {return m_attributes & FILE_ATTR_FILE;}
   /** \return True if this is a hidden file. */
-  bool isHidden() const {
-    return m_attributes & FILE_ATTR_HIDDEN;
-  }
+  bool isHidden() const {return m_attributes & FILE_ATTR_HIDDEN;}
   /** \return true if this file has a Long File Name. */
-  bool isLFN() const {
-    return m_lfnOrd;
-  }
+  bool isLFN() const {return m_lfnOrd;}
   /** \return True if this is an open file/directory. */
-  bool isOpen() const {
-    return m_attributes;
-  }
+  bool isOpen() const {return m_attributes;}
   /** \return True if this is the root directory. */
-  bool isRoot() const {
-    return m_attributes & FILE_ATTR_ROOT;
-  }
+  bool isRoot() const {return m_attributes & FILE_ATTR_ROOT;}
   /** \return True if this is the FAT32 root directory. */
-  bool isRoot32() const {
-    return m_attributes & FILE_ATTR_ROOT32;
-  }
+  bool isRoot32() const {return m_attributes & FILE_ATTR_ROOT32;}
   /** \return True if this is the FAT12 of FAT16 root directory. */
-  bool isRootFixed() const {
-    return m_attributes & FILE_ATTR_ROOT_FIXED;
-  }
+  bool isRootFixed() const {return m_attributes & FILE_ATTR_ROOT_FIXED;}
   /** \return True if file is read-only */
-  bool isReadOnly() const {
-    return m_attributes & FILE_ATTR_READ_ONLY;
-  }
+  bool isReadOnly() const {return m_attributes & FILE_ATTR_READ_ONLY;}
   /** \return True if this is a subdirectory. */
-  bool isSubDir() const {
-    return m_attributes & FILE_ATTR_SUBDIR;
-  }
+  bool isSubDir() const {return m_attributes & FILE_ATTR_SUBDIR;}
   /** \return True if this is a system file. */
-  bool isSystem() const {
-    return m_attributes & FILE_ATTR_SYSTEM;
-  }
+  bool isSystem() const {return m_attributes & FILE_ATTR_SYSTEM;}
   /** \return True file is writable. */
-  bool isReadable() const {
-    return m_flags & FILE_FLAG_READ;
-  }
+  bool isReadable() const {return m_flags & FILE_FLAG_READ;}
   /** \return True file is writable. */
-  bool isWritable() const {
-    return m_flags & FILE_FLAG_WRITE;
-  }
+  bool isWritable() const {return m_flags & FILE_FLAG_WRITE;}
   /** Check for a legal 8.3 character.
    * \param[in] c Character to be checked.
    * \return true for a legal 8.3 character.
@@ -472,10 +487,12 @@ class FatFile {
    * O_CREAT - If the file exists, this flag has no effect except as noted
    * under O_EXCL below. Otherwise, the file shall be created
    *
-   * O_EXCL - If O_CREAT and O_EXCL are set, open() shall fail if the file exists.
+   * O_EXCL - If O_CREAT and O_EXCL are set, open() shall fail if the file
+   * exists.
    *
    * O_TRUNC - If the file exists and is a regular file, and the file is
-   * successfully opened and is not read only, its length shall be truncated to 0.
+   * successfully opened and is not read only, its length shall be truncated
+   * to 0.
    *
    * WARNING: A given file must not be opened by more than one FatFile object
    * or file corruption may occur.
@@ -873,7 +890,8 @@ class FatFile {
    * \return For success write() returns the number of bytes written, always
    * \a count.  If an error occurs, write() returns -1.  Possible errors
    * include write() is called before a file has been opened, write is called
-   * for a read-only file, device is full, a corrupt file system or an I/O error.
+   * for a read-only file, device is full, a corrupt file system or an I/O
+   * error.
    *
    */
   size_t write(const void* buf, size_t count);

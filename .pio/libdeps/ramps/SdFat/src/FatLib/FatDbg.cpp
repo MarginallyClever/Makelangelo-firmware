@@ -24,7 +24,6 @@
  */
 #include "FatVolume.h"
 #include "FatFile.h"
-#include "../common/FsDateTime.h"
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 //------------------------------------------------------------------------------
 static void printHex(print_t* pr, uint8_t h) {
@@ -145,7 +144,7 @@ void FatPartition::dmpFat(print_t* pr, uint32_t start, uint32_t count) {
   uint32_t sector = m_fatStartSector + start;
   uint32_t cluster = nf*start;
   for (uint32_t i = 0; i < count; i++) {
-    cache_t* pc = cacheFetchFat(sector + i, FatCache::CACHE_FOR_READ);
+    cache_t* pc = cacheFetchFat(sector + i, FsCache::CACHE_FOR_READ);
     if (!pc) {
       pr->println(F("cache read failed"));
       return;

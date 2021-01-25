@@ -7,11 +7,10 @@
 
 #ifdef HAS_SD
 
-#include <SPI.h>
-#include "SdFat.h"
+#  include <SPI.h>
+#  include "SdFat.h"
 
-
-//extern File root;
+// extern File root;
 extern SdFile root;
 extern char sd_inserted;
 extern char sd_printing_now;
