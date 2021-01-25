@@ -19,9 +19,9 @@ uint8_t current_tool = 0;
 
 /**
    Compare two floats to the first decimal place.
-   return true when abs(a-b)<0.1
+   return 1 when abs(a-b)<0.1
 */
-boolean equalEpsilon(float a, float b) {
+uint8_t equalEpsilon(float a, float b) {
   int aa = floor(a * 10);
   int bb = floor(b * 10);
   //Serial.print("aa=");        Serial.print(aa);
@@ -578,9 +578,8 @@ void Parser::G01() {
   float f = parseNumber('F', feed_rate);
   f = min(max(f, (float)MIN_FEEDRATE), (float)MAX_FEEDRATE);
 
-  boolean badAngles=false;
+  uint8_t badAngles=0;
   
-  int i;
   float pos[NUM_AXIES];
   for (ALL_AXIES(i)) {
     float p = axies[i].pos;
@@ -598,7 +597,7 @@ void Parser::G01() {
     }
   }
 
-  if(badAngles) return;
+  if(badAngles==1) return;
 
   lineSafe( pos, f );
 }
@@ -735,17 +734,17 @@ void Parser::M101() {
   if (axisNumber >= 0 && axisNumber < NUM_AXIES) {
     float newT = parseNumber('T', axies[axisNumber].limitMax);
     float newB = parseNumber('B', axies[axisNumber].limitMin);
-    boolean changed = false;
+    uint8_t changed = 0;
 
     if (!equalEpsilon(axies[axisNumber].limitMax, newT)) {
       axies[axisNumber].limitMax = newT;
-      changed = true;
+      changed = 1;
     }
     if (!equalEpsilon(axies[axisNumber].limitMin, newB)) {
       axies[axisNumber].limitMin = newB;
-      changed = true;
+      changed = 1;
     }
-    if (changed == true) {
+    if (changed == 1) {
       eepromManager.saveLimits();
     }
   }
@@ -753,7 +752,6 @@ void Parser::M101() {
 
   Serial.print(F("M101 ("));
 
-  int i;
   for (ALL_AXIES(i)) {
     Serial.print(axies[i].limitMin);
     if (i < NUM_AXIES - 1)  Serial.print(',');
@@ -889,7 +887,7 @@ void Parser::M205() {
   f = parseNumber('W', max_jerk[5]);  max_jerk[5] = max(min(f, (float)MAX_JERK), (float)0);
   Serial.print(" W");  Serial.print(max_jerk[5]);
 #endif
-  f = parseNumber('B', min_segment_time_us);  min_segment_time_us = max(min(f, 1000000), (float)0);
+  f = parseNumber('B', min_segment_time_us);  min_segment_time_us = max(min(f, 1000000.0f), (float)0);
   Serial.print(" B");  Serial.println(min_segment_time_us);
 }
 

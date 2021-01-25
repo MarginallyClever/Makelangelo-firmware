@@ -24,4 +24,6 @@
 #define NUM_BOARD_SERVOS          (1)
 #define SERVO0_PIN                (24)
 
+#define USE_ALT_SERVO
+
 #endif

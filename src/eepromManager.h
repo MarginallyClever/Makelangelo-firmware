@@ -30,7 +30,7 @@
 class EEPROMManager {
 public:
   long readLong(int ee);
-  boolean writeLong(int ee, long value);
+  uint8_t writeLong(int ee, long value);
   
   uint8_t loadVersion();
   void saveUID();

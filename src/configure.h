@@ -54,8 +54,7 @@
 #define BOARD_SIXI_MEGA    6  // Arduino Mega + custom shield for Sixi 2 robot
 #define BOARD_CNCV3        7  // Mega2560 + CNC Shield v3
 #define BOARD_ESP32        8  // ESP32 + Marginally Clever Polargraph PCB.
-#define BOARD_SKRPRO       9  // SKR Pro 1.2
-#define BOARD_SIXI_32      10 //emerging mainboard for sixi2???
+#define BOARD_SKRPRO1_2    9  // SKR Pro 1.2
 
 // default value
 #define MOTHERBOARD BOARD_SIXI_MEGA

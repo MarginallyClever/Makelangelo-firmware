@@ -29,15 +29,15 @@ long EEPROMManager::readLong(int ee) {
 
 // 2020-01-31 Dan added check to not update EEPROM if value is unchanged.
 // from http://www.arduino.cc/cgi-bin/yabb2/YaBB.pl?num=1234477290/3
-// returns true if the value was changed.
-boolean EEPROMManager::writeLong(int ee, long value) {
-  if(readLong(ee) == value) return false;
+// returns 1 if the value was changed.
+uint8_t EEPROMManager::writeLong(int ee, long value) {
+  if(readLong(ee) == value) return 0;
   
   byte* p = (byte*)(void*)&value;
   for (uint16_t i = 0; i < sizeof(value); i++)
   EEPROM.write(ee++, *p++);
 
-  return true;
+  return 1;
 }
 
 
@@ -58,7 +58,7 @@ uint8_t EEPROMManager::loadUID() {
 
 void EEPROMManager::saveLimits() {
   Serial.println(F("Saving limits."));
-  int i,j=ADDR_LIMITS;
+  int j=ADDR_LIMITS;
   for(ALL_AXIES(i)) {
     writeLong(j,axies[i].limitMax*100);
     j+=4;
@@ -69,7 +69,7 @@ void EEPROMManager::saveLimits() {
 
 
 void EEPROMManager::loadLimits() {
-  int i,j=ADDR_LIMITS;
+  int j=ADDR_LIMITS;
   for(ALL_AXIES(i)) {
     axies[i].limitMax = (float)readLong(j)/100.0f;
     j+=4;
@@ -91,7 +91,7 @@ void EEPROMManager::loadLimits() {
  */
 void EEPROMManager::adjustLimits(float *limits) {
   Serial.println(F("Adjusting limits."));
-  int i,j=0;
+  int j=0;
   int changed=0;
   float v;
   for(ALL_AXIES(i)) {
@@ -119,7 +119,7 @@ void EEPROMManager::adjustLimits(float *limits) {
 
 void EEPROMManager::saveHome() {
   Serial.println(F("Saving home."));
-  int i,j=ADDR_HOME;
+  int j=ADDR_HOME;
   for(ALL_AXIES(i)) {
     writeLong(j,(long)(axies[i].homePos*100.0f));
     j+=4;
