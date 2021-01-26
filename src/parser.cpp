@@ -1,7 +1,12 @@
 #include "configure.h"
 #include "lcd.h"
 #include "sdcard.h"
-#include "mservo.h"
+
+#if !defined(USE_ALT_SERVO)
+#  include <Servo.h>
+# else
+# include "mservo.h"
+#endif
 
 // GLOBALS
 
