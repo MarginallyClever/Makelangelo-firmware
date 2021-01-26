@@ -42,7 +42,7 @@
   Stops an attached servos from pulsing its i/o pin.
  */
 
-#if defined(USE_ALT_SERVO) && MOTHERBOARD != BOARD_SKRPRO1_2
+#if defined(USE_ALT_SERVO)// && MOTHERBOARD != BOARD_SKRPRO1_2
 
 #  include <avr/interrupt.h>
 #  include <Arduino.h>
