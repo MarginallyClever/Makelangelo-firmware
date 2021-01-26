@@ -587,12 +587,12 @@ void Parser::D23() {
   float homePos[NUM_AXIES];
   for (ALL_SENSORS(i)) { homePos[i] = sensorManager.sensors[i].angle; }
   // subtract the calibration from this position
-  homePos[0] += 0;
-  homePos[1] += -41.3;
-  homePos[2] += 74.5;
-  homePos[3] += 0;
-  homePos[4] += -33.5;
-  homePos[5] += 0;
+  homePos[0] += 0.0;
+  homePos[1] += 0.0;
+  homePos[2] += 0.0;
+  homePos[3] += 0.0;
+  homePos[4] += 0.0;
+  homePos[5] += 0.0;
 
   setHome(homePos);
 }
