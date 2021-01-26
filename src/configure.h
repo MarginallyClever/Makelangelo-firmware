@@ -29,7 +29,8 @@
 #define SCARA         11  // 2 axis SCARA.
 
 // default value
-#define MACHINE_STYLE TRADITIONAL6
+// !! this is now handeled via pio.ini !!
+//#define MACHINE_STYLE SIXI
 
 //------------------------------------------------------------------------------
 // LCD panels supported
@@ -56,8 +57,9 @@
 #define BOARD_ESP32        8  // ESP32 + Marginally Clever Polargraph PCB.
 #define BOARD_SKRPRO1_2    9  // SKR Pro 1.2
 
-// default value
-#define MOTHERBOARD BOARD_RUMBA
+// default value 
+// !! this is now handeled via pio.ini !!
+//#define MOTHERBOARD BOARD_SIXI_MEGA
 
 //------------------------------------------------------------------------------
 // YOUR CHANGES GO HERE
