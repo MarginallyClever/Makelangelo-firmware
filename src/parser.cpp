@@ -588,7 +588,7 @@ void Parser::D23() {
   for (ALL_SENSORS(i)) { homePos[i] = sensorManager.sensors[i].angle; }
   // subtract the calibration from this position
   homePos[0] += 0.0;
-  homePos[1] += 0.0;
+  homePos[1] += -90.0;
   homePos[2] += 0.0;
   homePos[3] += 0.0;
   homePos[4] += 0.0;
@@ -650,12 +650,20 @@ void Parser::G01() {
 
     if (pos[i] > axies[i].limitMax) {
       Serial.print(F("LIMIT MAX "));
-      Serial.println(i);
+      Serial.print(i);
+      Serial.print(" | pos[i] = ");
+      Serial.print(pos[i]);
+      Serial.print(" | axies[i].limitMax = ");
+      Serial.println(axies[i].limitMax);
       badAngles = 1;
     }
     if (pos[i] < axies[i].limitMin) {
       Serial.print(F("LIMIT MIN "));
-      Serial.println(i);
+      Serial.print(i);
+      Serial.print(" | pos[i] = ");
+      Serial.print(pos[i]);
+      Serial.print(" | axies[i].limitMin = ");
+      Serial.println(axies[i].limitMin);
       badAngles = 1;
     }
   }

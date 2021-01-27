@@ -28,7 +28,7 @@
 #  define DEFAULT_ACCELERATION (150.0)
 #  define DEGREES_PER_STEP     (1.8)
 #elif NORMAL_MOTOR_STEPS == 400
-#  define DEFAULT_FEEDRATE     (100.0)
+#  define DEFAULT_FEEDRATE     (25.0)
 #  define DEFAULT_ACCELERATION (150.0)
 #  define DEGREES_PER_STEP     (0.9)
 #endif

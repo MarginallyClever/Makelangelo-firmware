@@ -17,9 +17,9 @@
 // plan long moves as a set of submoves to increase accuracy.  Uncomment to turn this off.
 #  define SEGMENTS_PER_SECOND (40)
 
-#  define NUM_AXIES   (7)
+#  define NUM_AXIES   (6)
 #  define NUM_MOTORS  (6)
-#  define NUM_TOOLS   (1)
+#  define NUM_TOOLS   (0)
 #  define NUM_SENSORS (6)
 
 #  define NUM_SERVOS (1)

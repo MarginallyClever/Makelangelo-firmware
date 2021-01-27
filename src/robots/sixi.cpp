@@ -14,6 +14,10 @@
 
 SensorManager sensorManager;
 
+
+  float posHome_store[7] = { 0, -90, 0, 0, 20, 0, 0 };
+  float pos_store[7]     = { 0, 0, 0, 0, 0, 0, 0 };
+
 /**
    Inverse Kinematics turns XY coordinates into step counts from each motor
    This code is a duplicate of
@@ -100,7 +104,12 @@ int FK(long *motorStepArray, float *axies) {
 void robot_findHome() {
   motor_engage();
   // sixi always knows where it is.
-  float pos[NUM_AXIES] = { 0, -90, 0, 0, 20, 0, 0 };
+  float pos[NUM_AXIES];
+
+  for (ALL_AXIES(i))
+  {
+    pos[i] = pos_store[i];
+  }
   lineSafe(pos, feed_rate);
 }
 
@@ -285,7 +294,12 @@ void drive(int i, int totalSteps, int t) {
 }
 
 void drive2(int i, float change) {
-  float pos[NUM_AXIES] = { 0, -90, 0, 0, 20, 0, 0 };
+  float pos[NUM_AXIES];
+
+  for (ALL_AXIES(i))
+  {
+    pos[i] = pos_store[i];
+  }
 
   pos[i] += -change;
 
@@ -427,8 +441,21 @@ void sixiDemo1() {
   Serial.print("AXIES=");
   Serial.println(NUM_AXIES);
 
-  float posHome[NUM_AXIES] = { 0, -90, 0, 0, 20, 0, 0 };
-  float pos[NUM_AXIES]     = { 0, 0, 0, 0, 0, 0, 0 };
+
+  float posHome[NUM_AXIES];
+  float pos[NUM_AXIES];
+
+  for (ALL_AXIES(i))
+  {
+    posHome[i] = posHome_store[i];
+    pos[i] = pos_store[i];
+  }
+
+
+
+
+
+
   int i, j;
 
   float fr = feed_rate;
