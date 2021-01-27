@@ -59,7 +59,9 @@ inline void CRITICAL_SECTION_END() {
 
 Motor motors[NUM_MOTORS];
 #ifndef ESP8266
+#if NUM_SERVOS>0
 Servo servos[NUM_SERVOS];
+#endif
 #endif
 
 Segment line_segments[MAX_SEGMENTS];
@@ -116,8 +118,6 @@ int global_servoStep_dir_0;
 float previous_nominal_speed = 0;
 float previous_safe_speed    = 0;
 float previous_speed[NUM_MUSCLES];
-
-uint32_t nextMainISR = 0;
 
 const char *MotorNames = "LRUVWT";
 const char *AxisNames  = "XYZUVWT";
@@ -200,8 +200,6 @@ float max_speed_allowed(const float &acc, const float &target_velocity, const fl
  * set up the pins for each motor
  */
 void motor_setup() {
-  Serial.println("A");
-
 #define SETUP_MOT(NN)                                    \
   motors[NN].letter           = MOTOR_##NN##_LETTER;     \
   motors[NN].step_pin         = MOTOR_##NN##_STEP_PIN;   \
@@ -226,9 +224,7 @@ void motor_setup() {
   SETUP_MOT(5)
 #endif
 
-  Serial.println("B");
-
-  for (ALL_MOTORS(i)) {
+  for(ALL_MOTORS(i)) {
     // set the motor pin & scale
     pinMode(motors[i].step_pin, OUTPUT);
     pinMode(motors[i].dir_pin, OUTPUT);
@@ -292,8 +288,6 @@ void motor_setup() {
   servos[4].attach(SERVO4_PIN);
 #endif
 
-  Serial.println("C");
-
   current_segment  = 0;
   last_segment     = 0;
   Segment &old_seg = line_segments[get_prev_segment(last_segment)];
@@ -302,8 +296,6 @@ void motor_setup() {
   long steps[NUM_MUSCLES];
   memset(steps, 0, (NUM_MUSCLES) * sizeof(long));
   motor_set_step_count(steps);
-
-  Serial.println("D");
 
   working_seg         = NULL;
   first_segment_delay = 0;
@@ -384,19 +376,17 @@ void recalculate_reverse_kernel(Segment *const current, const Segment *next) {
   if (current == NULL) return;
 
   const float entry_speed_max2 = current->entry_speed_max;
-  if (current->entry_speed != entry_speed_max2 || (next && next->recalculate_flag)) {
+  if (current->entry_speed != entry_speed_max2 || (next && TEST(next->flags,BIT_FLAG_RECALCULATE)) ) {
     // If nominal length true, max junction speed is guaranteed to be reached. Only compute
     // for max allowable speed if block is decelerating and nominal length is false.
-    const float new_entry_speed =
-        current->nominal_length_flag
-            ? entry_speed_max2
-            : min(entry_speed_max2, max_speed_allowed(-current->acceleration, (next ? next->entry_speed : MIN_FEEDRATE),
-                                                      current->distance));
+    const float new_entry_speed = TEST(current->flags, BIT_FLAG_NOMINAL)
+                                  ? entry_speed_max2
+                                  : min( entry_speed_max2, max_speed_allowed(-current->acceleration, (next ? next->entry_speed : MIN_FEEDRATE), current->distance) );
 
-    if (current->entry_speed != new_entry_speed) {
-      current->recalculate_flag = true;
-      if (current->busy) {
-        current->recalculate_flag = false;
+    if( current->entry_speed != new_entry_speed ) {
+      SET_BIT_ON(current->flags, BIT_FLAG_RECALCULATE);
+      if( TEST(current->flags, BIT_FLAG_BUSY) ) {
+        SET_BIT_OFF(current->flags, BIT_FLAG_RECALCULATE);
       } else {
         current->entry_speed = new_entry_speed;
       }
@@ -426,13 +416,13 @@ void recalculate_forward_kernel(const Segment *prev, Segment *const current) {
   // full speed change within the block, we need to adjust the entry speed accordingly. Entry
   // speeds have already been reset, maximized, and reverse planned by reverse planner.
   // If nominal length is true, max junction speed is guaranteed to be reached. No need to recheck.
-  if (!prev->nominal_length_flag && prev->entry_speed < current->entry_speed) {
+  if( !TEST(prev->flags,BIT_FLAG_NOMINAL) && prev->entry_speed < current->entry_speed ) {
     const float new_entry_speed2 = max_speed_allowed(-prev->acceleration, prev->entry_speed, prev->distance);
     // Check for junction speed change
     if (new_entry_speed2 < current->entry_speed) {
-      current->recalculate_flag = true;
-      if (current->busy) {
-        current->recalculate_flag = false;
+      SET_BIT_ON(current->flags, BIT_FLAG_RECALCULATE);
+      if(TEST(current->flags, BIT_FLAG_BUSY)) {
+        SET_BIT_OFF(current->flags, BIT_FLAG_RECALCULATE);
       } else {
         current->entry_speed = new_entry_speed2;
       }
@@ -494,17 +484,18 @@ void recalculate_trapezoids() {
   while (s != last_segment) {
     next             = &line_segments[s];
     next_entry_speed = next->entry_speed;
-    if (current) {
+    if(current) {
       // Recalculate if current block entry or exit junction speed has changed.
-      if (current->recalculate_flag || next->recalculate_flag) {
-        current->recalculate_flag = true;
-        if (!current->busy) {
+      if( TEST(current->flags,BIT_FLAG_RECALCULATE) || TEST(next->flags,BIT_FLAG_RECALCULATE) ) {
+        SET_BIT_ON( current->flags, BIT_FLAG_RECALCULATE );
+        if( !TEST(current->flags, BIT_FLAG_BUSY) ) {
           // NOTE: Entry and exit factors always > 0 by all previous logic operations.
           const float inom = 1.0 / current->nominal_speed;
           segment_update_trapezoid(current, current_entry_speed * inom, next_entry_speed * inom);
         }
       }
-      current->recalculate_flag = false;  // Reset current only to ensure next trapezoid is computed
+      // Reset current only to ensure next trapezoid is computed
+      SET_BIT_OFF(current->flags,BIT_FLAG_RECALCULATE);
     }
     s                   = get_next_segment(s);
     current_entry_speed = next_entry_speed;
@@ -513,12 +504,12 @@ void recalculate_trapezoids() {
 
   // Last/newest block in buffer. Make sure the last block always ends motion.
   if (next) {
-    next->recalculate_flag = true;
-    if (!current->busy) {
+    SET_BIT_ON(next->flags,BIT_FLAG_RECALCULATE);
+    if( !TEST(current->flags,BIT_FLAG_BUSY) ) {
       const float inom = 1.0 / next->nominal_speed;
       segment_update_trapezoid(next, next_entry_speed * inom, MIN_FEEDRATE * inom);
     }
-    next->recalculate_flag = false;
+    SET_BIT_OFF(next->flags,BIT_FLAG_RECALCULATE);
   }
 }
 
@@ -560,45 +551,28 @@ void describe_segments() {
     int coast     = next->decel_after - next->accel_until;
     int decel     = next->steps_total - next->decel_after;
     Serial.print(s);
-    Serial.print(F("\t"));
-    Serial.print(next->distance);
-    Serial.print(F("\t"));
-    Serial.print(next->acceleration);
-    Serial.print(F("\t"));
-    Serial.print(next->acceleration_steps_per_s2);
-    Serial.print(F("\t"));
-    Serial.print(next->acceleration_rate);
+    Serial.print(F("\t"));   Serial.print(next->distance);
+    Serial.print(F("\t"));   Serial.print(next->acceleration);
+    Serial.print(F("\t"));   Serial.print(next->acceleration_steps_per_s2);
+    Serial.print(F("\t"));   Serial.print(next->acceleration_rate);
 
-    Serial.print(F("\t"));
-    Serial.print(next->entry_speed);
-    Serial.print(F("\t"));
-    Serial.print(next->nominal_speed);
-    Serial.print(F("\t"));
-    Serial.print(next->entry_speed_max);
+    Serial.print(F("\t"));   Serial.print(next->entry_speed);
+    Serial.print(F("\t"));   Serial.print(next->nominal_speed);
+    Serial.print(F("\t"));   Serial.print(next->entry_speed_max);
 
-    Serial.print(F("\t"));
-    Serial.print(next->initial_rate);
-    Serial.print(F("\t"));
-    Serial.print(next->nominal_rate);
-    Serial.print(F("\t"));
-    Serial.print(next->final_rate);
+    Serial.print(F("\t"));   Serial.print(next->initial_rate);
+    Serial.print(F("\t"));   Serial.print(next->nominal_rate);
+    Serial.print(F("\t"));   Serial.print(next->final_rate);
 
-    Serial.print(F("\t"));
-    Serial.print(next->accel_until);
-    Serial.print(F("\t"));
-    Serial.print(coast);
-    Serial.print(F("\t"));
-    Serial.print(decel);
-    Serial.print(F("\t"));
-    Serial.print(next->steps_total);
-    // Serial.print(F("\t"));   Serial.print(next->steps_taken);
+    Serial.print(F("\t"));   Serial.print(next->accel_until);
+    Serial.print(F("\t"));   Serial.print(coast);
+    Serial.print(F("\t"));   Serial.print(decel);
+    Serial.print(F("\t"));   Serial.print(next->steps_total);
+    //Serial.print(F("\t"));   Serial.print(next->steps_taken);
 
-    Serial.print(F("\t"));
-    Serial.print(next->nominal_length_flag != 0 ? 'Y' : 'N');
-    Serial.print(F("\t"));
-    Serial.print(next->recalculate_flag != 0 ? 'Y' : 'N');
-    Serial.print(F("\t"));
-    Serial.print(next->busy != 0 ? 'Y' : 'N');
+    Serial.print(F("\t"));   Serial.print(TEST(next->flags,BIT_FLAG_NOMINAL) != 0 ? 'Y' : 'N');
+    Serial.print(F("\t"));   Serial.print(TEST(next->flags,BIT_FLAG_RECALCULATE) != 0 ? 'Y' : 'N');
+    Serial.print(F("\t"));   Serial.print(TEST(next->flags,BIT_FLAG_BUSY) != 0 ? 'Y' : 'N');
     Serial.println();
     s = get_next_segment(s);
   }
@@ -661,18 +635,57 @@ void motor_onestep(int motor) {
   digitalWrite(motors[motor].step_pin, LOW);
 }
 
+ 
+//#define TIMER_READ_ADD_AND_STORE_CYCLES 13UL
+//#define ISR_START_STEPPER_CYCLES        57UL
+
+#define ISR_BASE_CYCLES                 1200UL//752UL
+#define ISR_LOOP_BASE_CYCLES            32UL
+#define ISR_STEPPER_CYCLES              88UL
+#define F_CPU                           CLOCK_FREQ
+#define MIN_ISR_LOOP_CYCLES             (ISR_STEPPER_CYCLES * NUM_MOTORS)
+#define MAXIMUM_STEPPER_RATE            500000UL
+#define MINIMUM_STEPPER_PULSE           1UL
+  
+#define _MIN_STEPPER_PULSE_CYCLES(N) max(  (F_CPU / MAXIMUM_STEPPER_RATE),  (F_CPU / 500000UL) * (N) )
+  
+#define MIN_STEPPER_PULSE_CYCLES       _MIN_STEPPER_PULSE_CYCLES(MINIMUM_STEPPER_PULSE)
+#define ISR_LOOP_CYCLES                (ISR_LOOP_BASE_CYCLES + (long)max(MIN_STEPPER_PULSE_CYCLES, MIN_ISR_LOOP_CYCLES))
+  
+#define ISR_EXECUTION_CYCLES(R)  (  ( (ISR_BASE_CYCLES) + ((ISR_LOOP_CYCLES) * (R)) ) / (R) )
+
+// The maximum allowable stepping frequency when doing x128-x1 stepping (in Hz)
+#define MAX_STEP_ISR_FREQUENCY_128X ((F_CPU) / ISR_EXECUTION_CYCLES(128))
+#define MAX_STEP_ISR_FREQUENCY_64X  ((F_CPU) / ISR_EXECUTION_CYCLES(64))
+#define MAX_STEP_ISR_FREQUENCY_32X  ((F_CPU) / ISR_EXECUTION_CYCLES(32))
+#define MAX_STEP_ISR_FREQUENCY_16X  ((F_CPU) / ISR_EXECUTION_CYCLES(16))
+#define MAX_STEP_ISR_FREQUENCY_8X   ((F_CPU) / ISR_EXECUTION_CYCLES(8))
+#define MAX_STEP_ISR_FREQUENCY_4X   ((F_CPU) / ISR_EXECUTION_CYCLES(4))
+#define MAX_STEP_ISR_FREQUENCY_2X   ((F_CPU) / ISR_EXECUTION_CYCLES(2))
+#define MAX_STEP_ISR_FREQUENCY_1X   ((F_CPU) / ISR_EXECUTION_CYCLES(1))
+
 /**
    Set the clock 2 timer frequency.
    @input desired_freq_hz the desired frequency
-   Different clock sources can be selected for each timer independently.
-   To calculate the timer frequency (for example 2Hz using timer1) you will need:
 */
-FORCE_INLINE unsigned short calc_timer(uint32_t desired_freq_hz, uint8_t *loops) {
+FORCE_INLINE static unsigned short calc_timer(uint32_t desired_freq_hz, uint8_t * loops) {
   uint32_t timer;
   uint8_t step_multiplier = 1;
+  int idx=0;
+  
+  // The stepping frequency limits for each multistepping rate
+  static const uint32_t limit[] PROGMEM = {
+    (  MAX_STEP_ISR_FREQUENCY_1X     ),
+    (  MAX_STEP_ISR_FREQUENCY_2X >> 1),
+    (  MAX_STEP_ISR_FREQUENCY_4X >> 2),
+    (  MAX_STEP_ISR_FREQUENCY_8X >> 3),
+    ( MAX_STEP_ISR_FREQUENCY_16X >> 4),
+    ( MAX_STEP_ISR_FREQUENCY_32X >> 5),
+    ( MAX_STEP_ISR_FREQUENCY_64X >> 6),
+    (MAX_STEP_ISR_FREQUENCY_128X >> 7)
+  };
 
-  int idx = 0;
-  while (idx < 6 && desired_freq_hz > 10000) {
+  while( idx<7 && desired_freq_hz > (uint32_t)pgm_read_dword(&limit[idx]) ) {
     step_multiplier <<= 1;
     desired_freq_hz >>= 1;
     idx++;
@@ -893,7 +906,7 @@ inline uint32_t isr_internal_block() {
     if (working_seg == NULL) return interval;  // buffer empty
 
     // New segment!
-    working_seg->busy = true;
+    SET_BIT_OFF(working_seg->flags,BIT_FLAG_BUSY);
 
     // set the direction pins
     digitalWrite(MOTOR_0_DIR_PIN, working_seg->a[0].dir);
@@ -1025,12 +1038,15 @@ void debug_stepping() {
 void itr() {
 #else
 ISR(TIMER1_COMPA_vect) {
-#endif  // ESP8266
-        //#ifndef __AVR__
-  // Disable interrupts, to avoid ISR preemption while we reprogram the period
-  // (AVR enters the ISR with global interrupts disabled, so no need to do it here)
-  CRITICAL_SECTION_START();
+#endif // ESP8266
+  static uint32_t nextMainISR=0;
+  
+  //#ifndef __AVR__
+    // Disable interrupts, to avoid ISR preemption while we reprogram the period
+    // (AVR enters the ISR with global interrupts disabled, so no need to do it here)
+    CRITICAL_SECTION_START();
   //#endif
+  
   // set the timer interrupt value as big as possible so there's little chance it triggers while i'm still in the ISR.
   CLOCK_ADJUST(MAX_OCR1A_VALUE);
 
@@ -1055,11 +1071,9 @@ ISR(TIMER1_COMPA_vect) {
 #  endif
 #endif  // DEBUG_STEPPING
 
-    uint32_t interval = nextMainISR;
-    interval          = min((uint32_t)MAX_OCR1A_VALUE, interval);
-    nextMainISR -= interval;
-
-    next_isr_ticks += interval;
+    uint32_t interval = min(MAX_OCR1A_VALUE,nextMainISR);
+    nextMainISR      -= interval;
+    next_isr_ticks   += interval;
 
     CRITICAL_SECTION_START();
     min_ticks = OCR1A + 8;
@@ -1199,8 +1213,8 @@ void motor_line(const float *const target_position, float fr_mm_s, float millime
   // No steps?  No work!  Stop now.
   if (new_seg.steps_total < MIN_STEPS_PER_SEGMENT) return;
 
-  new_seg.busy              = false;
-  new_seg.distance          = distance_mm;
+  SET_BIT_OFF(new_seg.flags,BIT_FLAG_BUSY);
+  new_seg.distance = distance_mm;
   float inverse_distance_mm = 1.0 / distance_mm;
   float inverse_secs        = fr_mm_s * inverse_distance_mm;
 
@@ -1245,24 +1259,25 @@ void motor_line(const float *const target_position, float fr_mm_s, float millime
     // We only consider the XY plane.
     // Special thanks to https://www.reddit.com/user/zebediah49 for his math help.
 
-    // normal vectors pointing from plotter to motor
-    float R1x  = axies[0].limitMin - oldX;  // to left
-    float R1y  = axies[1].limitMax - oldY;  // to top
-    float Rlen = sqrt(sq(R1x) + sq(R1y));   // old_seg.a[0].step_count * MM_PER_STEP;
-    R1x /= Rlen;
-    R1y /= Rlen;
-
-    float R2x = axies[0].limitMax - oldX;  // to right
-    float R2y = axies[1].limitMax - oldY;  // to top
-    Rlen      = sqrt(sq(R2x) + sq(R2y));   // old_seg.a[1].step_count * MM_PER_STEP;
-    R2x /= Rlen;
-    R2y /= Rlen;
-
     // if T is your target direction unit vector,
     float Tx = target_position[0] - oldX;
     float Ty = target_position[1] - oldY;
-    Rlen     = sqrt(sq(Tx) + sq(Ty));
+    float Rlen = sq(Tx) + sq(Ty);  // always >=0
     if (Rlen > 0) {
+      Rlen = sqrt(Rlen);
+      // normal vectors pointing from plotter to motor
+      float R1x   = axies[0].limitMin - oldX;  // to left
+      float R1y   = axies[1].limitMax - oldY;  // to top
+      float Rlen1 = sqrt(sq(R1x) + sq(R1y));//old_seg.a[0].step_count * MM_PER_STEP;
+      R1x /= Rlen1;
+      R1y /= Rlen1;
+
+      float R2x   = axies[0].limitMax - oldX;  // to right
+      float R2y   = axies[1].limitMax - oldY;  // to top
+      float Rlen2 = sqrt(sq(R2x) + sq(R2y));//old_seg.a[1].step_count * MM_PER_STEP;
+      R2x /= Rlen2;
+      R2y /= Rlen2;
+      
       // only affects XY non-zero movement.  Servo is not touched.
       Tx /= Rlen;
       Ty /= Rlen;
@@ -1383,10 +1398,10 @@ void motor_line(const float *const target_position, float fr_mm_s, float millime
 
   float allowable_speed = max_speed_allowed(-new_seg.acceleration, MIN_FEEDRATE, new_seg.distance);
 
-  new_seg.entry_speed_max     = vmax_junction;
-  new_seg.entry_speed         = min(vmax_junction, allowable_speed);
-  new_seg.nominal_length_flag = (allowable_speed >= new_seg.nominal_speed);
-  new_seg.recalculate_flag    = true;
+  new_seg.entry_speed_max = vmax_junction;
+  new_seg.entry_speed     = min(vmax_junction, allowable_speed);
+  SET_BIT( new_seg.flags, BIT_FLAG_NOMINAL, ( allowable_speed >= new_seg.nominal_speed ) );
+  SET_BIT_ON( new_seg.flags, BIT_FLAG_RECALCULATE );
 
   previous_nominal_speed = new_seg.nominal_speed;
   for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) { previous_speed[i] = current_speed[i]; }

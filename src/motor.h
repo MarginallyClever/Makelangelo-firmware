@@ -102,6 +102,20 @@ typedef struct {
 #endif
 } Muscle;
 
+
+enum BlockFlagBits : uint8_t { 
+    BIT_FLAG_NOMINAL,
+    BIT_FLAG_BUSY,
+    BIT_FLAG_RECALCULATE
+};
+/*
+enum BlockFlagMask : uint8_t {
+  FLAG_NOMINAL     = _BV(BIT_FLAG_NOMINAL),
+  FLAG_BUSY        = _BV(BIT_FLAG_BUSY),
+  FLAG_RECALCULATE = _BV(BIT_FLAG_RECALCULATE),
+};*/
+
+
 typedef struct {
   Muscle a[NUM_MUSCLES];
 
@@ -120,11 +134,9 @@ typedef struct {
   uint32_t initial_rate;               // steps/s
   uint32_t final_rate;                 // steps/s
   uint32_t acceleration_steps_per_s2;  // steps/s^2
-  uint32_t acceleration_rate;          // ?
+  uint32_t acceleration_rate;  // ?
 
-  char nominal_length_flag;
-  char recalculate_flag;
-  char busy;
+  uint8_t flags;
 } Segment;
 
 //------------------------------------------------------------------------------
@@ -191,8 +203,9 @@ FORCE_INLINE Segment *get_current_segment() {
   }
 
   Segment *block = &line_segments[current_segment];
+  
+  if( TEST(block->flags,BIT_FLAG_RECALCULATE) ) return NULL;  // wait, not ready
 
-  if (block->recalculate_flag != 0) return NULL;  // wait, not ready
   nonbusy_segment = get_next_segment(current_segment);
 
   return block;

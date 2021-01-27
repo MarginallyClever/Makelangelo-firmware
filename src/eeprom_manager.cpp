@@ -150,9 +150,10 @@ void EEPROMManager::loadAll() {
     // If not the current FIRMWARE_VERSION or the FIRMWARE_VERSION is sullied (i.e. unknown data)
     // Update the version number
     EEPROM.write(ADDR_VERSION, FIRMWARE_VERSION);
-#if MAKELANGELO_HARDWARE_VERSION == 5 || MAKELANGELO_HARDWARE_VERSION == 6
-    adjustDimensions(50, -50, -32.5, 32.5);
-    saveCalibration();
+#if MACHINE_STYLE == POLARGRAPH
+#  if MAKELANGELO_HARDWARE_VERSION == 5 || MAKELANGELO_HARDWARE_VERSION == 6
+    parser.M502();
+#  endif
 #endif
   }
 

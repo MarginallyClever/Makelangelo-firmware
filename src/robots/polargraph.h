@@ -94,10 +94,6 @@ extern void recordHome();
 // convert belt length to cartesian position, save that as home pos.
 extern void calibrationToPosition();
 
-extern void makelangelo6Setup();
-
-extern void makelangelo5Setup();
-
-extern void makelangelo33Setup();
+extern void polargraphReset();
 
 #endif  // #ifdef POLARGRAPH

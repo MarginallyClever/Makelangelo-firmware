@@ -4,8 +4,8 @@
  */
 
 // choose one of the following
-//#define NORMAL_MOTOR_STEPS   200  // 1.8 degrees per step
-#define NORMAL_MOTOR_STEPS 400  // 0.9 degrees per step
+#define NORMAL_MOTOR_STEPS   200  // 1.8 degrees per step
+//#define NORMAL_MOTOR_STEPS   400  // 0.9 degrees per step
 
 // stepper motor drivers can use microstepping to split steps into fractions of steps for greater precision.
 // A4988 drivers (Marginallyclever.com default) use 16x.
@@ -25,11 +25,11 @@
 
 #if NORMAL_MOTOR_STEPS == 200
 #  define DEFAULT_FEEDRATE     (180.0)
-#  define DEFAULT_ACCELERATION (150.0)
+#  define DEFAULT_ACCELERATION (1250.0)
 #  define DEGREES_PER_STEP     (1.8)
 #elif NORMAL_MOTOR_STEPS == 400
-#  define DEFAULT_FEEDRATE     (25.0)
-#  define DEFAULT_ACCELERATION (150.0)
+#  define DEFAULT_FEEDRATE     (100.0)
+#  define DEFAULT_ACCELERATION (625.0)
 #  define DEGREES_PER_STEP     (0.9)
 #endif
 
@@ -37,7 +37,19 @@
 #ifndef NORMAL_MOTOR_STEPS
 #  define NORMAL_MOTOR_STEPS (360.0 / DEGREES_PER_STEP)
 #endif
+
+#ifndef STEPS_PER_TURN
 #define STEPS_PER_TURN       (NORMAL_MOTOR_STEPS * MICROSTEPS)
-#define MM_PER_STEP          (PULLEY_PITCH / STEPS_PER_TURN)
-#define STEPS_PER_MM         (STEPS_PER_TURN / PULLEY_PITCH)
-#define MICROSTEP_PER_DEGREE (STEPS_PER_TURN / 360.0)
+#endif
+
+#ifndef MM_PER_STEP
+#define MM_PER_STEP          (PULLEY_PITCH/STEPS_PER_TURN)
+#endif
+
+#ifndef STEPS_PER_MM
+#define STEPS_PER_MM         (STEPS_PER_TURN/PULLEY_PITCH)
+#endif
+
+#ifndef MICROSTEP_PER_DEGREE
+#define MICROSTEP_PER_DEGREE (STEPS_PER_TURN/360.0)
+#endif

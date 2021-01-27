@@ -17,12 +17,12 @@
 // GLOBALS
 //------------------------------------------------------------------------------
 SdFat sd;
-SdFile root;
+File root;
 char sd_inserted;
 char sd_printing_now;
 char sd_printing_paused;
 
-SdFile sd_print_file;
+File sd_print_file;
 float sd_percent_complete;
 long sd_file_size;
 long sd_bytes_read;
@@ -125,7 +125,8 @@ void SD_check() {
   }
 }
 
-void SD_StartPrintingFile(SdFile toPrint) {
+
+void SD_StartPrintingFile(File toPrint) {
   sd_print_file = toPrint;
 
   // count the number of lines (\n characters) for displaying % complete.
@@ -143,7 +144,7 @@ void SD_StartPrintingFile(SdFile toPrint) {
 void SD_listFiles() {
   if (!sd_inserted) return;
 
-  root.open("/");
+  root.rewindDirectory();
   SdFile entry;
   char filename[32];
   while (entry.openNext(&root)) {
@@ -153,7 +154,6 @@ void SD_listFiles() {
     }
     entry.close();
   }
-  root.close();
 }
 
 #endif  // HAS_SD
