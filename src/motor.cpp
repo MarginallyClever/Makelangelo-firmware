@@ -9,12 +9,14 @@
 
 #include "configure.h"
 #include "motor.h"
-#include "mservo.h"
+
 #include "lcd.h"
 #include "speed_lookuptable.h"
 
 #if !defined(USE_ALT_SERVO)
 #  include <Servo.h>
+# else
+# include "mservo.h"
 #endif
 
 //------------------------------------------------------------------------------

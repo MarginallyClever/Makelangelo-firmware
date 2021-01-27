@@ -287,7 +287,10 @@ void teleport(float *pos) {
 
 void setHome(float *pos) {
   int i;
+
   for (i = 0; i < NUM_AXIES; ++i) { axies[i].homePos = pos[i]; }
+ 
+
   eepromManager.saveHome();
 }
 

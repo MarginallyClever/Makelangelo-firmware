@@ -41,9 +41,10 @@
 
 */
 
-#include "mservo.h"
+
 
 #if defined(USE_ALT_SERVO)
+#include "mservo.h"
 
 #  define usToTicks(_us) \
     ((clockCyclesPerMicrosecond() * _us) / 8)  // converts microseconds to tick (assumes prescale of 8)  // 12 Aug 2009

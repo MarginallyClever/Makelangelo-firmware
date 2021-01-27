@@ -1,7 +1,12 @@
 #include "configure.h"
 #include "lcd.h"
 #include "sdcard.h"
-#include "mservo.h"
+
+#if !defined(USE_ALT_SERVO)
+#  include <Servo.h>
+# else
+# include "mservo.h"
+#endif
 
 // GLOBALS
 
@@ -583,12 +588,12 @@ void Parser::D23() {
   float homePos[NUM_AXIES];
   for (ALL_SENSORS(i)) { homePos[i] = sensorManager.sensors[i].angle; }
   // subtract the calibration from this position
-  homePos[0] += 0;
-  homePos[1] += -41.3;
-  homePos[2] += 74.5;
-  homePos[3] += 0;
-  homePos[4] += -33.5;
-  homePos[5] += 0;
+  homePos[0] += 0.0;
+  homePos[1] += -90.0;
+  homePos[2] += 0.0;
+  homePos[3] += 0.0;
+  homePos[4] += 0.0;
+  homePos[5] += 0.0;
 
   setHome(homePos);
 }
@@ -646,12 +651,20 @@ void Parser::G01() {
 
     if (pos[i] > axies[i].limitMax) {
       Serial.print(F("LIMIT MAX "));
-      Serial.println(i);
+      Serial.print(i);
+      Serial.print(" | pos[i] = ");
+      Serial.print(pos[i]);
+      Serial.print(" | axies[i].limitMax = ");
+      Serial.println(axies[i].limitMax);
       badAngles = 1;
     }
     if (pos[i] < axies[i].limitMin) {
       Serial.print(F("LIMIT MIN "));
-      Serial.println(i);
+      Serial.print(i);
+      Serial.print(" | pos[i] = ");
+      Serial.print(pos[i]);
+      Serial.print(" | axies[i].limitMin = ");
+      Serial.println(axies[i].limitMin);
       badAngles = 1;
     }
   }
