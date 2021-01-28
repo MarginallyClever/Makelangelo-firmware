@@ -264,43 +264,6 @@ inline void LCD_print(const char x) {
   if(menuStack[menuStackDepth].menu_position==ty && lcd_click_now) MENU_POP(); \
   MENU_ITEM_END()
 
-#define MENU_ACTION(menu_label,menu_method) MENU_SUBMENU(menu_label,menu_method)
-
-#define MENU_LONG(key,value) \
-  MENU_ITEM_START(key) \
-  LCD_print_long(value); \
-  if(menuStack[menuStackDepth].menu_position==ty && lcd_click_now) { \
-    update_key = key; \
-    update_val = (void *)&(value); \
-    MENU_PUSH(LCD_update_long); \
-  } \
-  MENU_ITEM_END()
-
-#define MENU_FLOAT(key,value) \
-  MENU_ITEM_START(key) \
-  LCD_print_float(value,LCD_WIDTH-1-strlen(key)); \
-  if(menuStack[menuStackDepth].menu_position==ty && lcd_click_now) { \
-    update_key = key; \
-    update_val = (void *)&(value); \
-    MENU_PUSH(LCD_update_float); \
-  } \
-  MENU_ITEM_END()
-
-#  define MENU_LABEL(menu_label)                                                           \
-    MENU_ITEM_START(menu_label)                                                            \
-    if (menuStack[menuStackDepth].menu_position == ty && lcd_click_now) lcd_click_now = 0; \
-    MENU_ITEM_END()
-
-#  define MENU_SUBMENU(menu_label, menu_method)                                                 \
-    MENU_ITEM_START(menu_label)                                                                 \
-    if (menuStack[menuStackDepth].menu_position == ty && lcd_click_now) MENU_PUSH(menu_method); \
-    MENU_ITEM_END()
-
-#  define MENU_BACK(menu_label)                                                     \
-    MENU_ITEM_START(menu_label)                                                     \
-    if (menuStack[menuStackDepth].menu_position == ty && lcd_click_now) MENU_POP(); \
-    MENU_ITEM_END()
-
 #  define MENU_ACTION(menu_label, menu_method) MENU_SUBMENU(menu_label, menu_method)
 
 #  define MENU_LONG(key, value)                                           \
