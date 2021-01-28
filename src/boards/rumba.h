@@ -106,6 +106,4 @@
 
 #  endif  // HAS_TMC2130
 
-#  define USE_ALT_SERVO
-
 #endif

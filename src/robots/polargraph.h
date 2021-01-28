@@ -20,7 +20,7 @@
 #  define MACHINE_HAS_LIFTABLE_PEN
 
 // what is the maximum length of a subdivided line?
-#  define SEGMENTS_PER_SECOND (40)
+#  define SEGMENTS_PER_SECOND (5)
 
 // servo angles for pen control
 #  define PEN_UP_ANGLE   (90)
@@ -47,7 +47,7 @@
 
 #  if MACHINE_HARDWARE_VERSION == MAKELANGELO_3
 #    ifndef MAX_SEGMENTS
-#      define MAX_SEGMENTS (32)
+#      define MAX_SEGMENTS (8)
 #    endif
 #    define HAS_SD
 #    define HAS_LCD
@@ -55,7 +55,7 @@
 
 #  if MACHINE_HARDWARE_VERSION == MAKELANGELO_3_3
 #    ifndef MAX_SEGMENTS
-#      define MAX_SEGMENTS (32)
+#      define MAX_SEGMENTS (8)
 #    endif
 #    define USE_LIMIT_SWITCH
 #    define HAS_SD
@@ -64,7 +64,7 @@
 
 #  if MACHINE_HARDWARE_VERSION == MAKELANGELO_5
 #    ifndef MAX_SEGMENTS
-#      define MAX_SEGMENTS (32)
+#      define MAX_SEGMENTS (8)
 #    endif
 #    define USE_LIMIT_SWITCH
 #    define HAS_SD
@@ -73,7 +73,7 @@
 
 #  if MACHINE_HARDWARE_VERSION == MAKELANGELO_6
 #    ifndef MAX_SEGMENTS
-#      define MAX_SEGMENTS (16)
+#      define MAX_SEGMENTS (8)
 #    endif
 #    define USE_LIMIT_SWITCH
 #    define HAS_TMC2130  // driver type

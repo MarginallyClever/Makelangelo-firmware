@@ -4,5 +4,3 @@
 #define MACHINE_STYLE POLARGRAPH
 #undef MOTHERBOARD
 #define MOTHERBOARD RUMBA  // your board here.  See configure.h for options.
-
-#define USE_ALT_SERVO
