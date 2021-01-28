@@ -56,10 +56,10 @@ void Parser::start() {
 }
 
 /**
-   Look for character /code/ in the buffer and read the float that immediately follows it.
-   @return the value found.  If nothing is found, /val/ is returned.
-   @input code the character to look for.
-   @input val the return value if /code/ is not found.
+ * Look for character /code/ in the buffer and read the float that immediately follows it.
+ * @return the value found.  If nothing is found, /val/ is returned.
+ * @input code the character to look for.
+ * @input val the return value if /code/ is not found.
 */
 float Parser::parseNumber(char code, float val) {
   char *ptr    = serialBuffer;  // start at the beginning of buffer
@@ -141,8 +141,8 @@ char Parser::checkLineNumberAndCRCisOK() {
 }
 
 /**
-   prepares the input buffer to receive a new message and tells the serial connected device it is ready for more.
-*/
+ * prepares the input buffer to receive a new message and tells the serial connected device it is ready for more.
+ */
 void Parser::ready() {
   Serial.print(F("\n> "));  // signal ready to receive input
   lastCmdTimeMs = millis();
@@ -159,7 +159,9 @@ void Parser::update() {
       serialBuffer[sofar - 1] = 0;
 
       // echo confirmation
-      if (MUST_ECHO) { Serial.println(serialBuffer); }
+      if (MUST_ECHO) { 
+        Serial.println(serialBuffer);
+      }
 
       // do something with the command
       processCommand();
@@ -186,8 +188,8 @@ void Parser::update() {
 }
 
 /**
-   process commands in the serial receive buffer
-*/
+ * process commands in the serial receive buffer
+ */
 void Parser::processCommand() {
   if (serialBuffer[0] == '\0' || serialBuffer[0] == ';') return;  // blank lines
 
@@ -208,75 +210,34 @@ void Parser::processCommand() {
   if (hasGCode('M')) {
     cmd = parseNumber('M', -1);
     switch (cmd) {
-      case 6:
-        M6();
-        break;
-      case 17:
-        motor_engage();
-        break;
-      case 18:
-        motor_disengage();
-        break;
+      case   6:        M6();                  break;
+      case  17:        motor_engage();        break;
+      case  18:        motor_disengage();     break;
 #ifdef HAS_SD
-      case 20:
-        SD_listFiles();
-        break;
+      case  20:        SD_listFiles();        break;
 #endif
-      case 42:
-        M42();
-        break;
-      case 100:
-        M100();
-        break;
-      case 101:
-        M101();
-        break;
-      case 110:
-        lineNumber = parseNumber('N', lineNumber);
-        break;
-      case 112:
-        M112();
-        break;
-      case 114:
-        M114();
-        break;
+      case  42:        M42();         break;
+      case 100:        M100();        break;
+      case 101:        M101();        break;
+      case 110:        lineNumber = parseNumber('N', lineNumber);        break;
+      case 112:        M112();        break;
+      case 114:        M114();        break;
 #ifdef HAS_LCD
-      case 117:
-        M117();
-        break;
+      case 117:        M117();        break;
 #endif
-      case 203:
-        M203();
-        break;
-      case 205:
-        M205();
-        break;
-      case 226:
-        M226();
-        break;
-      case 300:
-        M300();
-        break;
-        // case 306:  M306();  break;
+      case 203:        M203();        break;
+      case 205:        M205();        break;
+      case 226:        M226();        break;
+      case 300:        M300();        break;
+     //case 306:  M306();  break;
 #if MACHINE_STYLE == SIXI
-      case 428:
-        M428();
-        break;
+      case 428:        M428();        break;
 #endif
-      case 500:
-        M500();
-        break;
-      case 501:
-        M501();
-        break;
-      case 502:
-        M502();
-        break;
-      case 503:
-        M503();
-        break;
-      default:
-        break;
+      case 500:        M500();        break;
+      case 501:        M501();        break;
+      case 502:        M502();        break;
+      case 503:        M503();        break;
+      default:                        break;
     }
     return;
   }
@@ -285,74 +246,39 @@ void Parser::processCommand() {
   if (hasGCode('D')) {
     cmd = parseNumber('D', -1);
     switch (cmd) {
-      case 0:
-        D0();
-        break;
+      case 0:        D0();        break;
 #ifdef HAS_SD
 //    case  4:  SD_StartPrintingFile(strchr(serialBuffer, ' ') + 1);  break;
 #endif
-      case 5:
-        D5();
-        break;
-      case 6:
-        D6();
-        break;
+      case 5:        D5();        break;
+      case 6:        D6();        break;
 #if MACHINE_STYLE == POLARGRAPH
-      case 7:
-        D7();
-        break;
-      case 8:
-        D8();
-        break;
+      case 7:        D7();        break;
+      case 8:        D8();        break;
 #endif
-      case 9:
-        eepromManager.saveCalibration();
-        break;
+      case 9:        eepromManager.saveCalibration();        break;
       case 10:  // get hardware version
         Serial.print(F("D10 V"));
         Serial.println(MACHINE_HARDWARE_VERSION);
         break;
 #ifdef MACHINE_HAS_LIFTABLE_PEN
-      case 13:
-        setPenAngle(parseNumber('Z', axies[2].pos));
-        break;
+      case 13:        setPenAngle(parseNumber('Z', axies[2].pos));        break;
 #endif
-      case 14:
-        D14();
-        break;
+      case 14:        D14();        break;
 #if MACHINE_STYLE == STEWART
-      case 15:
-        stewartDemo();
-        break;
+      case 15:        stewartDemo();        break;
 #endif
 #if MACHINE_STYLE == SIXI
-      case 15:
-        sixiDemo();
-        break;
-      case 17:
-        D17();
-        break;
-      case 18:
-        D18();
-        break;
-      case 19:
-        D19();
-        break;
-      case 20:
-        SET_BIT_OFF(sensorManager.positionErrorFlags, POSITION_ERROR_FLAG_ERROR);
-        break;
-      case 21:
-        FLIP_BIT(sensorManager.positionErrorFlags, POSITION_ERROR_FLAG_ESTOP);
-        break;  // toggle ESTOP
-      case 23:
-        D23();
-        break;
+      case 15:        sixiDemo();           break;
+      case 17:        D17();        break;
+      case 18:        D18();        break;
+      case 19:        D19();        break;
+      case 20:        SET_BIT_OFF(sensorManager.positionErrorFlags, POSITION_ERROR_FLAG_ERROR);        break;
+      case 21:        FLIP_BIT(sensorManager.positionErrorFlags, POSITION_ERROR_FLAG_ESTOP);        break;  // toggle ESTOP
+      case 23:        D23();        break;
 #endif
-      case 50:
-        D50();
-        break;
-      default:
-        break;
+      case 50:        D50();        break;
+      default:                      break;
     }
     return;
   }
@@ -363,38 +289,18 @@ void Parser::processCommand() {
   lastGcommand = -1;
   switch (cmd) {
     case 0:
-    case 1:
-      G01();
-      lastGcommand = cmd;
-      break;
-    case 2:
-      G02(ARC_CW);
-      lastGcommand = cmd;
-      break;  // clockwise
-    case 3:
-      G02(ARC_CCW);
-      lastGcommand = cmd;
-      break;  // counter-clockwise
-    case 4:
-      G04();
-      break;
-    case 28:
-      robot_findHome();
-      break;
+    case 1:      G01();         lastGcommand = cmd;      break;
+    case 2:      G02(ARC_CW);   lastGcommand = cmd;      break;  // clockwise
+    case 3:      G02(ARC_CCW);  lastGcommand = cmd;      break;  // counter-clockwise
+    case 4:      G04();                                  break;
+    case 28:     robot_findHome();                       break;
 #if MACHINE_STYLE == POLARGRAPH
       // case 29:  calibrateBelts();  break;
 #endif
-    case 90:
-      absolute_mode = 1;
-      break;  // absolute mode
-    case 91:
-      absolute_mode = 0;
-      break;  // relative mode
-    case 92:
-      G92();
-      break;
-    default:
-      break;
+    case 90:      absolute_mode = 1;      break;  // absolute mode
+    case 91:      absolute_mode = 0;      break;  // relative mode
+    case 92:      G92();                  break;
+    default:                              break;
   }
 }
 
@@ -587,13 +493,32 @@ void Parser::D23() {
   // apply the new offsets
   float homePos[NUM_AXIES];
   for (ALL_SENSORS(i)) { homePos[i] = sensorManager.sensors[i].angle; }
+#ifdef CALIBRATION_TOOL
   // subtract the calibration from this position
+<<<<<<< Updated upstream
   homePos[0] += 0.0;
   homePos[1] += -90.0;
   homePos[2] += 0.0;
   homePos[3] += 0.0;
   homePos[4] += 0.0;
   homePos[5] += 0.0;
+=======
+  homePos[0] += 0;
+  homePos[1] += -41.3;
+  homePos[2] += 74.5;
+  homePos[3] += 0;
+  homePos[4] += -33.5;
+  homePos[5] += 0;
+#else
+  // subtract the calibration from this position
+  homePos[0] += 0;
+  homePos[1] += -90;
+  homePos[2] += 0;
+  homePos[3] += 0;
+  homePos[4] += 0;
+  homePos[5] += 0;
+#endif
+>>>>>>> Stashed changes
 
   setHome(homePos);
 }
