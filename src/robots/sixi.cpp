@@ -182,7 +182,6 @@ boolean SensorAS5147::getRawValue(uint16_t &result) {
 }
 
 void SensorManager::setup() {
-  int i = 0;
 
 #  define SSP(label, NN, JJ) sensors[NN].pin_##label = PIN_SENSOR_##label##_##NN;
 #  define SSP2(NN) \
@@ -309,8 +308,6 @@ void drive2(int i, float change) {
 
 void sixiDemo3a(int i, float t) {
   delay(100);
-
-  int totalSteps = 3000;
 
   digitalWrite(motors[i].dir_pin, HIGH);
   // drive(i,3000,t);
@@ -451,12 +448,7 @@ void sixiDemo1() {
     pos[i] = pos_store[i];
   }
 
-
-
-
-
-
-  int i, j;
+  int j;
 
   float fr = feed_rate;
   float aa = acceleration;
@@ -532,7 +524,6 @@ void sixiSetup() {
   sensorManager.updateAll();
   // apply the new offsets
   float homePos[NUM_AXIES];
-  int i;
   for (ALL_SENSORS(i)) { homePos[i] = sensorManager.sensors[i].angle; }
   // subtract the home position from this position
   homePos[0] += 0;
