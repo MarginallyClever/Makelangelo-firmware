@@ -495,14 +495,6 @@ void Parser::D23() {
   for (ALL_SENSORS(i)) { homePos[i] = sensorManager.sensors[i].angle; }
 #ifdef CALIBRATION_TOOL
   // subtract the calibration from this position
-<<<<<<< Updated upstream
-  homePos[0] += 0.0;
-  homePos[1] += -90.0;
-  homePos[2] += 0.0;
-  homePos[3] += 0.0;
-  homePos[4] += 0.0;
-  homePos[5] += 0.0;
-=======
   homePos[0] += 0;
   homePos[1] += -41.3;
   homePos[2] += 74.5;
@@ -518,7 +510,6 @@ void Parser::D23() {
   homePos[4] += 0;
   homePos[5] += 0;
 #endif
->>>>>>> Stashed changes
 
   setHome(homePos);
 }
