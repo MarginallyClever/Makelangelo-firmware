@@ -252,8 +252,7 @@ void motor_setup() {
   tmc_setup(driver_1);
 #endif  // HAS_TMC2130
 
-  int i;
-  for (i = 0; i < NUM_MUSCLES; ++i) {
+  for (ALL_MUSCLES(i)) {
     max_jerk[i]          = MAX_JERK;
     max_feedrate_mm_s[i] = MAX_FEEDRATE;
   }
@@ -642,7 +641,10 @@ void motor_onestep(int motor) {
 #define ISR_BASE_CYCLES                 1200UL//752UL
 #define ISR_LOOP_BASE_CYCLES            32UL
 #define ISR_STEPPER_CYCLES              88UL
+
+#undef F_CPU
 #define F_CPU                           CLOCK_FREQ
+
 #define MIN_ISR_LOOP_CYCLES             (ISR_STEPPER_CYCLES * NUM_MOTORS)
 #define MAXIMUM_STEPPER_RATE            500000UL
 #define MINIMUM_STEPPER_PULSE           1UL
@@ -1149,7 +1151,7 @@ void motor_line(const float *const target_position, float fr_mm_s, float millime
   Segment &old_seg = line_segments[prev_segment];
 
   // convert from the cartesian position to the motor steps
-  long steps[NUM_MOTORS + NUM_SERVOS];
+  long steps[NUM_MUSCLES];
   IK(target_position, steps);
 
   float distance_mm = 0;
@@ -1167,7 +1169,7 @@ void motor_line(const float *const target_position, float fr_mm_s, float millime
   // The axis that has the most steps will control the overall acceleration as per bresenham's algorithm.
   new_seg.steps_total = 0;
   int i;
-  for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
+  for (ALL_MUSCLES(i)) {
     new_seg.a[i].step_count  = steps[i];
     new_seg.a[i].delta_steps = steps[i] - old_seg.a[i].step_count;
 
@@ -1178,27 +1180,13 @@ void motor_line(const float *const target_position, float fr_mm_s, float millime
 
     float distancePerStep;
     switch (i) {
-      case 0:
-        distancePerStep = DEGREES_PER_STEP_0;
-        break;
-      case 1:
-        distancePerStep = DEGREES_PER_STEP_1;
-        break;
-      case 2:
-        distancePerStep = DEGREES_PER_STEP_2;
-        break;
-      case 3:
-        distancePerStep = DEGREES_PER_STEP_3;
-        break;
-      case 4:
-        distancePerStep = DEGREES_PER_STEP_4;
-        break;
-      case 5:
-        distancePerStep = DEGREES_PER_STEP_5;
-        break;
-      default:
-        distancePerStep = MM_PER_STEP;
-        break;
+      case 0:        distancePerStep = DEGREES_PER_STEP_0;        break;
+      case 1:        distancePerStep = DEGREES_PER_STEP_1;        break;
+      case 2:        distancePerStep = DEGREES_PER_STEP_2;        break;
+      case 3:        distancePerStep = DEGREES_PER_STEP_3;        break;
+      case 4:        distancePerStep = DEGREES_PER_STEP_4;        break;
+      case 5:        distancePerStep = DEGREES_PER_STEP_5;        break;
+      default:       distancePerStep = MM_PER_STEP;               break;
     }
     new_seg.a[i].delta_mm = new_seg.a[i].delta_steps * distancePerStep;
 #else
@@ -1237,15 +1225,15 @@ void motor_line(const float *const target_position, float fr_mm_s, float millime
 
   // Calculate the the speed limit for each axis.
   // All speeds are connected so if one motor slows, they all have to slow the same amount.
-  float current_speed[NUM_MOTORS + NUM_SERVOS], speed_factor = 1.0;
-  for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
+  float current_speed[NUM_MUSCLES], speed_factor = 1.0;
+  for (ALL_MUSCLES(i)) {
     current_speed[i] = new_seg.a[i].delta_mm * inverse_secs;
     const float cs = fabs(current_speed[i]), max_fr = max_feedrate_mm_s[i];
     if (cs > max_fr) speed_factor = min(speed_factor, max_fr / cs);
   }
   // apply the speed limit
   if (speed_factor < 1.0) {
-    for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) { current_speed[i] *= speed_factor; }
+    for (ALL_MUSCLES(i)) { current_speed[i] *= speed_factor; }
     new_seg.nominal_speed *= speed_factor;
     new_seg.nominal_rate *= speed_factor;
   }
@@ -1305,7 +1293,7 @@ void motor_line(const float *const target_position, float fr_mm_s, float millime
   uint32_t accel           = ceil(max_acceleration * steps_per_mm);
 
   const float max_acceleration_steps_per_s2 = max_acceleration * steps_per_mm;
-  for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
+  for (ALL_MUSCLES(i)) {
     if (new_seg.a[i].absdelta && max_acceleration_steps_per_s2 < accel) {
       const uint32_t comp = max_acceleration_steps_per_s2 * new_seg.steps_total;
       if (accel * new_seg.a[i].absdelta > comp) { accel = comp / (float)new_seg.a[i].absdelta; }
@@ -1321,7 +1309,7 @@ void motor_line(const float *const target_position, float fr_mm_s, float millime
 
   float safe_speed = new_seg.nominal_speed;
   char limited     = 0;
-  for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
+  for (ALL_MUSCLES(i)) {
     const float jerk = fabs(current_speed[i]), maxj = max_jerk[i];
     if (jerk > maxj) {  // new current speed too fast?
       if (limited) {
@@ -1357,7 +1345,7 @@ void motor_line(const float *const target_position, float fr_mm_s, float millime
 
     // Now limit the jerk in all axes.
     const float smaller_speed_factor = vmax_junction / previous_nominal_speed;
-    for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
+    for (ALL_MUSCLES(i)) {
       // Limit an axis. We have to differentiate: coasting, reversal of an axis, full stop.
       float v_exit  = previous_speed[i] * smaller_speed_factor;
       float v_entry = current_speed[i];
@@ -1404,7 +1392,7 @@ void motor_line(const float *const target_position, float fr_mm_s, float millime
   SET_BIT_ON( new_seg.flags, BIT_FLAG_RECALCULATE );
 
   previous_nominal_speed = new_seg.nominal_speed;
-  for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) { previous_speed[i] = current_speed[i]; }
+  for (ALL_MUSCLES(i)) { previous_speed[i] = current_speed[i]; }
 
   // when should we accelerate and decelerate in this segment?
   segment_update_trapezoid(&new_seg, new_seg.entry_speed / new_seg.nominal_speed,
@@ -1423,7 +1411,7 @@ void motor_line(const float *const target_position, float fr_mm_s, float millime
     Serial.print("inverse_secs=");  Serial.println(inverse_secs);
     Serial.print("nominal_rate=");  Serial.println(new_seg.nominal_rate);
     Serial.print("delta_mm=");
-    for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
+    for (ALL_MUSCLES(i)) {
       if (i > 0) Serial.print(",");
       Serial.print(new_seg.a[i].delta_mm);
     }
