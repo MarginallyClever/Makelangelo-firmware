@@ -485,7 +485,7 @@ void Parser::D21() {
 // D23 - Sixi is at the calibration position.  Set the home position accordingly.
 void Parser::D23() {
   Serial.println(F("D23"));
-  int i;
+  
   // cancel the current home offsets
   sensorManager.resetAll();
   // read the sensor
