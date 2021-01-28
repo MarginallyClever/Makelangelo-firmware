@@ -24,13 +24,25 @@
 #define PULLEY_PITCH (40.0)
 
 #if NORMAL_MOTOR_STEPS == 200
-#  define DEFAULT_FEEDRATE     (180.0)
-#  define DEFAULT_ACCELERATION (1250.0)
-#  define DEGREES_PER_STEP     (1.8)
-#elif NORMAL_MOTOR_STEPS == 400
-#  define DEFAULT_FEEDRATE     (100.0)
-#  define DEFAULT_ACCELERATION (625.0)
-#  define DEGREES_PER_STEP     (0.9)
+#  ifndef DEFAULT_FEEDRATE
+#    define DEFAULT_FEEDRATE     (180.0)
+#  endif
+#  ifndef DEFAULT_ACCELERATION
+#    define DEFAULT_ACCELERATION (1250.0)
+#  endif
+#  ifndef DEGREES_PER_STEP
+#    define DEGREES_PER_STEP     (1.8)
+#  endif
+#  elif NORMAL_MOTOR_STEPS == 400
+#  ifndef DEFAULT_FEEDRATE
+#    define DEFAULT_FEEDRATE     (100.0)
+#  endif
+#  ifndef DEFAULT_ACCELERATION
+#    define DEFAULT_ACCELERATION (625.0)
+#  endif
+#  ifndef DEGREES_PER_STEP
+#    define DEGREES_PER_STEP     (0.9)
+#  endif
 #endif
 
 // These numbers are calculated from the above.  No need to change these.
