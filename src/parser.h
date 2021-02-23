@@ -61,6 +61,7 @@ class Parser {
   void D8();  // D8 - Polargraph only.  Report calibration values for left and right belts (mm)
   // void D13();  // D13 Znn - Polargraph only.  Set pen angle
 #endif
+  void D10();  // D10 - get hardware version
   void D14();  // D14 - get machine style
 #if MACHINE_STYLE == SIXI
   void D15();  // D15 - Sixi only.  Sixi demo

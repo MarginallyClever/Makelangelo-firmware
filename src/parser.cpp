@@ -257,10 +257,7 @@ void Parser::processCommand() {
       case 8:        D8();        break;
 #endif
       case 9:        eepromManager.saveCalibration();        break;
-      case 10:  // get hardware version
-        Serial.print(F("D10 V"));
-        Serial.println(MACHINE_HARDWARE_VERSION);
-        break;
+      case 10:       D10();       break;
 #ifdef MACHINE_HAS_LIFTABLE_PEN
       case 13:        setPenAngle(parseNumber('Z', axies[2].pos));        break;
 #endif
@@ -392,6 +389,15 @@ void Parser::D8() {
   Serial.println(calibrateRight);
 }
 #endif
+
+/**
+   D10
+   get hardware version
+*/
+void Parser::D10() {
+  Serial.print(F("D10 V"));
+  Serial.println(MACHINE_HARDWARE_VERSION);
+}
 
 void Parser::D14() {
   // get machine style
@@ -681,7 +687,8 @@ void Parser::sayModelAndUID() {
 void Parser::M100() {
   Serial.print(F("\n\nHELLO WORLD! "));
   sayModelAndUID();
-  D5();
+  // report firmware version
+  D5();  
   sayBuildDateAndTime();
   Serial.println(F("Please see http://makelangelo.com/ for more information."));
   Serial.println(F("Try these (with a newline): G00,G01,G02,G03,G04,G28,G90,G91,G92,M18,M101,M100,M114"));
