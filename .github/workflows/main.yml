@@ -110,19 +110,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@master
  
-      # We use the arduino/setup-arduino-cli action to install and
-      # configure the Arduino CLI on the system.
+      # We use the arduino/setup-arduino-cli action to install and configure the Arduino CLI on the system.
       - name: Setup Arduino CLI
         uses: arduino/setup-arduino-cli@v1.1.1
         
-      # We then install the platform, which one will be determined
-      # dynamically by the build matrix.
+      # We then install the platform, which one will be determined dynamically by the build matrix.
       - name: Install platform
-        run: |
-          arduino-cli core update-index
+        run: arduino-cli core update-index
           
       - name: Add core(s)
-        run: arduino-cli core install ${{ matrix.arduino-platform }} --additional-urls http://arduino.esp8266.com/stable/package_esp8266com_index.json https://dl.espressif.com/dl/package_esp32_index.json
+        run: arduino-cli core install ${{ matrix.arduino-platform }} #--additional-urls http://arduino.esp8266.com/stable/package_esp8266com_index.json https://dl.espressif.com/dl/package_esp32_index.json
         
       - name: Add SDFat
         run: arduino-cli lib install SdFat
