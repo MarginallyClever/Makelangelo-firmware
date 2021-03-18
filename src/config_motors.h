@@ -18,9 +18,9 @@
 #  define MICROSTEPS (16.0)
 #endif
 
-// Marginallyclever.com uses GT2 timing belt, which has 2mm teeth.
-// We also use GT2-20 pulleys which have 20 teeth.
-// 20*2 means the pitch is 40.
+// Marginallyclever.com uses GT2-6 timing belt, which has 2mm teeth.
+// We also use GT2 pulleys which have 20 teeth.
+// 20 teeth * 2mm means the pitch is 40mm.
 #define PULLEY_PITCH (40.0)
 
 #if NORMAL_MOTOR_STEPS == 200
