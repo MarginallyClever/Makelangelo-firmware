@@ -179,6 +179,7 @@ void EEPROMManager::reportAll() {
   // belt calibration
   parser.D8();
 #endif
+  parser.D6();
 #if MACHINE_STYLE == SIXI
   // Sixi only home angle values
   Serial.print(F("Home angles "));

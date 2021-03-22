@@ -359,9 +359,15 @@ void Parser::D5() {
    Set home position for each axis.
 */
 void Parser::D6() {
+  Serial.print(F("D6"));
   int i;
   float homePos[NUM_AXIES];
-  for (i = 0; i < NUM_AXIES; ++i) { homePos[i] = parseNumber(AxisNames[i], axies[i].homePos); }
+  for (i = 0; i < NUM_AXIES; ++i) {
+    homePos[i] = parseNumber(AxisNames[i], axies[i].homePos);
+    Serial.print(' ');
+    Serial.print(AxisNames[i]);
+    Serial.print(homePos[i],2);
+  }
   setHome(homePos);
 }
 
