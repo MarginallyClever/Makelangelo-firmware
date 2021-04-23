@@ -762,7 +762,7 @@ void Parser::M112() {
   LCD_setStatusMessage("ESTOP - PLEASE RESET");
 #endif
   // stop clock
-  CRITICAL_SECTION_START();
+  DISABLE_ISRS();
   // do nothing
 }
 

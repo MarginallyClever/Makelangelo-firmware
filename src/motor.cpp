@@ -20,32 +20,14 @@
 #endif
 
 //------------------------------------------------------------------------------
-// MACROS
-//------------------------------------------------------------------------------
-
-#ifdef ESP8266
-#endif
-
-#ifndef CLOCK_ADJUST
-#  define CLOCK_ADJUST(x) \
-    { OCR1A = (x); }  // microseconds
-#endif
-#ifndef CRITICAL_SECTION_START
-unsigned char _sreg = 0;
-inline void CRITICAL_SECTION_START() {
-  _sreg = SREG;
-  cli();
-}
-#endif
-#ifndef CRITICAL_SECTION_END
-inline void CRITICAL_SECTION_END() {
-  SREG = _sreg;
-}
-#endif
-
-//------------------------------------------------------------------------------
 // DEFINES
 //------------------------------------------------------------------------------
+
+#ifdef CPU_32_BIT
+  #define STEP_MULTIPLY(A,B) MultiU32X24toH32(A, B)
+#else
+  #define STEP_MULTIPLY(A,B) MultiU24X32toH16(A, B)
+#endif
 
 #define BLOCK_DELAY_FOR_1ST_MOVE 100
 #define MIN_STEP_RATE            120
@@ -123,6 +105,14 @@ const char *AxisNames  = "XYZUVWT";
 //------------------------------------------------------------------------------
 // METHODS
 //------------------------------------------------------------------------------
+
+#ifdef CPU_32_BIT
+static FORCE_INLINE uint32_t MultiU32X24toH32(uint32_t longIn1, uint32_t longIn2) {
+  return ((uint64_t)longIn1 * longIn2 + 0x00800000) >> 24;
+}
+
+#else
+
 #ifdef ESP8266
 void itr();
 #endif
@@ -134,12 +124,21 @@ void itr();
 static FORCE_INLINE uint16_t MultiU16X8toH16(uint8_t charIn1, uint16_t intIn2) {
   register uint8_t tmp;
   register uint16_t intRes;
-  __asm__ __volatile__(A("clr %[tmp]") A("mul %[charIn1], %B[intIn2]") A("movw %A[intRes], r0")
-                           A("mul %[charIn1], %A[intIn2]") A("add %A[intRes], r1") A("adc %B[intRes], %[tmp]")
-                               A("lsr r0") A("adc %A[intRes], %[tmp]") A("adc %B[intRes], %[tmp]") A("clr r1")
-                       : [ intRes ] "=&r"(intRes), [ tmp ] "=&r"(tmp)
-                       : [ charIn1 ] "d"(charIn1), [ intIn2 ] "d"(intIn2)
-                       : "cc");
+  __asm__ __volatile__(
+    A("clr %[tmp]")
+    A("mul %[charIn1], %B[intIn2]") 
+    A("movw %A[intRes], r0")
+    A("mul %[charIn1], %A[intIn2]") 
+    A("add %A[intRes], r1") 
+    A("adc %B[intRes], %[tmp]")
+    A("lsr r0") 
+    A("adc %A[intRes], %[tmp]") 
+    A("adc %B[intRes], %[tmp]") 
+    A("clr r1")
+    : [ intRes ] "=&r"(intRes), [ tmp ] "=&r"(tmp)
+    : [ charIn1 ] "d"(charIn1), [ intIn2 ] "d"(intIn2)
+    : "cc"
+  );
   return intRes;
 }
 
@@ -161,24 +160,49 @@ static FORCE_INLINE uint16_t MultiU24X32toH16(uint32_t longIn1, uint32_t longIn2
   register uint8_t tmp2;
   register uint16_t intRes;
   __asm__ __volatile__(
-      A("clr %[tmp1]") A("mul %A[longIn1], %B[longIn2]") A("mov %[tmp2], r1") A("mul %B[longIn1], %C[longIn2]")
-          A("movw %A[intRes], r0") A("mul %C[longIn1], %C[longIn2]") A("add %B[intRes], r0")
-              A("mul %C[longIn1], %B[longIn2]") A("add %A[intRes], r0") A("adc %B[intRes], r1")
-                  A("mul %A[longIn1], %C[longIn2]") A("add %[tmp2], r0") A("adc %A[intRes], r1")
-                      A("adc %B[intRes], %[tmp1]") A("mul %B[longIn1], %B[longIn2]") A("add %[tmp2], r0")
-                          A("adc %A[intRes], r1") A("adc %B[intRes], %[tmp1]") A("mul %C[longIn1], %A[longIn2]")
-                              A("add %[tmp2], r0") A("adc %A[intRes], r1") A("adc %B[intRes], %[tmp1]")
-                                  A("mul %B[longIn1], %A[longIn2]") A("add %[tmp2], r1") A("adc %A[intRes], %[tmp1]")
-                                      A("adc %B[intRes], %[tmp1]") A("lsr %[tmp2]") A("adc %A[intRes], %[tmp1]")
-                                          A("adc %B[intRes], %[tmp1]") A("mul %D[longIn2], %A[longIn1]")
-                                              A("add %A[intRes], r0") A("adc %B[intRes], r1")
-                                                  A("mul %D[longIn2], %B[longIn1]") A("add %B[intRes], r0") A("clr r1")
-      : [ intRes ] "=&r"(intRes), [ tmp1 ] "=&r"(tmp1), [ tmp2 ] "=&r"(tmp2)
-      : [ longIn1 ] "d"(longIn1), [ longIn2 ] "d"(longIn2)
-      : "cc");
+    A("clr %[tmp1]") 
+    A("mul %A[longIn1], %B[longIn2]") 
+    A("mov %[tmp2], r1") 
+    A("mul %B[longIn1], %C[longIn2]")
+    A("movw %A[intRes], r0") 
+    A("mul %C[longIn1], %C[longIn2]") 
+    A("add %B[intRes], r0")
+    A("mul %C[longIn1], %B[longIn2]") 
+    A("add %A[intRes], r0") 
+    A("adc %B[intRes], r1")
+    A("mul %A[longIn1], %C[longIn2]") 
+    A("add %[tmp2], r0") 
+    A("adc %A[intRes], r1")
+    A("adc %B[intRes], %[tmp1]") 
+    A("mul %B[longIn1], %B[longIn2]") 
+    A("add %[tmp2], r0")
+    A("adc %A[intRes], r1") 
+    A("adc %B[intRes], %[tmp1]") 
+    A("mul %C[longIn1], %A[longIn2]")
+    A("add %[tmp2], r0") 
+    A("adc %A[intRes], r1") 
+    A("adc %B[intRes], %[tmp1]")
+    A("mul %B[longIn1], %A[longIn2]") 
+    A("add %[tmp2], r1") 
+    A("adc %A[intRes], %[tmp1]")
+    A("adc %B[intRes], %[tmp1]") 
+    A("lsr %[tmp2]") 
+    A("adc %A[intRes], %[tmp1]")
+    A("adc %B[intRes], %[tmp1]") 
+    A("mul %D[longIn2], %A[longIn1]")
+    A("add %A[intRes], r0")
+    A("adc %B[intRes], r1")
+    A("mul %D[longIn2], %B[longIn1]") 
+    A("add %B[intRes], r0") 
+    A("clr r1")
+    : [ intRes ] "=&r"(intRes), [ tmp1 ] "=&r"(tmp1), [ tmp2 ] "=&r"(tmp2)
+    : [ longIn1 ] "d"(longIn1), [ longIn2 ] "d"(longIn2)
+    : "cc"
+  );
 #endif  // ESP8266
   return intRes;
 }
+#endif //__AVR__
 
 /**
    Calculate the maximum allowable speed at this point, in order
@@ -297,7 +321,7 @@ void motor_setup() {
   working_seg         = NULL;
   first_segment_delay = 0;
 
-  HAL_timer_start(0);
+  HAL_timer_start(STEP_TIMER_NUM);
 
   motor_engage();
 }
@@ -818,8 +842,8 @@ inline void isr_internal_pulse() {
 }
 
 // Process blocks in the isr
-inline uint32_t isr_internal_block() {
-  uint32_t interval = (TIMER_RATE) / 1000;
+inline hal_timer_t isr_internal_block() {
+  hal_timer_t interval = (TIMER_RATE) / 1000;
 
   if (working_seg != NULL) {
     // Is this segment done?
@@ -830,7 +854,7 @@ inline uint32_t isr_internal_block() {
     } else {
       if (steps_taken <= accel_until) {
         // accelerating
-        current_feed_rate = start_feed_rate + MultiU24X32toH16(time_accelerating, current_acceleration);
+        current_feed_rate = start_feed_rate + STEP_MULTIPLY(time_accelerating, current_acceleration);
         current_feed_rate = min(current_feed_rate, working_seg->nominal_rate);
         interval          = calc_timer(current_feed_rate, &isr_step_multiplier);
         time_accelerating += interval;
@@ -846,7 +870,7 @@ inline uint32_t isr_internal_block() {
 #endif
       } else if (steps_taken > decel_after) {
         // decelerating
-        uint32_t end_feed_rate = MultiU24X32toH16(time_decelerating, current_acceleration);
+        hal_timer_t end_feed_rate = STEP_MULTIPLY(time_decelerating, current_acceleration);
         if (end_feed_rate < current_feed_rate) {
           end_feed_rate = current_feed_rate - end_feed_rate;
           end_feed_rate = max(end_feed_rate, working_seg->final_rate);
@@ -1016,23 +1040,23 @@ void debug_stepping() {
 #endif
 
 HAL_STEP_TIMER_ISR {
-  static uint32_t nextMainISR=0;
+  static hal_timer_t nextMainISR=0;
   
-  //#ifndef __AVR__
+  #ifndef __AVR__
     // Disable interrupts, to avoid ISR preemption while we reprogram the period
     // (AVR enters the ISR with global interrupts disabled, so no need to do it here)
-    CRITICAL_SECTION_START();
-  //#endif
+    DISABLE_ISRS();
+  #endif
   
   // set the timer interrupt value as big as possible so there's little chance it triggers while i'm still in the ISR.
-  CLOCK_ADJUST(MAX_OCR1A_VALUE);
+  HAL_timer_set_compare(STEP_TIMER_NUM, hal_timer_t(HAL_TIMER_TYPE_MAX));
 
   uint8_t max_loops       = 10;
-  uint32_t next_isr_ticks = 0;
-  uint32_t min_ticks;
+  hal_timer_t next_isr_ticks = 0;
+  hal_timer_t min_ticks;
   do {
     // Turn the interrupts back on (reduces UART delay, apparently)
-    CRITICAL_SECTION_END();
+    ENABLE_ISRS();
 
 #ifndef DEBUG_STEPPING
 #  ifdef HAS_TMC2130
@@ -1048,12 +1072,20 @@ HAL_STEP_TIMER_ISR {
 #  endif
 #endif  // DEBUG_STEPPING
 
-    uint32_t interval = min(MAX_OCR1A_VALUE,nextMainISR);
+    hal_timer_t interval = min(hal_timer_t(HAL_TIMER_TYPE_MAX),nextMainISR);
+
     nextMainISR      -= interval;
     next_isr_ticks   += interval;
 
-    CRITICAL_SECTION_START();
-    min_ticks = OCR1A + 8;
+    DISABLE_ISRS();
+    min_ticks = HAL_timer_get_count(0) + hal_timer_t(
+      #ifdef __AVR__
+        8
+      #else
+        1
+      #endif
+      * (STEPPER_TIMER_TICKS_PER_US)
+    );
 
     if (!--max_loops) next_isr_ticks = min_ticks;
     // ORC1A has been advancing while the interrupt was running.
@@ -1061,9 +1093,10 @@ HAL_STEP_TIMER_ISR {
   } while (next_isr_ticks < min_ticks);
 
   // set the next isr to fire at the right time.
-  CLOCK_ADJUST(next_isr_ticks);
+  HAL_timer_set_compare(STEP_TIMER_NUM, hal_timer_t(next_isr_ticks));
+
   // turn the interrupts back on
-  CRITICAL_SECTION_END();
+  ENABLE_ISRS();
 }
 
 void clockISRProfile() {

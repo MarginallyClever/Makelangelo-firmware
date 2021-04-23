@@ -4,10 +4,6 @@
 // TIMERS
 //------------------------------------------------------------------------------
 
-
-// for timer interrupt control
-#  define MAX_COUNTER (65536L)  // 16 bits
-
 #define TIMER_RATE ((CLOCK_FREQ) / 8)
 
 // TODO a guess.  use real math here!
