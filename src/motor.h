@@ -23,6 +23,10 @@
 
 #define NUM_MUSCLES (NUM_MOTORS + NUM_SERVOS)
 
+#ifndef HAL_STEP_TIMER_ISR
+#define HAL_STEP_TIMER_ISR ISR(TIMER1_COMPA_vect)
+#endif
+
 //------------------------------------------------------------------------------
 // MOVE BUFFERING
 //------------------------------------------------------------------------------

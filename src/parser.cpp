@@ -694,7 +694,7 @@ void Parser::M100() {
   Serial.print(F("\n\nHELLO WORLD! "));
   sayModelAndUID();
   // report firmware version
-  D5();  
+  D5();
   sayBuildDateAndTime();
   Serial.println(F("Please see http://makelangelo.com/ for more information."));
   Serial.println(F("Try these (with a newline): G00,G01,G02,G03,G04,G28,G90,G91,G92,M18,M101,M100,M114"));
@@ -841,7 +841,8 @@ void Parser::M203() {
 
 /**
    M205 X<jerk> Y<jerk> Z<jerk> U<jerk> V<jerk> W<jerk> B<us>
-   adjust max jerk
+   adjust max jerk for axies XYZUVW.
+   Adjust minimum segment time B
 */
 void Parser::M205() {
   float f;

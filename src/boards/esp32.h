@@ -52,4 +52,6 @@
 #  undef HAS_SD
 #  undef HAS_LCD
 
+#include "HAL_default.h"
+
 #endif  // MOTHERBOARD == BOARD_ESP32

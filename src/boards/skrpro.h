@@ -12,7 +12,8 @@
 #    error "Oops!  Make sure you build this project using PlatformIO"
 #  endif
 
-#  define CLOCK_FREQ (16000000L)
+#  define CPU_32_BIT
+#  define CLOCK_FREQ (168000000L)
 
 #  define MAX_MOTORS (6)
 
@@ -105,5 +106,47 @@
 #    define CS_PIN_1 31  // chip select
 
 #  endif  // HAS_TMC2130
+
+// HAL stuff ---------------------------------------------
+
+
+#  include <stdint.h>
+#  include <HardwareTimer.h>
+
+#define NUM_HARDWARE_TIMERS 2
+
+#define FORCE_INLINE __attribute__((always_inline)) inline
+#define STEPPER_TIMER_RATE 2000000 // 2 Mhz
+
+#define HAL_STEP_TIMER_ISR void Step_Handler(HardwareTimer *htim)
+
+#  define CRITICAL_SECTION_START()  uint32_t primaskV = __get_PRIMASK(); __disable_irq()
+#  define CRITICAL_SECTION_END()    if(!primaskV) __enable_irq()
+#  define cli() __enable_irq()
+#  define sei() __disable_irq()
+
+
+extern void Step_Handler(HardwareTimer *htim);
+
+extern HardwareTimer *timer_instance[NUM_HARDWARE_TIMERS];
+
+FORCE_INLINE void HAL_timer_start(const uint8_t timerIndex) {
+}
+
+FORCE_INLINE bool HAL_timer_initialized(const uint8_t timerIndex) {
+  return timer_instance[timerIndex] != NULL;
+}
+
+FORCE_INLINE static void CLOCK_ADJUST(uint32_t overflow) {
+  if (HAL_timer_initialized(0)) {
+    timer_instance[0]->setOverflow(overflow + 1, TICK_FORMAT); // Value decremented by setOverflow()
+    // wiki: "force all registers (Autoreload, prescaler, compare) to be taken into account"
+    // So, if the new overflow value is less than the count it will trigger a rollover interrupt.
+    if (overflow < timer_instance[0]->getCount())  // Added 'if' here because reports say it won't boot without it
+      timer_instance[0]->refresh();
+  }
+}
+// HAL stuff ---------------------------------------------
+
 
 #endif

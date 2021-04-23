@@ -24,25 +24,23 @@
 //------------------------------------------------------------------------------
 
 #ifdef ESP8266
-#  define CLOCK_ADJUST(x) \
-    { timer0_write(ESP.getCycleCount() + (long)(80000L * (x))); }  // microseconds
+#endif
 
-inline void CRITICAL_SECTION_START() {}
-inline void CRITICAL_SECTION_END() {}
-
-#else
+#ifndef CLOCK_ADJUST
 #  define CLOCK_ADJUST(x) \
     { OCR1A = (x); }  // microseconds
-
+#endif
+#ifndef CRITICAL_SECTION_START
 unsigned char _sreg = 0;
 inline void CRITICAL_SECTION_START() {
   _sreg = SREG;
   cli();
 }
+#endif
+#ifndef CRITICAL_SECTION_END
 inline void CRITICAL_SECTION_END() {
   SREG = _sreg;
 }
-
 #endif
 
 //------------------------------------------------------------------------------
@@ -299,31 +297,7 @@ void motor_setup() {
   working_seg         = NULL;
   first_segment_delay = 0;
 
-#ifndef DEBUG_STEPPING
-  // disable global interrupts
-  CRITICAL_SECTION_START();
-
-#  ifdef ESP8266
-  timer0_isr_init();
-  timer0_attachInterrupt(itr);
-  CLOCK_ADJUST(2000);
-#  else
-  // set entire TCCR1A register to 0
-  TCCR1A = 0;
-  // set the overflow clock to 0
-  TCNT1 = 0;
-  // set compare match register to desired timer count
-  OCR1A = 2000;  // 1ms
-  // turn on CTC mode
-  TCCR1B = (1 << WGM12);
-  // Set 8x prescaler
-  TCCR1B = (TCCR1B & ~(0x07 << CS10)) | (2 << CS10);
-  // enable timer compare interrupt
-  TIMSK1 |= (1 << OCIE1A);
-#  endif  // ESP8266
-
-  CRITICAL_SECTION_END();
-#endif  // DEBUG_STEPPING
+  HAL_timer_start(0);
 
   motor_engage();
 }
@@ -694,20 +668,25 @@ FORCE_INLINE static unsigned short calc_timer(uint32_t desired_freq_hz, uint8_t 
   }
   *loops = step_multiplier;
 
-  if (desired_freq_hz < CLOCK_MIN_STEP_FREQUENCY) desired_freq_hz = CLOCK_MIN_STEP_FREQUENCY;
-  desired_freq_hz -= CLOCK_MIN_STEP_FREQUENCY;
-  if (desired_freq_hz >= 8 * 256) {
-    const uint8_t tmp_step_rate  = (desired_freq_hz & 0x00FF);
-    const uint16_t table_address = (uint16_t)&speed_lookuptable_fast[(uint8_t)(desired_freq_hz >> 8)][0],
-                   gain          = (uint16_t)pgm_read_word_near(table_address + 2);
-    timer                        = MultiU16X8toH16(tmp_step_rate, gain);
-    timer                        = (uint16_t)pgm_read_word_near(table_address) - timer;
-  } else {  // lower step rates
-    uint16_t table_address = (uint16_t)&speed_lookuptable_slow[0][0];
-    table_address += ((desired_freq_hz) >> 1) & 0xFFFC;
-    timer = (uint16_t)pgm_read_word_near(table_address) -
-            (((uint16_t)pgm_read_word_near(table_address + 2) * (uint8_t)(desired_freq_hz & 0x0007)) >> 3);
-  }
+
+  #ifdef CPU_32_BIT
+    timer = uint32_t(STEPPER_TIMER_RATE) / desired_freq_hz;
+  #else
+    if (desired_freq_hz < CLOCK_MIN_STEP_FREQUENCY) desired_freq_hz = CLOCK_MIN_STEP_FREQUENCY;
+    desired_freq_hz -= CLOCK_MIN_STEP_FREQUENCY;
+    if (desired_freq_hz >= 8 * 256) {
+      const uint8_t tmp_step_rate  = (desired_freq_hz & 0x00FF);
+      const uint16_t table_address = (uint16_t)&speed_lookuptable_fast[(uint8_t)(desired_freq_hz >> 8)][0],
+                    gain          = (uint16_t)pgm_read_word_near(table_address + 2);
+      timer                        = MultiU16X8toH16(tmp_step_rate, gain);
+      timer                        = (uint16_t)pgm_read_word_near(table_address) - timer;
+    } else {  // lower step rates
+      uint16_t table_address = (uint16_t)&speed_lookuptable_slow[0][0];
+      table_address += ((desired_freq_hz) >> 1) & 0xFFFC;
+      timer = (uint16_t)pgm_read_word_near(table_address) -
+              (((uint16_t)pgm_read_word_near(table_address + 2) * (uint8_t)(desired_freq_hz & 0x0007)) >> 3);
+    }
+  #endif
 
   return timer;
 }
@@ -1036,11 +1015,7 @@ void debug_stepping() {
 }
 #endif
 
-#ifdef ESP8266
-void itr() {
-#else
-ISR(TIMER1_COMPA_vect) {
-#endif // ESP8266
+HAL_STEP_TIMER_ISR {
   static uint32_t nextMainISR=0;
   
   //#ifndef __AVR__

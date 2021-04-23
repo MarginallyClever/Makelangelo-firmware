@@ -82,4 +82,6 @@
 #  define encrot2 3
 #  define encrot3 1
 
+#include "HAL_default.h"
+
 #endif  // BOARD_MKS

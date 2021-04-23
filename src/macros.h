@@ -25,9 +25,16 @@
 #  define CBI(NN, BB) (NN &= ~(1 << BB))
 #endif
 
+#undef SET_BIT_ON
 #define SET_BIT_ON(NN, BB)  SBI(NN, BB)
+
+#undef SET_BIT_OFF
 #define SET_BIT_OFF(NN, BB) CBI(NN, BB)
+
+#undef TEST
 #define TEST(NN, BB)        (((NN >> BB) & 0x1) == 0x1)
+
+#undef SET_BIT
 #define SET_BIT(NN, BB, TF) \
   do {                      \
     if (TF)                 \
@@ -35,6 +42,8 @@
     else                    \
       CBI(NN, BB);          \
   } while (0);
+
+#undef FLIP_BIT
 #define FLIP_BIT(NN, BB) (NN ^= (1 << BB))
 
 // wrap all degrees to within -180...180.
