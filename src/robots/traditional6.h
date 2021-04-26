@@ -42,6 +42,6 @@
 // this value should equal gear ratio * motor steps * microstepping for each axis.
 // by default this is set the same for all motors, and you'll probably want to break it out into separate value
 // per-axis.
-#  define MM_PER_STEP (1 * 200 * 2)  // 1:1 ratio * 200 steps per turn * 1/2 stepping
+#  define MM_PER_STEP (1.0 * 200.0 * 70.0 * 26.0)  // 1:1 ratio * 200 steps per turn * 70:1 gearbox * 54:20 pulley ratio
 
 #endif  // #ifdef TRADITIONAL6
