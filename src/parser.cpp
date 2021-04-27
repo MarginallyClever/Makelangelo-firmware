@@ -568,7 +568,7 @@ void Parser::G01() {
   }
 
   float f = parseNumber('F', feed_rate);
-  f       = min(max(f, (float)MIN_FEEDRATE), (float)MAX_FEEDRATE);
+  f = min(max(f, (float)MIN_FEEDRATE), (float)MAX_FEEDRATE);
 
   uint8_t badAngles = 0;
 

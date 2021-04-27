@@ -27,10 +27,11 @@
 #define SIXI          9   // 6DOF robot arm.
 #define TRADITIONAL6  10  // 6 axis machine, no restrictions.
 #define SCARA         11  // 2 axis SCARA.
+#define SIXI3         12   // 6DOF robot arm.
 
 // default value
 // !! this is now handeled via pio.ini !!
-//#define MACHINE_STYLE SIXI
+#define MACHINE_STYLE SIXI3
 
 //------------------------------------------------------------------------------
 // LCD panels supported
@@ -41,7 +42,7 @@
 #define LCD_IS_SMART  2  // reprapdiscount Smart LCD Controller (including XXL model)
 
 // default value
-#define LCD_TYPE LCD_IS_SMART
+#define LCD_TYPE LCD_NONE
 
 //------------------------------------------------------------------------------
 // Microcontrollers supported
@@ -59,7 +60,7 @@
 
 // default value 
 // !! this is now handeled via pio.ini !!
-//#define MOTHERBOARD BOARD_SIXI_MEGA
+#define MOTHERBOARD BOARD_RUMBA
 
 //------------------------------------------------------------------------------
 // YOUR CHANGES GO HERE
@@ -86,6 +87,7 @@
 #include "robots/sixi.h"
 #include "robots/traditional6.h"
 #include "robots/scara.h"
+#include "robots/sixi3.h"
 
 #include "boards/rumba.h"
 #include "boards/ramps.h"

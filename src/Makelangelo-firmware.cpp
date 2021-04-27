@@ -62,7 +62,11 @@ unsigned int localPort = 9999;
 //------------------------------------------------------------------------------
 
 void findStepDelay() {
-  step_delay = 1000000.0f / (DEFAULT_FEEDRATE / MM_PER_STEP);
+  // feedrate is units/s
+  // mm per step is 
+  step_delay = 1000000.0f / (feed_rate / MM_PER_STEP);
+  Serial.print("step_delay=");
+  Serial.println(step_delay);
 }
 
 // returns angle of dy/dx as a value from 0...2PI
