@@ -315,63 +315,47 @@ void LCD_read() {
     // detect potentiometer changes
     buttons       = ((digitalRead(BTN_EN1) == LOW) << BLEN_A) | ((digitalRead(BTN_EN2) == LOW) << BLEN_B);
     next_lcd_read = now + 30;
-  }
 
-  // potentiometer uses grey code.  Pattern is 0 3 1 2
-  if (lcd_rot_old != buttons) {
-    switch (buttons) {
-      case ENCROT0:
-        switch (lcd_rot_old) {
-          case ENCROT3:
-            lcd_turn++;
-            break;
-          case ENCROT1:
-            lcd_turn--;
-            break;
-        }
-        break;
-      case ENCROT1:
-        switch (lcd_rot_old) {
-          case ENCROT0:
-            lcd_turn++;
-            break;
-          case ENCROT2:
-            lcd_turn--;
-            break;
-        }
-        break;
-      case ENCROT2:
-        switch (lcd_rot_old) {
-          case ENCROT1:
-            lcd_turn++;
-            break;
-          case ENCROT3:
-            lcd_turn--;
-            break;
-        }
-        break;
-      case ENCROT3:
-        switch (lcd_rot_old) {
-          case ENCROT2:
-            lcd_turn++;
-            break;
-          case ENCROT0:
-            lcd_turn--;
-            break;
-        }
-        break;
-    }
-    // for debugging potentiometer
-    {
-      // if(lcd_turn !=0) Serial.print(lcd_turn>0?'+':'-');
-      // else Serial.print(' ');
-      // Serial.print(millis());     Serial.print('\t');
-      // Serial.print(lcd_rot_old);  Serial.print('\t');
-      // Serial.print(buttons);      Serial.print('\t');
-      // Serial.print(lcd_turn);     Serial.print('\n');
-    }
+    // potentiometer uses grey code.  Pattern is 0 3 1 2
+    if (lcd_rot_old != buttons) {
+      switch (buttons) {
+        case ENCROT0:
+          switch (lcd_rot_old) {
+            case ENCROT3:            lcd_turn++;            break;
+            case ENCROT1:            lcd_turn--;            break;
+          }
+          break;
+        case ENCROT1:
+          switch (lcd_rot_old) {
+            case ENCROT0:            lcd_turn++;            break;
+            case ENCROT2:            lcd_turn--;            break;
+          }
+          break;
+        case ENCROT2:
+          switch (lcd_rot_old) {
+            case ENCROT1:            lcd_turn++;            break;
+            case ENCROT3:            lcd_turn--;            break;
+          }
+          break;
+        case ENCROT3:
+          switch (lcd_rot_old) {
+            case ENCROT2:            lcd_turn++;            break;
+            case ENCROT0:            lcd_turn--;            break;
+          }
+          break;
+      }
+      // for debugging potentiometer
+      {
+        // if(lcd_turn !=0) Serial.print(lcd_turn>0?'+':'-');
+        // else Serial.print(' ');
+        // Serial.print(millis());     Serial.print('\t');
+        // Serial.print(lcd_rot_old);  Serial.print('\t');
+        // Serial.print(buttons);      Serial.print('\t');
+        // Serial.print(lcd_turn);     Serial.print('\n');
+      }
 
-    lcd_rot_old = buttons;
+      lcd_rot_old = buttons;
+    }
   }
 
   // find click state
