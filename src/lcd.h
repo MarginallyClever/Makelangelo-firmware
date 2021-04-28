@@ -57,11 +57,6 @@
 #  define BLEN_B 1
 #  define BLEN_A 0
 
-#  define ENCROT0 0
-#  define ENCROT1 2
-#  define ENCROT2 3
-#  define ENCROT3 1
-
 #  define LCD_MESSAGE_LENGTH (LCD_HEIGHT * LCD_WIDTH + 1)  // we have two lines of 20 characters avialable in 7.16
 #  define LCD_DRAW_DELAY     (100)
 #  define LCD_TURN_PER_MENU  (3)  // was 5
