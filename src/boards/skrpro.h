@@ -23,42 +23,53 @@
 
 #  define MAX_MOTORS (6)
 
+//
+// Trinamic Stallguard pins
+//
+#define X_DIAG_PIN                          PB10  // X-
+#define Y_DIAG_PIN                          PE12  // Y-
+#define Z_DIAG_PIN                          PG8   // Z-
+#define E0_DIAG_PIN                         PE15  // E0
+#define E1_DIAG_PIN                         PE10  // E1
+#define E2_DIAG_PIN                         PG5   // E2
+
+
 // pin outs, see Makelangelo-firmware\platformio\variants\BIGTREE_SKR_PRO_1v1\pinout.png
 #  define MOTOR_0_LETTER           'X'
-#  define MOTOR_0_DIR_PIN          (PF1)
 #  define MOTOR_0_STEP_PIN         (PE9)
+#  define MOTOR_0_DIR_PIN          (PF1)
 #  define MOTOR_0_ENABLE_PIN       (PF2)
-#  define MOTOR_0_LIMIT_SWITCH_PIN (PF8)
+#  define MOTOR_0_LIMIT_SWITCH_PIN (PA15)
 
 #  define MOTOR_1_LETTER           'Y'
-#  define MOTOR_1_DIR_PIN          (PE8)
 #  define MOTOR_1_STEP_PIN         (PE11)
+#  define MOTOR_1_DIR_PIN          (PE8)
 #  define MOTOR_1_ENABLE_PIN       (PD7)
-#  define MOTOR_1_LIMIT_SWITCH_PIN (PF8)
+#  define MOTOR_1_LIMIT_SWITCH_PIN (PB8)
 
 #  define MOTOR_2_LETTER           'Z'
-#  define MOTOR_2_DIR_PIN          (PC2)
 #  define MOTOR_2_STEP_PIN         (PE13)
+#  define MOTOR_2_DIR_PIN          (PC2)
 #  define MOTOR_2_ENABLE_PIN       (PC0)
-#  define MOTOR_2_LIMIT_SWITCH_PIN (PF8)
+#  define MOTOR_2_LIMIT_SWITCH_PIN (PB9)
 
 #  define MOTOR_3_LETTER           'U'
-#  define MOTOR_3_DIR_PIN          (PA0)
 #  define MOTOR_3_STEP_PIN         (PE14)
+#  define MOTOR_3_DIR_PIN          (PA0)
 #  define MOTOR_3_ENABLE_PIN       (PC3)
-#  define MOTOR_3_LIMIT_SWITCH_PIN (PF8)
+#  define MOTOR_3_LIMIT_SWITCH_PIN (PB3)
 
 #  define MOTOR_4_LETTER           'V'
-#  define MOTOR_4_DIR_PIN          (PE7)
 #  define MOTOR_4_STEP_PIN         (PD15)
+#  define MOTOR_4_DIR_PIN          (PE7)
 #  define MOTOR_4_ENABLE_PIN       (PA3)
-#  define MOTOR_4_LIMIT_SWITCH_PIN (PF8)
+#  define MOTOR_4_LIMIT_SWITCH_PIN (PG15)
 
 #  define MOTOR_5_LETTER           'W'
-#  define MOTOR_5_DIR_PIN          (PG9)
 #  define MOTOR_5_STEP_PIN         (PD13)
+#  define MOTOR_5_DIR_PIN          (PG9)
 #  define MOTOR_5_ENABLE_PIN       (PF0)
-#  define MOTOR_5_LIMIT_SWITCH_PIN (PF8)
+#  define MOTOR_5_LIMIT_SWITCH_PIN (PG12)
 
 #  define MAX_BOARD_SERVOS (1)
 #  define SERVO0_PIN       (5)

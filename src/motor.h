@@ -39,6 +39,18 @@
 #define SEGMOD(x) ((x) & (MAX_SEGMENTS - 1))
 
 //------------------------------------------------------------------------------
+// enable pin.  reverse if your board or drivers are odd.
+//------------------------------------------------------------------------------
+
+#ifndef MOTOR_ENABLE_ON
+#define MOTOR_ENABLE_ON  LOW
+#endif
+
+#ifndef MOTOR_ENABLE_OFF
+#define MOTOR_ENABLE_OFF  HIGH
+#endif
+
+//------------------------------------------------------------------------------
 // step direction
 //------------------------------------------------------------------------------
 

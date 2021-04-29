@@ -327,9 +327,12 @@ void motor_setup() {
   motor_engage();
 }
 
+
 // turn on power to the motors (make them immobile)
 void motor_engage() {
-  for (ALL_MOTORS(i)) { digitalWrite(motors[i].enable_pin, LOW); }
+  for (ALL_MOTORS(i)) {
+    digitalWrite(motors[i].enable_pin, MOTOR_ENABLE_ON);
+  }
   /*
     #if MACHINE_STYLE == SIXI
       // DM320T drivers want high for enabled
@@ -341,7 +344,9 @@ void motor_engage() {
 
 // turn off power to the motors (make them move freely)
 void motor_disengage() {
-  for (ALL_MOTORS(i)) { digitalWrite(motors[i].enable_pin, HIGH); }
+  for (ALL_MOTORS(i)) {
+    digitalWrite(motors[i].enable_pin, MOTOR_ENABLE_OFF);
+  }
   /*
   #if MACHINE_STYLE == SIXI
   // DM320T drivers want low for disabled

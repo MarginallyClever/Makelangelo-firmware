@@ -33,7 +33,7 @@ float calibrateLeft  = 1011.0;
 // plotter position.
 float feed_rate    = DEFAULT_FEEDRATE;
 float acceleration = DEFAULT_ACCELERATION;
-float step_delay;
+uint32_t step_delay;
 
 #if MACHINE_STYLE == SIXI
 uint32_t reportDelay = 0;
@@ -61,8 +61,15 @@ unsigned int localPort = 9999;
 // METHODS
 //------------------------------------------------------------------------------
 
+/**
+ * calculate microseconds-per-step.
+ * step_per_mm = 1mm / MM_PER_STEP
+ * steps_per_second = step_per_mm * feed_rate (mm/s)
+ * microseconds_per_step = 1M microseconds / steps_per_second
+ **/
 void findStepDelay() {
-  step_delay = 1000000.0f / (feed_rate / MM_PER_STEP);
+ float steps_per_second = (feed_rate / MM_PER_STEP);
+ step_delay = (uint32_t)(1000000.0f / steps_per_second);
 }
 
 // returns angle of dy/dx as a value from 0...2PI
@@ -89,7 +96,7 @@ void setFeedRate(float v1) {
 /**
    @param delay in microseconds
 */
-void pause(const long us) {
+void pause(const uint32_t us) {
   delay(us / 1000);
   delayMicroseconds(us % 1000);
 }

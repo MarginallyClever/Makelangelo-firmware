@@ -312,12 +312,11 @@ void Parser::D0() {
   int i, j, amount;
 
   motor_engage();
+
   findStepDelay();
   Serial.print(F("Step delay="));  Serial.println(step_delay);
   Serial.print(F("feed rate="));  Serial.println(feed_rate);
   Serial.print(F("mm_per_step="));  Serial.println(MM_PER_STEP);
-
-  step_delay=20000;
 
   for(i = 0; i < NUM_MOTORS; ++i) {
     if (MotorNames[i] == 0) continue;
@@ -333,7 +332,6 @@ void Parser::D0() {
       Serial.print(motors[i].dir_pin);
       Serial.print(F(" Step="));
       Serial.print(motors[i].step_pin);
-      Serial.print('\n');
 
       int x = amount < 0 ? STEPPER_DIR_HIGH : STEPPER_DIR_LOW;
       digitalWrite(motors[i].dir_pin, x);
@@ -343,7 +341,9 @@ void Parser::D0() {
         digitalWrite(motors[i].step_pin, HIGH);
         digitalWrite(motors[i].step_pin, LOW);
         pause(step_delay);
+        if(j%100) Serial.print('.');
       }
+      Serial.println();
     }
   }
 }
@@ -637,7 +637,7 @@ void Parser::G02(int8_t clockwise) {
 */
 void Parser::G04() {
   wait_for_empty_segment_buffer();
-  float delayTime = parseNumber('S', 0) + parseNumber('P', 0) * 1000.0f;
+  uint32_t delayTime = parseNumber('S', 0) + parseNumber('P', 0) * 1000.0f;
   pause(delayTime);
 }
 
@@ -670,14 +670,14 @@ void Parser::M6() {
 
 
 void Parser::M17() {
-  Serial.print(F("M17 "));
+  Serial.print(F("M17"));
 
   motor_engage();
 }
 
 
 void Parser::M18() {
-  Serial.print(F("M18 "));
+  Serial.print(F("M18"));
   
   motor_disengage();
 }
@@ -794,7 +794,8 @@ void Parser::M114() {
   wait_for_empty_segment_buffer();
 
   Serial.print(F("M114"));
-  for (ALL_AXIES(i)) {
+  
+  for(ALL_AXIES(i)) {
     Serial.print(' ');
     Serial.print(AxisNames[i]);
     Serial.print(axies[i].pos);

@@ -145,10 +145,10 @@ extern float calibrateLeft;
 
 extern float feed_rate;
 extern float acceleration;
-extern float step_delay;
+extern uint32_t step_delay;
 extern Axis axies[NUM_AXIES];
 
-extern void pause(const long us);
+extern void pause(const uint32_t us);
 extern void findStepDelay();
 
 extern void IK(const float *const axies, long *motorStepArray);
