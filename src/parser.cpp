@@ -313,14 +313,19 @@ void Parser::D0() {
 
   motor_engage();
   findStepDelay();
+  Serial.print(F("Step delay="));  Serial.println(step_delay);
+  Serial.print(F("feed rate="));  Serial.println(feed_rate);
+  Serial.print(F("mm_per_step="));  Serial.println(MM_PER_STEP);
 
-  for (i = 0; i < NUM_MOTORS; ++i) {
+  step_delay=20000;
+
+  for(i = 0; i < NUM_MOTORS; ++i) {
     if (MotorNames[i] == 0) continue;
     amount = parseNumber(MotorNames[i], 0);
     if (amount != 0) {
       Serial.print(F("Moving "));
       Serial.print(MotorNames[i]);
-      Serial.print(F(" ("));
+      Serial.print(F("("));
       Serial.print(i);
       Serial.print(F(") "));
       Serial.print(amount);
@@ -662,6 +667,21 @@ void Parser::M6() {
   if (tool_id >= NUM_TOOLS) tool_id = NUM_TOOLS - 1;
   current_tool = tool_id;
 }
+
+
+void Parser::M17() {
+  Serial.print(F("M17 "));
+
+  motor_engage();
+}
+
+
+void Parser::M18() {
+  Serial.print(F("M18 "));
+  
+  motor_disengage();
+}
+
 
 /**
    M42 P[a] S[b]

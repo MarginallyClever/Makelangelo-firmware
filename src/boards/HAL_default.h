@@ -26,7 +26,7 @@
 
 #define FORCE_INLINE __attribute__((always_inline)) inline
 
-#define STEP_TIMER_NUM 0 
+#define STEP_TIMER 0 
 
 FORCE_INLINE void HAL_timer_start(const uint8_t timerIndex) {
   Serial.println(F("timer start"));

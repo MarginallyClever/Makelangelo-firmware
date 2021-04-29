@@ -1,7 +1,8 @@
 #pragma once
 
-#  include <stdint.h>
-#  include <HardwareTimer.h>
+#include <stdint.h>
+#include <HardwareTimer.h>
+#include "macros.h"
 
 #define NUM_HARDWARE_TIMERS 2
 
@@ -11,7 +12,6 @@
 #define HAL_TIMER_TYPE_MAX 0xFFFFFFFF // Timers can be 16 or 32 bit
 
 #define FORCE_INLINE __attribute__((always_inline)) inline
-#define STEPPER_TIMER_RATE 2000000 // 2 Mhz
 
 #define HAL_STEP_TIMER_ISR void Step_Handler(HardwareTimer *htim)
 
@@ -20,12 +20,30 @@
 #define ENABLE_ISRS() __enable_irq()
 #define DISABLE_ISRS() __disable_irq()
 
+#define __TIMER_DEV(X) TIM##X
+#define _TIMER_DEV(X) __TIMER_DEV(X)
+#define STEP_TIMER_DEV _TIMER_DEV(STEP_TIMER)
+
+#define __TIMER_IRQ_NAME(X) TIM##X##_IRQn
+#define _TIMER_IRQ_NAME(X) __TIMER_IRQ_NAME(X)
+#define STEP_TIMER_IRQ_NAME _TIMER_IRQ_NAME(STEP_TIMER)
+
+#define STEP_TIMER_IRQ_PRIO_DEFAULT      2
+#define STEP_TIMER_IRQ_PRIO STEP_TIMER_IRQ_PRIO_DEFAULT
+
+#define STEP_TIMER_NUM 0
 
 extern void Step_Handler(HardwareTimer *htim);
 
 extern HardwareTimer *timer_instance[NUM_HARDWARE_TIMERS];
 
 FORCE_INLINE void HAL_timer_start(const uint8_t timerIndex) {
+  timer_instance[timerIndex] = new HardwareTimer(STEP_TIMER_DEV);
+  timer_instance[timerIndex]->setPrescaleFactor(STEPPER_TIMER_PRESCALE); //the -1 is done internally
+  timer_instance[timerIndex]->setOverflow(_MIN(hal_timer_t(HAL_TIMER_TYPE_MAX), (HAL_TIMER_RATE) / (STEPPER_TIMER_PRESCALE) /* /frequency */), TICK_FORMAT);
+  timer_instance[timerIndex]->attachInterrupt(Step_Handler);
+  timer_instance[timerIndex]->resume(); // First call to resume() MUST follow the attachInterrupt()
+  HAL_NVIC_SetPriority(STEP_TIMER_IRQ_NAME, STEP_TIMER_IRQ_PRIO, 0);
 }
 
 FORCE_INLINE bool HAL_timer_initialized(const uint8_t timerIndex) {

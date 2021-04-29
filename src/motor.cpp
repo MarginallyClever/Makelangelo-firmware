@@ -38,6 +38,7 @@
 //------------------------------------------------------------------------------
 
 Motor motors[NUM_MOTORS];
+
 #ifndef ESP8266
 #if NUM_SERVOS>0
 Servo servos[NUM_SERVOS];
@@ -99,7 +100,7 @@ float previous_nominal_speed = 0;
 float previous_safe_speed    = 0;
 float previous_speed[NUM_MUSCLES];
 
-const char *MotorNames = "LRUVWT";
+const char *MotorNames = "LRZUVWT";
 const char *AxisNames  = "XYZUVWT";
 
 //------------------------------------------------------------------------------
@@ -1078,7 +1079,7 @@ HAL_STEP_TIMER_ISR {
     next_isr_ticks   += interval;
 
     DISABLE_ISRS();
-    min_ticks = HAL_timer_get_count(0) + hal_timer_t(
+    min_ticks = HAL_timer_get_count(STEP_TIMER_NUM) + hal_timer_t(
       #ifdef __AVR__
         8
       #else

@@ -5,6 +5,12 @@
 // Please see http://www.github.com/MarginallyClever/makelangeloFirmware for more information.
 //------------------------------------------------------------------------------
 
+// SKR PRO 1.2
+// In platformIO, when building any goal starting with "env:BIGTREE_SKR_PRO-*" the output will be found at
+// .Makelangelo-firmware\.pio\build\BIGTREE_SKR_PRO-*\firmware.bin.
+// This file is then copied to the SD card, moved to the board, and then the board is rebooted.
+// firmware.bin will be changed to FIRMWARE.CUR.
+
 #if MOTHERBOARD == BOARD_SKRPRO1_2
 
 // wrong board type set
@@ -17,41 +23,42 @@
 
 #  define MAX_MOTORS (6)
 
+// pin outs, see Makelangelo-firmware\platformio\variants\BIGTREE_SKR_PRO_1v1\pinout.png
 #  define MOTOR_0_LETTER           'X'
-#  define MOTOR_0_DIR_PIN          (16)
-#  define MOTOR_0_STEP_PIN         (17)
-#  define MOTOR_0_ENABLE_PIN       (48)
-#  define MOTOR_0_LIMIT_SWITCH_PIN (37)
+#  define MOTOR_0_DIR_PIN          (PF1)
+#  define MOTOR_0_STEP_PIN         (PE9)
+#  define MOTOR_0_ENABLE_PIN       (PF2)
+#  define MOTOR_0_LIMIT_SWITCH_PIN (PF8)
 
 #  define MOTOR_1_LETTER           'Y'
-#  define MOTOR_1_DIR_PIN          (47)
-#  define MOTOR_1_STEP_PIN         (54)
-#  define MOTOR_1_ENABLE_PIN       (55)
-#  define MOTOR_1_LIMIT_SWITCH_PIN (36)
+#  define MOTOR_1_DIR_PIN          (PE8)
+#  define MOTOR_1_STEP_PIN         (PE11)
+#  define MOTOR_1_ENABLE_PIN       (PD7)
+#  define MOTOR_1_LIMIT_SWITCH_PIN (PF8)
 
 #  define MOTOR_2_LETTER           'Z'
-#  define MOTOR_2_DIR_PIN          (56)
-#  define MOTOR_2_STEP_PIN         (57)
-#  define MOTOR_2_ENABLE_PIN       (62)
-#  define MOTOR_2_LIMIT_SWITCH_PIN (35)
+#  define MOTOR_2_DIR_PIN          (PC2)
+#  define MOTOR_2_STEP_PIN         (PE13)
+#  define MOTOR_2_ENABLE_PIN       (PC0)
+#  define MOTOR_2_LIMIT_SWITCH_PIN (PF8)
 
 #  define MOTOR_3_LETTER           'U'
-#  define MOTOR_3_DIR_PIN          (22)
-#  define MOTOR_3_STEP_PIN         (23)
-#  define MOTOR_3_ENABLE_PIN       (24)
-#  define MOTOR_3_LIMIT_SWITCH_PIN (34)
+#  define MOTOR_3_DIR_PIN          (PA0)
+#  define MOTOR_3_STEP_PIN         (PE14)
+#  define MOTOR_3_ENABLE_PIN       (PC3)
+#  define MOTOR_3_LIMIT_SWITCH_PIN (PF8)
 
 #  define MOTOR_4_LETTER           'V'
-#  define MOTOR_4_DIR_PIN          (25)
-#  define MOTOR_4_STEP_PIN         (26)
-#  define MOTOR_4_ENABLE_PIN       (27)
-#  define MOTOR_4_LIMIT_SWITCH_PIN (33)
+#  define MOTOR_4_DIR_PIN          (PE7)
+#  define MOTOR_4_STEP_PIN         (PD15)
+#  define MOTOR_4_ENABLE_PIN       (PA3)
+#  define MOTOR_4_LIMIT_SWITCH_PIN (PF8)
 
 #  define MOTOR_5_LETTER           'W'
-#  define MOTOR_5_DIR_PIN          (28)
-#  define MOTOR_5_STEP_PIN         (29)
-#  define MOTOR_5_ENABLE_PIN       (39)
-#  define MOTOR_5_LIMIT_SWITCH_PIN (32)
+#  define MOTOR_5_DIR_PIN          (PG9)
+#  define MOTOR_5_STEP_PIN         (PD13)
+#  define MOTOR_5_ENABLE_PIN       (PF0)
+#  define MOTOR_5_LIMIT_SWITCH_PIN (PF8)
 
 #  define MAX_BOARD_SERVOS (1)
 #  define SERVO0_PIN       (5)
@@ -107,7 +114,11 @@
 
 #  endif  // HAS_TMC2130
 
-#define STEP_TIMER_NUM 0
+// STM32F4xx specific
+#if defined(STM32F4xx)
+#define STEP_TIMER 6
+#define HAL_TIMER_RATE (F_CPU/2)
+#endif
 
 #define STEPPER_TIMER_RATE 2000000 // 2 Mhz
 #define STEPPER_TIMER_PRESCALE ((HAL_TIMER_RATE)/(STEPPER_TIMER_RATE))
