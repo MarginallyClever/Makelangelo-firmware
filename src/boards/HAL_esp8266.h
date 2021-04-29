@@ -1,5 +1,7 @@
 #pragma once
 
+#ifdef ESP8266
+
 // clock stuff
 #  define CRITICAL_SECTION_START noInterrupts();
 #  define CRITICAL_SECTION_END   interrupts();
@@ -19,10 +21,23 @@
 #  define CLOCK_ADJUST(x) { timer0_write(ESP.getCycleCount() + (long)(80000L * (x))); }  // microseconds
 #endif
 
-FORCE_INLINE void CRITICAL_SECTION_START() {}
-FORCE_INLINE void CRITICAL_SECTION_END() {}
+#define FORCE_INLINE __attribute__((always_inline)) inline
 
+FORCE_INLINE void HAL_timer_start(const uint8_t timerIndex) {
+#ifndef DEBUG_STEPPING
+  // disable global interrupts
+  DISABLE_ISRS();
+
+  timer0_isr_init();
+  timer0_attachInterrupt(itr);
+  CLOCK_ADJUST(2000);
+
+  ENABLE_ISRS();
+#endif  // DEBUG_STEPPING
+}
 
 FORCE_INLINE static void HAL_timer_set_compare(const uint8_t timerIndex,uint32_t value) {
   CLOCK_ADJUST(value);
 }
+
+#endif

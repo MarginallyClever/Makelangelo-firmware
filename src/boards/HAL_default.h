@@ -29,15 +29,11 @@
 #define STEP_TIMER_NUM 0 
 
 FORCE_INLINE void HAL_timer_start(const uint8_t timerIndex) {
+  Serial.println(F("timer start"));
 #ifndef DEBUG_STEPPING
   // disable global interrupts
   DISABLE_ISRS();
 
-#  ifdef ESP8266
-  timer0_isr_init();
-  timer0_attachInterrupt(itr);
-  CLOCK_ADJUST(2000);
-#  else
   // set entire TCCR1A register to 0
   TCCR1A = 0;
   // set the overflow clock to 0
@@ -50,7 +46,6 @@ FORCE_INLINE void HAL_timer_start(const uint8_t timerIndex) {
   TCCR1B = (TCCR1B & ~(0x07 << CS10)) | (2 << CS10);
   // enable timer compare interrupt
   TIMSK1 |= (1 << OCIE1A);
-#  endif  // ESP8266
 
   ENABLE_ISRS();
 #endif  // DEBUG_STEPPING
@@ -61,7 +56,7 @@ FORCE_INLINE bool HAL_timer_initialized(const uint8_t timerIndex) {
 }
 
 FORCE_INLINE static void HAL_timer_set_compare(const uint8_t timerIndex,hal_timer_t value) {
-  OCR1A =(value);
+  OCR1A = (value);
 }
 
 FORCE_INLINE hal_timer_t HAL_timer_get_count(const uint8_t timerIndex) {
