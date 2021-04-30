@@ -27,9 +27,10 @@
 #define SIXI          9   // 6DOF robot arm.
 #define TRADITIONAL6  10  // 6 axis machine, no restrictions.
 #define SCARA         11  // 2 axis SCARA.
+#define SIXI3         12  // Sixi3 with RUMBA board
 
 // default value
-// !! this is now handeled via pio.ini !!
+// !! this is now handeled via platformio.ini !!
 //#define MACHINE_STYLE SIXI
 
 //------------------------------------------------------------------------------
@@ -58,7 +59,7 @@
 #define BOARD_SKRPRO1_2    9  // SKR Pro 1.2
 
 // default value 
-// !! this is now handeled via pio.ini !!
+// !! this is now handeled via platformio.ini !!
 //#define MOTHERBOARD BOARD_SIXI_MEGA
 
 //------------------------------------------------------------------------------

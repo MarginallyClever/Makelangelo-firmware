@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Arduino.h>
+#include "macros.h"
 
 #ifndef CLOCK_FREQ
 #  define CLOCK_FREQ (16000000L)
@@ -24,9 +25,13 @@
 #define ENABLE_ISRS()  sei()
 #define DISABLE_ISRS() cli()
 
-#define FORCE_INLINE __attribute__((always_inline)) inline
+#define ENABLE_STEPPER_DRIVER_INTERRUPT()  SBI(TIMSK1, OCIE1A)
+#define DISABLE_STEPPER_DRIVER_INTERRUPT() CBI(TIMSK1, OCIE1A)
+#define STEPPER_ISR_ENABLED()              TEST(TIMSK1, OCIE1A)
 
 #define STEP_TIMER 0 
+
+FORCE_INLINE void HAL_init() {}
 
 FORCE_INLINE void HAL_timer_start(const uint8_t timerIndex) {
   Serial.println(F("timer start"));

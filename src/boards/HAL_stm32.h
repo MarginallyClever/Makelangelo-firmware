@@ -33,18 +33,18 @@
 
 #define STEP_TIMER_NUM 0
 
+#define ENABLE_STEPPER_DRIVER_INTERRUPT() HAL_timer_enable_interrupt(STEP_TIMER_NUM)
+#define DISABLE_STEPPER_DRIVER_INTERRUPT() HAL_timer_disable_interrupt(STEP_TIMER_NUM)
+#define STEPPER_ISR_ENABLED() HAL_timer_interrupt_enabled(STEP_TIMER_NUM)
+
 extern void Step_Handler(HardwareTimer *htim);
 
 extern HardwareTimer *timer_instance[NUM_HARDWARE_TIMERS];
 
-FORCE_INLINE void HAL_timer_start(const uint8_t timerIndex) {
-  timer_instance[timerIndex] = new HardwareTimer(STEP_TIMER_DEV);
-  timer_instance[timerIndex]->setPrescaleFactor(STEPPER_TIMER_PRESCALE); //the -1 is done internally
-  timer_instance[timerIndex]->setOverflow(_MIN(hal_timer_t(HAL_TIMER_TYPE_MAX), (HAL_TIMER_RATE) / (STEPPER_TIMER_PRESCALE) /* /frequency */), TICK_FORMAT);
-  timer_instance[timerIndex]->attachInterrupt(Step_Handler);
-  timer_instance[timerIndex]->resume(); // First call to resume() MUST follow the attachInterrupt()
-  HAL_NVIC_SetPriority(STEP_TIMER_IRQ_NAME, STEP_TIMER_IRQ_PRIO, 0);
-}
+extern void HAL_init();
+extern void HAL_timer_start(const uint8_t timerIndex);
+extern void HAL_timer_enable_interrupt(const uint8_t timerIndex);
+
 
 FORCE_INLINE bool HAL_timer_initialized(const uint8_t timerIndex) {
   return timer_instance[timerIndex] != NULL;
@@ -61,7 +61,6 @@ FORCE_INLINE static void HAL_timer_set_compare(const uint8_t timerIndex,hal_time
       timer_instance[timerIndex]->refresh();
   }
 }
-
 FORCE_INLINE hal_timer_t HAL_timer_get_count(const uint8_t timerIndex) {
   return HAL_timer_initialized(timerIndex) ? timer_instance[timerIndex]->getCount() : 0;
 }

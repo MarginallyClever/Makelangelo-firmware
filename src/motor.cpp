@@ -263,10 +263,14 @@ void motor_setup() {
   }
 
 #ifdef HAS_TMC2130
+#ifdef CS_PIN_0
   pinMode(CS_PIN_0, OUTPUT);
-  pinMode(CS_PIN_1, OUTPUT);
   digitalWrite(CS_PIN_0, HIGH);
+#endif
+#ifdef CS_PIN_1
+  pinMode(CS_PIN_1, OUTPUT);
   digitalWrite(CS_PIN_1, HIGH);
+#endif
 
   SPI.begin();
   pinMode(MISO, INPUT_PULLUP);
@@ -322,9 +326,13 @@ void motor_setup() {
   working_seg         = NULL;
   first_segment_delay = 0;
 
+  Serial.println(F("motor_setup timer start"));
   HAL_timer_start(STEP_TIMER_NUM);
 
+  Serial.println(F("motor_setup engage"));
   motor_engage();
+
+  Serial.println(F("motor_setup done"));
 }
 
 
@@ -646,8 +654,9 @@ void motor_onestep(int motor) {
 #define ISR_LOOP_BASE_CYCLES            32UL
 #define ISR_STEPPER_CYCLES              88UL
 
-#undef F_CPU
+#ifndef F_CPU
 #define F_CPU                           CLOCK_FREQ
+#endif
 
 #define MIN_ISR_LOOP_CYCLES             (ISR_STEPPER_CYCLES * NUM_MOTORS)
 #define MAXIMUM_STEPPER_RATE            500000UL
@@ -1048,6 +1057,8 @@ void debug_stepping() {
 HAL_STEP_TIMER_ISR {
   static hal_timer_t nextMainISR=0;
   
+  digitalWrite(LED_BUILTIN,!digitalRead(LED_BUILTIN));
+
   #ifndef __AVR__
     // Disable interrupts, to avoid ISR preemption while we reprogram the period
     // (AVR enters the ISR with global interrupts disabled, so no need to do it here)
@@ -1445,6 +1456,8 @@ void motor_line(const float *const target_position, float fr_mm_s, float millime
     //*/
 
   recalculate_acceleration();
+
+  ENABLE_STEPPER_DRIVER_INTERRUPT();
 }
 
 void wait_for_empty_segment_buffer() {

@@ -318,6 +318,11 @@ void Parser::D0() {
   Serial.print(F("feed rate="));  Serial.println(feed_rate);
   Serial.print(F("mm_per_step="));  Serial.println(MM_PER_STEP);
 
+  Serial.print("STEPPER_TIMER_PRESCALE=");  Serial.println(STEPPER_TIMER_PRESCALE);
+  Serial.print("HAL_TIMER_RATE=");  Serial.println(HAL_TIMER_RATE);
+  Serial.print("STEPPER_TIMER_RATE=");  Serial.println(STEPPER_TIMER_RATE);
+  Serial.print("STEPPER_TIMER_TICKS_PER_US=");  Serial.println(STEPPER_TIMER_TICKS_PER_US);
+
   for(i = 0; i < NUM_MOTORS; ++i) {
     if (MotorNames[i] == 0) continue;
     amount = parseNumber(MotorNames[i], 0);
@@ -342,6 +347,7 @@ void Parser::D0() {
         digitalWrite(motors[i].step_pin, LOW);
         pause(step_delay);
         if(j%100) Serial.print('.');
+        digitalWrite(LED_BUILTIN,!digitalRead(LED_BUILTIN));
       }
       Serial.println();
     }
@@ -794,7 +800,7 @@ void Parser::M114() {
   wait_for_empty_segment_buffer();
 
   Serial.print(F("M114"));
-  
+
   for(ALL_AXIES(i)) {
     Serial.print(' ');
     Serial.print(AxisNames[i]);

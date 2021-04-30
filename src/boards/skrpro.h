@@ -19,7 +19,7 @@
 #  endif
 
 #  define CPU_32_BIT
-#  define CLOCK_FREQ (168000000L)
+#  define CLOCK_FREQ (84000000L)
 
 #  define MAX_MOTORS (6)
 
@@ -128,11 +128,11 @@
 // STM32F4xx specific
 #if defined(STM32F4xx)
 #define STEP_TIMER 6
-#define HAL_TIMER_RATE (F_CPU/2)
+#define HAL_TIMER_RATE (HAL_RCC_GetSysClockFreq()/2)
 #endif
 
-#define STEPPER_TIMER_RATE 2000000 // 2 Mhz
-#define STEPPER_TIMER_PRESCALE ((HAL_TIMER_RATE)/(STEPPER_TIMER_RATE))
+#define STEPPER_TIMER_PRESCALE 54
+#define STEPPER_TIMER_RATE (HAL_TIMER_RATE / STEPPER_TIMER_PRESCALE) 
 #define STEPPER_TIMER_TICKS_PER_US ((STEPPER_TIMER_RATE) / 1000000) // stepper timer ticks per µs
 
 #include "HAL_stm32.h"

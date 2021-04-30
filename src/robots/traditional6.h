@@ -43,11 +43,11 @@
 // by default this is set the same for all motors, and you'll probably want to break it out into separate value
 // per-axis.
 #define SIXI3_STEP_PER_FULL_TURN (1.0 * 200.0 * 70.0 * 26.0)       // 1:1 ratio * 200 steps per turn * 70:1 gearbox * 54:20 pulley ratio
-//#define MM_PER_STEP              (360.0/SIXI3_STEP_PER_FULL_TURN)  // degrees/step
+#define MM_PER_STEP              (360.0/SIXI3_STEP_PER_FULL_TURN)  // degrees/step
 
 // stewart platform
-#define MM_PER_INCH   (25.4)
-#define STEP_PER_INCH (1.0 * 200.0 * 20.0)       // 1:1 microstepping * 200 steps per turn * 20 turns-per-inch
-#define MM_PER_STEP (MM_PER_INCH/STEP_PER_INCH)  // mm-per-inch 
+//#define MM_PER_INCH   (25.4)
+//#define STEP_PER_INCH (1.0 * 200.0 * 20.0)       // 1:1 microstepping * 200 steps per turn * 20 turns-per-inch
+//#define MM_PER_STEP (MM_PER_INCH/STEP_PER_INCH)  // mm-per-inch 
 
 #endif  // #ifdef TRADITIONAL6
