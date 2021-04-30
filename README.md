@@ -2,11 +2,21 @@
 
 CNC firmware for many different control boards and kinematic systems.
 
-This project specifically deals with the firmware: the code in the brain of the robot that receives instructions and moves the motors.  It pairs really well with Makelangelo, a project to give humans a pleasant GUI.
+CNCs are computer controlled machines like mills, lathes, robot arms, and more.
 
-Makelangelo-firmware supports many different robot shapes and robot brains.  (see heading below)
+Firmware is the code that lives in the CPU of each robot.  The CPU is the brain, the firmware is the lesson taught to the machine.
 
-Originally designed to drive the http://www.makelangelo.com/ polargraph mural drawing robot.  Makelangelo is scalable: our test models have ranged from 30cm^2 to 300cm^2.
+Control boards are the PCB that surrounds each CPU.  Think of it as the nervous system.  This firmware has been written for several kinds of control boards from different manufacturers.  Please feel free to make a pull request with your favorite flavor.
+
+Kinematic systems is more complicated.  All the different types of robots supported eventually boil down to a few motors moving in concert.  These moving motors can be rearranged physically to make different shapes.  The firmware only knows the state of each motor.  BUT there is some room in some brains to add more.  More powerful brains can run [Forward Kinematics](https://en.wikipedia.org/wiki/Forward_kinematics) and even [Inverse Kinematics](https://en.wikipedia.org/wiki/Inverse_kinematics) with [Gradient Descent](https://www.marginallyclever.com/2020/04/gradient-descent-inverse-kinematics-for-6dof-robot-arms/).
+
+This firmware fully or partially supports many kinematic models.  It was originally written for the http://www.makelangelo.com/ Makelangelo art robot, a 3 motor polargraph art machine.  It has since expanded to suport more types.  Please feel free to make a pull request with your favorite flavor.
+
+It pairs really well with Makelangelo Software, a project to give humans a pleasant GUI.
+
+## Installation and Usage ##
+
+Please see the pictoral guide at https://mcr.dozuki.com/Guide/How+to+upload+Makelangelo-firmware/
 
 ## Kinematics aka Shapes ##
 
