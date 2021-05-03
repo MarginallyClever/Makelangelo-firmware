@@ -23,6 +23,10 @@
 
 #define NUM_MUSCLES (NUM_MOTORS + NUM_SERVOS)
 
+#ifndef HAL_STEP_TIMER_ISR
+#define HAL_STEP_TIMER_ISR ISR(TIMER1_COMPA_vect)
+#endif
+
 //------------------------------------------------------------------------------
 // MOVE BUFFERING
 //------------------------------------------------------------------------------
@@ -33,6 +37,18 @@
 #endif
 
 #define SEGMOD(x) ((x) & (MAX_SEGMENTS - 1))
+
+//------------------------------------------------------------------------------
+// enable pin.  reverse if your board or drivers are odd.
+//------------------------------------------------------------------------------
+
+#ifndef MOTOR_ENABLE_ON
+#define MOTOR_ENABLE_ON  LOW
+#endif
+
+#ifndef MOTOR_ENABLE_OFF
+#define MOTOR_ENABLE_OFF  HIGH
+#endif
 
 //------------------------------------------------------------------------------
 // step direction

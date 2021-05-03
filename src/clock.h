@@ -4,26 +4,6 @@
 // TIMERS
 //------------------------------------------------------------------------------
 
-#ifdef ESP8266
-
-#  define MAX_COUNTER            (4294967295L)  // 32 bits
-#  define CRITICAL_SECTION_START noInterrupts();
-#  define CRITICAL_SECTION_END   interrupts();
-
-#else                           // ESP8266
-
-extern void CRITICAL_SECTION_START();
-extern void CRITICAL_SECTION_END();
-
-// for timer interrupt control
-#  define MAX_COUNTER (65536L)  // 16 bits
-
-#endif  // ESP8266
-
-#ifndef CLOCK_FREQ
-#  define CLOCK_FREQ (16000000L)
-#endif
-
 #define TIMER_RATE ((CLOCK_FREQ) / 8)
 
 // TODO a guess.  use real math here!
@@ -36,16 +16,14 @@ extern void CRITICAL_SECTION_END();
 #define TIMEOUT_OK (1000)
 
 // uncomment this to slow the machine and smooth movement if the segment buffer is running low.
+// if the segment buffer runs empty the machine will be forced to stop.  if the machine slows just enough
+// for the buffer to keep filling up then the machine will never come to a complete stop.  end result smoother movement and maybe shorter drawing time.
 #define BUFFER_EMPTY_SLOWDOWN
 #ifndef MIN_SEGMENT_TIME_US
 #  define MIN_SEGMENT_TIME_US (25000)
 #endif
 
-// if a segment added to the buffer is less tahn this many motor steps, roll it into the next move.
+// if a segment added to the buffer is less than this many motor steps, roll it into the next move.
 #define MIN_STEPS_PER_SEGMENT 6
 
 #define MINIMUM_PLANNER_SPEED 0.05  // (mm/s)
-
-#ifndef MAX_OCR1A_VALUE
-#  define MAX_OCR1A_VALUE (0xFFFF)
-#endif

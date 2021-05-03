@@ -20,34 +20,14 @@
 #endif
 
 //------------------------------------------------------------------------------
-// MACROS
-//------------------------------------------------------------------------------
-
-#ifdef ESP8266
-#  define CLOCK_ADJUST(x) \
-    { timer0_write(ESP.getCycleCount() + (long)(80000L * (x))); }  // microseconds
-
-inline void CRITICAL_SECTION_START() {}
-inline void CRITICAL_SECTION_END() {}
-
-#else
-#  define CLOCK_ADJUST(x) \
-    { OCR1A = (x); }  // microseconds
-
-unsigned char _sreg = 0;
-inline void CRITICAL_SECTION_START() {
-  _sreg = SREG;
-  cli();
-}
-inline void CRITICAL_SECTION_END() {
-  SREG = _sreg;
-}
-
-#endif
-
-//------------------------------------------------------------------------------
 // DEFINES
 //------------------------------------------------------------------------------
+
+#ifdef CPU_32_BIT
+  #define STEP_MULTIPLY(A,B) MultiU32X24toH32(A, B)
+#else
+  #define STEP_MULTIPLY(A,B) MultiU24X32toH16(A, B)
+#endif
 
 #define BLOCK_DELAY_FOR_1ST_MOVE 100
 #define MIN_STEP_RATE            120
@@ -58,6 +38,7 @@ inline void CRITICAL_SECTION_END() {
 //------------------------------------------------------------------------------
 
 Motor motors[NUM_MOTORS];
+
 #ifndef ESP8266
 #if NUM_SERVOS>0
 Servo servos[NUM_SERVOS];
@@ -119,12 +100,20 @@ float previous_nominal_speed = 0;
 float previous_safe_speed    = 0;
 float previous_speed[NUM_MUSCLES];
 
-const char *MotorNames = "LRUVWT";
+const char *MotorNames = "LRZUVWT";
 const char *AxisNames  = "XYZUVWT";
 
 //------------------------------------------------------------------------------
 // METHODS
 //------------------------------------------------------------------------------
+
+#ifdef CPU_32_BIT
+static FORCE_INLINE uint32_t MultiU32X24toH32(uint32_t longIn1, uint32_t longIn2) {
+  return ((uint64_t)longIn1 * longIn2 + 0x00800000) >> 24;
+}
+
+#else
+
 #ifdef ESP8266
 void itr();
 #endif
@@ -136,12 +125,21 @@ void itr();
 static FORCE_INLINE uint16_t MultiU16X8toH16(uint8_t charIn1, uint16_t intIn2) {
   register uint8_t tmp;
   register uint16_t intRes;
-  __asm__ __volatile__(A("clr %[tmp]") A("mul %[charIn1], %B[intIn2]") A("movw %A[intRes], r0")
-                           A("mul %[charIn1], %A[intIn2]") A("add %A[intRes], r1") A("adc %B[intRes], %[tmp]")
-                               A("lsr r0") A("adc %A[intRes], %[tmp]") A("adc %B[intRes], %[tmp]") A("clr r1")
-                       : [ intRes ] "=&r"(intRes), [ tmp ] "=&r"(tmp)
-                       : [ charIn1 ] "d"(charIn1), [ intIn2 ] "d"(intIn2)
-                       : "cc");
+  __asm__ __volatile__(
+    A("clr %[tmp]")
+    A("mul %[charIn1], %B[intIn2]") 
+    A("movw %A[intRes], r0")
+    A("mul %[charIn1], %A[intIn2]") 
+    A("add %A[intRes], r1") 
+    A("adc %B[intRes], %[tmp]")
+    A("lsr r0") 
+    A("adc %A[intRes], %[tmp]") 
+    A("adc %B[intRes], %[tmp]") 
+    A("clr r1")
+    : [ intRes ] "=&r"(intRes), [ tmp ] "=&r"(tmp)
+    : [ charIn1 ] "d"(charIn1), [ intIn2 ] "d"(intIn2)
+    : "cc"
+  );
   return intRes;
 }
 
@@ -163,24 +161,49 @@ static FORCE_INLINE uint16_t MultiU24X32toH16(uint32_t longIn1, uint32_t longIn2
   register uint8_t tmp2;
   register uint16_t intRes;
   __asm__ __volatile__(
-      A("clr %[tmp1]") A("mul %A[longIn1], %B[longIn2]") A("mov %[tmp2], r1") A("mul %B[longIn1], %C[longIn2]")
-          A("movw %A[intRes], r0") A("mul %C[longIn1], %C[longIn2]") A("add %B[intRes], r0")
-              A("mul %C[longIn1], %B[longIn2]") A("add %A[intRes], r0") A("adc %B[intRes], r1")
-                  A("mul %A[longIn1], %C[longIn2]") A("add %[tmp2], r0") A("adc %A[intRes], r1")
-                      A("adc %B[intRes], %[tmp1]") A("mul %B[longIn1], %B[longIn2]") A("add %[tmp2], r0")
-                          A("adc %A[intRes], r1") A("adc %B[intRes], %[tmp1]") A("mul %C[longIn1], %A[longIn2]")
-                              A("add %[tmp2], r0") A("adc %A[intRes], r1") A("adc %B[intRes], %[tmp1]")
-                                  A("mul %B[longIn1], %A[longIn2]") A("add %[tmp2], r1") A("adc %A[intRes], %[tmp1]")
-                                      A("adc %B[intRes], %[tmp1]") A("lsr %[tmp2]") A("adc %A[intRes], %[tmp1]")
-                                          A("adc %B[intRes], %[tmp1]") A("mul %D[longIn2], %A[longIn1]")
-                                              A("add %A[intRes], r0") A("adc %B[intRes], r1")
-                                                  A("mul %D[longIn2], %B[longIn1]") A("add %B[intRes], r0") A("clr r1")
-      : [ intRes ] "=&r"(intRes), [ tmp1 ] "=&r"(tmp1), [ tmp2 ] "=&r"(tmp2)
-      : [ longIn1 ] "d"(longIn1), [ longIn2 ] "d"(longIn2)
-      : "cc");
+    A("clr %[tmp1]") 
+    A("mul %A[longIn1], %B[longIn2]") 
+    A("mov %[tmp2], r1") 
+    A("mul %B[longIn1], %C[longIn2]")
+    A("movw %A[intRes], r0") 
+    A("mul %C[longIn1], %C[longIn2]") 
+    A("add %B[intRes], r0")
+    A("mul %C[longIn1], %B[longIn2]") 
+    A("add %A[intRes], r0") 
+    A("adc %B[intRes], r1")
+    A("mul %A[longIn1], %C[longIn2]") 
+    A("add %[tmp2], r0") 
+    A("adc %A[intRes], r1")
+    A("adc %B[intRes], %[tmp1]") 
+    A("mul %B[longIn1], %B[longIn2]") 
+    A("add %[tmp2], r0")
+    A("adc %A[intRes], r1") 
+    A("adc %B[intRes], %[tmp1]") 
+    A("mul %C[longIn1], %A[longIn2]")
+    A("add %[tmp2], r0") 
+    A("adc %A[intRes], r1") 
+    A("adc %B[intRes], %[tmp1]")
+    A("mul %B[longIn1], %A[longIn2]") 
+    A("add %[tmp2], r1") 
+    A("adc %A[intRes], %[tmp1]")
+    A("adc %B[intRes], %[tmp1]") 
+    A("lsr %[tmp2]") 
+    A("adc %A[intRes], %[tmp1]")
+    A("adc %B[intRes], %[tmp1]") 
+    A("mul %D[longIn2], %A[longIn1]")
+    A("add %A[intRes], r0")
+    A("adc %B[intRes], r1")
+    A("mul %D[longIn2], %B[longIn1]") 
+    A("add %B[intRes], r0") 
+    A("clr r1")
+    : [ intRes ] "=&r"(intRes), [ tmp1 ] "=&r"(tmp1), [ tmp2 ] "=&r"(tmp2)
+    : [ longIn1 ] "d"(longIn1), [ longIn2 ] "d"(longIn2)
+    : "cc"
+  );
 #endif  // ESP8266
   return intRes;
 }
+#endif //__AVR__
 
 /**
    Calculate the maximum allowable speed at this point, in order
@@ -240,10 +263,14 @@ void motor_setup() {
   }
 
 #ifdef HAS_TMC2130
+#ifdef CS_PIN_0
   pinMode(CS_PIN_0, OUTPUT);
-  pinMode(CS_PIN_1, OUTPUT);
   digitalWrite(CS_PIN_0, HIGH);
+#endif
+#ifdef CS_PIN_1
+  pinMode(CS_PIN_1, OUTPUT);
   digitalWrite(CS_PIN_1, HIGH);
+#endif
 
   SPI.begin();
   pinMode(MISO, INPUT_PULLUP);
@@ -299,38 +326,21 @@ void motor_setup() {
   working_seg         = NULL;
   first_segment_delay = 0;
 
-#ifndef DEBUG_STEPPING
-  // disable global interrupts
-  CRITICAL_SECTION_START();
+  Serial.println(F("motor_setup timer start"));
+  HAL_timer_start(STEP_TIMER_NUM);
 
-#  ifdef ESP8266
-  timer0_isr_init();
-  timer0_attachInterrupt(itr);
-  CLOCK_ADJUST(2000);
-#  else
-  // set entire TCCR1A register to 0
-  TCCR1A = 0;
-  // set the overflow clock to 0
-  TCNT1 = 0;
-  // set compare match register to desired timer count
-  OCR1A = 2000;  // 1ms
-  // turn on CTC mode
-  TCCR1B = (1 << WGM12);
-  // Set 8x prescaler
-  TCCR1B = (TCCR1B & ~(0x07 << CS10)) | (2 << CS10);
-  // enable timer compare interrupt
-  TIMSK1 |= (1 << OCIE1A);
-#  endif  // ESP8266
-
-  CRITICAL_SECTION_END();
-#endif  // DEBUG_STEPPING
-
+  Serial.println(F("motor_setup engage"));
   motor_engage();
+
+  Serial.println(F("motor_setup done"));
 }
+
 
 // turn on power to the motors (make them immobile)
 void motor_engage() {
-  for (ALL_MOTORS(i)) { digitalWrite(motors[i].enable_pin, LOW); }
+  for (ALL_MOTORS(i)) {
+    digitalWrite(motors[i].enable_pin, MOTOR_ENABLE_ON);
+  }
   /*
     #if MACHINE_STYLE == SIXI
       // DM320T drivers want high for enabled
@@ -342,7 +352,9 @@ void motor_engage() {
 
 // turn off power to the motors (make them move freely)
 void motor_disengage() {
-  for (ALL_MOTORS(i)) { digitalWrite(motors[i].enable_pin, HIGH); }
+  for (ALL_MOTORS(i)) {
+    digitalWrite(motors[i].enable_pin, MOTOR_ENABLE_OFF);
+  }
   /*
   #if MACHINE_STYLE == SIXI
   // DM320T drivers want low for disabled
@@ -642,8 +654,9 @@ void motor_onestep(int motor) {
 #define ISR_LOOP_BASE_CYCLES            32UL
 #define ISR_STEPPER_CYCLES              88UL
 
-#undef F_CPU
+#ifndef F_CPU
 #define F_CPU                           CLOCK_FREQ
+#endif
 
 #define MIN_ISR_LOOP_CYCLES             (ISR_STEPPER_CYCLES * NUM_MOTORS)
 #define MAXIMUM_STEPPER_RATE            500000UL
@@ -694,20 +707,25 @@ FORCE_INLINE static unsigned short calc_timer(uint32_t desired_freq_hz, uint8_t 
   }
   *loops = step_multiplier;
 
-  if (desired_freq_hz < CLOCK_MIN_STEP_FREQUENCY) desired_freq_hz = CLOCK_MIN_STEP_FREQUENCY;
-  desired_freq_hz -= CLOCK_MIN_STEP_FREQUENCY;
-  if (desired_freq_hz >= 8 * 256) {
-    const uint8_t tmp_step_rate  = (desired_freq_hz & 0x00FF);
-    const uint16_t table_address = (uint16_t)&speed_lookuptable_fast[(uint8_t)(desired_freq_hz >> 8)][0],
-                   gain          = (uint16_t)pgm_read_word_near(table_address + 2);
-    timer                        = MultiU16X8toH16(tmp_step_rate, gain);
-    timer                        = (uint16_t)pgm_read_word_near(table_address) - timer;
-  } else {  // lower step rates
-    uint16_t table_address = (uint16_t)&speed_lookuptable_slow[0][0];
-    table_address += ((desired_freq_hz) >> 1) & 0xFFFC;
-    timer = (uint16_t)pgm_read_word_near(table_address) -
-            (((uint16_t)pgm_read_word_near(table_address + 2) * (uint8_t)(desired_freq_hz & 0x0007)) >> 3);
-  }
+
+  #ifdef CPU_32_BIT
+    timer = uint32_t(STEPPER_TIMER_RATE) / desired_freq_hz;
+  #else
+    if (desired_freq_hz < CLOCK_MIN_STEP_FREQUENCY) desired_freq_hz = CLOCK_MIN_STEP_FREQUENCY;
+    desired_freq_hz -= CLOCK_MIN_STEP_FREQUENCY;
+    if (desired_freq_hz >= 8 * 256) {
+      const uint8_t tmp_step_rate  = (desired_freq_hz & 0x00FF);
+      const uint16_t table_address = (uint16_t)&speed_lookuptable_fast[(uint8_t)(desired_freq_hz >> 8)][0],
+                    gain          = (uint16_t)pgm_read_word_near(table_address + 2);
+      timer                        = MultiU16X8toH16(tmp_step_rate, gain);
+      timer                        = (uint16_t)pgm_read_word_near(table_address) - timer;
+    } else {  // lower step rates
+      uint16_t table_address = (uint16_t)&speed_lookuptable_slow[0][0];
+      table_address += ((desired_freq_hz) >> 1) & 0xFFFC;
+      timer = (uint16_t)pgm_read_word_near(table_address) -
+              (((uint16_t)pgm_read_word_near(table_address + 2) * (uint8_t)(desired_freq_hz & 0x0007)) >> 3);
+    }
+  #endif
 
   return timer;
 }
@@ -839,8 +857,8 @@ inline void isr_internal_pulse() {
 }
 
 // Process blocks in the isr
-inline uint32_t isr_internal_block() {
-  uint32_t interval = (TIMER_RATE) / 1000;
+inline hal_timer_t isr_internal_block() {
+  hal_timer_t interval = (TIMER_RATE) / 1000;
 
   if (working_seg != NULL) {
     // Is this segment done?
@@ -851,7 +869,7 @@ inline uint32_t isr_internal_block() {
     } else {
       if (steps_taken <= accel_until) {
         // accelerating
-        current_feed_rate = start_feed_rate + MultiU24X32toH16(time_accelerating, current_acceleration);
+        current_feed_rate = start_feed_rate + STEP_MULTIPLY(time_accelerating, current_acceleration);
         current_feed_rate = min(current_feed_rate, working_seg->nominal_rate);
         interval          = calc_timer(current_feed_rate, &isr_step_multiplier);
         time_accelerating += interval;
@@ -867,7 +885,7 @@ inline uint32_t isr_internal_block() {
 #endif
       } else if (steps_taken > decel_after) {
         // decelerating
-        uint32_t end_feed_rate = MultiU24X32toH16(time_decelerating, current_acceleration);
+        hal_timer_t end_feed_rate = STEP_MULTIPLY(time_decelerating, current_acceleration);
         if (end_feed_rate < current_feed_rate) {
           end_feed_rate = current_feed_rate - end_feed_rate;
           end_feed_rate = max(end_feed_rate, working_seg->final_rate);
@@ -1036,28 +1054,26 @@ void debug_stepping() {
 }
 #endif
 
-#ifdef ESP8266
-void itr() {
-#else
-ISR(TIMER1_COMPA_vect) {
-#endif // ESP8266
-  static uint32_t nextMainISR=0;
+HAL_STEP_TIMER_ISR {
+  static hal_timer_t nextMainISR=0;
   
-  //#ifndef __AVR__
+  digitalWrite(LED_BUILTIN,!digitalRead(LED_BUILTIN));
+
+  #ifndef __AVR__
     // Disable interrupts, to avoid ISR preemption while we reprogram the period
     // (AVR enters the ISR with global interrupts disabled, so no need to do it here)
-    CRITICAL_SECTION_START();
-  //#endif
+    DISABLE_ISRS();
+  #endif
   
   // set the timer interrupt value as big as possible so there's little chance it triggers while i'm still in the ISR.
-  CLOCK_ADJUST(MAX_OCR1A_VALUE);
+  HAL_timer_set_compare(STEP_TIMER_NUM, hal_timer_t(HAL_TIMER_TYPE_MAX));
 
   uint8_t max_loops       = 10;
-  uint32_t next_isr_ticks = 0;
-  uint32_t min_ticks;
+  hal_timer_t next_isr_ticks = 0;
+  hal_timer_t min_ticks;
   do {
     // Turn the interrupts back on (reduces UART delay, apparently)
-    CRITICAL_SECTION_END();
+    ENABLE_ISRS();
 
 #ifndef DEBUG_STEPPING
 #  ifdef HAS_TMC2130
@@ -1073,12 +1089,20 @@ ISR(TIMER1_COMPA_vect) {
 #  endif
 #endif  // DEBUG_STEPPING
 
-    uint32_t interval = min(MAX_OCR1A_VALUE,nextMainISR);
+    hal_timer_t interval = min(hal_timer_t(HAL_TIMER_TYPE_MAX),nextMainISR);
+
     nextMainISR      -= interval;
     next_isr_ticks   += interval;
 
-    CRITICAL_SECTION_START();
-    min_ticks = OCR1A + 8;
+    DISABLE_ISRS();
+    min_ticks = HAL_timer_get_count(STEP_TIMER_NUM) + hal_timer_t(
+      #ifdef __AVR__
+        8
+      #else
+        1
+      #endif
+      * (STEPPER_TIMER_TICKS_PER_US)
+    );
 
     if (!--max_loops) next_isr_ticks = min_ticks;
     // ORC1A has been advancing while the interrupt was running.
@@ -1086,9 +1110,10 @@ ISR(TIMER1_COMPA_vect) {
   } while (next_isr_ticks < min_ticks);
 
   // set the next isr to fire at the right time.
-  CLOCK_ADJUST(next_isr_ticks);
+  HAL_timer_set_compare(STEP_TIMER_NUM, hal_timer_t(next_isr_ticks));
+
   // turn the interrupts back on
-  CRITICAL_SECTION_END();
+  ENABLE_ISRS();
 }
 
 void clockISRProfile() {
@@ -1431,6 +1456,8 @@ void motor_line(const float *const target_position, float fr_mm_s, float millime
     //*/
 
   recalculate_acceleration();
+
+  ENABLE_STEPPER_DRIVER_INTERRUPT();
 }
 
 void wait_for_empty_segment_buffer() {

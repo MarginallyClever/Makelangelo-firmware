@@ -109,4 +109,6 @@
 
 #  define USE_ALT_SERVO
 
+#include "HAL_default.h"
+
 #endif

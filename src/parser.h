@@ -83,8 +83,8 @@ class Parser {
   void G92();                  // G92 - teleport
 
   void M6();  // M6 Tnn - change tool to nn
-  // M17();  // M17 - engage motors
-  // M18();  // M18 - disengage motors
+  void M17();  // M17 - engage motors
+  void M18();  // M18 - disengage motors
   // M20();  // M20 - list SD card contents
   void M42();   // M42 Paa Sbb - Set digital pin aa to state bb (1 or 0).
   void M100();  // M100 - Print a helpful message to serial.

@@ -69,4 +69,6 @@
 
 #endif
 
+#include "HAL_default.h"
+
 #endif  // BOARD_MELZI_H

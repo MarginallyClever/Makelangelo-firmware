@@ -18,6 +18,8 @@
 #    error "Oops!  Make sure you have 'Wemos D1 R1' selected from the 'Tools -> Boards' menu."
 #  endif
 
+#define HAL_STEP_TIMER_ISR void itr
+
 // actual limit is 4 but I only have the pins for the first two motors.
 // TODO add more pin definitions
 #  define MAX_MOTORS (2)
@@ -50,5 +52,7 @@
 #  undef HAS_LCD
 
 #  define USE_ALT_SERVO
+
+#include "HAL_esp8266.h"
 
 #endif  // MOTHERBOARD == BOARD_WEMOS
