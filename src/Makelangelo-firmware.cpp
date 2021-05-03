@@ -387,24 +387,12 @@ void reportAllMotors() {
   Serial.println();
 }
 
-HardwareTimer *MyTim;
-void UpdateLED(HardwareTimer *htim) {
-  digitalWrite(LED_BUILTIN,!digitalRead(LED_BUILTIN));
-}
-
 // runs once on machine start
-void setup() {/*
+void setup() {
   parser.start();
 
   HAL_init();
-*/
-  Serial.begin(57600);
-  pinMode(LED_BUILTIN,OUTPUT);
-  MyTim = new HardwareTimer(TIM1);
-  MyTim->setOverflow(10,HERTZ_FORMAT);
-  MyTim->attachInterrupt(UpdateLED);
-  MyTim->resume();
-/*
+  
   eepromManager.loadAll();
 
   // unitTestWrapDegrees();
@@ -446,12 +434,10 @@ void setup() {/*
 
   parser.M100();
   parser.ready();
-  */
 }
 
 // after setup runs over and over.
 void loop() {
-  /*
   parser.update();
 
 #ifdef HAS_SD
@@ -481,5 +467,5 @@ void loop() {
     parser.ready();
   }
 
-  meanwhile();*/
+  meanwhile();
 }

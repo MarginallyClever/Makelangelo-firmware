@@ -33,9 +33,12 @@ void HAL_timer_start(const uint8_t timerIndex) {
 
   Serial.println("HAL_timer_start");
   timer_instance[timerIndex] = new HardwareTimer(STEP_TIMER_DEV);
+  
+  timer_instance[timerIndex]->setMode(2,TIMER_OUTPUT_COMPARE);
   timer_instance[timerIndex]->setPrescaleFactor(STEPPER_TIMER_PRESCALE); //the -1 is done internally
   timer_instance[timerIndex]->setOverflow(_MIN(hal_timer_t(HAL_TIMER_TYPE_MAX), (HAL_TIMER_RATE) / (STEPPER_TIMER_PRESCALE) /* /frequency */), TICK_FORMAT);
   HAL_timer_enable_interrupt(timerIndex);
+  timer_instance[timerIndex]->refresh();
   timer_instance[timerIndex]->resume(); // First call to resume() MUST follow the attachInterrupt()
   HAL_NVIC_SetPriority(STEP_TIMER_IRQ_NAME, STEP_TIMER_IRQ_PRIO, 0);
 }
