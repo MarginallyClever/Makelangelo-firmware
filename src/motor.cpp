@@ -13,10 +13,10 @@
 #include "lcd.h"
 #include "speed_lookuptable.h"
 
-#if !defined(USE_ALT_SERVO)
+#ifdef USE_ALT_SERVO
+#  include "mservo.h"
+#else
 #  include <Servo.h>
-# else
-# include "mservo.h"
 #endif
 
 //------------------------------------------------------------------------------
@@ -38,6 +38,12 @@
 //------------------------------------------------------------------------------
 
 Motor motors[NUM_MOTORS];
+
+#ifndef ESP8266
+#if NUM_SERVOS>0
+Servo servos[NUM_SERVOS];
+#endif
+#endif
 
 Segment line_segments[MAX_SEGMENTS];
 Segment *working_seg         = NULL;
@@ -369,7 +375,11 @@ void setPenAngle(int arg0) {
 
 #if NUM_SERVOS > 0
 // this is commented out because compiler segfault for unknown reasons.
-  SERVO_ANGLE(SERVO0,arg0);
+#  ifndef ESP8266
+  servos[0].write(arg0);
+#  else
+  analogWrite(SERVO0_PIN, arg0);
+#  endif  // ESP8266
 #endif    // NUM_SERVOS>0
 }
 
@@ -943,7 +953,11 @@ inline hal_timer_t isr_internal_block() {
 #endif
 
 #if NUM_SERVOS > 0
-    SERVO_ANGLE(SERVO0, working_seg->a[NUM_MOTORS].step_count);
+#  ifdef ESP8266
+    // analogWrite(SERVO0_PIN, working_seg->a[NUM_MOTORS].step_count);
+#  else
+    // servos[0].write(working_seg->a[NUM_MOTORS].step_count);
+#  endif  // ESP8266
 #endif    // NUM_SERVOS>0
 
     start_feed_rate      = working_seg->initial_rate;
