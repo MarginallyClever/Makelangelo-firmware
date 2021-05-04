@@ -127,7 +127,7 @@ void testKinematics() {
     }
     for (j = 0; j < NUM_MOTORS; ++j) {
       Serial.print('\t');
-      Serial.print(MotorNames[j]);
+      Serial.print(motors[j].letter);
       Serial.print(A[j]);
     }
     for (j = 0; j < NUM_AXIES; ++j) {
@@ -457,10 +457,29 @@ void loop() {
   // just in case USB garbled ready and each half is waiting on the other.
   if (!segment_buffer_full() && (millis() - parser.lastCmdTimeMs) > TIMEOUT_OK) {
 #ifdef HAS_TMC2130
-    tmc2130_status();
+    // for debugging limit switches
+    //tmc2130_status();
 #endif
     parser.ready();
   }
 
   meanwhile();
+  /*
+  tmc2130_ms(2);
+  //tmc2130_status();
+
+  digitalWrite(MOTOR_0_ENABLE_PIN,LOW);
+  digitalWrite(MOTOR_0_DIR_PIN,LOW);
+  for(int i=0;i<1000;++i) {
+    digitalWrite(MOTOR_0_STEP_PIN,HIGH);
+    digitalWrite(MOTOR_0_STEP_PIN,LOW);
+    delay(1);
+  }
+  digitalWrite(MOTOR_0_DIR_PIN,HIGH);
+  for(int i=0;i<1000;++i) {
+    digitalWrite(MOTOR_0_STEP_PIN,HIGH);
+    digitalWrite(MOTOR_0_STEP_PIN,LOW);
+    delay(1);
+  }
+  */
 }

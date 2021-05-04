@@ -100,7 +100,6 @@ float previous_nominal_speed = 0;
 float previous_safe_speed    = 0;
 float previous_speed[NUM_MUSCLES];
 
-const char *MotorNames = "LRZUVWT";
 const char *AxisNames  = "XYZUVWT";
 
 //------------------------------------------------------------------------------
@@ -621,7 +620,7 @@ void motor_set_step_count(long *a) {
  **/
 void motor_onestep(int motor) {
 #ifdef VERBOSE
-  Serial.print(MotorNames[motor]);
+  Serial.print(motors[motor].letter);
 #endif
 
   digitalWrite(motors[motor].step_pin, HIGH);

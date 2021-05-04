@@ -204,16 +204,16 @@ void Parser::processCommand() {
   if (hasGCode('M')) {
     cmd = parseNumber('M', -1);
     switch (cmd) {
-      case   6:        M6();                  break;
-      case  17:        motor_engage();        break;
-      case  18:        motor_disengage();     break;
+      case   6:        M6();          break;
+      case  17:        M17();         break;
+      case  18:        M18();         break;
 #ifdef HAS_SD
-      case  20:        SD_listFiles();        break;
+      case  20:        SD_listFiles(); break;
 #endif
       case  42:        M42();         break;
       case 100:        M100();        break;
       case 101:        M101();        break;
-      case 110:        lineNumber = parseNumber('N', lineNumber);        break;
+      case 110:        lineNumber = parseNumber('N', lineNumber);  break;
       case 112:        M112();        break;
       case 114:        M114();        break;
 #ifdef HAS_LCD
@@ -303,7 +303,7 @@ void Parser::processCommand() {
    I don't know why the latter motor names are UVWT.
 */
 void Parser::D0() {
-  int i, j, amount;
+  int j, amount;
 
   motor_engage();
 
@@ -317,12 +317,12 @@ void Parser::D0() {
   Serial.print(F("STEPPER_TIMER_RATE="));          Serial.println(STEPPER_TIMER_RATE);
   Serial.print(F("STEPPER_TIMER_TICKS_PER_US="));  Serial.println(STEPPER_TIMER_TICKS_PER_US);
 
-  for(i = 0; i < NUM_MOTORS; ++i) {
-    if (MotorNames[i] == 0) continue;
-    amount = parseNumber(MotorNames[i], 0);
+  for(ALL_MOTORS(i)) {
+    if (motors[i].letter == 0) continue;
+    amount = parseNumber(motors[i].letter, 0);
     if (amount != 0) {
       Serial.print(F("Moving "));
-      Serial.print(MotorNames[i]);
+      Serial.print(motors[i].letter);
       Serial.print(F("("));
       Serial.print(i);
       Serial.print(F(") "));
@@ -365,9 +365,8 @@ void Parser::D5() {
 */
 void Parser::D6() {
   Serial.print(F("D6"));
-  int i;
   float homePos[NUM_AXIES];
-  for (i = 0; i < NUM_AXIES; ++i) {
+  for(ALL_AXIES(i)) {
     homePos[i] = parseNumber(AxisNames[i], axies[i].homePos);
     Serial.print(' ');
     Serial.print(AxisNames[i]);
@@ -849,11 +848,10 @@ void Parser::M117() {
    adjust the max feedrate of each axis
 */
 void Parser::M203() {
-  int i;
   Serial.print(F("M203 "));
-  for (i = 0; i < NUM_MOTORS + NUM_SERVOS; ++i) {
-    max_feedrate_mm_s[i] = parseNumber(MotorNames[i], max_feedrate_mm_s[i]);
-    Serial.print(MotorNames[i]);
+  for(ALL_MUSCLES(i)) {
+    max_feedrate_mm_s[i] = parseNumber(motors[i].letter, max_feedrate_mm_s[i]);
+    Serial.print(motors[i].letter);
     Serial.print(max_feedrate_mm_s[i]);
     Serial.print(' ');
   }
