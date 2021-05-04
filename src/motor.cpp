@@ -263,21 +263,8 @@ void motor_setup() {
   }
 
 #ifdef HAS_TMC2130
-#ifdef CS_PIN_0
-  pinMode(CS_PIN_0, OUTPUT);
-  digitalWrite(CS_PIN_0, HIGH);
+  tmc2130_setup_all();
 #endif
-#ifdef CS_PIN_1
-  pinMode(CS_PIN_1, OUTPUT);
-  digitalWrite(CS_PIN_1, HIGH);
-#endif
-
-  SPI.begin();
-  pinMode(MISO, INPUT_PULLUP);
-
-  tmc_setup(driver_0);
-  tmc_setup(driver_1);
-#endif  // HAS_TMC2130
 
   for (ALL_MUSCLES(i)) {
     max_jerk[i]          = MAX_JERK;
@@ -782,51 +769,28 @@ inline void isr_internal_pulse() {
     servoOver0 += servoDelta0;
 #endif
     // now that the pins have had a moment to settle, do the second half of the steps.
-    // M0
-    if (over0 > 0) {
-      over0 -= steps_total;
-      global_steps_0 += global_step_dir_0;
-      digitalWrite(MOTOR_0_STEP_PIN, END0);
+#define MOTOR_OVER(NN) \
+    if (over##NN > 0) { \
+      over##NN -= steps_total; \
+      global_steps_##NN += global_step_dir_##NN; \
+      digitalWrite(MOTOR_##NN##_STEP_PIN, END##NN); \
     }
+
+    MOTOR_OVER(0);
 #if NUM_MOTORS > 1
-    // M1
-    if (over1 > 0) {
-      over1 -= steps_total;
-      global_steps_1 += global_step_dir_1;
-      digitalWrite(MOTOR_1_STEP_PIN, END1);
-    }
+    MOTOR_OVER(1);
 #endif
 #if NUM_MOTORS > 2
-    // M2
-    if (over2 > 0) {
-      over2 -= steps_total;
-      global_steps_2 += global_step_dir_2;
-      digitalWrite(MOTOR_2_STEP_PIN, END2);
-    }
+    MOTOR_OVER(2);
 #endif
 #if NUM_MOTORS > 3
-    // M3
-    if (over3 > 0) {
-      over3 -= steps_total;
-      global_steps_3 += global_step_dir_3;
-      digitalWrite(MOTOR_3_STEP_PIN, END3);
-    }
+    MOTOR_OVER(3);
 #endif
 #if NUM_MOTORS > 4
-    // M4
-    if (over4 > 0) {
-      over4 -= steps_total;
-      global_steps_4 += global_step_dir_4;
-      digitalWrite(MOTOR_4_STEP_PIN, END4);
-    }
+    MOTOR_OVER(4);
 #endif
 #if NUM_MOTORS > 5
-    // M5
-    if (over5 > 0) {
-      over5 -= steps_total;
-      global_steps_5 += global_step_dir_5;
-      digitalWrite(MOTOR_5_STEP_PIN, END5);
-    }
+    MOTOR_OVER(5);
 #endif
 #if NUM_SERVOS > 0
     // servo 0
@@ -845,7 +809,7 @@ inline void isr_internal_pulse() {
 
     // make a step
     steps_taken++;
-    if (steps_taken >= steps_total) break;
+    if(steps_taken >= steps_total) break;
   }
 }
 
@@ -1071,7 +1035,7 @@ HAL_STEP_TIMER_ISR {
 #ifndef DEBUG_STEPPING
 #  ifdef HAS_TMC2130
     if (homing == true) {
-      homing_sequence();
+      tmc2130_homing_sequence();
       nextMainISR = HOMING_OCR1A;
     } else {
 #  endif

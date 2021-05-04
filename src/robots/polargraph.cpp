@@ -235,18 +235,7 @@ void robot_findHome() {
   digitalWrite(MOTOR_0_DIR_PIN, STEPPER_DIR_HIGH);
   digitalWrite(MOTOR_1_DIR_PIN, STEPPER_DIR_HIGH);
 
-  motor_home();
-
-  while (homing == true) {
-    Serial.print(driver_0.TSTEP());
-    Serial.print('\t');
-    Serial.print(digitalRead(MOTOR_0_LIMIT_SWITCH_PIN));
-    Serial.print('\t');
-    Serial.print(digitalRead(MOTOR_1_LIMIT_SWITCH_PIN));
-    Serial.print("\tstill homing");
-  }
-  Serial.println("BOTH EN false");
-  enable_stealthChop();
+  tmc2130_motor_home();
 
 #    else
 

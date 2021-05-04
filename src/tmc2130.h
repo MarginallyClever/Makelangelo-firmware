@@ -25,15 +25,15 @@
 #  define STALL_VALUE -64  //-24
 //#define HYBRID_THRESHOLD        100
 
-extern bool en0, en1;
 extern bool homing;
-extern TMC2130Stepper driver_0;
-extern TMC2130Stepper driver_1;
 
-extern void homing_sequence();
-extern void tmc_setup(TMC2130Stepper &driver);
-extern void disable_stealthChop();
-extern void enable_stealthChop();
-extern void motor_home();
+extern void tmc2130_setup_all();
+extern void tmc2130_setup(TMC2130Stepper &driver);
+extern void tmc2130_disable_stealthChop();
+extern void tmc2130_enable_stealthChop();
+extern void tmc2130_motor_home();
+extern void tmc2130_homing_sequence();
+extern void tmc2130_status();
+
 
 #endif  // HAS_TMC2130

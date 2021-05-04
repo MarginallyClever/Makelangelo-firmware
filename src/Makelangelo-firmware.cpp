@@ -457,17 +457,7 @@ void loop() {
   // just in case USB garbled ready and each half is waiting on the other.
   if (!segment_buffer_full() && (millis() - parser.lastCmdTimeMs) > TIMEOUT_OK) {
 #ifdef HAS_TMC2130
-    {
-      uint32_t drv_status = driver_0.DRV_STATUS();
-      uint32_t stallValue = (drv_status & SG_RESULT_bm) >> SG_RESULT_bp;
-      Serial.print(stallValue, DEC);
-      Serial.print('\t');
-    }
-    {
-      uint32_t drv_status = driver_1.DRV_STATUS();
-      uint32_t stallValue = (drv_status & SG_RESULT_bm) >> SG_RESULT_bp;
-      Serial.println(stallValue, DEC);
-    }
+    tmc2130_status();
 #endif
     parser.ready();
   }
