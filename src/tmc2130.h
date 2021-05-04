@@ -34,6 +34,6 @@ extern void tmc2130_enable_stealthChop();
 extern void tmc2130_motor_home();
 extern void tmc2130_homing_sequence();
 extern void tmc2130_status();
-
+extern void tmc2130_ms(uint16_t ms);
 
 #endif  // HAS_TMC2130

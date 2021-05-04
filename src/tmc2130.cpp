@@ -13,10 +13,20 @@ uint16_t tmc2130_rms_current(uint8_t CS, bool vsense, float Rsense = 0.11) {
   return (float)(CS + 1) / 32.0 * (vsense ? 0.180 : 0.325) / (Rsense + 0.02) / 1.41421 * 1000;
 }
 
+void tmc2130_ms(uint16_t ms) {
+  for(ALL_MOTORS(i)) {
+    drivers[i]->microsteps(ms);
+  }
+}
+
 void tmc2130_setup_single(TMC2130Stepper *driver) {
   driver->begin();
   driver->setCurrent(CURRENT, R_SENSE, HOLD_MULTIPLIER);
-  driver->microsteps(MICROSTEPS);
+
+  // 2021-05-04: microsteps(ms) takes a power of two.  unless it's full step, then microsteps is zero.  why?  no reason.
+  int ms = MICROSTEPS==1? 0 : MICROSTEPS;
+  driver->microsteps(ms);
+
   driver->blank_time(24);
   driver->off_time(2);
   driver->interpolate(true);
@@ -179,11 +189,13 @@ void tmc2130_homing_sequence() {
 
 void tmc2130_status() {
    for(ALL_MOTORS(i)) {
+      Serial.println(i);
       uint32_t drv_status = drivers[i]->DRV_STATUS();
       uint32_t stallValue = (drv_status & SG_RESULT_bm) >> SG_RESULT_bp;
-      Serial.print(stallValue, DEC);
-      Serial.print('\t');
+      Serial.print("\tstall=");        Serial.println(stallValue, DEC);
+      Serial.print("\tmicrosteps=");   Serial.println(drivers[i]->microsteps(), DEC);
+      Serial.print("\tTSTEP=");  Serial.println(drivers[i]->TSTEP());
+      Serial.print("\tTHIGH=");  Serial.println(drivers[i]->THIGH());
     }
-    Serial.println();
 }
 #endif  // HAS_TMC2130
