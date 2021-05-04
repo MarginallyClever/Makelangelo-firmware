@@ -37,7 +37,7 @@
 // GLOBALS
 //------------------------------------------------------------------------------
 
-Motor motors[NUM_MOTORS];
+Motor motors[NUM_MUSCLES];
 
 #ifndef ESP8266
 #if NUM_SERVOS>0
@@ -326,13 +326,8 @@ void motor_setup() {
   working_seg         = NULL;
   first_segment_delay = 0;
 
-  Serial.println(F("motor_setup timer start"));
   HAL_timer_start(STEP_TIMER_NUM);
-
-  Serial.println(F("motor_setup engage"));
   motor_engage();
-
-  Serial.println(F("motor_setup done"));
 }
 
 
@@ -730,6 +725,8 @@ FORCE_INLINE static unsigned short calc_timer(uint32_t desired_freq_hz, uint8_t 
 inline void isr_internal_pulse() {
   if (working_seg == NULL) return;
 
+  digitalWrite(LED_BUILTIN,!digitalRead(LED_BUILTIN));
+  
   uint8_t i;
 
 #if MACHINE_STYLE == SIXI

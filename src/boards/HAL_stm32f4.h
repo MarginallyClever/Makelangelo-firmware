@@ -50,6 +50,7 @@ extern HardwareTimer *timer_instance[NUM_HARDWARE_TIMERS];
 extern void HAL_init();
 extern void HAL_timer_start(const uint8_t timerIndex);
 extern void HAL_timer_enable_interrupt(const uint8_t timerIndex);
+extern void HAL_timer_disable_interrupt(const uint8_t timerIndex);
 
 
 FORCE_INLINE bool HAL_timer_initialized(const uint8_t timerIndex) {

@@ -308,14 +308,14 @@ void Parser::D0() {
   motor_engage();
 
   findStepDelay();
-  Serial.print(F("Step delay="));  Serial.println(step_delay);
-  Serial.print(F("feed rate="));  Serial.println(feed_rate);
-  Serial.print(F("mm_per_step="));  Serial.println(MM_PER_STEP);
+  Serial.print(F("Step delay="));   Serial.println(step_delay);
+  Serial.print(F("feed rate="));    Serial.println(feed_rate);
+  Serial.print(F("mm_per_step="));  Serial.println(MM_PER_STEP,4);
 
-  Serial.print("STEPPER_TIMER_PRESCALE=");  Serial.println(STEPPER_TIMER_PRESCALE);
-  Serial.print("HAL_TIMER_RATE=");  Serial.println(HAL_TIMER_RATE);
-  Serial.print("STEPPER_TIMER_RATE=");  Serial.println(STEPPER_TIMER_RATE);
-  Serial.print("STEPPER_TIMER_TICKS_PER_US=");  Serial.println(STEPPER_TIMER_TICKS_PER_US);
+  Serial.print(F("STEPPER_TIMER_PRESCALE="));      Serial.println(STEPPER_TIMER_PRESCALE);
+  Serial.print(F("HAL_TIMER_RATE="));              Serial.println(HAL_TIMER_RATE);
+  Serial.print(F("STEPPER_TIMER_RATE="));          Serial.println(STEPPER_TIMER_RATE);
+  Serial.print(F("STEPPER_TIMER_TICKS_PER_US="));  Serial.println(STEPPER_TIMER_TICKS_PER_US);
 
   for(i = 0; i < NUM_MOTORS; ++i) {
     if (MotorNames[i] == 0) continue;

@@ -80,5 +80,7 @@ FORCE_INLINE hal_timer_t HAL_timer_get_count(const uint8_t timerIndex) {
   return OCR1A;
 }
 
+extern void HAL_timer_enable_interrupt(const uint8_t timerIndex);
+extern void HAL_timer_disable_interrupt(const uint8_t timerIndex);
 
 #endif // TARGET_DEFAULT

@@ -35,6 +35,9 @@
 #  define MAX_JERK   (10.0)
 #  define MAX_Z_JERK (0.3)
 
+#undef MICROSTEPS
+#define MICROSTEPS 1
+
 // plan long moves as a set of submoves to increase accuracy.  Uncomment to turn this off.
 //#define SUBDIVIDE_LINES
 #  define SEGMENTS_PER_SECOND (10)
@@ -49,7 +52,7 @@
 // The actuator has the following kinematic ratios applied
 #  define GEARBOX_RATIO (70.0)
 // *70 -to-one gearbox ratio
-#  define STEPS_PER_FULL_TURN (STEPPER_MOTOR_STEPS_PER_FULL_TURN * PULLEY_RATIO * GEARBOX_RATIO)
+#  define STEPS_PER_FULL_TURN (STEPPER_MOTOR_STEPS_PER_FULL_TURN * MICROSTEPS * PULLEY_RATIO * GEARBOX_RATIO)
 // which means... 105, actually.
 #  define STEPS_PER_DEGREE (STEPS_PER_FULL_TURN/360.0)
 

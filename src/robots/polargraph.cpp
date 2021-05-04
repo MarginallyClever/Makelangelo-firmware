@@ -239,12 +239,11 @@ void robot_findHome() {
 
   while (homing == true) {
     Serial.print(driver_0.TSTEP());
-    Serial.print("   ");
+    Serial.print('\t');
     Serial.print(digitalRead(MOTOR_0_LIMIT_SWITCH_PIN));
-    Serial.print("   ");
+    Serial.print('\t');
     Serial.print(digitalRead(MOTOR_1_LIMIT_SWITCH_PIN));
-    Serial.print("   ");
-    Serial.println("still homing");
+    Serial.print("\tstill homing");
   }
   Serial.println("BOTH EN false");
   enable_stealthChop();

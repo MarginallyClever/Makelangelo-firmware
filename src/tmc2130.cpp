@@ -1,5 +1,5 @@
 
-#include "tmc2130.h"
+#include "configure.h"
 
 #ifdef HAS_TMC2130
 
@@ -10,7 +10,7 @@ bool en0, en1 = false;
 bool homing = false;
 // bool vsense;
 
-uint16_t rms_current(uint8_t CS, float Rsense = 0.11) {
+uint16_t rms_current(uint8_t CS, bool vsense, float Rsense = 0.11) {
   return (float)(CS + 1) / 32.0 * (vsense ? 0.180 : 0.325) / (Rsense + 0.02) / 1.41421 * 1000;
 }
 
@@ -59,25 +59,21 @@ void disable_stealthChop() {
   driver_1.TCOOLTHRS((float)MEASURED_TSTEP * (100 + MEASURED_TSTEP_MARGIN_PCT) / 100.0f);  // + margin %
   driver_0.THIGH((float)MEASURED_TSTEP * (100 - MEASURED_TSTEP_MARGIN_PCT) / 100.0f);      // - margin %
   driver_1.THIGH((float)MEASURED_TSTEP * (100 - MEASURED_TSTEP_MARGIN_PCT) / 100.0f);      // - margin %
-#  endif MEASURED_TSTEP
+#  endif // MEASURED_TSTEP
 
 #  ifdef STEALTHCHOP
-  Serial.println("Disabling StealthChop");
+  Serial.println(F("Disabling StealthChop"));
   driver_0.stealthChop(0);
   driver_1.stealthChop(0);
 #  endif  // STEALTHCHOP
 }
 
 void enable_stealthChop() {
-  cli();
-  TCCR1A = 0;  // set entire TCCR1A register to 0
-  TCNT1  = 0;  // set the overflow clock to 0
-  // set compare match register to desired timer count
-  OCR1A  = 2000;                                      // 1ms
-  TCCR1B = (1 << WGM12);                              // turn on CTC mode
-  TCCR1B = (TCCR1B & ~(0x07 << CS10)) | (2 << CS10);  // Set 8x prescaler
-  TIMSK1 |= (1 << OCIE1A);                            // enable timer compare interrupt
-  sei();
+  Serial.println(F("enabling StealthChop"));
+
+  HAL_timer_disable_interrupt(0);
+  HAL_timer_set_compare(0,2000);
+  HAL_timer_enable_interrupt(0);
 
   // re-enable stealthchop
   driver_0.coolstep_min_speed(0);
@@ -88,10 +84,9 @@ void enable_stealthChop() {
 #  ifdef MEASURED_TSTEP
   driver_0.THIGH(0);
   driver_1.THIGH(0);
-#  endif MEASURED_TSTEP
+#  endif // MEASURED_TSTEP
 
 #  ifdef STEALTHCHOP
-  Serial.println("enabling StealthChop");
   driver_0.stealthChop(1);
   driver_1.stealthChop(1);
 #  endif  // STEALTHCHOP
@@ -109,13 +104,8 @@ void motor_home() {
     delayMicroseconds(45);
   }
 
-  cli();
-  TCCR1A = 0;               // set entire TCCR1A register to 0
-  TCNT1  = 0;               // initialize counter value to 0
-  OCR1A  = HOMING_OCR1A;    // = (16*10^6) / (1*1024) - 1 (must be <65536)
-  TCCR1B = (1 << WGM12);    // turn on CTC mode
-  TCCR1B |= (1 << CS11);    // Set CS11 bits for 8 prescaler
-  TIMSK1 |= (1 << OCIE1A);  // enable timer compare interrupt
+  HAL_timer_disable_interrupt(0);
+  HAL_timer_set_compare(0,HOMING_OCR1A);
 
   homing = true;
 
@@ -127,7 +117,29 @@ void motor_home() {
   digitalWrite(MOTOR_1_DIR_PIN, STEPPER_DIR_LOW);
   en1 = true;
   en0 = true;
-  sei();
+
+  HAL_timer_enable_interrupt(0);
+}
+
+void homing_sequence() {
+  if (en0 == true) {
+    digitalWrite(MOTOR_0_STEP_PIN, HIGH);
+    digitalWrite(MOTOR_0_STEP_PIN, LOW);
+    if (digitalRead(MOTOR_0_LIMIT_SWITCH_PIN) == LOW) {
+      digitalWrite(MOTOR_0_ENABLE_PIN, HIGH);
+      en0 = false;
+    }
+  }
+  if (en1 == true) {
+    digitalWrite(MOTOR_1_STEP_PIN, HIGH);
+    digitalWrite(MOTOR_1_STEP_PIN, LOW);
+    if (digitalRead(MOTOR_1_LIMIT_SWITCH_PIN) == LOW) {
+      digitalWrite(MOTOR_1_ENABLE_PIN, HIGH);
+      en1 = false;
+    }
+  }
+  // make homing false when en0 and en1 are both false at the same time.
+  homing = en0 | en1;
 }
 
 #endif  // HAS_TMC2130

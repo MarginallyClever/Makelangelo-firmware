@@ -159,7 +159,7 @@ extern Segment line_segments[MAX_SEGMENTS];
 extern Segment *working_seg;
 extern volatile int current_segment, last_segment, nonbusy_segment;
 extern int first_segment_delay;
-extern Motor motors[NUM_MOTORS];
+extern Motor motors[NUM_MUSCLES];
 extern const char *AxisNames;
 extern const char *MotorNames;
 extern float max_jerk[NUM_MUSCLES];

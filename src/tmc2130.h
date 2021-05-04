@@ -1,9 +1,8 @@
 #pragma once
 
-#include "macros.h"
-
 #ifdef HAS_TMC2130
 
+#include "macros.h"
 #  include <TMC2130Stepper.h>
 #  include <TMC2130Stepper_REGDEFS.h>
 
@@ -26,31 +25,12 @@
 #  define STALL_VALUE -64  //-24
 //#define HYBRID_THRESHOLD        100
 
+extern bool en0, en1;
 extern bool homing;
 extern TMC2130Stepper driver_0;
 extern TMC2130Stepper driver_1;
 
-FORCE_INLINE void homing_sequence() {
-  if (en0 == true) {
-    digitalWrite(MOTOR_0_STEP_PIN, HIGH);
-    digitalWrite(MOTOR_0_STEP_PIN, LOW);
-    if (digitalRead(MOTOR_0_LIMIT_SWITCH_PIN) == LOW) {
-      digitalWrite(MOTOR_0_ENABLE_PIN, HIGH);
-      en0 = false;
-    }
-  }
-  if (en1 == true) {
-    digitalWrite(MOTOR_1_STEP_PIN, HIGH);
-    digitalWrite(MOTOR_1_STEP_PIN, LOW);
-    if (digitalRead(MOTOR_1_LIMIT_SWITCH_PIN) == LOW) {
-      digitalWrite(MOTOR_1_ENABLE_PIN, HIGH);
-      en1 = false;
-    }
-  }
-  // make homing false when en0 and en1 are both false at the same time.
-  homing = en0 | en1;
-}
-
+extern void homing_sequence();
 extern void tmc_setup(TMC2130Stepper &driver);
 extern void disable_stealthChop();
 extern void enable_stealthChop();

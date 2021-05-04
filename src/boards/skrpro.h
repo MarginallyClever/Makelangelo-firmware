@@ -71,8 +71,9 @@
 #  define MOTOR_5_LIMIT_SWITCH_PIN (PG12)
 
 #  define MAX_BOARD_SERVOS (1)
-#  define SERVO0_PIN       (5)
+#  define SERVO0_PIN       (PA1)
 
+// for polargraph
 #  define LIMIT_SWITCH_PIN_LEFT  (MOTOR_0_LIMIT_SWITCH_PIN)
 #  define LIMIT_SWITCH_PIN_RIGHT (MOTOR_1_LIMIT_SWITCH_PIN)
 
@@ -118,9 +119,13 @@
 #  endif
 
 #  ifdef HAS_TMC2130
-
-#    define CS_PIN_0 30  // chip select
-#    define CS_PIN_1 31  // chip select
+// chip select
+#    define CS_PIN_0 MOTOR_0_LIMIT_SWITCH_PIN
+#    define CS_PIN_1 MOTOR_1_LIMIT_SWITCH_PIN
+#    define CS_PIN_2 MOTOR_2_LIMIT_SWITCH_PIN
+#    define CS_PIN_3 MOTOR_3_LIMIT_SWITCH_PIN
+#    define CS_PIN_4 MOTOR_4_LIMIT_SWITCH_PIN
+#    define CS_PIN_5 MOTOR_5_LIMIT_SWITCH_PIN
 
 #  endif  // HAS_TMC2130
 
@@ -134,6 +139,6 @@
 #define STEPPER_TIMER_RATE (HAL_TIMER_RATE / STEPPER_TIMER_PRESCALE) 
 #define STEPPER_TIMER_TICKS_PER_US ((STEPPER_TIMER_RATE) / 1000000) // stepper timer ticks per µs
 
-#include "HAL_stm32.h"
+#include "HAL_stm32f4.h"
 
 #endif
