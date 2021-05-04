@@ -12,16 +12,16 @@
 
 #  define STEP_DELAY (50)  // delay between steps, in milliseconds, when doing fixed tasks like homing
 
-#  define MAX_SEGMENTS (16)  // override the default to save RAM
+#  define MAX_SEGMENTS (8)  // override the default to save RAM
 
 //#define MACHINE_HAS_LIFTABLE_PEN
 // servo angles for pen control
 //#define PEN_UP_ANGLE         (90)
 //#define PEN_DOWN_ANGLE       (50)  // Some steppers don't like 0 degrees
 
-#  define NUM_AXIES  (6)  // could be more?
+#  define NUM_AXIES  (7)  // could be more?
 #  define NUM_MOTORS (6)
-#  define NUM_SERVOS (0)
+#  define NUM_SERVOS (1)
 #  define NUM_TOOLS  (0)
 
 #  define MAX_FEEDRATE     (100.0)  // depends on timer interrupt & hardware
@@ -41,15 +41,15 @@
 
 // It takes MM_PER_STEP steps for the actuator to make one degree.
 
-// The actuator has the following kinematic ratios applied
-#  define GEARBOX_RATIO (70.0)
+// 200 motor steps per full turn (360/1.8 deg=200 steps;360/0.9 deg=400 steps)
+#  define STEPPER_MOTOR_STEPS_PER_FULL_TURN (200.0)
 // *54 input pulley of gearbox has 54 teeth
 // /20 output pulley of stepper motor
 #  define PULLEY_RATIO (54.0/20.0)
-// 200 motor steps per full turn (360/1.8 deg=200 steps;360/0.9 deg=400 steps)
-#  define STEPPER_MOTOR_STEPS_PER_FULL_TURN (200.0)
+// The actuator has the following kinematic ratios applied
+#  define GEARBOX_RATIO (70.0)
 // *70 -to-one gearbox ratio
-#  define STEPS_PER_FULL_TURN (GEARBOX_RATIO * PULLEY_RATIO * STEPPER_MOTOR_STEPS_PER_FULL_TURN)
+#  define STEPS_PER_FULL_TURN (STEPPER_MOTOR_STEPS_PER_FULL_TURN * PULLEY_RATIO * GEARBOX_RATIO)
 // which means... 105, actually.
 #  define STEPS_PER_DEGREE (STEPS_PER_FULL_TURN/360.0)
 

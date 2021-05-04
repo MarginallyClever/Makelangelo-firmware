@@ -6,10 +6,6 @@
 #  define CRITICAL_SECTION_START noInterrupts();
 #  define CRITICAL_SECTION_END   interrupts();
 
-#ifndef CLOCK_FREQ
-#  define CLOCK_FREQ (16000000L)
-#endif
-
 #ifndef MAX_OCR1A_VALUE
 #  define MAX_OCR1A_VALUE (0xFFFF)
 #endif
@@ -22,6 +18,9 @@
 #endif
 
 #define FORCE_INLINE __attribute__((always_inline)) inline
+
+#define SERVO0  SERVO0_PIN
+#define SERVO_ANGLE(index,angle)  analogWrite(index, arg0)
 
 FORCE_INLINE void HAL_timer_start(const uint8_t timerIndex) {
 #ifndef DEBUG_STEPPING

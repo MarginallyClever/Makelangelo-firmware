@@ -48,8 +48,6 @@
 #  define LIMIT_SWITCH_PIN_LEFT  (MOTOR_0_LIMIT_SWITCH_PIN)
 #  define LIMIT_SWITCH_PIN_RIGHT (MOTOR_1_LIMIT_SWITCH_PIN)
 
-#  define CLOCK_FREQ (16000000L)
-
 #  define _useTimer2
 #  undef _useTimer3
 

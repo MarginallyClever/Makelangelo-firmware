@@ -1,5 +1,7 @@
 #include "configure.h"
 
+#ifdef TARGET_STM32F4
+
 HardwareTimer *timer_instance[NUM_HARDWARE_TIMERS] = { NULL };
 bool timer_enabled[NUM_HARDWARE_TIMERS] = { false };
 
@@ -42,3 +44,5 @@ void HAL_timer_start(const uint8_t timerIndex) {
   timer_instance[timerIndex]->resume(); // First call to resume() MUST follow the attachInterrupt()
   HAL_NVIC_SetPriority(STEP_TIMER_IRQ_NAME, STEP_TIMER_IRQ_PRIO, 0);
 }
+
+#endif // TARGET_STM32F4

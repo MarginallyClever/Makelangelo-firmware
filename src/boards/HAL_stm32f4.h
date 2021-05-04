@@ -1,8 +1,11 @@
 #pragma once
 
+#ifdef TARGET_STM32F4
+
 #include <stdint.h>
 #include <HardwareTimer.h>
 #include "macros.h"
+
 
 #define NUM_HARDWARE_TIMERS 2
 
@@ -37,6 +40,9 @@
 #define DISABLE_STEPPER_DRIVER_INTERRUPT() HAL_timer_disable_interrupt(STEP_TIMER_NUM)
 #define STEPPER_ISR_ENABLED() HAL_timer_interrupt_enabled(STEP_TIMER_NUM)
 
+#define SERVO0  PB6
+#define SERVO_ANGLE(index,angle)  pwmWrite(index,angle)
+
 extern void Step_Handler(HardwareTimer *htim);
 
 extern HardwareTimer *timer_instance[NUM_HARDWARE_TIMERS];
@@ -64,3 +70,5 @@ FORCE_INLINE static void HAL_timer_set_compare(const uint8_t timerIndex,hal_time
 FORCE_INLINE hal_timer_t HAL_timer_get_count(const uint8_t timerIndex) {
   return HAL_timer_initialized(timerIndex) ? timer_instance[timerIndex]->getCount() : 0;
 }
+
+#endif  // TARGET_STM32F4

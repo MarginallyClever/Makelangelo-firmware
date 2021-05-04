@@ -19,7 +19,6 @@
 #  endif
 
 #  define CPU_32_BIT
-#  define CLOCK_FREQ (84000000L)
 
 #  define MAX_MOTORS (6)
 

@@ -12,12 +12,6 @@
 
 Parser parser;
 
-#if MACHINE_STYLE == SIXI
-#  ifndef ESP8266
-extern Servo servos[NUM_SERVOS];
-#  endif
-#endif  // MACHINE_STYLE == SIXI
-
 uint8_t absolute_mode = 1;  // absolute or incremental programming mode?
 uint8_t current_tool  = 0;
 

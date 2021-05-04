@@ -66,4 +66,4 @@ void robot_findHome() {
 
 void robot_setup() {}
 
-#endif  // TRADITIONAL6
+#endif  // SIXI3

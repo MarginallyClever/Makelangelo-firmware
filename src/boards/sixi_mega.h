@@ -14,8 +14,6 @@
 
 #  define BAUD (57600)  // How fast is the Arduino talking?
 
-#  define CLOCK_FREQ (16000000L)
-
 #  undef HAS_LCD
 
 #  ifdef HAS_SD

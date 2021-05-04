@@ -39,12 +39,6 @@
 
 Motor motors[NUM_MOTORS];
 
-#ifndef ESP8266
-#if NUM_SERVOS>0
-Servo servos[NUM_SERVOS];
-#endif
-#endif
-
 Segment line_segments[MAX_SEGMENTS];
 Segment *working_seg         = NULL;
 volatile int current_segment = 0;
@@ -375,11 +369,7 @@ void setPenAngle(int arg0) {
 
 #if NUM_SERVOS > 0
 // this is commented out because compiler segfault for unknown reasons.
-#  ifndef ESP8266
-  servos[0].write(arg0);
-#  else
-  analogWrite(SERVO0_PIN, arg0);
-#  endif  // ESP8266
+  SERVO_ANGLE(SERVO0,arg0);
 #endif    // NUM_SERVOS>0
 }
 
@@ -654,10 +644,6 @@ void motor_onestep(int motor) {
 #define ISR_LOOP_BASE_CYCLES            32UL
 #define ISR_STEPPER_CYCLES              88UL
 
-#ifndef F_CPU
-#define F_CPU                           CLOCK_FREQ
-#endif
-
 #define MIN_ISR_LOOP_CYCLES             (ISR_STEPPER_CYCLES * NUM_MOTORS)
 #define MAXIMUM_STEPPER_RATE            500000UL
 #define MINIMUM_STEPPER_PULSE           1UL
@@ -858,7 +844,7 @@ inline void isr_internal_pulse() {
 
 // Process blocks in the isr
 inline hal_timer_t isr_internal_block() {
-  hal_timer_t interval = (TIMER_RATE) / 1000;
+  hal_timer_t interval = (HAL_TIMER_RATE) / 1000;
 
   if (working_seg != NULL) {
     // Is this segment done?
@@ -957,11 +943,7 @@ inline hal_timer_t isr_internal_block() {
 #endif
 
 #if NUM_SERVOS > 0
-#  ifdef ESP8266
-    // analogWrite(SERVO0_PIN, working_seg->a[NUM_MOTORS].step_count);
-#  else
-    // servos[0].write(working_seg->a[NUM_MOTORS].step_count);
-#  endif  // ESP8266
+    SERVO_ANGLE(SERVO0, working_seg->a[NUM_MOTORS].step_count);
 #endif    // NUM_SERVOS>0
 
     start_feed_rate      = working_seg->initial_rate;
@@ -1303,10 +1285,11 @@ void motor_line(const float *const target_position, float fr_mm_s, float millime
       float cT = -1;
       if (c1 > 0 && c2 > 0) {
         cT = (c1 < c2) ? c1 : c2;
-      } else if (c1 > 0)
+      } else if (c1 > 0) {
         cT = c1;
-      else if (c2 > 0)
+      } else if (c2 > 0) {
         cT = c2;
+      }
 
       // The maximum acceleration is given by cT if cT>0
       if (cT > 0) { max_acceleration = max(min(max_acceleration, cT), (float)MIN_ACCELERATION); }
@@ -1327,7 +1310,7 @@ void motor_line(const float *const target_position, float fr_mm_s, float millime
 
   new_seg.acceleration_steps_per_s2 = accel;
   new_seg.acceleration              = accel / steps_per_mm;
-  new_seg.acceleration_rate         = (uint32_t)(accel * (4096.0f * 4096.0f / (TIMER_RATE)));
+  new_seg.acceleration_rate         = (uint32_t)(accel * (4096.0f * 4096.0f / (STEPPER_TIMER_RATE)));
   new_seg.steps_taken               = 0;
 
   // BEGIN JERK LIMITING

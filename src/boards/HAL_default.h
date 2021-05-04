@@ -1,20 +1,22 @@
 #pragma once
 
+#ifdef TARGET_DEFAULT
+
 #include <Arduino.h>
 #include "macros.h"
 
-#ifndef CLOCK_FREQ
-#  define CLOCK_FREQ (16000000L)
-#endif
-
 #define CPU_16_BIT
 
-#define hal_timer_t uint32_t
+#define hal_timer_t uint16_t
 #define HAL_TIMER_TYPE_MAX 0xFFFF
+#define HAL_TIMER_RATE ((F_CPU) / 8)
 
 // TODO: get rid of manual rate/prescale/ticks/cycles taken for procedures in stepper.cpp
 #define STEPPER_TIMER_RATE 2000000 // 2 Mhz
-#define STEPPER_TIMER_PRESCALE ((HAL_TIMER_RATE)/(STEPPER_TIMER_RATE))
+#define STEPPER_TIMER_PRESCALE 8
+//#define STEPPER_TIMER_RATE HAL_TIMER_RATE // 2 Mhz
+//#define STEPPER_TIMER_PRESCALE ((HAL_TIMER_RATE)/(STEPPER_TIMER_RATE))
+
 #define STEPPER_TIMER_TICKS_PER_US ((STEPPER_TIMER_RATE) / 1000000) // stepper timer ticks per µs
 
 
@@ -29,7 +31,17 @@
 #define DISABLE_STEPPER_DRIVER_INTERRUPT() CBI(TIMSK1, OCIE1A)
 #define STEPPER_ISR_ENABLED()              TEST(TIMSK1, OCIE1A)
 
-#define STEP_TIMER 0 
+#ifndef HAL_STEP_TIMER_ISR
+#define HAL_STEP_TIMER_ISR ISR(TIMER1_COMPA_vect)
+#endif
+
+// The hardware clock id
+#define STEP_TIMER 1 
+// the software clock id
+#define STEP_TIMER_NUM 0
+
+#define SERVO0  0
+#define SERVO_ANGLE(index,angle)  servos[index].write(angle)
 
 FORCE_INLINE void HAL_init() {}
 
@@ -67,3 +79,6 @@ FORCE_INLINE static void HAL_timer_set_compare(const uint8_t timerIndex,hal_time
 FORCE_INLINE hal_timer_t HAL_timer_get_count(const uint8_t timerIndex) {
   return OCR1A;
 }
+
+
+#endif // TARGET_DEFAULT

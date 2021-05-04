@@ -31,7 +31,9 @@
 
 // default value
 // !! this is now handeled via pio.ini !!
+#ifndef MACHINE_STYLE
 #define MACHINE_STYLE SIXI3
+#endif
 
 //------------------------------------------------------------------------------
 // LCD panels supported
@@ -42,7 +44,9 @@
 #define LCD_IS_SMART  2  // reprapdiscount Smart LCD Controller (including XXL model)
 
 // default value
+#ifndef LCD_TYPE
 #define LCD_TYPE LCD_NONE
+#endif
 
 //------------------------------------------------------------------------------
 // Microcontrollers supported
@@ -60,7 +64,9 @@
 
 // default value 
 // !! this is now handeled via platformio.ini !!
-//#define MOTHERBOARD BOARD_RUMBA
+#ifndef MOTHERBOARD
+#define MOTHERBOARD BOARD_RUMBA
+#endif
 
 //------------------------------------------------------------------------------
 // YOUR CHANGES GO HERE

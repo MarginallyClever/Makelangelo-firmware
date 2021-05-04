@@ -47,8 +47,6 @@
 #  define WIFI_SSID_NAME ""  // WiFi AP SSID Name - define this in local_config.h
 #  define WIFI_SSID_PASS ""  // WiFi AP SSID Password - define this in local_config.h
 
-#  define CLOCK_FREQ (80000000L)
-
 #  undef HAS_SD
 #  undef HAS_LCD
 
