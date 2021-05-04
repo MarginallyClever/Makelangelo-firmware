@@ -153,7 +153,7 @@ extern float calibrateLeft;
 
 extern float feed_rate;
 extern float acceleration;
-extern uint32_t step_delay;
+extern hal_timer_t step_delay;
 extern Axis axies[NUM_AXIES];
 
 extern void pause(const uint32_t us);

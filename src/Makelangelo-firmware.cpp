@@ -33,7 +33,7 @@ float calibrateLeft  = 1011.0;
 // plotter position.
 float feed_rate    = DEFAULT_FEEDRATE;
 float acceleration = DEFAULT_ACCELERATION;
-uint32_t step_delay;
+hal_timer_t step_delay;
 
 #if MACHINE_STYLE == SIXI
 uint32_t reportDelay = 0;
@@ -70,8 +70,8 @@ unsigned int localPort = 9999;
 void findStepDelay() {
   // feedrate is units/s
   // mm per step is 
-  float steps_per_second = (feed_rate / MM_PER_STEP);
-  step_delay = (uint32_t)(1000000.0f / steps_per_second);
+  float steps_per_second = feed_rate * STEPS_PER_MM;
+  step_delay = (hal_timer_t)(1000000.0f / steps_per_second);
   Serial.print("step_delay=");
   Serial.println(step_delay);
 
