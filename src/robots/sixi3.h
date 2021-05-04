@@ -35,9 +35,6 @@
 #  define MAX_JERK   (10.0)
 #  define MAX_Z_JERK (0.3)
 
-#undef MICROSTEPS
-#define MICROSTEPS 1
-
 // plan long moves as a set of submoves to increase accuracy.  Uncomment to turn this off.
 //#define SUBDIVIDE_LINES
 #  define SEGMENTS_PER_SECOND (10)

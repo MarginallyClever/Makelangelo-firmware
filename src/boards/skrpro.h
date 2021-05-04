@@ -119,6 +119,9 @@
 #  endif
 
 #  ifdef HAS_TMC2130
+
+#define MICROSTEPS 1
+
 // chip select
 #    define CS_PIN_0 MOTOR_0_LIMIT_SWITCH_PIN
 #    define CS_PIN_1 MOTOR_1_LIMIT_SWITCH_PIN
