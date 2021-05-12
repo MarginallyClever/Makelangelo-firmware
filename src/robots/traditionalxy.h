@@ -42,7 +42,7 @@
 
 // alter these two values to equal gear ratio * motor steps * microstepping for each axis.
 // by default they are set the same as all other robots in the system.
-#  define MM_PER_STEP_X MM_PER_STEP
-#  define MM_PER_STEP_Y MM_PER_STEP
+#  define UNITS_PER_STEP_X UNITS_PER_STEP
+#  define UNITS_PER_STEP_Y UNITS_PER_STEP
 
 #endif  // #ifdef TRADITIONALXY

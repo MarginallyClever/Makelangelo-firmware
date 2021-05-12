@@ -15,7 +15,7 @@
  * @param motorStepArray number of steps per motor
  */
 void IK(const float *const cartesian, long *motorStepArray) {
-  for (ALL_AXIES(i)) { motorStepArray[i] = lround(cartesian[i] / MM_PER_STEP); }
+  for (ALL_AXIES(i)) { motorStepArray[i] = lround(cartesian[i] / UNITS_PER_STEP); }
 }
 
 /**
@@ -25,7 +25,7 @@ void IK(const float *const cartesian, long *motorStepArray) {
  * @return 0 if no problem, 1 on failure.
  */
 int FK(long *motorStepArray, float *axies) {
-  for (ALL_AXIES(i)) { axies[i] = motorStepArray[i] * MM_PER_STEP; }
+  for (ALL_AXIES(i)) { axies[i] = motorStepArray[i] * UNITS_PER_STEP; }
   return 0;
 }
 

@@ -30,8 +30,8 @@
 #  ifndef DEFAULT_ACCELERATION
 #    define DEFAULT_ACCELERATION (1250.0)
 #  endif
-#  ifndef DEGREES_PER_STEP
-#    define DEGREES_PER_STEP     (1.8)
+#  ifndef UNITS_PER_STEP
+#    define UNITS_PER_STEP     (1.8)  // units=degrees this time
 #  endif
 #  elif NORMAL_MOTOR_STEPS == 400
 #  ifndef DEFAULT_FEEDRATE
@@ -40,22 +40,22 @@
 #  ifndef DEFAULT_ACCELERATION
 #    define DEFAULT_ACCELERATION (625.0)
 #  endif
-#  ifndef DEGREES_PER_STEP
-#    define DEGREES_PER_STEP     (0.9)
+#  ifndef UNITS_PER_STEP
+#    define UNITS_PER_STEP     (0.9)  // units=degrees this time
 #  endif
 #endif
 
 // These numbers are calculated from the above.  No need to change these.
 #ifndef NORMAL_MOTOR_STEPS
-#  define NORMAL_MOTOR_STEPS (360.0 / DEGREES_PER_STEP)
+#  define NORMAL_MOTOR_STEPS (360.0 / UNITS_PER_STEP)
 #endif
 
 #ifndef STEPS_PER_TURN
 #define STEPS_PER_TURN       (NORMAL_MOTOR_STEPS * MICROSTEPS)
 #endif
 
-#ifndef MM_PER_STEP
-#define MM_PER_STEP          (PULLEY_PITCH/STEPS_PER_TURN)
+#ifndef UNITS_PER_STEP
+#define UNITS_PER_STEP          (PULLEY_PITCH/STEPS_PER_TURN)
 #endif
 
 #ifndef STEPS_PER_MM

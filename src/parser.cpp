@@ -2,10 +2,12 @@
 #include "lcd.h"
 #include "sdcard.h"
 
-#if !defined(USE_ALT_SERVO)
-#  include <Servo.h>
-# else
+#if NUM_SERVOS > 0
+#ifdef USE_ALT_SERVO
 # include "mservo.h"
+# else
+#  include <Servo.h>
+#endif
 #endif
 
 // GLOBALS
@@ -222,6 +224,7 @@ void Parser::processCommand() {
       case 203:        M203();        break;
       case 205:        M205();        break;
       case 226:        M226();        break;
+      case 280:        M280();        break;
       case 300:        M300();        break;
      //case 306:  M306();  break;
 #if MACHINE_STYLE == SIXI
@@ -310,7 +313,7 @@ void Parser::D0() {
   findStepDelay();
   Serial.print(F("Step delay="));   Serial.println(step_delay);
   Serial.print(F("feed rate="));    Serial.println(feed_rate);
-  Serial.print(F("mm_per_step="));  Serial.println(MM_PER_STEP,4);
+  Serial.print(F("UNITS_PER_STEP="));  Serial.println(UNITS_PER_STEP,4);
 
   Serial.print(F("STEPPER_TIMER_PRESCALE="));      Serial.println(STEPPER_TIMER_PRESCALE);
   Serial.print(F("HAL_TIMER_RATE="));              Serial.println(HAL_TIMER_RATE);
@@ -949,6 +952,23 @@ void Parser::M226() {
 #endif
 
   Serial.println(" ended.");
+}
+
+// M270 P[a] S[b] - Move servo P to angle S (1..180 for degrees, >=500 for pwm).
+void Parser::M280() {
+#if NUM_SERVOS > 0
+  Serial.println("M280");
+  
+  int id = parseNumber('P', 0);
+  int v = parseNumber('S', servos[0].read());
+
+  if(id <0 || id>=NUM_SERVOS) return;
+  if(v>=0 && v <=180) {
+    servos[id].write(v);
+  } else if(v>500) {
+    servos[id].writeMicroseconds(v);
+  }
+#endif
 }
 
 /**

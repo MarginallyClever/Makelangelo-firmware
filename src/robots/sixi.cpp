@@ -420,7 +420,7 @@ void sixiDemo2() {
     {                                         \
       Serial.print('\t');                     \
       Serial.print(AxisNames[NN]);            \
-      Serial.print(DEGREES_PER_STEP_##NN, 5); \
+      Serial.print(UNITS_PER_STEP_##NN, 5); \
     }
   PPX(0);
   PPX(1);

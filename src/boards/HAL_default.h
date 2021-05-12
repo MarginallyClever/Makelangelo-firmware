@@ -45,6 +45,9 @@
 
 FORCE_INLINE void HAL_init() {}
 
+// TCNT* - Timer/Counter Register.  The actual timer value is stored here.
+// OCR*  - Output Compare Register
+
 FORCE_INLINE void HAL_timer_start(const uint8_t timerIndex) {
   Serial.println(F("timer start"));
 #ifndef DEBUG_STEPPING

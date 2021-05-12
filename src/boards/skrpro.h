@@ -120,7 +120,7 @@
 
 #  ifdef HAS_TMC2130
 
-#define MICROSTEPS 1
+#define MICROSTEPS 8
 
 // chip select
 #    define CS_PIN_0 MOTOR_0_LIMIT_SWITCH_PIN
@@ -134,7 +134,7 @@
 
 // STM32F4xx specific
 #if defined(STM32F4xx)
-#define STEP_TIMER 6
+#define STEP_TIMER 3
 #define HAL_TIMER_RATE (HAL_RCC_GetSysClockFreq()/2)
 #endif
 

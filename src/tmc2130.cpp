@@ -49,7 +49,7 @@ void tmc2130_setup_single(TMC2130Stepper *driver) {
   driver->stealth_amplitude(255);
   driver->stealthChop(1);
   //#if defined(HYBRID_THRESHOLD)
-  //  driver->stealth_max_speed(12650000UL*MICROSTEPS/(256*HYBRID_THRESHOLD*STEPS_PER_MM));
+  //  driver->stealth_max_speed(12650000UL*MICROSTEPS/(256*HYBRID_THRESHOLD*STEPS_PER_UNIT));
   //#endif
 #  endif
   driver->GSTAT(0);  // Clear GSTAT
@@ -133,7 +133,7 @@ void tmc2130_enable_stealthChop() {
 
 void tmc2130_motor_home() {
   // Backoff
-  for (uint32_t i = 0; i < STEPS_PER_MM * 25; ++i) {
+  for (uint32_t i = 0; i < STEPS_PER_UNIT * 25; ++i) {
     for(ALL_MOTORS(j)) {
       digitalWrite(motors[j].step_pin, HIGH);
       digitalWrite(motors[j].step_pin, LOW);

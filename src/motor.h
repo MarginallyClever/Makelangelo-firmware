@@ -10,6 +10,14 @@
 #include "macros.h"
 #include "tmc2130.h"
 
+#if NUM_SERVOS > 0
+#ifdef USE_ALT_SERVO
+#  include "mservo.h"
+#else
+#  include <Servo.h>
+#endif
+#endif
+
 //------------------------------------------------------------------------------
 // CONSTANTS
 //------------------------------------------------------------------------------
@@ -104,7 +112,7 @@ typedef struct {
 typedef struct {
   int32_t step_count;   // current motor position, in steps.
   int32_t delta_steps;  // steps
-  int32_t delta_mm;     // mm
+  int32_t delta_units;     // in some systems it's mm, in others it's degrees.
   uint32_t absdelta;
   int dir;
 #if MACHINE_STYLE == SIXI
@@ -165,6 +173,12 @@ extern float max_jerk[NUM_MUSCLES];
 extern float max_feedrate_mm_s[NUM_MUSCLES];
 
 extern uint32_t min_segment_time_us;
+
+#if NUM_SERVOS>0
+#ifndef ESP8266
+extern Servo servos[NUM_SERVOS];
+#endif
+#endif
 
 //------------------------------------------------------------------------------
 // METHODS

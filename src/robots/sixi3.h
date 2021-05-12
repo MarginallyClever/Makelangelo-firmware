@@ -19,8 +19,8 @@
 //#define PEN_UP_ANGLE         (90)
 //#define PEN_DOWN_ANGLE       (50)  // Some steppers don't like 0 degrees
 
-#  define NUM_AXIES  (6)  // could be more?
-#  define NUM_MOTORS (5)
+#  define NUM_AXIES  (7)  // could be more?
+#  define NUM_MOTORS (6)
 #  define NUM_SERVOS (1)
 #  define NUM_TOOLS  (0)
 
@@ -39,7 +39,7 @@
 //#define SUBDIVIDE_LINES
 #  define SEGMENTS_PER_SECOND (10)
 
-// It takes MM_PER_STEP steps for the actuator to make one degree.
+// It takes UNITS_PER_STEP steps for the actuator to make one degree.
 
 // 200 motor steps per full turn (360/1.8 deg=200 steps;360/0.9 deg=400 steps)
 #  define STEPPER_MOTOR_STEPS_PER_FULL_TURN (200.0)
@@ -54,8 +54,8 @@
 #  define STEPS_PER_DEGREE (STEPS_PER_FULL_TURN/360.0)
 
 // the value the rest of the code cares about.
-#  define STEPS_PER_MM STEPS_PER_DEGREE  // 105
-#  define MM_PER_STEP (1.0/STEPS_PER_MM)  // 0.00952380952?
+#  define STEPS_PER_UNIT STEPS_PER_DEGREE  // 105
+#  define UNITS_PER_STEP (1.0/STEPS_PER_UNIT)  // 0.00952380952?
 
 
 #endif  // #ifdef TRADITIONAL6

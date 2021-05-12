@@ -4,20 +4,11 @@
 // Please see http://www.github.com/MarginallyClever/makelangeloFirmware for more information.
 //------------------------------------------------------------------------------
 
-// TCNT* - Timer/Counter Register.  The actual timer value is stored here.
-// OCR*  - Output Compare Register
-
 #include "configure.h"
 #include "motor.h"
 
 #include "lcd.h"
 #include "speed_lookuptable.h"
-
-#ifdef USE_ALT_SERVO
-#  include "mservo.h"
-#else
-#  include <Servo.h>
-#endif
 
 //------------------------------------------------------------------------------
 // DEFINES
@@ -39,8 +30,8 @@
 
 Motor motors[NUM_MUSCLES];
 
-#ifndef ESP8266
 #if NUM_SERVOS>0
+#ifndef ESP8266
 Servo servos[NUM_SERVOS];
 #endif
 #endif
@@ -355,12 +346,11 @@ void setPenAngle(int arg0) {
 #endif  // NUM_AXIES>=3
 
 #if NUM_SERVOS > 0
-// this is commented out because compiler segfault for unknown reasons.
-#  ifndef ESP8266
-  servos[0].write(arg0);
-#  else
+#ifdef ESP8266
   analogWrite(SERVO0_PIN, arg0);
-#  endif  // ESP8266
+#else
+  servos[0].write(arg0);
+#endif  // ESP8266
 #endif    // NUM_SERVOS>0
 }
 
@@ -912,14 +902,6 @@ inline hal_timer_t isr_internal_block() {
     global_servoStep_dir_0 = (working_seg->a[NUM_MOTORS].dir == STEPPER_DIR_HIGH) ? -1 : 1;
 #endif
 
-#if NUM_SERVOS > 0
-#  ifdef ESP8266
-    // analogWrite(SERVO0_PIN, working_seg->a[NUM_MOTORS].step_count);
-#  else
-    // servos[0].write(working_seg->a[NUM_MOTORS].step_count);
-#  endif  // ESP8266
-#endif    // NUM_SERVOS>0
-
     start_feed_rate      = working_seg->initial_rate;
     end_feed_rate        = working_seg->final_rate;
     current_feed_rate    = start_feed_rate;
@@ -993,9 +975,9 @@ inline hal_timer_t isr_internal_block() {
     // Serial.print("  acceleration_rate: ");  Serial.println(working_seg->acceleration_rate);
     // Serial.print("  nominal_length_flag: ");  Serial.println(working_seg->nominal_length_flag==0?"n":"y");
     // Serial.print("  recalculate_flag: ");  Serial.println(working_seg->recalculate_flag==0?"n":"y");
-    // Serial.print("  dx: ");  Serial.println(working_seg->a[0].delta_mm);
-    // Serial.print("  dy: ");  Serial.println(working_seg->a[1].delta_mm);
-    // Serial.print("  dz: ");  Serial.println(working_seg->a[2].delta_mm);
+    // Serial.print("  dx: ");  Serial.println(working_seg->a[0].delta_units);
+    // Serial.print("  dy: ");  Serial.println(working_seg->a[1].delta_units);
+    // Serial.print("  dz: ");  Serial.println(working_seg->a[2].delta_units);
 #endif
   }
 
@@ -1161,17 +1143,17 @@ void motor_line(const float *const target_position, float fr_mm_s, float millime
 
     float distancePerStep;
     switch (i) {
-      case 0:        distancePerStep = DEGREES_PER_STEP_0;        break;
-      case 1:        distancePerStep = DEGREES_PER_STEP_1;        break;
-      case 2:        distancePerStep = DEGREES_PER_STEP_2;        break;
-      case 3:        distancePerStep = DEGREES_PER_STEP_3;        break;
-      case 4:        distancePerStep = DEGREES_PER_STEP_4;        break;
-      case 5:        distancePerStep = DEGREES_PER_STEP_5;        break;
-      default:       distancePerStep = MM_PER_STEP;               break;
+      case 0:        distancePerStep = UNITS_PER_STEP_0;        break;
+      case 1:        distancePerStep = UNITS_PER_STEP_1;        break;
+      case 2:        distancePerStep = UNITS_PER_STEP_2;        break;
+      case 3:        distancePerStep = UNITS_PER_STEP_3;        break;
+      case 4:        distancePerStep = UNITS_PER_STEP_4;        break;
+      case 5:        distancePerStep = UNITS_PER_STEP_5;        break;
+      default:       distancePerStep = UNITS_PER_STEP_6         break;
     }
-    new_seg.a[i].delta_mm = new_seg.a[i].delta_steps * distancePerStep;
+    new_seg.a[i].delta_units = new_seg.a[i].delta_steps * distancePerStep;
 #else
-    new_seg.a[i].delta_mm = new_seg.a[i].delta_steps * MM_PER_STEP;
+    new_seg.a[i].delta_units = new_seg.a[i].delta_steps * UNITS_PER_STEP;
 #endif
     new_seg.a[i].absdelta = abs(new_seg.a[i].delta_steps);
     if (new_seg.steps_total < new_seg.a[i].absdelta) { new_seg.steps_total = new_seg.a[i].absdelta; }
@@ -1208,7 +1190,7 @@ void motor_line(const float *const target_position, float fr_mm_s, float millime
   // All speeds are connected so if one motor slows, they all have to slow the same amount.
   float current_speed[NUM_MUSCLES], speed_factor = 1.0;
   for (ALL_MUSCLES(i)) {
-    current_speed[i] = new_seg.a[i].delta_mm * inverse_secs;
+    current_speed[i] = new_seg.a[i].delta_units * inverse_secs;
     const float cs = fabs(current_speed[i]), max_fr = max_feedrate_mm_s[i];
     if (cs > max_fr) speed_factor = min(speed_factor, max_fr / cs);
   }
@@ -1237,13 +1219,13 @@ void motor_line(const float *const target_position, float fr_mm_s, float millime
       // normal vectors pointing from plotter to motor
       float R1x   = axies[0].limitMin - oldX;  // to left
       float R1y   = axies[1].limitMax - oldY;  // to top
-      float Rlen1 = sqrt(sq(R1x) + sq(R1y));//old_seg.a[0].step_count * MM_PER_STEP;
+      float Rlen1 = sqrt(sq(R1x) + sq(R1y));//old_seg.a[0].step_count * UNITS_PER_STEP;
       R1x /= Rlen1;
       R1y /= Rlen1;
 
       float R2x   = axies[0].limitMax - oldX;  // to right
       float R2y   = axies[1].limitMax - oldY;  // to top
-      float Rlen2 = sqrt(sq(R2x) + sq(R2y));//old_seg.a[1].step_count * MM_PER_STEP;
+      float Rlen2 = sqrt(sq(R2x) + sq(R2y));//old_seg.a[1].step_count * UNITS_PER_STEP;
       R2x /= Rlen2;
       R2y /= Rlen2;
       
@@ -1392,10 +1374,10 @@ void motor_line(const float *const target_position, float fr_mm_s, float millime
     Serial.print("inverse_distance_mm=");  Serial.println(inverse_distance_mm);
     Serial.print("inverse_secs=");  Serial.println(inverse_secs);
     Serial.print("nominal_rate=");  Serial.println(new_seg.nominal_rate);
-    Serial.print("delta_mm=");
+    Serial.print("delta_units=");
     for (ALL_MUSCLES(i)) {
       if (i > 0) Serial.print(",");
-      Serial.print(new_seg.a[i].delta_mm);
+      Serial.print(new_seg.a[i].delta_units);
     }
     Serial.println();
     Serial.print("speed_factor=");  Serial.println(speed_factor);

@@ -16,8 +16,12 @@
  */
 void IK(const float *const cartesian, long *motorStepArray) {
   for (ALL_AXIES(i)) {
-    motorStepArray[i] = lround(cartesian[i] * STEPS_PER_MM);
+    motorStepArray[i] = lround(cartesian[i] * STEPS_PER_UNIT);
   }
+#if NUM_SERVOS>0
+  // servo
+  motorStepArray[NUM_MOTORS] = lround(cartesian[NUM_MOTORS]);
+#endif
 }
 
 /**
@@ -28,8 +32,12 @@ void IK(const float *const cartesian, long *motorStepArray) {
  */
 int FK(long *motorStepArray, float *axies) {
   for (ALL_AXIES(i)) {
-    axies[i] = motorStepArray[i] * MM_PER_STEP;
+    axies[i] = motorStepArray[i] * UNITS_PER_STEP;
   }
+#if NUM_SERVOS>0
+  // servo
+  axies[NUM_MOTORS] = motorStepArray[NUM_MOTORS];
+#endif
   return 0;
 }
 

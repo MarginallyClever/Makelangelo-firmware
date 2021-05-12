@@ -16,8 +16,6 @@
 
 #define FORCE_INLINE __attribute__((always_inline)) inline
 
-#define HAL_STEP_TIMER_ISR void Step_Handler(HardwareTimer *htim)
-
 #define CRITICAL_SECTION_START()  uint32_t primaskV = __get_PRIMASK(); __disable_irq()
 #define CRITICAL_SECTION_END()    if(!primaskV) __enable_irq()
 #define ENABLE_ISRS() __enable_irq()
@@ -40,10 +38,11 @@
 #define DISABLE_STEPPER_DRIVER_INTERRUPT() HAL_timer_disable_interrupt(STEP_TIMER_NUM)
 #define STEPPER_ISR_ENABLED() HAL_timer_interrupt_enabled(STEP_TIMER_NUM)
 
-#define SERVO0  PB6
+#define SERVO0  PA1
 #define SERVO_ANGLE(index,angle)  pwmWrite(index,angle)
 
-extern void Step_Handler(HardwareTimer *htim);
+extern void Step_Handler();
+#define HAL_STEP_TIMER_ISR void Step_Handler()
 
 extern HardwareTimer *timer_instance[NUM_HARDWARE_TIMERS];
 

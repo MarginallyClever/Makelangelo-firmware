@@ -22,10 +22,10 @@ void IK(const float *const cartesian, long *motorStepArray) {
 
   dy                = cartesian[1] - top;
   dx                = cartesian[0] - left;
-  motorStepArray[0] = lroundf(sqrt(sq(dx) + sq(dy)) / MM_PER_STEP);
+  motorStepArray[0] = lroundf(sqrt(sq(dx) + sq(dy)) / UNITS_PER_STEP);
   // find length to M2
   dx                = right - cartesian[0];
-  motorStepArray[1] = lroundf(sqrt(sq(dx) + sq(dy)) / MM_PER_STEP);
+  motorStepArray[1] = lroundf(sqrt(sq(dx) + sq(dy)) / UNITS_PER_STEP);
 
   motorStepArray[2] = cartesian[2];
 }
@@ -42,9 +42,9 @@ int FK(long *motorStepArray, float *cartesian) {
   float top   = axies[1].limitMax;
 
   // use law of cosines: theta = acos((a*a+b*b-c*c)/(2*a*b));
-  float a = (float)motorStepArray[0] * MM_PER_STEP;
+  float a = (float)motorStepArray[0] * UNITS_PER_STEP;
   float b = (right - left);
-  float c = (float)motorStepArray[1] * MM_PER_STEP;
+  float c = (float)motorStepArray[1] * UNITS_PER_STEP;
 
   // slow, uses trig
   // we know law of cosines:   cc = aa + bb -2ab * cos( theta )
@@ -261,12 +261,12 @@ void robot_findHome() {
 
   // Serial.println(F("Estimating position..."));
   long count[NUM_MUSCLES];
-  count[0] = calibrateLeft / MM_PER_STEP;
-  count[1] = calibrateRight / MM_PER_STEP;
+  count[0] = calibrateLeft / UNITS_PER_STEP;
+  count[1] = calibrateRight / UNITS_PER_STEP;
   count[2] = axies[2].pos;
   // Serial.print("cl=");        Serial.println(calibrateLeft);
   // Serial.print("cr=");        Serial.println(calibrateRight);
-  // Serial.print("t*1000=");    Serial.println(MM_PER_STEP*1000);
+  // Serial.print("t*1000=");    Serial.println(UNITS_PER_STEP*1000);
 
   // current position is...
   float offset[NUM_AXIES];
@@ -338,8 +338,8 @@ void calibrateBelts() {
   delay(500);
 
   Serial.println(F("Estimating position..."));
-  calibrateLeft  = (float)steps[0] * MM_PER_STEP;
-  calibrateRight = (float)steps[1] * MM_PER_STEP;
+  calibrateLeft  = (float)steps[0] * UNITS_PER_STEP;
+  calibrateRight = (float)steps[1] * UNITS_PER_STEP;
 
   reportCalibration();
 

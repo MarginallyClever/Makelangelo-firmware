@@ -101,6 +101,7 @@ class Parser {
                 // (us)
   void M206();  // M206 [Xn] [Yn] [Zn] [Un] [Vn] [Wn] - set home offsets
   void M226();  // M226 P[a] S[b] - Wait for pin P to be in state S (1 or 0).
+  void M280();  // M270 P[a] S[b] - Move servo P to angle S (1..180 for degrees, >=500 for pwm).
   void M300();  // M300 S[a] P[b] - play frequency a for b milliseconds (if there is a speaker)
 #if MACHINE_STYLE == SIXI
   // void M306();  // M306 L[0...5] [Pn] [In] [Dn] - Sixi only.  adjust PID and report new values.

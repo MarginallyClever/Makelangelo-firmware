@@ -36,7 +36,7 @@
 #  define MAX_JERK (3.0)
 
 #  define MAX_SEGMENTS     (16)  // override the default to save RAM
-#  define DEGREES_PER_STEP (1.8)
+#  define UNITS_PER_STEP (1.8)
 #  define MICROSTEPS       (1.0)
 
 #  define MOTHERBOARD BOARD_SIXI_MEGA  // sixi only supports one motherboard right now
@@ -64,13 +64,13 @@
 #  define MOTOR_4_STEPS_PER_TURN (MOTOR_STEPS_PER_TURN * NEMA17_RATIO)         // wrist
 #  define MOTOR_5_STEPS_PER_TURN (MOTOR_STEPS_PER_TURN * NEMA17_RATIO)         // hand
 
-#  define DEGREES_PER_STEP_0 (360.0 / MOTOR_0_STEPS_PER_TURN)
-#  define DEGREES_PER_STEP_1 (360.0 / MOTOR_1_STEPS_PER_TURN)
-#  define DEGREES_PER_STEP_2 (360.0 / MOTOR_2_STEPS_PER_TURN)
-#  define DEGREES_PER_STEP_3 (360.0 / MOTOR_3_STEPS_PER_TURN)
-#  define DEGREES_PER_STEP_4 (360.0 / MOTOR_4_STEPS_PER_TURN)
-#  define DEGREES_PER_STEP_5 (360.0 / MOTOR_5_STEPS_PER_TURN)
-#  define MM_PER_STEP        1
+#  define UNITS_PER_STEP_0 (360.0 / MOTOR_0_STEPS_PER_TURN)
+#  define UNITS_PER_STEP_1 (360.0 / MOTOR_1_STEPS_PER_TURN)
+#  define UNITS_PER_STEP_2 (360.0 / MOTOR_2_STEPS_PER_TURN)
+#  define UNITS_PER_STEP_3 (360.0 / MOTOR_3_STEPS_PER_TURN)
+#  define UNITS_PER_STEP_4 (360.0 / MOTOR_4_STEPS_PER_TURN)
+#  define UNITS_PER_STEP_5 (360.0 / MOTOR_5_STEPS_PER_TURN)
+#  define UNITS_PER_STEP_6 1
 
 #  define POSITION_EPSILON (1.9)  // degrees
 

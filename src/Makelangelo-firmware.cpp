@@ -63,14 +63,14 @@ unsigned int localPort = 9999;
 
 /**
  * calculate microseconds-per-step.
- * step_per_mm = 1mm / MM_PER_STEP
+ * step_per_mm = 1mm / UNITS_PER_STEP
  * steps_per_second = step_per_mm * feed_rate (mm/s)
  * microseconds_per_step = 1M microseconds / steps_per_second
  **/
 void findStepDelay() {
   // feedrate is units/s
   // mm per step is 
-  float steps_per_second = feed_rate * STEPS_PER_MM;
+  float steps_per_second = feed_rate * STEPS_PER_UNIT;
   step_delay = (hal_timer_t)(1000000.0f / steps_per_second);
   Serial.print("step_delay=");
   Serial.println(step_delay);
@@ -392,6 +392,25 @@ void reportAllMotors() {
   Serial.println();
 }
 
+void tmc2130_test1() {
+  tmc2130_ms(2);
+  //tmc2130_status();
+
+  digitalWrite(MOTOR_0_ENABLE_PIN,LOW);
+  digitalWrite(MOTOR_0_DIR_PIN,LOW);
+  for(int i=0;i<1000;++i) {
+    digitalWrite(MOTOR_0_STEP_PIN,HIGH);
+    digitalWrite(MOTOR_0_STEP_PIN,LOW);
+    delay(1);
+  }
+  digitalWrite(MOTOR_0_DIR_PIN,HIGH);
+  for(int i=0;i<1000;++i) {
+    digitalWrite(MOTOR_0_STEP_PIN,HIGH);
+    digitalWrite(MOTOR_0_STEP_PIN,LOW);
+    delay(1);
+  }
+}
+
 // runs once on machine start
 void setup() {
   parser.start();
@@ -464,22 +483,4 @@ void loop() {
   }
 
   meanwhile();
-  /*
-  tmc2130_ms(2);
-  //tmc2130_status();
-
-  digitalWrite(MOTOR_0_ENABLE_PIN,LOW);
-  digitalWrite(MOTOR_0_DIR_PIN,LOW);
-  for(int i=0;i<1000;++i) {
-    digitalWrite(MOTOR_0_STEP_PIN,HIGH);
-    digitalWrite(MOTOR_0_STEP_PIN,LOW);
-    delay(1);
-  }
-  digitalWrite(MOTOR_0_DIR_PIN,HIGH);
-  for(int i=0;i<1000;++i) {
-    digitalWrite(MOTOR_0_STEP_PIN,HIGH);
-    digitalWrite(MOTOR_0_STEP_PIN,LOW);
-    delay(1);
-  }
-  */
 }
