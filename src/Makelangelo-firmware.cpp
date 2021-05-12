@@ -393,7 +393,7 @@ void reportAllMotors() {
 }
 
 void tmc2130_test1() {
-  tmc2130_ms(2);
+  //tmc2130_ms(2);
   //tmc2130_status();
 
   digitalWrite(MOTOR_0_ENABLE_PIN,LOW);

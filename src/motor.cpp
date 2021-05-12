@@ -1253,10 +1253,10 @@ void motor_line(const float *const target_position, float fr_mm_s, float millime
   }
 #endif  // MACHINE_STYLE == POLARGRAPH && defined(DYNAMIC_ACCELERATION)
 
-  const float steps_per_mm = new_seg.steps_total * inverse_distance_mm;
-  uint32_t accel           = ceil(max_acceleration * steps_per_mm);
+  const float steps_per_unit = new_seg.steps_total * inverse_distance_mm;
+  uint32_t accel           = ceil(max_acceleration * steps_per_unit);
 
-  const float max_acceleration_steps_per_s2 = max_acceleration * steps_per_mm;
+  const float max_acceleration_steps_per_s2 = max_acceleration * steps_per_unit;
   for (ALL_MUSCLES(i)) {
     if (new_seg.a[i].absdelta && max_acceleration_steps_per_s2 < accel) {
       const uint32_t comp = max_acceleration_steps_per_s2 * new_seg.steps_total;
@@ -1265,7 +1265,7 @@ void motor_line(const float *const target_position, float fr_mm_s, float millime
   }
 
   new_seg.acceleration_steps_per_s2 = accel;
-  new_seg.acceleration              = accel / steps_per_mm;
+  new_seg.acceleration              = accel / steps_per_unit;
   new_seg.acceleration_rate         = (uint32_t)(accel * (4096.0f * 4096.0f / (STEPPER_TIMER_RATE)));
   new_seg.steps_taken               = 0;
 
@@ -1381,7 +1381,7 @@ void motor_line(const float *const target_position, float fr_mm_s, float millime
     }
     Serial.println();
     Serial.print("speed_factor=");  Serial.println(speed_factor);
-    Serial.print("steps_per_mm=");  Serial.println(steps_per_mm);
+    Serial.print("steps_per_unit=");  Serial.println(steps_per_unit);
     Serial.print("accel=");  Serial.println(accel);
     Serial.print("acceleration_steps_per_s2=");  Serial.println(new_seg.acceleration_steps_per_s2);
     Serial.print("acceleration=");  Serial.println(new_seg.acceleration);

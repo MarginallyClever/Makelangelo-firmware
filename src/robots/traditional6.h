@@ -44,8 +44,9 @@
 // per-axis.
 
 // stewart platform
-#define MM_PER_INCH   (25.4)
-#define STEP_PER_INCH (1.0 * 200.0 * 20.0)       // 1:1 microstepping * 200 steps per turn * 20 turns-per-inch
-#define UNITS_PER_STEP (MM_PER_INCH/STEP_PER_INCH)  // mm-per-inch 
+#define UNITS_PER_INCH (25.4)  // in this case, mm is the default unit.
+#define STEP_PER_INCH  (1.0 * 200.0 * 20.0)       // 1:1 microstepping * 200 steps per turn * 20 turns-per-inch
+#define UNITS_PER_STEP (UNITS_PER_INCH/STEP_PER_INCH)
+#define STEPS_PER_UNIT (STEP_PER_INCH/UNITS_PER_INCH)
 
 #endif  // #ifdef TRADITIONAL6

@@ -43,9 +43,10 @@
 #define LCD_IS_128X64 1  // reprapdiscount Full Graphic Smart LCD Controller
 #define LCD_IS_SMART  2  // reprapdiscount Smart LCD Controller (including XXL model)
 
-// default value
-#ifndef LCD_TYPE
-#define LCD_TYPE LCD_NONE
+//#define LCD_TYPE LCD_NONE
+
+#if defined(LCD_TYPE) && LCD_TYPE!=LCD_NONE
+#define HAS_LCD
 #endif
 
 //------------------------------------------------------------------------------
@@ -129,6 +130,9 @@
 #if NUM_MUSCLES != NUM_AXIES
 // not always the case!  Skycam has more motors than axies.
 //#error "NUM_MUSCLES != NUM_AXIES"
+#endif
+#if defined(HAS_LCD) && (!defined(LCD_TYPE) || LCD_TYPE==NONE)
+#  error "If HAS_LCD is defined then but the type is undefined."
 #endif
 
 //------------------------------------------------------------------------------

@@ -45,12 +45,13 @@
 // uncomment this line to adjust acceleration based on pen position
 #  define DYNAMIC_ACCELERATION
 
+
 #  if MACHINE_HARDWARE_VERSION == MAKELANGELO_3
 #    ifndef MAX_SEGMENTS
 #      define MAX_SEGMENTS (8)
 #    endif
 #    define HAS_SD
-#    define HAS_LCD
+#    define LCD_TYPE LCD_IS_SMART
 #  endif
 
 #  if MACHINE_HARDWARE_VERSION == MAKELANGELO_3_3
@@ -59,7 +60,7 @@
 #    endif
 #    define USE_LIMIT_SWITCH
 #    define HAS_SD
-#    define HAS_LCD
+#    define LCD_TYPE LCD_IS_SMART
 #  endif
 
 #  if MACHINE_HARDWARE_VERSION == MAKELANGELO_5
@@ -68,7 +69,7 @@
 #    endif
 #    define USE_LIMIT_SWITCH
 #    define HAS_SD
-#    define HAS_LCD
+#    define LCD_TYPE LCD_IS_SMART
 #  endif
 
 #  if MACHINE_HARDWARE_VERSION == MAKELANGELO_6
@@ -79,7 +80,7 @@
 #    define HAS_TMC2130  // driver type
 #    define STEALTHCHOP  // quiet operation
 #    define HAS_SD
-#    define HAS_LCD
+#    define LCD_TYPE LCD_IS_SMART
 #  endif
 
 #  if defined(HAS_TMC2130) || defined(USE_LIMIT_SWITCH)

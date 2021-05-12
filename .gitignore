@@ -54,3 +54,4 @@ local_config.h
 
 ### VisualStudioCode ###
 .vscode
+platformio/scripts/__pycache__/marlin.cpython-37.pyc
