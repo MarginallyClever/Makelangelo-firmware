@@ -7,6 +7,8 @@
 
 #if MACHINE_STYLE == DELTA
 
+#include "macros.h"
+
 #  define MACHINE_STYLE_NAME       "DELTA"
 #  define MACHINE_HARDWARE_VERSION 5
 
@@ -67,4 +69,5 @@
 #    define DELTA_HOME_DIRECTION     LOW  // LOW or HIGH
 #  endif
 
+FORCE_INLINE void factory_reset() {}
 #endif  // MACHINE_STYLE == DELTA

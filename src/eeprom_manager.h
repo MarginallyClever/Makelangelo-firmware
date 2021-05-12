@@ -5,7 +5,7 @@
 // Please see http://www.github.com/MarginallyClever/makelangeloFirmware for more information.
 //------------------------------------------------------------------------------
 
-#define FIRMWARE_VERSION        10  // Increment when adding new variables
+#define FIRMWARE_VERSION        11  // Increment when adding new variables
 #define SIZEOF_FLOAT_BYTES      (4)
 #define SIZEOF_LONG_BYTES       (4)
 #define ADDR_VERSION            0  // 0..255 (1 byte)
@@ -20,6 +20,8 @@
 #define ADDR_CALIBRATION_RIGHT  (ADDR_CALIBRATION_LEFT + ADDR_CALIBRATION_LENGTH)
 #define ADDR_PID                (ADDR_CALIBRATION_RIGHT + ADDR_CALIBRATION_LENGTH)
 #define EEPROM_PID_LENGTH       (NUM_AXIES * 3 * SIZEOF_FLOAT_BYTES)
+#define ADDR_SPU                (ADDR_PID + EEPROM_PID_LENGTH)
+#define EEPROM_SPU_LENGTH       (NUM_MUSCLES * 1 * SIZEOF_FLOAT_BYTES)
 
 class EEPROMManager {
  public:
@@ -46,6 +48,10 @@ class EEPROMManager {
   void saveAll();
   void loadAll();
   void reportAll();
+
+  //v11
+  void saveSPU();
+  void loadSPU();
 };
 
 extern EEPROMManager eepromManager;

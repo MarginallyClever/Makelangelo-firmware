@@ -7,6 +7,8 @@
 
 #if MACHINE_STYLE == COREXY
 
+#include "macros.h"
+
 #  define MACHINE_STYLE_NAME       "COREXY"
 #  define MACHINE_HARDWARE_VERSION 5  // If you have a makelangelo 5+
 #  define MACHINE_HAS_LIFTABLE_PEN
@@ -37,4 +39,5 @@
 //#define SUBDIVIDE_LINES
 #  define SEGMENTS_PER_SECOND (10)
 
+FORCE_INLINE void factory_reset() {}
 #endif  // #ifdef COREXY

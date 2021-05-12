@@ -76,6 +76,15 @@ void robot_findHome() {
   teleport(zeros);
 }
 
-void robot_setup() {}
+void robot_setup() {
+}
+
+void factory_reset() {
+  for(ALL_MOTORS(i)) {
+    motor_spu[i]=STEPS_PER_UNIT;
+  }
+  motor_spu[NUM_MOTORS]=1;
+  eepromManager.saveSPU();
+}
 
 #endif  // SIXI3

@@ -201,7 +201,7 @@ class SensorManager {
 extern SensorManager sensorManager;
 
 extern void sixiDemo();
-extern void sixiSetup();
+extern void factory_reset();
 
 extern void gripperUpdate(float currentGripperCmd);
 

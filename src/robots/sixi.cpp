@@ -503,9 +503,17 @@ void sixiDemo() {
 }
 
 // M502 - sixi robot factory reset
-void sixiSetup() {
+void factory_reset() {
   // cancel the current home offsets
   sensorManager.resetAll();
+
+  motor_spu[0] = UNITS_PER_STEP_0;
+  motor_spu[1] = UNITS_PER_STEP_1;
+  motor_spu[2] = UNITS_PER_STEP_2;
+  motor_spu[3] = UNITS_PER_STEP_3;
+  motor_spu[4] = UNITS_PER_STEP_4;
+  motor_spu[5] = UNITS_PER_STEP_5;
+  motor_spu[6] = UNITS_PER_STEP_6;
 
   // Sixi init limits
 #  define SIL(NN)                         \

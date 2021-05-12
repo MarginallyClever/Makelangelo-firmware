@@ -95,6 +95,6 @@ extern void recordHome();
 // convert belt length to cartesian position, save that as home pos.
 extern void calibrationToPosition();
 
-extern void polargraphReset();
+extern void factory_reset();
 
 #endif  // #ifdef POLARGRAPH

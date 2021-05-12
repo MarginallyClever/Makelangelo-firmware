@@ -40,4 +40,5 @@
 #  define MAX_SEGMENTS        (16)  // override the default to save RAM
 #  define SEGMENTS_PER_SECOND (10)
 
+FORCE_INLINE void factory_reset() {}
 #endif  // ZARPLOTTER

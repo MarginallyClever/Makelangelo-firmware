@@ -7,6 +7,8 @@
 
 #if MACHINE_STYLE == TRADITIONALXY
 
+#include "macros.h"
+
 #  define MACHINE_STYLE_NAME       "TRADITIONALXY"
 #  define MACHINE_HARDWARE_VERSION 1
 #  define MACHINE_HAS_LIFTABLE_PEN
@@ -45,4 +47,5 @@
 #  define UNITS_PER_STEP_X UNITS_PER_STEP
 #  define UNITS_PER_STEP_Y UNITS_PER_STEP
 
+FORCE_INLINE void factory_reset() {}
 #endif  // #ifdef TRADITIONALXY

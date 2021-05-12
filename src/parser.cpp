@@ -1014,14 +1014,7 @@ void Parser::M501() {
 
 // M502 - factory reset
 void Parser::M502() {
-#if MACHINE_STYLE == POLARGRAPH
-  // found in robot_polargraph.cpp
-  polargraphReset();
-#endif  // MACHINE_STYLE == POLARGRAPH
-
-#if MACHINE_STYLE == SIXI
-  sixiSetup();
-#endif  // MACHINE_STYLE == SIXI
+  factory_reset();
 }
 
 // M503 - report all settings

@@ -169,8 +169,15 @@ extern volatile int current_segment, last_segment, nonbusy_segment;
 extern int first_segment_delay;
 extern Motor motors[NUM_MUSCLES];
 extern const char *AxisNames;
+
+// max jerk value per axis
 extern float max_jerk[NUM_MUSCLES];
+
+// maximum feedrate (units/s).  one value per motor/servo 
 extern float max_feedrate_mm_s[NUM_MUSCLES];
+
+// motor steps-per-unit.  one value per motor/servo
+extern float motor_spu[NUM_MUSCLES];
 
 extern uint32_t min_segment_time_us;
 

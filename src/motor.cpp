@@ -54,6 +54,7 @@ int32_t isr_nominal_rate = -1;
 uint32_t time_accelerating, time_decelerating;
 float max_jerk[NUM_MUSCLES];
 float max_feedrate_mm_s[NUM_MUSCLES];
+float motor_spu[NUM_MUSCLES];
 uint8_t isr_step_multiplier  = 1;
 uint32_t min_segment_time_us = MIN_SEGMENT_TIME_US;
 
@@ -1140,21 +1141,8 @@ void motor_line(const float *const target_position, float fr_mm_s, float millime
 #if MACHINE_STYLE == SIXI
     new_seg.a[i].positionStart = axies[i].pos;
     new_seg.a[i].positionEnd   = target_position[i];
-
-    float distancePerStep;
-    switch (i) {
-      case 0:        distancePerStep = UNITS_PER_STEP_0;        break;
-      case 1:        distancePerStep = UNITS_PER_STEP_1;        break;
-      case 2:        distancePerStep = UNITS_PER_STEP_2;        break;
-      case 3:        distancePerStep = UNITS_PER_STEP_3;        break;
-      case 4:        distancePerStep = UNITS_PER_STEP_4;        break;
-      case 5:        distancePerStep = UNITS_PER_STEP_5;        break;
-      default:       distancePerStep = UNITS_PER_STEP_6         break;
-    }
-    new_seg.a[i].delta_units = new_seg.a[i].delta_steps * distancePerStep;
-#else
-    new_seg.a[i].delta_units = new_seg.a[i].delta_steps * UNITS_PER_STEP;
 #endif
+    new_seg.a[i].delta_units = new_seg.a[i].delta_steps * motor_spu[i];
     new_seg.a[i].absdelta = abs(new_seg.a[i].delta_steps);
     if (new_seg.steps_total < new_seg.a[i].absdelta) { new_seg.steps_total = new_seg.a[i].absdelta; }
   }

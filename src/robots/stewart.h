@@ -7,6 +7,8 @@
 
 #if MACHINE_STYLE == STEWART
 
+#include "macros.h"
+
 #  define MACHINE_STYLE_NAME       "STEWART"
 #  define MACHINE_HARDWARE_VERSION 5
 
@@ -49,4 +51,5 @@
 
 extern void stewartDemo();
 
+FORCE_INLINE void factory_reset() {}
 #endif  // #ifdef STEWART

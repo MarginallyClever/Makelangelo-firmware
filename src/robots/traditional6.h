@@ -49,4 +49,5 @@
 #define UNITS_PER_STEP (UNITS_PER_INCH/STEP_PER_INCH)
 #define STEPS_PER_UNIT (STEP_PER_INCH/UNITS_PER_INCH)
 
+FORCE_INLINE void factory_reset() {}
 #endif  // #ifdef TRADITIONAL6

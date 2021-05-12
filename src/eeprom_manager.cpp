@@ -110,7 +110,7 @@ void EEPROMManager::saveHome() {
   int j = ADDR_HOME;
   for (ALL_AXIES(i)) {
     writeLong(j, (long)(axies[i].homePos * 100.0f));
-    j += 4;
+    j += SIZEOF_FLOAT_BYTES;
   }
 }
 
@@ -122,7 +122,7 @@ void EEPROMManager::loadHome() {
     // Serial.print(' ');
     // Serial.print(motors[i].letter);
     // Serial.print(axies[i].homePos);
-    j += 4;
+    j += SIZEOF_FLOAT_BYTES;
   }
   // Serial.println();
 }
@@ -136,6 +136,23 @@ void EEPROMManager::saveCalibration() {
 void EEPROMManager::loadCalibration() {
   calibrateLeft  = (float)readLong(ADDR_CALIBRATION_LEFT) / 100.0f;
   calibrateRight = (float)readLong(ADDR_CALIBRATION_RIGHT) / 100.0f;
+}
+
+void EEPROMManager::saveSPU() {
+  Serial.println(F("Saving calibration."));
+  int j = ADDR_SPU;
+  for(ALL_MUSCLES(i)) {
+    writeLong(j, motor_spu[i]*100.0f);
+    j+=SIZEOF_FLOAT_BYTES;
+  }
+}
+
+void EEPROMManager::loadSPU() {
+  int j = ADDR_SPU;
+  for(ALL_MUSCLES(i)) {
+    motor_spu[i]  = (float)readLong(j) / 100.0f;
+    j+=SIZEOF_FLOAT_BYTES;
+  }
 }
 
 void EEPROMManager::saveAll() {

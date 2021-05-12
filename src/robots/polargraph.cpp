@@ -457,7 +457,12 @@ inline void polargraphResetM33() {
 /**
  * M503 factory reset
  */
-void polargraphReset() {
+void factory_reset() {
+  motor_spu[0]=STEPS_PER_UNIT;
+  motor_spu[1]=STEPS_PER_UNIT;
+  motor_spu[2]=1;
+  eepromManager.saveSPU();
+
 #if MACHINE_HARDWARE_VERSION == MAKELANGELO_6
   polargraphResetM6();
 #endif

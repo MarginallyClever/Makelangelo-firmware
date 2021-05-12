@@ -7,6 +7,8 @@
 
 #if MACHINE_STYLE == ARM3
 
+#include "macros.h"
+
 #  define MACHINE_STYLE_NAME       "ARM3"
 #  define MACHINE_HARDWARE_VERSION 1
 
@@ -49,4 +51,5 @@
 #  define HOME_Y (0)
 #  define HOME_Z (22.2)
 
+FORCE_INLINE void factory_reset() {}
 #endif  // #ifdef ARM3

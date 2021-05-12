@@ -7,6 +7,8 @@
 
 #if MACHINE_STYLE == SKYCAM
 
+#include "macros.h"
+
 #  define MACHINE_STYLE_NAME       "SKYCAM"
 #  define MACHINE_HARDWARE_VERSION 6
 
@@ -38,4 +40,5 @@
 #  define PEN_UP_ANGLE   (50)
 #  define PEN_DOWN_ANGLE (90)  // Some steppers don't like 0 degrees
 
+FORCE_INLINE void factory_reset() {}
 #endif  // SKYCAM

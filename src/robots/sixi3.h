@@ -7,6 +7,8 @@
 
 #if MACHINE_STYLE == SIXI3
 
+#include "macros.h"
+
 #  define MACHINE_STYLE_NAME       "SIXI3"
 #  define MACHINE_HARDWARE_VERSION 1
 
@@ -57,5 +59,6 @@
 #  define STEPS_PER_UNIT STEPS_PER_DEGREE  // 105
 #  define UNITS_PER_STEP (1.0/STEPS_PER_UNIT)  // 0.00952380952?
 
+extern void factory_reset();
 
 #endif  // #ifdef TRADITIONAL6

@@ -7,6 +7,8 @@
 
 #if MACHINE_STYLE == SCARA
 
+#include "macros.h"
+
 #  define MACHINE_STYLE_NAME       "SCARA"
 #  define MACHINE_HARDWARE_VERSION 1
 #  define MACHINE_HAS_LIFTABLE_PEN
@@ -45,4 +47,5 @@
 //#define SUBDIVIDE_LINES
 #  define SEGMENTS_PER_SECOND (10)
 
+FORCE_INLINE void factory_reset() {}
 #endif  // #ifdef TRADITIONALXY
