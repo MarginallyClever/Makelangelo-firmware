@@ -5,11 +5,11 @@
 // Please see http://www.github.com/MarginallyClever/makelangeloFirmware for more information.
 //------------------------------------------------------------------------------
 
-#if MACHINE_STYLE == STEWART
+#if MACHINE_STYLE == STEWART_ROTARY
 
 #include "macros.h"
 
-#  define MACHINE_STYLE_NAME       "STEWART"
+#  define MACHINE_STYLE_NAME       "STEWART PLATFORM ROTARY"
 #  define MACHINE_HARDWARE_VERSION 5
 
 // servo angles for pen control
@@ -52,4 +52,4 @@
 extern void stewartDemo();
 
 FORCE_INLINE void factory_reset() {}
-#endif  // #ifdef STEWART
+#endif  // #ifdef STEWART_ROTARY

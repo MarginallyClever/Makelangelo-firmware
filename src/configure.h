@@ -16,23 +16,28 @@
 // Robot styles supported
 //------------------------------------------------------------------------------
 
-#define POLARGRAPH    1   // polargraph like Makelangelo
-#define TRADITIONALXY 3   // gantry 3 axis setup.
-#define COREXY        2   // gantry CoreXY setup.
-#define ZARPLOTTER    4   // 4 motor, x-shaped 2D motion
-#define SKYCAM        5   // 4 motor, x-shaped 3D motion
-#define DELTA         6   // 3 arm delta robot, rotary action.  untested.
-#define STEWART       7   // 6 arm stewart platform, rotary action.  untested.
-#define ARM3          8   // 3DOF palletizing robot arm.
-#define SIXI          9   // 6DOF robot arm.
-#define TRADITIONAL6  10  // 6 axis machine, no restrictions.
-#define SCARA         11  // 2 axis SCARA.
-#define SIXI3         12   // 6DOF robot arm.
+#define POLARGRAPH       1  // polargraph like Makelangelo
+#define TRADITIONALXY    3  // gantry 3 axis setup.
+#define COREXY           2  // gantry CoreXY setup.
+#define ZARPLOTTER       4  // 4 motor, x-shaped 2D motion
+#define SKYCAM           5  // 4 motor, x-shaped 3D motion
+#define DELTA            6  // 3 arm delta robot, rotary action.  untested.
+#define STEWART_ROTARY   7  // Stewart platform: 6 arm stewart platform, rotary action.  untested.
+#define ARM3             8  // Arm3: 3DOF palletizing robot arm.
+#define SIXI             9  // Sixi: 6DOF robot arm.
+#define TRADITIONAL6    10  // Traditional6: 6 axis machine, no restrictions.
+#define SCARA           11  // SCARA: two link, two joint, 2D motion
+#define SIXI3           12  // Sixi 3 robot arm.  5-6 DOF + Servo
+#define STEWART_LINEAR  13  // Stewart platform: 6 arm stewart platform, linear action.
 
 // default value
 // !! this is now handeled via pio.ini !!
 #ifndef MACHINE_STYLE
 #define MACHINE_STYLE SIXI3
+#endif
+
+#if MACHINE_STYLE==STEWART_ROTARY || MACHINE_STYLE==STEWART_LINEAR
+#define IS_STEWART_PLATFORM
 #endif
 
 //------------------------------------------------------------------------------
@@ -83,19 +88,6 @@
 //
 //------------------------------------------------------------------------------
 
-#include "robots/polargraph.h"
-#include "robots/traditionalxy.h"
-#include "robots/corexy.h"
-#include "robots/zarplotter.h"
-#include "robots/skycam.h"
-#include "robots/delta.h"
-#include "robots/stewart.h"
-#include "robots/arm3.h"
-#include "robots/sixi.h"
-#include "robots/traditional6.h"
-#include "robots/scara.h"
-#include "robots/sixi3.h"
-
 #include "boards/rumba.h"
 #include "boards/ramps.h"
 #include "boards/sanguinolulu.h"
@@ -105,6 +97,20 @@
 #include "boards/cncv3.h"
 #include "boards/esp32.h"
 #include "boards/skrpro.h"
+
+#include "robots/polargraph.h"
+#include "robots/traditionalxy.h"
+#include "robots/corexy.h"
+#include "robots/zarplotter.h"
+#include "robots/skycam.h"
+#include "robots/delta.h"
+#include "robots/stewartRotary.h"
+#include "robots/arm3.h"
+#include "robots/sixi.h"
+#include "robots/traditional6.h"
+#include "robots/scara.h"
+#include "robots/sixi3.h"
+#include "robots/stewartLinear.h"
 
 #include "config_motors.h"
 

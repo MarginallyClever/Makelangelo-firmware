@@ -259,7 +259,7 @@ void Parser::processCommand() {
       case 13:        setPenAngle(parseNumber('Z', axies[2].pos));        break;
 #endif
       case 14:        D14();        break;
-#if MACHINE_STYLE == STEWART
+#ifdef IS_STEWART_PLATFORM
       case 15:        stewartDemo();        break;
 #endif
 #if MACHINE_STYLE == SIXI

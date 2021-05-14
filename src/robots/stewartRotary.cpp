@@ -6,7 +6,7 @@
 
 #include "configure.h"
 
-#if MACHINE_STYLE == STEWART
+#if MACHINE_STYLE == STEWART_ROTARY
 
 #  include "vector3.h"
 

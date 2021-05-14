@@ -18,6 +18,10 @@
 #    error "Oops!  Make sure you build this project using PlatformIO"
 #  endif
 
+
+#define HAS_TMC2130  // driver type
+
+
 #  define CPU_32_BIT
 
 #  define MAX_MOTORS (6)

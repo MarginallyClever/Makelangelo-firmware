@@ -197,7 +197,6 @@ extern char segment_buffer_full();
 extern void motor_line(const float *const target_position, float fr_mm_s, float millimeters);
 extern void motor_engage();
 extern void motor_home();
-extern void enable_stealthChop();
 extern void motor_disengage();
 extern void motor_setup();
 extern void setPenAngle(int arg0);

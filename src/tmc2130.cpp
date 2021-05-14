@@ -160,13 +160,13 @@ void tmc2130_motor_home() {
   while (homing == true) {
     Serial.print(drivers[0]->TSTEP());
     for(ALL_MOTORS(j)) {
-      Serial.print('\t');
+      Serial.print(' ');
       Serial.print(digitalRead(motors[j].limit_switch_pin));
     }
-    Serial.print("\tstill homing");
+    Serial.println("\tstill homing");
   }
-  Serial.println("BOTH EN false");
-  enable_stealthChop();
+  Serial.println("Done.");
+  tmc2130_enable_stealthChop();
 }
 
 void tmc2130_homing_sequence() {

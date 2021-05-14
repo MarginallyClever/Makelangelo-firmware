@@ -19,11 +19,12 @@ Makelangelo-firmware can be recompiled to work as one of many different types of
 #define ZARPLOTTER       4  // Zarplotter:  4 motor, x-shaped 2D motion
 #define SKYCAM           5  // Skycam: 4 motor, x-shaped 3D motion
 #define DELTA            6  // Delta: 3 arm delta robot, rotary action.  untested.
-#define STEWART          7  // Stewart platform: 6 arm stewart platform, rotary action.  untested.
+#define STEWART_ROTARY   7  // Stewart platform: 6 arm stewart platform, rotary action.  untested.
 #define ARM3             8  // Arm3: 3DOF palletizing robot arm.
 #define SIXI             9  // Sixi: 6DOF robot arm.
 #define TRADITIONAL6    10  // Traditional6: 6 axis machine, no restrictions.
 #define SCARA           11  // SCARA: two link, two joint, 2D motion
+#define 
 ````
 
 ## Controllers aka Brains ##

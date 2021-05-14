@@ -41,7 +41,7 @@
 //#define SUBDIVIDE_LINES
 #  define SEGMENTS_PER_SECOND (10)
 
-// It takes UNITS_PER_STEP steps for the actuator to make one degree.
+// It takes STEPS_PER_UNIT steps for the actuator to make one degree.
 
 // 200 motor steps per full turn (360/1.8 deg=200 steps;360/0.9 deg=400 steps)
 #  define STEPPER_MOTOR_STEPS_PER_FULL_TURN (200.0)
