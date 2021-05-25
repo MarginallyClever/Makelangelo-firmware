@@ -947,9 +947,9 @@ void LCD_setup() {
   pinMode(BEEPER, OUTPUT);
   digitalWrite(BEEPER, LOW);
 
-  pinMode(BTN_EN1, INPUT);
-  pinMode(BTN_EN2, INPUT);
-  pinMode(BTN_ENC, INPUT);
+  pinMode(BTN_EN1, INPUT_PULLUP);
+  pinMode(BTN_EN2, INPUT_PULLUP);
+  pinMode(BTN_ENC, INPUT_PULLUP);
   digitalWrite(BTN_EN1, HIGH);
   digitalWrite(BTN_EN2, HIGH);
   digitalWrite(BTN_ENC, HIGH);
