@@ -63,8 +63,8 @@ unsigned int localPort = 9999;
 
 /**
  * calculate microseconds-per-step.
- * step_per_mm = 1mm / UNITS_PER_STEP
- * steps_per_second = step_per_mm * feed_rate (mm/s)
+ * step_per_units = 1mm / UNITS_PER_STEP
+ * steps_per_second = step_per_units * feed_rate (mm/s)
  * microseconds_per_step = 1M microseconds / steps_per_second
  **/
 void findStepDelay() {
@@ -151,14 +151,14 @@ void testKinematics() {
    @input pos NUM_AXIES floats describing destination coordinates
    @input new_feed_rate speed to travel along arc
 */
-void lineSafe(float *pos, float new_feed_rate_mms) {
+void lineSafe(float *pos, float new_feed_rate_units) {
   // Remember the feed rate.  This value will be used whenever no feedrate is given in a command, so it MUST be saved
   // BEFORE the dial adjustment. otherwise the feedrate will slowly fall or climb as new commands are processed.
-  feed_rate = new_feed_rate_mms;
+  feed_rate = new_feed_rate_units;
 
 #ifdef HAS_LCD
   // use LCD to adjust speed while drawing
-  new_feed_rate_mms *= (float)speed_adjust * 0.01f;
+  new_feed_rate_units *= (float)speed_adjust * 0.01f;
 #endif
 
   // split up long lines to make them straighter
@@ -175,15 +175,15 @@ void lineSafe(float *pos, float new_feed_rate_mms) {
 #if MACHINE_STYLE == POLARGRAPH
   if (delta[0] == 0 && delta[1] == 0) {
     // only moving Z, don't split the line.
-    motor_line(pos, new_feed_rate_mms, abs(delta[2]));
+    motor_line(pos, new_feed_rate_units, abs(delta[2]));
     return;
   }
 #endif
 
-  float len_mm = sqrt(lenSquared);
-  if (abs(len_mm) < 0.000001f) return;
+  float len_units = sqrt(lenSquared);
+  if (abs(len_units) < 0.000001f) return;
 
-  const float seconds = len_mm / new_feed_rate_mms;
+  const float seconds = len_units / new_feed_rate_units;
   uint16_t segments   = seconds * SEGMENTS_PER_SECOND;
   if (segments < 1) segments = 1;
 
@@ -194,26 +194,26 @@ void lineSafe(float *pos, float new_feed_rate_mms) {
     segments = 1;
     Serial.print("seconds=");
     Serial.println(seconds);
-    Serial.print("len_mm=");
-    Serial.println(len_mm);
-    Serial.print("new_feed_rate_mms=");
-    Serial.println(new_feed_rate_mms);
+    Serial.print("len_units=");
+    Serial.println(len_units);
+    Serial.print("new_feed_rate_units=");
+    Serial.println(new_feed_rate_units);
   }
 #endif
 
   const float inv_segments   = 1.0f / float(segments);
-  const float segment_len_mm = len_mm * inv_segments;
+  const float segment_len_units = len_units * inv_segments;
 
   for (ALL_AXIES(i)) delta[i] *= inv_segments;
 
   while (--segments) {
     for (ALL_AXIES(i)) startPos[i] += delta[i];
 
-    motor_line(startPos, new_feed_rate_mms, segment_len_mm);
+    motor_line(startPos, new_feed_rate_units, segment_len_units);
   }
 
   // guarantee we stop exactly at the destination (no rounding errors).
-  motor_line(pos, new_feed_rate_mms, segment_len_mm);
+  motor_line(pos, new_feed_rate_units, segment_len_units);
 
   //  Serial.print("P");  Serial.println(movesPlanned());
 }

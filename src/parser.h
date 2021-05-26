@@ -87,6 +87,7 @@ class Parser {
   void M18();  // M18 - disengage motors
   // M20();  // M20 - list SD card contents
   void M42();   // M42 Paa Sbb - Set digital pin aa to state bb (1 or 0).
+  void M92();   // M92 [Xn] [Yn] [Zn] [Un] [Vn] [Wn] - Set steps per unit
   void M100();  // M100 - Print a helpful message to serial.
   void M101();  // M101 Annn Tnnn Bnnn - Change axis A limits to max T and min B.
   void M110();  // M110 Nnn - sets next expected line number to n.

@@ -53,7 +53,7 @@ uint32_t start_feed_rate, end_feed_rate;
 int32_t isr_nominal_rate = -1;
 uint32_t time_accelerating, time_decelerating;
 float max_jerk[NUM_MUSCLES];
-float max_feedrate_mm_s[NUM_MUSCLES];
+float max_feedrate_units_s[NUM_MUSCLES];
 float motor_spu[NUM_MUSCLES];
 uint8_t isr_step_multiplier  = 1;
 uint32_t min_segment_time_us = MIN_SEGMENT_TIME_US;
@@ -259,12 +259,12 @@ void motor_setup() {
 
   for (ALL_MUSCLES(i)) {
     max_jerk[i]          = MAX_JERK;
-    max_feedrate_mm_s[i] = MAX_FEEDRATE;
+    max_feedrate_units_s[i] = MAX_FEEDRATE;
   }
 
 #if MACHINE_STYLE == POLARGRAPH
 #  ifdef MAX_FEEDRATE_Z
-  max_feedrate_mm_s[NUM_MOTORS] = MAX_FEEDRATE_Z;
+  max_feedrate_units_s[NUM_MOTORS] = MAX_FEEDRATE_Z;
 #  endif
   max_jerk[NUM_MOTORS] = MAX_JERK_Z;
 #endif
@@ -1100,9 +1100,9 @@ char segment_buffer_full() {
    Uses bresenham's line algorithm to move both motors
    @input pos NUM_AXIES floats describing destination coordinates
    @input new_feed_rate speed to travel along arc
-   @input millimeters must be >=0
+   @input longest_distance must be >=0
 */
-void motor_line(const float *const target_position, float fr_mm_s, float millimeters) {
+void motor_line(const float *const target_position, float fr_units_s, float longest_distance) {
   // get the next available spot in the segment buffer
   int next_segment = get_next_segment(last_segment);
   while (next_segment == current_segment) {
@@ -1118,7 +1118,7 @@ void motor_line(const float *const target_position, float fr_mm_s, float millime
   long steps[NUM_MUSCLES];
   IK(target_position, steps);
 
-  float distance_mm = 0;
+  float distance_units = 0;
 
 #if MACHINE_STYLE == POLARGRAPH
   float oldX = axies[0].pos;
@@ -1127,7 +1127,7 @@ void motor_line(const float *const target_position, float fr_mm_s, float millime
 #endif
 
   // record the new target position & feed rate for the next movement.
-  distance_mm = millimeters;
+  distance_units = longest_distance;
 
   // find the number of steps for each motor, the direction, and the absolute steps
   // The axis that has the most steps will control the overall acceleration as per bresenham's algorithm.
@@ -1142,7 +1142,7 @@ void motor_line(const float *const target_position, float fr_mm_s, float millime
     new_seg.a[i].positionStart = axies[i].pos;
     new_seg.a[i].positionEnd   = target_position[i];
 #endif
-    new_seg.a[i].delta_units = new_seg.a[i].delta_steps * motor_spu[i];
+    new_seg.a[i].delta_units = new_seg.a[i].delta_steps / motor_spu[i];
     new_seg.a[i].absdelta = abs(new_seg.a[i].delta_steps);
     if (new_seg.steps_total < new_seg.a[i].absdelta) { new_seg.steps_total = new_seg.a[i].absdelta; }
   }
@@ -1153,9 +1153,9 @@ void motor_line(const float *const target_position, float fr_mm_s, float millime
   if (new_seg.steps_total < MIN_STEPS_PER_SEGMENT) return;
 
   SET_BIT_OFF(new_seg.flags,BIT_FLAG_BUSY);
-  new_seg.distance = distance_mm;
-  float inverse_distance_mm = 1.0 / distance_mm;
-  float inverse_secs        = fr_mm_s * inverse_distance_mm;
+  new_seg.distance = distance_units;
+  float inverse_distance_units = 1.0 / distance_units;
+  float inverse_secs        = fr_units_s * inverse_distance_units;
 
   int movesQueued          = movesPlannedNotBusy();
   uint32_t segment_time_us = lroundf(1000000.0f / inverse_secs);
@@ -1171,7 +1171,7 @@ void motor_line(const float *const target_position, float fr_mm_s, float millime
   }
 #endif
 
-  new_seg.nominal_speed = distance_mm * inverse_secs;
+  new_seg.nominal_speed = distance_units * inverse_secs;
   new_seg.nominal_rate  = ceil(new_seg.steps_total * inverse_secs);
 
   // Calculate the the speed limit for each axis.
@@ -1179,7 +1179,7 @@ void motor_line(const float *const target_position, float fr_mm_s, float millime
   float current_speed[NUM_MUSCLES], speed_factor = 1.0;
   for (ALL_MUSCLES(i)) {
     current_speed[i] = new_seg.a[i].delta_units * inverse_secs;
-    const float cs = fabs(current_speed[i]), max_fr = max_feedrate_mm_s[i];
+    const float cs = fabs(current_speed[i]), max_fr = max_feedrate_units_s[i];
     if (cs > max_fr) speed_factor = min(speed_factor, max_fr / cs);
   }
   // apply the speed limit
@@ -1241,7 +1241,7 @@ void motor_line(const float *const target_position, float fr_mm_s, float millime
   }
 #endif  // MACHINE_STYLE == POLARGRAPH && defined(DYNAMIC_ACCELERATION)
 
-  const float steps_per_unit = new_seg.steps_total * inverse_distance_mm;
+  const float steps_per_unit = new_seg.steps_total * inverse_distance_units;
   uint32_t accel           = ceil(max_acceleration * steps_per_unit);
 
   const float max_acceleration_steps_per_s2 = max_acceleration * steps_per_unit;
@@ -1359,7 +1359,7 @@ void motor_line(const float *const target_position, float fr_mm_s, float millime
     Serial.print("acceleration original=");  Serial.println(acceleration);
     Serial.print("nominal_speed=");  Serial.println(new_seg.nominal_speed);
 
-    Serial.print("inverse_distance_mm=");  Serial.println(inverse_distance_mm);
+    Serial.print("inverse_distance_units=");  Serial.println(inverse_distance_units);
     Serial.print("inverse_secs=");  Serial.println(inverse_secs);
     Serial.print("nominal_rate=");  Serial.println(new_seg.nominal_rate);
     Serial.print("delta_units=");

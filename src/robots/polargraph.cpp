@@ -22,12 +22,12 @@ void IK(const float *const cartesian, long *motorStepArray) {
 
   dy                = cartesian[1] - top;
   dx                = cartesian[0] - left;
-  motorStepArray[0] = lroundf(sqrt(sq(dx) + sq(dy)) / UNITS_PER_STEP);
+  motorStepArray[0] = lroundf(sqrt(sq(dx) + sq(dy)) * motor_spu[0]);
   // find length to M2
   dx                = right - cartesian[0];
-  motorStepArray[1] = lroundf(sqrt(sq(dx) + sq(dy)) / UNITS_PER_STEP);
+  motorStepArray[1] = lroundf(sqrt(sq(dx) + sq(dy)) * motor_spu[1]);
 
-  motorStepArray[2] = cartesian[2];
+  motorStepArray[2] = cartesian[2] * motor_spu[2];
 }
 
 /**
@@ -387,8 +387,8 @@ inline void polargraphResetM6() {
   limits[5] = PEN_DOWN_ANGLE;
   eepromManager.adjustLimits(limits);
 
-  calibrateLeft  = 1025;
-  calibrateRight = 1025;
+  calibrateLeft  = 1035;
+  calibrateRight = 1035;
   eepromManager.saveCalibration();
   calibrationToPosition();
 
@@ -414,8 +414,8 @@ inline void polargraphResetM5() {
   limits[5] = PEN_DOWN_ANGLE;
   eepromManager.adjustLimits(limits);
 
-  calibrateLeft  = 1025;
-  calibrateRight = 1025;
+  calibrateLeft  = 1035;
+  calibrateRight = 1035;
   eepromManager.saveCalibration();
   calibrationToPosition();
 

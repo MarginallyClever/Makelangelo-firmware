@@ -213,6 +213,7 @@ void Parser::processCommand() {
       case  20:        SD_listFiles(); break;
 #endif
       case  42:        M42();         break;
+      case  92:        M92();         break;
       case 100:        M100();        break;
       case 101:        M101();        break;
       case 110:        lineNumber = parseNumber('N', lineNumber);  break;
@@ -375,6 +376,7 @@ void Parser::D6() {
     Serial.print(AxisNames[i]);
     Serial.print(homePos[i],2);
   }
+  Serial.println();
   setHome(homePos);
 }
 
@@ -696,6 +698,20 @@ void Parser::M42() {
   digitalWrite(pin, newState ? HIGH : LOW);
 }
 
+/**
+ * M92 [Xn] [Yn] [Zn] [Un] [Vn] [Wn] - Set steps per unit
+ */
+void Parser::M92() {
+  Serial.print(F("M92 "));
+  for(ALL_MUSCLES(i)) {
+    motor_spu[i] = parseNumber(motors[i].letter, motor_spu[i]);
+    Serial.print(motors[i].letter);
+    Serial.print(motor_spu[i]);
+    Serial.print(' ');
+  }
+  Serial.println();
+}
+
 void Parser::sayBuildDateAndTime() {
   Serial.print(F("Built "));
   Serial.println(__DATE__ " " __TIME__);
@@ -853,9 +869,9 @@ void Parser::M117() {
 void Parser::M203() {
   Serial.print(F("M203 "));
   for(ALL_MUSCLES(i)) {
-    max_feedrate_mm_s[i] = parseNumber(motors[i].letter, max_feedrate_mm_s[i]);
+    max_feedrate_units_s[i] = parseNumber(motors[i].letter, max_feedrate_units_s[i]);
     Serial.print(motors[i].letter);
-    Serial.print(max_feedrate_mm_s[i]);
+    Serial.print(max_feedrate_units_s[i]);
     Serial.print(' ');
   }
   Serial.println();

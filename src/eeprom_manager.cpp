@@ -139,7 +139,7 @@ void EEPROMManager::loadCalibration() {
 }
 
 void EEPROMManager::saveSPU() {
-  Serial.println(F("Saving calibration."));
+  Serial.println(F("Saving SPU."));
   int j = ADDR_SPU;
   for(ALL_MUSCLES(i)) {
     writeLong(j, motor_spu[i]*100.0f);
@@ -159,6 +159,7 @@ void EEPROMManager::saveAll() {
   saveUID();
   saveLimits();
   saveHome();
+  saveSPU();
 }
 
 void EEPROMManager::loadAll() {
@@ -179,6 +180,7 @@ void EEPROMManager::loadAll() {
   loadLimits();
   loadHome();
   loadCalibration();
+  loadSPU();
 }
 
 void EEPROMManager::reportAll() {
@@ -197,6 +199,9 @@ void EEPROMManager::reportAll() {
   parser.D8();
 #endif
   parser.D6();
+
+  parser.M92();
+  
 #if MACHINE_STYLE == SIXI
   // Sixi only home angle values
   Serial.print(F("Home angles "));

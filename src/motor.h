@@ -174,7 +174,7 @@ extern const char *AxisNames;
 extern float max_jerk[NUM_MUSCLES];
 
 // maximum feedrate (units/s).  one value per motor/servo 
-extern float max_feedrate_mm_s[NUM_MUSCLES];
+extern float max_feedrate_units_s[NUM_MUSCLES];
 
 // motor steps-per-unit.  one value per motor/servo
 extern float motor_spu[NUM_MUSCLES];
@@ -194,7 +194,7 @@ extern Servo servos[NUM_SERVOS];
 extern void motor_set_step_count(long *a);
 extern void wait_for_empty_segment_buffer();
 extern char segment_buffer_full();
-extern void motor_line(const float *const target_position, float fr_mm_s, float millimeters);
+extern void motor_line(const float *const target_position, float fr_units_s, float millimeters);
 extern void motor_engage();
 extern void motor_home();
 extern void motor_disengage();
