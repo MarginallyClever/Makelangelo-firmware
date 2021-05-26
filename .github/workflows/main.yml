@@ -1,143 +1,31 @@
-name: Arduino CI
+name: PlatformIO CI
 
-on: push
+on: [push]
 
 jobs:
   build:
-    strategy:
-      matrix:
-        board: [BOARD_RUMBA, BOARD_RAMPS, BOARD_SIXI_MEGA ]
-        # we cannot compile BOARD_ESP32, BOARD_WEMOS, BOARD_TEENSYLU, BOARD_CNCV3, or BOARD_SANGUINOLULU at this time.
-        robot: [POLARGRAPH, TRADITIONALXY, COREXY, ZARPLOTTER, SKYCAM, DELTA, STEWART, ARM3, SIXI, TRADITIONAL6, SCARA]
-        include:
-          - board: BOARD_RUMBA
-            arduino-platform: arduino:avr
-            fqbn: arduino:avr:mega
-          - board: BOARD_RAMPS
-            arduino-platform: arduino:avr
-            fqbn: arduino:avr:mega
-          - board: BOARD_SIXI_MEGA
-            arduino-platform: arduino:avr
-            fqbn: arduino:avr:mega
-          #- board: BOARD_ESP32
-          #  arduino-platform: esp32:esp32
-          #  fqbn: esp32:esp32:lolin32
-          #- board: BOARD_WEMOS
-          #  arduino-platform: esp8266:esp8266
-          #  fqbn: esp8266:esp8266:lolin32
-        exclude:
-          - board: BOARD_RUMBA
-            robot: SIXI
-            # BOARD_RAMPS can only handle 5 motors
-          - board: BOARD_RAMPS
-            robot: SIXI
-          - board: BOARD_RAMPS
-            robot: STEWART
-          - board: BOARD_RAMPS
-            robot: TRADITIONAL6
-            # CNCV3 anything over 3 motors
-          - board: BOARD_CNCV3
-            robot: COREXY
-          - board: BOARD_CNCV3
-            robot: ZARPLOTTER
-          - board: BOARD_CNCV3
-            robot: SKYCAM
-          - board: BOARD_CNCV3
-            robot: STEWART
-          - board: BOARD_CNCV3
-            robot: SIXI
-          - board: BOARD_CNCV3
-            robot: TRADITIONAL6
-          - board: BOARD_CNCV3
-            robot: SCARA
-            # WEMOS anything over 2 motors
-          - board: BOARD_WEMOS 
-            robot: COREXY
-          - board: BOARD_WEMOS
-            robot: ZARPLOTTER
-          - board: BOARD_WEMOS
-            robot: SKYCAM
-          - board: BOARD_WEMOS
-            robot: STEWART
-          - board: BOARD_WEMOS
-            robot: DELTA
-          - board: BOARD_WEMOS
-            robot: SIXI
-          - board: BOARD_WEMOS
-            robot: TRADITIONAL6
-          - board: BOARD_WEMOS
-            robot: SCARA
-            # BOARD_ESP32 anything over 2 motors
-          - board: BOARD_ESP32 
-            robot: COREXY
-          - board: BOARD_ESP32
-            robot: ZARPLOTTER
-          - board: BOARD_ESP32
-            robot: SKYCAM
-          - board: BOARD_ESP32
-            robot: STEWART
-          - board: BOARD_ESP32
-            robot: SIXI
-          - board: BOARD_ESP32
-            robot: TRADITIONAL6
-          - board: BOARD_ESP32
-            robot: SCARA
-            # BOARD_SIXI_MEGA only meant for sixi
-          - board: BOARD_SIXI_MEGA
-            robot: POLARGRAPH
-          - board: BOARD_SIXI_MEGA
-            robot: TRADITIONALXY
-          - board: BOARD_SIXI_MEGA
-            robot: COREXY
-          - board: BOARD_SIXI_MEGA
-            robot: ZARPLOTTER
-          - board: BOARD_SIXI_MEGA
-            robot: SKYCAM
-          - board: BOARD_SIXI_MEGA
-            robot: DELTA
-          - board: BOARD_SIXI_MEGA
-            robot: STEWART
-          - board: BOARD_SIXI_MEGA
-            robot: ARM3
-          - board: BOARD_SIXI_MEGA
-            robot: TRADITIONAL6
-          - board: BOARD_SIXI_MEGA
-            robot: SCARA
-            
+
     runs-on: ubuntu-latest
+
     steps:
-      # First of all, we clone the repo using the checkout action.
-      - name: Checkout
-        uses: actions/checkout@master
- 
-      # We use the arduino/setup-arduino-cli action to install and configure the Arduino CLI on the system.
-      - name: Setup Arduino CLI
-        uses: arduino/setup-arduino-cli@v1.1.1
-        
-      # We then install the platform, which one will be determined dynamically by the build matrix.
-      - name: Install platform
-        run: arduino-cli core update-index
-          
-      - name: Add core(s)
-        run: arduino-cli core install ${{ matrix.arduino-platform }} #--additional-urls http://arduino.esp8266.com/stable/package_esp8266com_index.json https://dl.espressif.com/dl/package_esp32_index.json
-        
-      - name: Add SDFat
-        run: arduino-cli lib install SdFat
-        
-      - name: Add TMC2130Stepper
-        run: arduino-cli lib install TMC2130Stepper
-      
-      - name: Add LiquidCrystal
-        run: arduino-cli lib install LiquidCrystal
-          
-      - name: Add local_config.h
-        uses: DamianReeves/write-file-action@v1.0
-        with:
-          path: ./local_config.h
-          contents: "#pragma once\n#undef MOTHERBOARD\n#define MOTHERBOARD ${{matrix.board}}\n#undef MACHINE_STYLE\n#define MACHINE_STYLE ${{matrix.robot}}"
-          write-mode: overwrite 
-          
-      # Finally, we compile the sketch, using the FQBN that was set
-      # in the build matrix.
-      - name: Compile Sketch
-        run: arduino-cli compile --fqbn ${{ matrix.fqbn }} ./Makelangelo-firmware.ino
+    - uses: actions/checkout@v2
+    - name: Cache pip
+      uses: actions/cache@v2
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    - name: Cache PlatformIO
+      uses: actions/cache@v2
+      with:
+        path: ~/.platformio
+        key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
+    - name: Set up Python
+      uses: actions/setup-python@v2
+    - name: Install PlatformIO
+      run: |
+        python -m pip install --upgrade pip
+        pip install --upgrade platformio
+    - name: Run PlatformIO
+      run: pio run 
