@@ -84,8 +84,8 @@ void stewartDemo() {
    @param motorStepArray a measure of each belt to that plotter position
 */
 void IK(const float *const cartesian, long *motorStepArray) {
-  for(int i = 0; i < NUM_ARMS; ++i) {
-     motorStepArray[i] = cartesian[i] * STEPS_PER_UNIT;
+  for(ALL_MUSCLES(i)) {
+    motorStepArray[i] = cartesian[i] * motor_spu[i];
   }
 }
 

@@ -16,12 +16,16 @@
  */
 void IK(const float *const cartesian, long *motorStepArray) {
   for (ALL_AXIES(i)) {
-    motorStepArray[i] = lround(cartesian[i] * STEPS_PER_UNIT);
+    motorStepArray[i] = lround(cartesian[i]);
   }
 #if NUM_SERVOS>0
   // servo
   motorStepArray[NUM_MOTORS] = lround(cartesian[NUM_MOTORS]);
 #endif
+  for(ALL_MUSCLES(i)) {
+    motorStepArray[i] *= motor_spu[i];
+  }
+
 }
 
 /**

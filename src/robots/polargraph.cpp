@@ -14,20 +14,20 @@
  * @param motorStepArray a measure of each belt to that plotter position
  */
 void IK(const float *const cartesian, long *motorStepArray) {
-  float dy, dx;
-  // find length to M1
   float left  = axies[0].limitMin;
   float right = axies[0].limitMax;
   float top   = axies[1].limitMax;
 
-  dy                = cartesian[1] - top;
-  dx                = cartesian[0] - left;
-  motorStepArray[0] = lroundf(sqrt(sq(dx) + sq(dy)) * motor_spu[0]);
-  // find length to M2
-  dx                = right - cartesian[0];
-  motorStepArray[1] = lroundf(sqrt(sq(dx) + sq(dy)) * motor_spu[1]);
-
-  motorStepArray[2] = cartesian[2] * motor_spu[2];
+  float dy          = sq(cartesian[1] - top  );
+  float dx1         = sq(cartesian[0] - left );
+  float dx2         = sq(right - cartesian[0]);
+  motorStepArray[0] = lroundf(sqrt(dx1 + dy));
+  motorStepArray[1] = lroundf(sqrt(dx2 + dy));
+  motorStepArray[2] = cartesian[2];
+  
+  motorStepArray[0] *= motor_spu[0];
+  motorStepArray[1] *= motor_spu[1];
+  motorStepArray[2] *= motor_spu[2];
 }
 
 /**

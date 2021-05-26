@@ -20,10 +20,10 @@ void IK(const float *const cartesian, long *motorStepArray) {
   float y = cartesian[1];
   float z = cartesian[2];
 
-  motorStepArray[0] = lround(x / UNITS_PER_STEP_X);
-  motorStepArray[1] = lround(y / UNITS_PER_STEP_Y);
+  motorStepArray[0] = lround(x * motor_spu[0]);
+  motorStepArray[1] = lround(y * motor_spu[1]);
 
-  motorStepArray[NUM_MOTORS] = z;
+  motorStepArray[NUM_MOTORS] = z * motor_spu[2];
 }
 
 /**

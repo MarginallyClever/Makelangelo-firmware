@@ -272,7 +272,9 @@ void IK(const float *const cartesian, long *motorStepArray) {
   stewart_update_shoulder_angles();
 
   int i;
-  for (i = 0; i < NUM_ARMS; ++i) { motorStepArray[i] = robot.arms[i].angle * MICROSTEP_PER_DEGREE; }
+  for (i = 0; i < NUM_ARMS; ++i) {
+    motorStepArray[i] = robot.arms[i].angle * motor_spu[i];
+  }
 }
 
 /**

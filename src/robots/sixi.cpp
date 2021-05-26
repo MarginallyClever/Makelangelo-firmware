@@ -53,12 +53,12 @@ void IK(const float *const axies, long *motorStepArray) {
   J4 += j4Adjust;
   J5 += j5Adjust;
 
-  motorStepArray[0] = J0 * MOTOR_0_STEPS_PER_TURN / 360.0;  // ANCHOR
-  motorStepArray[1] = J1 * MOTOR_1_STEPS_PER_TURN / 360.0;  // SHOULDER
-  motorStepArray[2] = J2 * MOTOR_2_STEPS_PER_TURN / 360.0;  // ELBOW
-  motorStepArray[3] = J3 * MOTOR_3_STEPS_PER_TURN / 360.0;  // ULNA
-  motorStepArray[4] = J4 * MOTOR_4_STEPS_PER_TURN / 360.0;  // WRIST
-  motorStepArray[5] = J5 * MOTOR_5_STEPS_PER_TURN / 360.0;  // HAND
+  motorStepArray[0] = J0 / 360.0;  // ANCHOR
+  motorStepArray[1] = J1 / 360.0;  // SHOULDER
+  motorStepArray[2] = J2 / 360.0;  // ELBOW
+  motorStepArray[3] = J3 / 360.0;  // ULNA
+  motorStepArray[4] = J4 / 360.0;  // WRIST
+  motorStepArray[5] = J5 / 360.0;  // HAND
 #  ifdef HAS_GRIPPER
   float jT = axies[6] * 255.0 / 180.0;
   jT       = min(max(jT, 0), 255);
@@ -68,6 +68,10 @@ void IK(const float *const axies, long *motorStepArray) {
 #  else
   motorStepArray[6] = axies[6];
 #  endif
+
+  for(ALL_MUSCLES(i)) {
+    motorStepArray[i] *= motor_spu[i];
+  }
 
 #  ifdef DEBUG_IK
   Serial.print("J=");

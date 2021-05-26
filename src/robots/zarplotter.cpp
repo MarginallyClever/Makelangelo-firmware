@@ -26,31 +26,25 @@ void IK(const float *const cartesian, long *motorStepArray) {
   // clockwise from top left.
   dx                = x - left;
   dy                = y - top;
-  motorStepArray[0] = lroundf((sqrt(sq(dx) + sq(dy))) / UNITS_PER_STEP);  // M0 (top left)
+  motorStepArray[0] = lroundf((sqrt(sq(dx) + sq(dy)))  * motor_spu[0]);  // M0 (top left)
   dx                = x - right;
   dy                = y - top;
-  motorStepArray[1] = lroundf((sqrt(sq(dx) + sq(dy))) / UNITS_PER_STEP);  // M1 (top right)
+  motorStepArray[1] = lroundf((sqrt(sq(dx) + sq(dy)))  * motor_spu[1]);  // M1 (top right)
   dx                = x - right;
   dy                = y - bottom;
-  motorStepArray[2] = lroundf((sqrt(sq(dx) + sq(dy))) / UNITS_PER_STEP);  // M2 (bottom right)
+  motorStepArray[2] = lroundf((sqrt(sq(dx) + sq(dy)))  * motor_spu[2]);  // M2 (bottom right)
   dx                = x - left;
   dy                = y - bottom;
-  motorStepArray[3] = lroundf((sqrt(sq(dx) + sq(dy))) / UNITS_PER_STEP);  // M3 (bottom left)
-                                                                       /*
-                                                                         Serial.print(x);
-                                                                         Serial.print('\t');
-                                                                         Serial.print(y);
-                                                                         Serial.print('\t');
-                                                                         Serial.print(motorStepArray[0]);
-                                                                         Serial.print('\t');
-                                                                         Serial.print(motorStepArray[1]);
-                                                                         Serial.print('\t');
-                                                                         Serial.print(motorStepArray[2]);
-                                                                         Serial.print('\t');
-                                                                         Serial.print(motorStepArray[3]);
-                                                                         Serial.print('\n');
-                                                                         */
-  motorStepArray[NUM_MOTORS] = cartesian[2];
+  motorStepArray[3] = lroundf((sqrt(sq(dx) + sq(dy)))  * motor_spu[3]);  // M3 (bottom left)
+  /*
+    Serial.print(x);    Serial.print('\t');
+    Serial.print(y);    Serial.print('\t');
+    Serial.print(motorStepArray[0]);    Serial.print('\t');
+    Serial.print(motorStepArray[1]);    Serial.print('\t');
+    Serial.print(motorStepArray[2]);    Serial.print('\t');
+    Serial.print(motorStepArray[3]);    Serial.print('\n');
+    */
+  motorStepArray[NUM_MOTORS] = cartesian[2] * motor_spu[1];
   /*
     Serial.print(cartesian[0]);  Serial.print('\t');
     Serial.print(cartesian[1]);  Serial.print('\t');

@@ -97,10 +97,12 @@ void IK(const float *const axies, long *motorStepArray) {
   Serial.print(angle_2 * RAD2DEG);
   Serial.print("\n");
 #  endif
-
-  motorStepArray[0] *= STEPS_PER_TURN * GEAR_RATIO / (PI * 2.0f);
-  motorStepArray[1] *= STEPS_PER_TURN * GEAR_RATIO / (PI * 2.0f);
-  motorStepArray[2] *= STEPS_PER_TURN * GEAR_RATIO / (PI * 2.0f);
+  motor_spu[0] = STEPS_PER_TURN * GEAR_RATIO / (PI * 2.0f);
+  motor_spu[1] = motor_spu[0];
+  motor_spu[2] = motor_spu[0];
+  motorStepArray[0] *= motor_spu[0];
+  motorStepArray[1] *= motor_spu[1];
+  motorStepArray[2] *= motor_spu[2];
 }
 
 /**

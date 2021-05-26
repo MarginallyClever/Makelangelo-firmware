@@ -84,6 +84,10 @@ void IK(const float *const axies, long *motorStepArray) {
   motorStepArray[3] = axies[3] * MICROSTEP_PER_DEGREE;
 #  endif
 
+  motorStepArray[0] *= motor_spu[0];
+  motorStepArray[1] *= motor_spu[1];
+  motorStepArray[2] *= motor_spu[2];
+
   // Serial.print("IK ");
   // Serial.print('\t');  Serial.print(axies[0]);
   // Serial.print('\t');  Serial.print(axies[1]);

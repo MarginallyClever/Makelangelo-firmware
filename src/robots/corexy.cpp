@@ -18,10 +18,13 @@ void IK(const float *const axies, long *motorStepArray) {
   float y = axies[1];
   float z = axies[2];
 
-  motorStepArray[0] = lround((x + y) / UNITS_PER_STEP);
-  motorStepArray[1] = lround((x - y) / UNITS_PER_STEP);
-
+  motorStepArray[0] = lround((x + y));
+  motorStepArray[1] = lround((x - y));
   motorStepArray[NUM_MOTORS] = z;
+  
+  motorStepArray[0] *= motor_spu[0];
+  motorStepArray[1] *= motor_spu[1];
+  motorStepArray[2] *= motor_spu[2];
 }
 
 /**
