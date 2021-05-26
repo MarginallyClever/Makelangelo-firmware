@@ -82,6 +82,6 @@ https://marginallyclever.com/forum
 
 Makelangelo is derived from the work of Paul Fisher.  It is largely inspired by "Hektor":http://hektor.ch/ by Jürg Lehni and Uli Franke.
 
-
-
 This file was downloaded from https://github.com/MarginallyClever/Makelangelo/
+
+[![PlatformIO CI](https://github.com/MarginallyClever/Makelangelo-firmware/actions/workflows/main.yml/badge.svg)](https://github.com/MarginallyClever/Makelangelo-firmware/actions/workflows/main.yml)
