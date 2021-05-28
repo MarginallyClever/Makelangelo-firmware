@@ -1184,7 +1184,9 @@ void motor_line(const float *const target_position, float fr_units_s, float long
   }
   // apply the speed limit
   if (speed_factor < 1.0) {
-    for (ALL_MUSCLES(i)) { current_speed[i] *= speed_factor; }
+    for (ALL_MUSCLES(i)) {
+      current_speed[i] *= speed_factor;
+    }
     new_seg.nominal_speed *= speed_factor;
     new_seg.nominal_rate *= speed_factor;
   }
@@ -1344,7 +1346,9 @@ void motor_line(const float *const target_position, float fr_units_s, float long
   SET_BIT_ON( new_seg.flags, BIT_FLAG_RECALCULATE );
 
   previous_nominal_speed = new_seg.nominal_speed;
-  for (ALL_MUSCLES(i)) { previous_speed[i] = current_speed[i]; }
+  for(ALL_MUSCLES(i)) {
+    previous_speed[i] = current_speed[i];
+  }
 
   // when should we accelerate and decelerate in this segment?
   segment_update_trapezoid(&new_seg, new_seg.entry_speed / new_seg.nominal_speed,
