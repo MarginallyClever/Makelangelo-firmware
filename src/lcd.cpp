@@ -814,6 +814,10 @@ void LCD_refresh_display() {
 #endif  // HAS_LCD
 }
 
+void LCD_saveChanges() {
+  eepromManager.saveAll();
+}
+
 void LCD_settings_menu() {
 #ifdef HAS_LCD
   MENU_START()
@@ -822,13 +826,55 @@ void LCD_settings_menu() {
 #  if MACHINE_STYLE == POLARGRAPH
   MENU_FLOAT("Home X", axies[0].homePos);
   MENU_FLOAT("Home Y", axies[1].homePos);
-  MENU_FLOAT("Left", axies[0].limitMin);
-  MENU_FLOAT("Right", axies[0].limitMax);
-  MENU_FLOAT("Top", axies[1].limitMax);
-  MENU_FLOAT("Bottom", axies[1].limitMin);
   MENU_FLOAT("Belt L", calibrateLeft);
   MENU_FLOAT("Belt R", calibrateRight);
 #endif
+
+#define MAKE_AXIS_MENUS(NN,BB) \
+    MENU_FLOAT("NN Min", axies[BB].limitMin); \
+    MENU_FLOAT("NN Max", axies[BB].limitMax)
+
+  MAKE_AXIS_MENUS(X,0);
+#if NUM_AXIES>=1
+  MAKE_AXIS_MENUS(Y,1);
+#endif
+#if NUM_AXIES>=2
+  MAKE_AXIS_MENUS(Z,2);
+#endif
+#if NUM_AXIES>=3
+  MAKE_AXIS_MENUS(U,3);
+#endif
+#if NUM_AXIES>=4
+  MAKE_AXIS_MENUS(V,4);
+#endif
+#if NUM_AXIES>=5
+  MAKE_AXIS_MENUS(W,5);
+#endif
+
+#define MAKE_MOTOR_MENUS(NN,BB) 
+    MENU_FLOAT("NN Steps", motor_spu[BB])
+
+  MAKE_MOTOR_MENUS(X,0);
+#if NUM_MOTORS>=1
+  MAKE_MOTOR_MENUS(Y,1);
+#endif
+#if NUM_MOTORS>=2
+  MAKE_MOTOR_MENUS(Z,2);
+#endif
+#if NUM_MOTORS>=3
+  MAKE_MOTOR_MENUS(U,3);
+#endif
+#if NUM_MOTORS>=4
+  MAKE_MOTOR_MENUS(V,4);
+#endif
+#if NUM_MOTORS>=5
+  MAKE_MOTOR_MENUS(W,5);
+#endif
+#if NUM_MOTORS>=6
+  MAKE_MOTOR_MENUS(T,6);
+#endif
+
+  MENU_ACTION("Save changes",LCD_saveChanges);
   MENU_END()
 #endif
 }
