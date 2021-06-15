@@ -22,6 +22,8 @@
 #define EEPROM_PID_LENGTH       (NUM_AXIES * 3 * SIZEOF_FLOAT_BYTES)
 #define ADDR_SPU                (ADDR_PID + EEPROM_PID_LENGTH)
 #define EEPROM_SPU_LENGTH       (NUM_MUSCLES * 1 * SIZEOF_FLOAT_BYTES)
+#define ADDR_JERK               (ADDR_SPU + EEPROM_SPU_LENGTH)
+#define EEPROM_JERK_LENGTH      (NUM_MUSCLES * 1 * SIZEOF_FLOAT_BYTES)
 
 class EEPROMManager {
  public:
@@ -52,6 +54,9 @@ class EEPROMManager {
   //v11
   void saveSPU();
   void loadSPU();
+  
+  void saveJerk();
+  void loadJerk();
 };
 
 extern EEPROMManager eepromManager;

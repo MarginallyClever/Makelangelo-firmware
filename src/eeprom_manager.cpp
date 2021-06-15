@@ -155,11 +155,29 @@ void EEPROMManager::loadSPU() {
   }
 }
 
+void EEPROMManager::saveJerk() {
+  Serial.println(F("Saving jerk."));
+  int j = ADDR_JERK;
+  for(ALL_MUSCLES(i)) {
+    writeLong(j, max_jerk[i]*100.0f);
+    j+=SIZEOF_FLOAT_BYTES;
+  }
+}
+
+void EEPROMManager::loadJerk() {
+  int j = ADDR_JERK;
+  for(ALL_MUSCLES(i)) {
+    max_jerk[i]  = (float)readLong(j) / 100.0f;
+    j+=SIZEOF_FLOAT_BYTES;
+  }
+}
+
 void EEPROMManager::saveAll() {
   saveUID();
   saveLimits();
   saveHome();
   saveSPU();
+  saveJerk();
 }
 
 void EEPROMManager::loadAll() {
@@ -173,6 +191,9 @@ void EEPROMManager::loadAll() {
     parser.M502();
 #  endif
 #endif
+    if(versionNumber==10) {
+      saveSPU();
+    }
   }
 
   // Retrieve stored configuration
@@ -181,6 +202,7 @@ void EEPROMManager::loadAll() {
   loadHome();
   loadCalibration();
   loadSPU();
+  loadJerk();
 }
 
 void EEPROMManager::reportAll() {
