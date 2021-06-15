@@ -51,6 +51,7 @@ uint32_t lcd_draw_delay = 0;
 
 int lcd_rot_old = 0;
 int lcd_turn    = 0;
+int lcd_turnMultiplier=0;
 int lcd_posx = 0, lcd_posy = 0;
 char lcd_click_old   = HIGH;
 char lcd_click_now   = 0;
@@ -303,17 +304,18 @@ void LCD_print_long(long v, int padding = 0);
 void LCD_refresh_display();
 void LCD_draw_border();
 
-int buttons                 = 0;
+int lcd_rot                 = 0;
 unsigned long next_lcd_read = 0;
 const char *update_key;
 void *update_val;
+uint8_t dialRotationFrequencyCounter=0;
 
 void LCD_read() {
   long now = millis();
 
   if (ELAPSED(now, next_lcd_read)) {
     // detect potentiometer changes
-    buttons = ((digitalRead(BTN_EN1) == LOW) << BLEN_A)
+    lcd_rot = ((digitalRead(BTN_EN1) == LOW) << BLEN_A)
             | ((digitalRead(BTN_EN2) == LOW) << BLEN_B);
     next_lcd_read = now + 30;
   }
@@ -324,10 +326,10 @@ void LCD_read() {
   #  define ENCROT2 3
   #  define ENCROT3 1
 
-  #define ENCODER_SPIN(_E1, _E2) switch (lcd_rot_old) { case _E1: lcd_turn +=1; break; case _E2: lcd_turn -=1; }
+  #define ENCODER_SPIN(_E1, _E2) switch (lcd_rot_old) { case _E1: lcd_turn--; break; case _E2: lcd_turn++; }
 
-  if (lcd_rot_old != buttons) {
-    switch (buttons) {
+  if (lcd_rot_old != lcd_rot) {
+    switch (lcd_rot) {
       case ENCROT0: ENCODER_SPIN(ENCROT3,ENCROT1);  break;
       case ENCROT1: ENCODER_SPIN(ENCROT0,ENCROT2);  break;
       case ENCROT2: ENCODER_SPIN(ENCROT1,ENCROT3);  break;
@@ -339,11 +341,11 @@ void LCD_read() {
       //else Serial.print(' ');
       //Serial.print(millis());     Serial.print('\t');
       //Serial.print(lcd_rot_old);  Serial.print('\t');
-      //Serial.print(buttons);      Serial.print('\t');
+      //Serial.print(lcd_rot);      Serial.print('\t');
       //Serial.print(lcd_turn);     Serial.print('\n');
     }
 
-    lcd_rot_old = buttons;
+    lcd_rot_old = lcd_rot;
   }
 
   // find click state
@@ -652,7 +654,7 @@ void LCD_update_long() {
   if (lcd_turn) {
     long *f = (long *)update_val;
     // protect servo, don't drive beyond physical limits
-    *f = lcd_turn > 0 ? 1 : -1;
+    *f += lcd_turnMultiplier /10;
   }
 
   LCD_setCursor(0, 0);
@@ -666,7 +668,7 @@ void LCD_update_float() {
   if (lcd_turn) {
     float *f = (float *)update_val;
     // protect servo, don't drive beyond physical limits
-    *f += lcd_turn > 0 ? 0.01 : -0.01;
+    *f += (float)lcd_turnMultiplier * 0.01;
   }
 
   LCD_setCursor(0, 0);
@@ -752,6 +754,10 @@ void LCD_update() {
   if (millis() >= lcd_draw_delay) {
     lcd_draw_delay = millis() + LCD_DRAW_DELAY;
 
+    dialRotationFrequencyCounter += (lcd_turn != 0)? 1:-1;
+    dialRotationFrequencyCounter = max(dialRotationFrequencyCounter,0);
+    lcd_turnMultiplier = lcd_turn * (dialRotationFrequencyCounter * 0.5);
+
     // Serial.print(lcd_turn,DEC);
     // Serial.print('\t');  Serial.print(menuStack[menuStackDepth].menu_position,DEC);
     // Serial.print('\t');  Serial.print(menuStack[menuStackDepth].menu_position_sum,DEC);
@@ -823,6 +829,10 @@ void LCD_settings_menu() {
   MENU_START()
   MENU_BACK("Main");
 
+  MENU_FLOAT("mm/s", feed_rate);
+  MENU_FLOAT("mm/s/s", acceleration);
+  MENU_LONG("seg min", min_segment_time_us);
+
 #  if MACHINE_STYLE == POLARGRAPH
   MENU_FLOAT("Home X", axies[0].homePos);
   MENU_FLOAT("Home Y", axies[1].homePos);
@@ -831,47 +841,50 @@ void LCD_settings_menu() {
 #endif
 
 #define MAKE_AXIS_MENUS(NN,BB) \
-    MENU_FLOAT("NN Min", axies[BB].limitMin); \
-    MENU_FLOAT("NN Max", axies[BB].limitMax)
+    MENU_FLOAT(NN" min", axies[BB].limitMin); \
+    MENU_FLOAT(NN" max", axies[BB].limitMax); \
+    MENU_FLOAT(NN" jerk", max_jerk[BB])
 
-  MAKE_AXIS_MENUS(X,0);
+  MAKE_AXIS_MENUS("X",0);
 #if NUM_AXIES>=1
-  MAKE_AXIS_MENUS(Y,1);
+  MAKE_AXIS_MENUS("Y",1);
 #endif
 #if NUM_AXIES>=2
-  MAKE_AXIS_MENUS(Z,2);
+  MAKE_AXIS_MENUS("Z",2);
 #endif
 #if NUM_AXIES>=3
-  MAKE_AXIS_MENUS(U,3);
+  MAKE_AXIS_MENUS("U",3);
 #endif
 #if NUM_AXIES>=4
-  MAKE_AXIS_MENUS(V,4);
+  MAKE_AXIS_MENUS("V",4);
 #endif
 #if NUM_AXIES>=5
-  MAKE_AXIS_MENUS(W,5);
+  MAKE_AXIS_MENUS("W",5);
+#endif
+#if NUM_AXIES>=6
+  MAKE_AXIS_MENUS("T",6);
 #endif
 
-#define MAKE_MOTOR_MENUS(NN,BB) 
-    MENU_FLOAT("NN Steps", motor_spu[BB])
+#define MAKE_MOTOR_MENUS(NN,BB)   MENU_FLOAT(NN" steps", motor_spu[BB])
 
-  MAKE_MOTOR_MENUS(X,0);
+  MAKE_MOTOR_MENUS("X",0);
 #if NUM_MOTORS>=1
-  MAKE_MOTOR_MENUS(Y,1);
+  MAKE_MOTOR_MENUS("Y",1);
 #endif
 #if NUM_MOTORS>=2
-  MAKE_MOTOR_MENUS(Z,2);
+  MAKE_MOTOR_MENUS("Z",2);
 #endif
 #if NUM_MOTORS>=3
-  MAKE_MOTOR_MENUS(U,3);
+  MAKE_MOTOR_MENUS("U",3);
 #endif
 #if NUM_MOTORS>=4
-  MAKE_MOTOR_MENUS(V,4);
+  MAKE_MOTOR_MENUS("V",4);
 #endif
 #if NUM_MOTORS>=5
-  MAKE_MOTOR_MENUS(W,5);
+  MAKE_MOTOR_MENUS("W",5);
 #endif
 #if NUM_MOTORS>=6
-  MAKE_MOTOR_MENUS(T,6);
+  MAKE_MOTOR_MENUS("T",6);
 #endif
 
   MENU_ACTION("Save changes",LCD_saveChanges);
@@ -936,7 +949,7 @@ void LCD_status_menu() {
   // on click go to the main menu
   if (lcd_click_now) MENU_PUSH(LCD_main_menu);
 
-  if (lcd_turn) { speed_adjust += lcd_turn; }
+  if (lcd_turn) speed_adjust += lcd_turn;
   LCD_setCursor(0, 0);
 
   LCD_setCursor(0, 0);
