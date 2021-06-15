@@ -172,7 +172,7 @@ extern const char *AxisNames;
 extern float max_jerk[NUM_MUSCLES];
 
 // maximum feedrate (units/s).  one value per motor/servo 
-extern float max_feedrate_units_s[NUM_MUSCLES];
+extern float max_step_rate_s[NUM_MUSCLES];
 
 // motor steps-per-unit.  one value per motor/servo
 extern float motor_spu[NUM_MUSCLES];
@@ -189,25 +189,21 @@ extern Servo servos[NUM_SERVOS];
 // METHODS
 //------------------------------------------------------------------------------
 
-extern void motor_set_step_count(long *a);
-extern void wait_for_empty_segment_buffer();
-extern char segment_buffer_full();
-extern void addSegment(const float *const target_position, float fr_units_s, float millimeters);
-extern void motor_engage();
-extern void motor_home();
-extern void motor_disengage();
 extern void motor_setup();
+extern void motor_home();
+extern void motor_engage();
+extern void motor_disengage();
+extern void motor_set_step_count(long *a);
 extern void setPenAngle(int arg0);
 extern void clockISRProfile();
 
-extern const int movesPlanned();
 extern void motor_onestep(int motor);
 
 #ifdef DEBUG_STEPPING
 extern void debug_stepping();
 #endif  // DEBUG_STEPPING
 
-FORCE_INLINE const int movesPlanned() {
+FORCE_INLINE const int planner_movesPlanned() {
   return SEGMOD(block_buffer_head - block_buffer_tail);
 }
 
@@ -229,10 +225,11 @@ FORCE_INLINE const bool isBlockBusy(const Segment *block) {
 
 FORCE_INLINE Segment *getCurrentBlock() {
   if (block_buffer_tail == block_buffer_head) return NULL;
+
   if (first_segment_delay > 0) {
     --first_segment_delay;
-    if (movesPlanned() > 3) first_segment_delay = 0;
-    return NULL;
+    if (planner_movesPlanned() < 3 && first_segment_delay) return NULL;
+    first_segment_delay=0;
   }
 
   Segment *block = &blockBuffer[block_buffer_tail];
