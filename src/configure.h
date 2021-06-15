@@ -33,7 +33,7 @@
 // default value
 // !! this is now handeled via pio.ini !!
 #ifndef MACHINE_STYLE
-#define MACHINE_STYLE SIXI3
+#error No machine style defined.
 #endif
 
 #if MACHINE_STYLE==STEWART_ROTARY || MACHINE_STYLE==STEWART_LINEAR
