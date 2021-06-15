@@ -150,7 +150,11 @@ void factory_reset() {
   for(ALL_MOTORS(i)) {
     motor_spu[i]=STEPS_PER_UNIT;
   }
-  eepromManager.saveSPU();
+  for (ALL_MUSCLES(i)) {
+    max_jerk[i] = MAX_JERK_DEFAULT;
+    max_feedrate_units_s[i] = MAX_FEEDRATE;
+  }
+  eepromManager.saveAll();
 }
 
 #endif

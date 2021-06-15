@@ -88,15 +88,21 @@ void factory_reset() {
     motor_spu[i]=STEPS_PER_UNIT;
   }
   motor_spu[NUM_MOTORS]=1;
-  eepromManager.saveSPU();
   
+  for (ALL_MUSCLES(i)) {
+    max_jerk[i] = MAX_JERK_DEFAULT;
+    max_step_rate_s[i] = MAX_STEP_RATE_DEFAULT;
+  }
+
   // if you accidentally upload m3 firmware to an m5 then upload it ONCE with this line uncommented.
   float limits[NUM_AXIES * 2];
   for(ALL_AXIES(i)) {
     limits[i*2+0] = -360.0;
     limits[i*2+1] =  360.0;
   }
+
   eepromManager.adjustLimits(limits);
+  eepromManager.saveAll();
 }
 
 #endif  // SIXI3

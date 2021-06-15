@@ -519,6 +519,11 @@ void factory_reset() {
   motor_spu[5] = UNITS_PER_STEP_5;
   motor_spu[6] = UNITS_PER_STEP_6;
 
+  for (ALL_MUSCLES(i)) {
+    max_jerk[i] = MAX_JERK_DEFAULT;
+    max_feedrate_units_s[i] = MAX_FEEDRATE;
+  }
+
   // Sixi init limits
 #  define SIL(NN)                         \
     {                                     \
