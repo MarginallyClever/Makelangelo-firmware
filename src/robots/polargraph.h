@@ -39,8 +39,11 @@
 #  define MAX_ACCELERATION (2000.0)
 #  define MIN_ACCELERATION (0.0)
 
-#  define MAX_JERK   (8.0)
-#  define MAX_JERK_Z (0.3)
+#  define MAX_JERK   (50.0)
+#  define MAX_JERK_DEFAULT   (20.0)
+
+#  define MAX_JERK_Z (3.0)
+#  define MAX_JERK_Z_DEFAULT (0.3)
 
 // uncomment this line to adjust acceleration based on pen position
 #  define DYNAMIC_ACCELERATION
