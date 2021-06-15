@@ -125,25 +125,23 @@ typedef struct {
 
 enum BlockFlagBits : uint8_t { 
     BIT_FLAG_NOMINAL,
-    BIT_FLAG_BUSY,
     BIT_FLAG_RECALCULATE
 };
-/*
+
 enum BlockFlagMask : uint8_t {
-  FLAG_NOMINAL     = _BV(BIT_FLAG_NOMINAL),
-  FLAG_BUSY        = _BV(BIT_FLAG_BUSY),
-  FLAG_RECALCULATE = _BV(BIT_FLAG_RECALCULATE),
-};*/
+  BLOCK_FLAG_NOMINAL     = _BV(BIT_FLAG_NOMINAL),
+  BLOCK_FLAG_RECALCULATE = _BV(BIT_FLAG_RECALCULATE),
+};
 
 
 typedef struct {
   Muscle a[NUM_MUSCLES];
 
-  float distance;         // mm
-  float nominal_speed;    // mm/s
-  float entry_speed;      // mm/s
-  float entry_speed_max;  // mm/s
-  float acceleration;     // mm/sec^2
+  float distance;         // units
+  float nominal_speed;    // units/s
+  float entry_speed;      // units/s
+  float entry_speed_max;  // units/s
+  float acceleration;     // units/sec^2
 
   uint32_t steps_total;  // steps
   uint32_t steps_taken;  // steps
@@ -163,9 +161,9 @@ typedef struct {
 // GLOBALS
 //------------------------------------------------------------------------------
 
-extern Segment line_segments[MAX_SEGMENTS];
-extern Segment *working_seg;
-extern volatile int current_segment, last_segment, nonbusy_segment;
+extern Segment blockBuffer[MAX_SEGMENTS];
+extern Segment *working_block;
+extern volatile int block_buffer_head, block_buffer_nonbusy, block_buffer_planned, block_buffer_tail;
 extern int first_segment_delay;
 extern Motor motors[NUM_MUSCLES];
 extern const char *AxisNames;
@@ -194,7 +192,7 @@ extern Servo servos[NUM_SERVOS];
 extern void motor_set_step_count(long *a);
 extern void wait_for_empty_segment_buffer();
 extern char segment_buffer_full();
-extern void motor_line(const float *const target_position, float fr_units_s, float millimeters);
+extern void addSegment(const float *const target_position, float fr_units_s, float millimeters);
 extern void motor_engage();
 extern void motor_home();
 extern void motor_disengage();
@@ -210,34 +208,41 @@ extern void debug_stepping();
 #endif  // DEBUG_STEPPING
 
 FORCE_INLINE const int movesPlanned() {
-  return SEGMOD(last_segment - current_segment);
+  return SEGMOD(block_buffer_head - block_buffer_tail);
 }
 
 FORCE_INLINE const int movesPlannedNotBusy() {
-  return SEGMOD(last_segment - nonbusy_segment);
+  return SEGMOD(block_buffer_head - block_buffer_nonbusy);
 }
 
-FORCE_INLINE const int get_next_segment(int i) {
+FORCE_INLINE const int getNextBlock(int i) {
   return SEGMOD(i + 1);
 }
 
-FORCE_INLINE const int get_prev_segment(int i) {
+FORCE_INLINE const int getPrevBlock(int i) {
   return SEGMOD(i - 1);
 }
 
-FORCE_INLINE Segment *get_current_segment() {
-  if (current_segment == last_segment) return NULL;
+FORCE_INLINE const bool isBlockBusy(const Segment *block) {
+  return block == working_block;
+}
+
+FORCE_INLINE Segment *getCurrentBlock() {
+  if (block_buffer_tail == block_buffer_head) return NULL;
   if (first_segment_delay > 0) {
     --first_segment_delay;
     if (movesPlanned() > 3) first_segment_delay = 0;
     return NULL;
   }
 
-  Segment *block = &line_segments[current_segment];
-  
+  Segment *block = &blockBuffer[block_buffer_tail];
+
   if( TEST(block->flags,BIT_FLAG_RECALCULATE) ) return NULL;  // wait, not ready
 
-  nonbusy_segment = get_next_segment(current_segment);
+  block_buffer_nonbusy = getNextBlock(block_buffer_tail);
+  if (block_buffer_tail == block_buffer_planned) {
+    block_buffer_planned = block_buffer_nonbusy;
+  }
 
   return block;
 }

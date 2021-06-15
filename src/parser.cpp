@@ -795,7 +795,7 @@ void Parser::M101() {
  */
 void Parser::M112() {
   // clear segment buffer
-  last_segment = current_segment;
+  block_buffer_head = block_buffer_tail;
 #ifdef HAS_LCD
   LCD_setStatusMessage("ESTOP - PLEASE RESET");
 #endif
@@ -884,39 +884,30 @@ void Parser::M203() {
 */
 void Parser::M205() {
   float f;
-  f           = parseNumber('X', max_jerk[0]);
-  max_jerk[0] = max(min(f, (float)MAX_JERK), (float)0);
-  Serial.print("M205 X");
-  Serial.print(max_jerk[0]);
+  Serial.print("M205");
+
+#define PARSE_205_AXIS(AA,BB) \
+  f = parseNumber(AA, max_jerk[BB]); \
+  max_jerk[BB] = max(min(f, (float)MAX_JERK), (float)0); \
+  Serial.print(" "); \
+  Serial.print(AA); \
+  Serial.print(max_jerk[BB]);
+
+  PARSE_205_AXIS('X',0);
 #if NUM_AXIES > 1
-  f           = parseNumber('Y', max_jerk[1]);
-  max_jerk[1] = max(min(f, (float)MAX_JERK), (float)0);
-  Serial.print(" Y");
-  Serial.print(max_jerk[1]);
+  PARSE_205_AXIS('Y',1);
 #endif
 #if NUM_AXIES > 2
-  f           = parseNumber('Z', max_jerk[2]);
-  max_jerk[2] = max(min(f, (float)MAX_JERK), (float)0);
-  Serial.print(" Z");
-  Serial.print(max_jerk[2]);
+  PARSE_205_AXIS('Z',2);
 #endif
 #if NUM_AXIES > 3
-  f           = parseNumber('U', max_jerk[3]);
-  max_jerk[3] = max(min(f, (float)MAX_JERK), (float)0);
-  Serial.print(" U");
-  Serial.print(max_jerk[3]);
+  PARSE_205_AXIS('U',3);
 #endif
 #if NUM_AXIES > 4
-  f           = parseNumber('V', max_jerk[4]);
-  max_jerk[4] = max(min(f, (float)MAX_JERK), (float)0);
-  Serial.print(" V");
-  Serial.print(max_jerk[4]);
+  PARSE_205_AXIS('V',4);
 #endif
 #if NUM_AXIES > 5
-  f           = parseNumber('W', max_jerk[5]);
-  max_jerk[5] = max(min(f, (float)MAX_JERK), (float)0);
-  Serial.print(" W");
-  Serial.print(max_jerk[5]);
+  PARSE_205_AXIS('W',5);
 #endif
   f                   = parseNumber('B', min_segment_time_us);
   min_segment_time_us = max(min(f, 1000000.0f), (float)0);

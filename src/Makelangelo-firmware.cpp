@@ -175,7 +175,7 @@ void lineSafe(float *pos, float new_feed_rate_units) {
 #if MACHINE_STYLE == POLARGRAPH
   if (delta[0] == 0 && delta[1] == 0) {
     // only moving Z, don't split the line.
-    motor_line(pos, new_feed_rate_units, abs(delta[2]));
+    addSegment(pos, new_feed_rate_units, abs(delta[2]));
     return;
   }
 #endif
@@ -209,11 +209,11 @@ void lineSafe(float *pos, float new_feed_rate_units) {
   while (--segments) {
     for (ALL_AXIES(i)) startPos[i] += delta[i];
 
-    motor_line(startPos, new_feed_rate_units, segment_len_units);
+    addSegment(startPos, new_feed_rate_units, segment_len_units);
   }
 
   // guarantee we stop exactly at the destination (no rounding errors).
-  motor_line(pos, new_feed_rate_units, segment_len_units);
+  addSegment(pos, new_feed_rate_units, segment_len_units);
 
   //  Serial.print("P");  Serial.println(movesPlanned());
 }
