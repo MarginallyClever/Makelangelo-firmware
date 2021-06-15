@@ -277,7 +277,7 @@ void robot_findHome() {
   // go home
   offset[0] = axies[0].homePos;
   offset[1] = axies[1].homePos;
-  lineSafe(offset, feed_rate);
+  planner_bufferLine(offset, feed_rate);
 
   Serial.println(F("Done."));
 #  endif  // defined(CAN_HOME)
@@ -356,7 +356,7 @@ void calibrateBelts() {
   get_end_plus_offset(offset);
   offset[0] = axies[0].homePos;
   offset[1] = axies[1].homePos;
-  lineSafe(offset, feed_rate);
+  planner_bufferLine(offset, feed_rate);
   Serial.println(F("Done."));
 #  endif  // defined(CAN_HOME)
 }
@@ -461,7 +461,18 @@ void factory_reset() {
   motor_spu[0]=STEPS_PER_UNIT;
   motor_spu[1]=STEPS_PER_UNIT;
   motor_spu[2]=1;
-  eepromManager.saveSPU();
+
+  for (ALL_MUSCLES(i)) {
+    max_jerk[i] = MAX_JERK_DEFAULT;
+    max_step_rate_s[i] = MAX_STEP_RATE_DEFAULT;
+  }
+
+#ifdef MAX_FEEDRATE_Z
+  max_step_rate_s[NUM_MOTORS] = MAX_FEEDRATE_Z;
+#endif
+#ifdef MAX_JERK_Z_DEFAULT
+  max_jerk[NUM_MOTORS] = MAX_JERK_Z_DEFAULT;
+#endif
 
 #if MACHINE_HARDWARE_VERSION == MAKELANGELO_6
   polargraphResetM6();
@@ -472,6 +483,8 @@ void factory_reset() {
 #if MACHINE_HARDWARE_VERSION == MAKELANGELO_3_3
   polargraphResetM33();
 #endif
+
+  eepromManager.saveAll();
 }
 
 // called once at startup
