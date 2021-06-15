@@ -73,7 +73,7 @@ void SD_check() {
   }
 
   // read one line from the file.  don't read too fast or the LCD will appear to hang.
-  if (sd_printing_now == true && sd_printing_paused == false && segment_buffer_full() == false) {
+  if (sd_printing_now && !sd_printing_paused && !planner_segmentBufferFull()) {
     int c;
     while (sd_print_file.peek() != -1) {
       c = sd_print_file.read();
