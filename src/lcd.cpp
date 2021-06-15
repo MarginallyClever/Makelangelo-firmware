@@ -398,7 +398,7 @@ void LCD_this_is_home() {
 void LCD_go_home() {
   float homes[NUM_AXIES];
   for (ALL_AXIES(i)) homes[i] = axies[i].homePos;
-  lineSafe(homes, DEFAULT_FEEDRATE);
+  planner_bufferLine(homes, DEFAULT_FEEDRATE);
   MENU_POP();
 }
 
@@ -408,7 +408,7 @@ void LCD_togglePenUp() {
   offset[0] = axies[0].pos;
   offset[1] = axies[1].pos;
   offset[2] = (axies[2].pos == PEN_UP_ANGLE) ? PEN_DOWN_ANGLE : PEN_UP_ANGLE;
-  lineSafe(offset, feed_rate);
+  planner_bufferLine(offset, feed_rate);
   MENU_POP();
 }
 
@@ -432,7 +432,7 @@ void LCD_driveX() {
   offset[1] = axies[1].pos;
   offset[2] = axies[2].pos;
 
-  if (lcd_turn) { lineSafe(offset, feed_rate); }
+  if (lcd_turn) { planner_bufferLine(offset, feed_rate); }
 
   LCD_setCursor(0, 0);
   LCD_print('X');
@@ -447,7 +447,7 @@ void LCD_driveY() {
   offset[1] = axies[1].pos + lcd_turn > 0 ? 1 : -1;
   offset[2] = axies[2].pos;
 
-  if (lcd_turn) { lineSafe(offset, feed_rate); }
+  if (lcd_turn) { planner_bufferLine(offset, feed_rate); }
 
   LCD_setCursor(0, 0);
   LCD_print('Y');
@@ -464,7 +464,7 @@ void LCD_driveZ() {
 
   if (lcd_turn) {
     // protect servo, don't drive beyond physical limits
-    lineSafe(offset, feed_rate);
+    planner_bufferLine(offset, feed_rate);
   }
 
   LCD_setCursor(0, 0);
@@ -560,33 +560,33 @@ void draw_border(int width, int height, int landscape) {
   start[0] = pos[0] = axies[0].pos;
   start[1] = pos[1] = axies[1].pos;
   start[2] = pos[2] = PEN_UP_ANGLE;
-  lineSafe(pos, feed_rate);
+  planner_bufferLine(pos, feed_rate);
   // move to first corner
   pos[0] = -width;
   pos[1] = height;
-  lineSafe(pos, feed_rate);
+  planner_bufferLine(pos, feed_rate);
   // lower pen
   pos[2] = PEN_DOWN_ANGLE;
-  lineSafe(pos, feed_rate);
+  planner_bufferLine(pos, feed_rate);
   // move around border
   pos[0] = width;
   pos[1] = height;
-  lineSafe(pos, feed_rate);
+  planner_bufferLine(pos, feed_rate);
   pos[0] = width;
   pos[1] = -height;
-  lineSafe(pos, feed_rate);
+  planner_bufferLine(pos, feed_rate);
   pos[0] = -width;
   pos[1] = -height;
-  lineSafe(pos, feed_rate);
+  planner_bufferLine(pos, feed_rate);
   pos[0] = -width;
   pos[1] = height;
-  lineSafe(pos, feed_rate);
+  planner_bufferLine(pos, feed_rate);
   // lift pen
   pos[2] = PEN_UP_ANGLE;
-  lineSafe(pos, feed_rate);
+  planner_bufferLine(pos, feed_rate);
 
   // return to start position
-  lineSafe(start, feed_rate);
+  planner_bufferLine(start, feed_rate);
 #  endif  // NUM_AXIES == 3
   MENU_POP();
 }

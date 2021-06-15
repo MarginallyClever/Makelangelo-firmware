@@ -117,6 +117,7 @@
 #include <Arduino.h>
 
 #include "clock.h"
+#include "planner.h"
 #include "motor.h"
 #include "parser.h"
 #include "eeprom_manager.h"
@@ -175,7 +176,7 @@ extern int FK(long *motorStepArray, float *axies);
 extern void robot_findHome();
 extern void robot_setup();
 extern void teleport(float *pos);
-extern void lineSafe(float *pos, float new_feed_rate);
+extern void planner_bufferLine(float *pos, float new_feed_rate);
 extern void arc(float cx, float cy, float *destination, char clockwise, float new_feed_rate);
 extern void get_end_plus_offset(float *results);
 extern void set_tool_offset(int toolID, float *pos);

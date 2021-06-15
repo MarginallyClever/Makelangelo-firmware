@@ -74,41 +74,20 @@ void findStepDelay() {
   step_delay = (hal_timer_t)(1000000.0f / steps_per_second);
   Serial.print("step_delay=");
   Serial.println(step_delay);
-
 }
 
-// returns angle of dy/dx as a value from 0...2PI
-float atan3(float dy, float dx) {
-  float a = atan2(dy, dx);
-  if (a < 0) a += (PI * 2.0);
-  return a;
-}
-
-/**
-   feed rate is given in units/min and converted to cm/s
-*/
-void setFeedRate(float v1) {
-  if (feed_rate != v1) {
-    feed_rate = v1;
-    if (feed_rate < MIN_FEEDRATE) feed_rate = MIN_FEEDRATE;
-#ifdef VERBOSE
-    Serial.print(F("F="));
-    Serial.println(feed_rate);
-#endif
+void setFeedRate(float units_per_s) {
+  if (feed_rate != units_per_s) {
+    feed_rate = max(min(units_per_s,MAX_FEEDRATE),MIN_FEEDRATE);
   }
 }
 
-/**
-   @param delay in microseconds
-*/
 void pause(const uint32_t us) {
   delay(us / 1000);
   delayMicroseconds(us % 1000);
 }
 
-/**
-   Test that IK(FK(A))=A
-*/
+// Test that IK(FK(A))=A
 void testKinematics() {
   long A[NUM_MOTORS], i, j;
   float axies1[NUM_AXIES];
@@ -143,140 +122,6 @@ void testKinematics() {
       Serial.print(axies2[j] - axies1[j]);
     }
     Serial.println();
-  }
-}
-
-/**
-   Split long moves into sub-moves if needed.
-   @input pos NUM_AXIES floats describing destination coordinates
-   @input new_feed_rate speed to travel along arc
-*/
-void lineSafe(float *pos, float new_feed_rate_units) {
-  // Remember the feed rate.  This value will be used whenever no feedrate is given in a command, so it MUST be saved
-  // BEFORE the dial adjustment. otherwise the feedrate will slowly fall or climb as new commands are processed.
-  feed_rate = new_feed_rate_units;
-
-#ifdef HAS_LCD
-  // use LCD to adjust speed while drawing
-  new_feed_rate_units *= (float)speed_adjust * 0.01f;
-#endif
-
-  // split up long lines to make them straighter
-  float delta[NUM_AXIES];
-  float startPos[NUM_AXIES];
-  float lenSquared = 0;
-
-  for (ALL_AXIES(i)) {
-    startPos[i] = axies[i].pos;
-    delta[i]    = pos[i] - startPos[i];
-    lenSquared += sq(delta[i]);
-  }
-
-#if MACHINE_STYLE == POLARGRAPH
-  if (delta[0] == 0 && delta[1] == 0) {
-    // only moving Z, don't split the line.
-    addSegment(pos, new_feed_rate_units, abs(delta[2]));
-    return;
-  }
-#endif
-
-  float len_units = sqrt(lenSquared);
-  if (abs(len_units) < 0.000001f) return;
-
-  const float seconds = len_units / new_feed_rate_units;
-  uint16_t segments   = seconds * SEGMENTS_PER_SECOND;
-  if (segments < 1) segments = 1;
-
-#ifdef HAS_GRIPPER
-  // if we have a gripper and only gripper is moving, don't split the movement.
-  if (lenSquared == sq(delta[6])) {
-    Serial.println("only t");
-    segments = 1;
-    Serial.print("seconds=");
-    Serial.println(seconds);
-    Serial.print("len_units=");
-    Serial.println(len_units);
-    Serial.print("new_feed_rate_units=");
-    Serial.println(new_feed_rate_units);
-  }
-#endif
-
-  const float inv_segments   = 1.0f / float(segments);
-  const float segment_len_units = len_units * inv_segments;
-
-  for (ALL_AXIES(i)) delta[i] *= inv_segments;
-
-  while (--segments) {
-    for (ALL_AXIES(i)) startPos[i] += delta[i];
-
-    addSegment(startPos, new_feed_rate_units, segment_len_units);
-  }
-
-  // guarantee we stop exactly at the destination (no rounding errors).
-  addSegment(pos, new_feed_rate_units, segment_len_units);
-
-  //  Serial.print("P");  Serial.println(movesPlanned());
-}
-
-/**
-   This method assumes the limits have already been checked.
-   This method assumes the start and end radius match.
-   This method assumes arcs are not >180 degrees (PI radians)
-   @input cx center of circle x value
-   @input cy center of circle y value
-   @input destination point where movement ends
-   @input dir - ARC_CW or ARC_CCW to control direction of arc
-   @input new_feed_rate speed to travel along arc
-*/
-void arc(float cx, float cy, float *destination, char clockwise, float new_feed_rate) {
-  // get radius
-  float dx = axies[0].pos - cx;
-  float dy = axies[1].pos - cy;
-  float sr = sqrt(dx * dx + dy * dy);
-
-  // find angle of arc (sweep)
-  float sa = atan3(dy, dx);
-  float ea = atan3(destination[1] - cy, destination[0] - cx);
-  float er = sqrt(dx * dx + dy * dy);
-
-  float da = ea - sa;
-  if (clockwise == ARC_CW && da < 0)
-    ea += 2 * PI;
-  else if (clockwise == ARC_CCW && da > 0)
-    sa += 2 * PI;
-  da       = ea - sa;
-  float dr = er - sr;
-
-  // get length of arc
-  // float circ=PI*2.0*radius;
-  // float len=theta*circ/(PI*2.0);
-  // simplifies to
-  float len1 = abs(da) * sr;
-  float len  = sqrt(len1 * len1 + dr * dr);  // mm
-
-  int i, segments = ceil(len);
-
-  float n[NUM_AXIES], scale;
-  float a, r;
-#if NUM_AXIES > 2
-  float sz = axies[2].pos;
-  float z  = destination[2];
-#endif
-
-  for (i = 0; i <= segments; ++i) {
-    // interpolate around the arc
-    scale = ((float)i) / ((float)segments);
-
-    a = (da * scale) + sa;
-    r = (dr * scale) + sr;
-
-    n[0] = cx + cos(a) * r;
-    n[1] = cy + sin(a) * r;
-#if NUM_AXIES > 2
-    n[2] = (z - sz) * scale + sz;
-#endif
-    // send it to the planner
-    lineSafe(n, new_feed_rate);
   }
 }
 
@@ -474,7 +319,7 @@ void loop() {
   // The PC will wait forever for the ready signal.
   // if Arduino hasn't received a new instruction in a while, send ready() again
   // just in case USB garbled ready and each half is waiting on the other.
-  if (!segment_buffer_full() && (millis() - parser.lastCmdTimeMs) > TIMEOUT_OK) {
+  if (!planner_segmentBufferFull() && (millis() - parser.lastCmdTimeMs) > TIMEOUT_OK) {
 #ifdef HAS_TMC2130
     // for debugging limit switches
     //tmc2130_status();
