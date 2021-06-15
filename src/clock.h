@@ -17,8 +17,8 @@
 // if the segment buffer runs empty the machine will be forced to stop.  if the machine slows just enough
 // for the buffer to keep filling up then the machine will never come to a complete stop.  end result smoother movement and maybe shorter drawing time.
 #define BUFFER_EMPTY_SLOWDOWN
-#ifndef MIN_SEGMENT_TIME_US
-#  define MIN_SEGMENT_TIME_US (25000)
+#ifndef DEFAULT_MIN_SEGMENT_TIME_US
+#  define DEFAULT_MIN_SEGMENT_TIME_US (25000)
 #endif
 
 // if a segment added to the buffer is less than this many motor steps, roll it into the next move.

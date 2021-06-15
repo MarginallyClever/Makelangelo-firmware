@@ -6,7 +6,7 @@
 
 // How fast is the Arduino talking?
 #ifndef BAUD
-#  define BAUD (57600)
+#  define BAUD 57600
 #endif
 
 // What is the longest message Arduino can store?

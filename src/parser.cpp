@@ -608,7 +608,7 @@ void Parser::G01() {
 
   if (badAngles == 1) return;
 
-  lineSafe(pos, f);
+  planner_bufferLine(pos, f);
 }
 
 /**
@@ -869,9 +869,9 @@ void Parser::M117() {
 void Parser::M203() {
   Serial.print(F("M203 "));
   for(ALL_MUSCLES(i)) {
-    max_feedrate_units_s[i] = parseNumber(motors[i].letter, max_feedrate_units_s[i]);
+    max_step_rate_s[i] = parseNumber(motors[i].letter, max_step_rate_s[i]);
     Serial.print(motors[i].letter);
-    Serial.print(max_feedrate_units_s[i]);
+    Serial.print(max_step_rate_s[i]);
     Serial.print(' ');
   }
   Serial.println();
