@@ -48,9 +48,9 @@
 // *54 input pulley of gearbox has 54 teeth
 // /20 output pulley of stepper motor
 #  define PULLEY_RATIO (54.0/20.0)
-// The actuator has the following kinematic ratios applied
-#  define GEARBOX_RATIO (70.0)
 // *70 -to-one gearbox ratio
+#  define GEARBOX_RATIO (70.0)
+// which means
 #  define STEPS_PER_FULL_TURN (STEPPER_MOTOR_STEPS_PER_FULL_TURN * MICROSTEPS * PULLEY_RATIO * GEARBOX_RATIO)
 // which means... 105, actually.
 #  define STEPS_PER_DEGREE (STEPS_PER_FULL_TURN/360.0)
@@ -61,4 +61,4 @@
 
 extern void factory_reset();
 
-#endif  // #ifdef TRADITIONAL6
+#endif  // MACHINE_STYLE == SIXI3
