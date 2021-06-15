@@ -37,21 +37,21 @@ uint8_t EEPROMManager::writeLong(int ee, long value) {
 }
 
 uint8_t EEPROMManager::loadVersion() {
-  return EEPROM.read(ADDR_VERSION);
+  return EEPROM.read(EEPROM_VERSION);
 }
 
 void EEPROMManager::saveUID() {
   Serial.println(F("Saving UID."));
-  writeLong(ADDR_UUID, (long)robot_uid);
+  writeLong(EEPROM_UUID, (long)robot_uid);
 }
 
 uint8_t EEPROMManager::loadUID() {
-  return EEPROM.read(ADDR_VERSION);
+  return EEPROM.read(EEPROM_VERSION);
 }
 
 void EEPROMManager::saveLimits() {
   Serial.println(F("Saving limits."));
-  int j = ADDR_LIMITS;
+  int j = EEPROM_LIMITS;
   for (ALL_AXIES(i)) {
     writeLong(j, axies[i].limitMax * 100);
     j += 4;
@@ -61,7 +61,7 @@ void EEPROMManager::saveLimits() {
 }
 
 void EEPROMManager::loadLimits() {
-  int j = ADDR_LIMITS;
+  int j = EEPROM_LIMITS;
   for (ALL_AXIES(i)) {
     axies[i].limitMax = (float)readLong(j) / 100.0f;
     j += 4;
@@ -107,7 +107,7 @@ void EEPROMManager::adjustLimits(float* limits) {
 
 void EEPROMManager::saveHome() {
   Serial.println(F("Saving home."));
-  int j = ADDR_HOME;
+  int j = EEPROM_HOME;
   for (ALL_AXIES(i)) {
     writeLong(j, (long)(axies[i].homePos * 100.0f));
     j += SIZEOF_FLOAT_BYTES;
@@ -116,7 +116,7 @@ void EEPROMManager::saveHome() {
 
 void EEPROMManager::loadHome() {
   // Serial.print(F("Loading home:"));
-  int j = ADDR_HOME;
+  int j = EEPROM_HOME;
   for (ALL_AXIES(i)) {
     axies[i].homePos = (float)readLong(j) / 100.0f;
     // Serial.print(' ');
@@ -129,18 +129,18 @@ void EEPROMManager::loadHome() {
 
 void EEPROMManager::saveCalibration() {
   Serial.println(F("Saving calibration."));
-  writeLong(ADDR_CALIBRATION_LEFT, calibrateLeft * 100);
-  writeLong(ADDR_CALIBRATION_RIGHT, calibrateRight * 100);
+  writeLong(EEPROM_CALIBRATION_LEFT, calibrateLeft * 100);
+  writeLong(EEPROM_CALIBRATION_RIGHT, calibrateRight * 100);
 }
 
 void EEPROMManager::loadCalibration() {
-  calibrateLeft  = (float)readLong(ADDR_CALIBRATION_LEFT) / 100.0f;
-  calibrateRight = (float)readLong(ADDR_CALIBRATION_RIGHT) / 100.0f;
+  calibrateLeft  = (float)readLong(EEPROM_CALIBRATION_LEFT) / 100.0f;
+  calibrateRight = (float)readLong(EEPROM_CALIBRATION_RIGHT) / 100.0f;
 }
 
 void EEPROMManager::saveSPU() {
   Serial.println(F("Saving SPU."));
-  int j = ADDR_SPU;
+  int j = EEPROM_SPU;
   for(ALL_MUSCLES(i)) {
     writeLong(j, motor_spu[i]*100.0f);
     j+=SIZEOF_FLOAT_BYTES;
@@ -148,7 +148,7 @@ void EEPROMManager::saveSPU() {
 }
 
 void EEPROMManager::loadSPU() {
-  int j = ADDR_SPU;
+  int j = EEPROM_SPU;
   for(ALL_MUSCLES(i)) {
     motor_spu[i]  = (float)readLong(j) / 100.0f;
     j+=SIZEOF_FLOAT_BYTES;
@@ -157,7 +157,7 @@ void EEPROMManager::loadSPU() {
 
 void EEPROMManager::saveJerk() {
   Serial.println(F("Saving jerk."));
-  int j = ADDR_JERK;
+  int j = EEPROM_JERK;
   for(ALL_MUSCLES(i)) {
     writeLong(j, max_jerk[i]*100.0f);
     j+=SIZEOF_FLOAT_BYTES;
@@ -165,9 +165,26 @@ void EEPROMManager::saveJerk() {
 }
 
 void EEPROMManager::loadJerk() {
-  int j = ADDR_JERK;
+  int j = EEPROM_JERK;
   for(ALL_MUSCLES(i)) {
     max_jerk[i]  = (float)readLong(j) / 100.0f;
+    j+=SIZEOF_FLOAT_BYTES;
+  }
+}
+
+void EEPROMManager::saveStepRate() {
+  Serial.println(F("Saving step rate."));
+  int j = EEPROM_STEP_RATE;
+  for(ALL_MUSCLES(i)) {
+    writeLong(j, max_step_rate_s[i]*100.0f);
+    j+=SIZEOF_FLOAT_BYTES;
+  }
+}
+
+void EEPROMManager::loadStepRate() {
+  int j = EEPROM_STEP_RATE;
+  for(ALL_MUSCLES(i)) {
+    max_step_rate_s[i]  = (float)readLong(j) / 100.0f;
     j+=SIZEOF_FLOAT_BYTES;
   }
 }
@@ -178,6 +195,7 @@ void EEPROMManager::saveAll() {
   saveHome();
   saveSPU();
   saveJerk();
+  saveStepRate();
 }
 
 void EEPROMManager::loadAll() {
@@ -185,7 +203,7 @@ void EEPROMManager::loadAll() {
   if (versionNumber != FIRMWARE_VERSION) {
     // If not the current FIRMWARE_VERSION or the FIRMWARE_VERSION is sullied (i.e. unknown data)
     // Update the version number
-    EEPROM.write(ADDR_VERSION, FIRMWARE_VERSION);
+    EEPROM.write(EEPROM_VERSION, FIRMWARE_VERSION);
 #if MACHINE_STYLE == POLARGRAPH
 #  if MAKELANGELO_HARDWARE_VERSION == 5 || MAKELANGELO_HARDWARE_VERSION == 6
     parser.M502();
@@ -203,6 +221,7 @@ void EEPROMManager::loadAll() {
   loadCalibration();
   loadSPU();
   loadJerk();
+  loadStepRate();
 }
 
 void EEPROMManager::reportAll() {
@@ -221,8 +240,9 @@ void EEPROMManager::reportAll() {
   parser.D8();
 #endif
   parser.D6();
-
   parser.M92();
+  parser.M203();
+  parser.M205();
   
 #if MACHINE_STYLE == SIXI
   // Sixi only home angle values
