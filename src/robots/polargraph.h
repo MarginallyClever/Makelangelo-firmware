@@ -31,8 +31,8 @@
 #  define NUM_SERVOS (1)
 #  define NUM_TOOLS  (1)
 
-#  define MAX_FEEDRATE (1000.0)  // linear travel speed
-#  define MIN_FEEDRATE (0.0)
+#  define MAX_FEEDRATE (1000.0f)  // linear travel speed
+#  define MIN_FEEDRATE (0.0f)
 
 #  define MAX_FEEDRATE_Z (180.0)  // linear travel speed
 
@@ -70,7 +70,7 @@
 
 #  if MACHINE_HARDWARE_VERSION == MAKELANGELO_5
 #    ifndef MAX_SEGMENTS
-#      define MAX_SEGMENTS (8)
+#      define MAX_SEGMENTS (16)
 #    endif
 #    define USE_LIMIT_SWITCH
 #    define HAS_SD
