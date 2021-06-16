@@ -82,7 +82,6 @@ class Planner {
     return SEGMOD(block_buffer_head - block_buffer_nonbusy);
   }
 
-
   FORCE_INLINE static int getNextBlock(int i) {
     return SEGMOD(i + 1);
   }
