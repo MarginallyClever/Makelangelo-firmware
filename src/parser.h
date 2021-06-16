@@ -9,8 +9,8 @@
 #  define BAUD 57600
 #endif
 
-// What is the longest message Arduino can store?
-#define MAX_BUF (128)
+// What is the longest message the FTDI buffer can store?
+#define MAX_BUF (60)
 
 // for arc directions
 #define ARC_CW  (1)
