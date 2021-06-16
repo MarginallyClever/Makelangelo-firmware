@@ -2,40 +2,48 @@
 // inserts those blocks into the block ring buffer, and optimizes acceleration between the blocks.
 #include "configure.h"
 #include "lcd.h"
+#include "motor.h"
 
 #define BLOCK_DELAY_FOR_1ST_MOVE 100
 #define MIN_STEP_RATE            120
-#define GRAVITYmag               (980.0)  // mm
+#define GRAVITYmag               (9800.0)  // mm/s/s
 
+extern Planner planner;
 
-float previous_nominal_speed = 0;
-float previous_safe_speed    = 0;
-float previous_speed[NUM_MUSCLES];
+Segment Planner::blockBuffer[MAX_SEGMENTS];
+volatile int Planner::block_buffer_head, 
+             Planner::block_buffer_nonbusy,
+             Planner::block_buffer_planned,
+             Planner::block_buffer_tail;
+int Planner::first_segment_delay;
+
+float Planner::previous_nominal_speed;
+float Planner::previous_safe_speed;
+float Planner::previous_speed[NUM_MUSCLES];
 
 
 // returns angle of dy/dx as a value from 0...2PI
 float atan3(float dy, float dx) {
   float a = atan2(dy, dx);
-  if (a < 0) a += (PI * 2.0);
+  if(a < 0) a += (PI * 2.0);
   return a;
 }
 
-void wait_for_empty_segment_buffer() {
+void Planner::wait_for_empty_segment_buffer() {
   while (block_buffer_tail != block_buffer_head);
 }
 
-// return 1 if buffer is full, 0 if it is not.
-bool planner_segmentBufferFull() {
-  int next_segment = getNextBlock(block_buffer_head);
-  return (next_segment == block_buffer_tail);
-}
 
-void planner_zeroSpeeds() {
+void Planner::zeroSpeeds() {
   wait_for_empty_segment_buffer();
 
   previous_nominal_speed = 0;
   previous_safe_speed = 0;
   for (ALL_MUSCLES(i)) previous_speed[i] = 0;
+
+  block_buffer_tail = 0;
+  block_buffer_head = 0;
+  first_segment_delay = 0;
 }
 
 /**
@@ -46,15 +54,15 @@ void planner_zeroSpeeds() {
    @param target_velocity
    @param distance
 */
-float max_speed_allowed(const float &acc, const float &target_velocity, const float &distance) {
+float Planner::max_speed_allowed(const float &acc, const float &target_velocity, const float &distance) {
   return sqrt(sq(target_velocity) - 2 * acc * distance);
 }
 
-void recalculate_reverse_kernel(Segment *const current, const Segment *next) {
-  if (current == NULL) return;
+void Planner::recalculate_reverse_kernel(Segment *const current, const Segment *next) {
+  if(current == NULL) return;
 
   const float entry_speed_max2 = current->entry_speed_max;
-  if (current->entry_speed != entry_speed_max2 || (next && TEST(next->flags,BIT_FLAG_RECALCULATE)) ) {
+  if(current->entry_speed != entry_speed_max2 || (next && TEST(next->flags,BIT_FLAG_RECALCULATE)) ) {
     // If nominal length true, max junction speed is guaranteed to be reached. Only compute
     // for max allowable speed if block is decelerating and nominal length is false.
     const float new_entry_speed = TEST(current->flags, BIT_FLAG_NOMINAL)
@@ -63,7 +71,7 @@ void recalculate_reverse_kernel(Segment *const current, const Segment *next) {
 
     if( current->entry_speed != new_entry_speed ) {
       SET_BIT_ON(current->flags, BIT_FLAG_RECALCULATE);
-      if( isBlockBusy(current) ) {
+      if( motor.isBlockBusy(current) ) {
         SET_BIT_OFF(current->flags, BIT_FLAG_RECALCULATE);
       } else {
         current->entry_speed = new_entry_speed;
@@ -72,11 +80,11 @@ void recalculate_reverse_kernel(Segment *const current, const Segment *next) {
   }
 }
 
-void recalculate_reverse() {
+void Planner::recalculate_reverse() {
   int block_index = getPrevBlock(block_buffer_head);
 
   uint8_t planned_block_index = block_buffer_planned;
-  if (planned_block_index == block_buffer_head) return;
+  if(planned_block_index == block_buffer_head) return;
 
   Segment *next = NULL;
   while (block_index != block_buffer_tail) {
@@ -87,15 +95,15 @@ void recalculate_reverse() {
     block_index = getPrevBlock(block_index);
     while(planned_block_index != block_buffer_planned) {
       // If we reached the busy block or an already processed block, break the loop now
-      if (block_index == planned_block_index) return;
+      if(block_index == planned_block_index) return;
       // Advance the pointer, following the busy block
       planned_block_index = getNextBlock(planned_block_index);
     }
   }
 }
 
-void recalculate_forward_kernel(const Segment *prev, Segment *const current,uint8_t block_index) {
-  if (prev == NULL) return;
+void Planner::recalculate_forward_kernel(const Segment *prev, Segment *const current,uint8_t block_index) {
+  if(prev == NULL) return;
 
   // If the previous block is an acceleration block, but it is not long enough to complete the
   // full speed change within the block, we need to adjust the entry speed accordingly. Entry
@@ -104,9 +112,9 @@ void recalculate_forward_kernel(const Segment *prev, Segment *const current,uint
   if( !TEST(prev->flags,BIT_FLAG_NOMINAL) && prev->entry_speed < current->entry_speed ) {
     const float new_entry_speed2 = max_speed_allowed(-prev->acceleration, prev->entry_speed, prev->distance);
     // Check for junction speed change
-    if (new_entry_speed2 < current->entry_speed) {
+    if(new_entry_speed2 < current->entry_speed) {
       SET_BIT_ON(current->flags, BIT_FLAG_RECALCULATE);
-      if(isBlockBusy(current)) {
+      if(motor.isBlockBusy(current)) {
         SET_BIT_OFF(current->flags, BIT_FLAG_RECALCULATE);
       } else {
         current->entry_speed = new_entry_speed2;
@@ -116,13 +124,13 @@ void recalculate_forward_kernel(const Segment *prev, Segment *const current,uint
   }
 }
 
-void recalculate_forward() {
+void Planner::recalculate_forward() {
   int block_index = block_buffer_planned;
 
   Segment *previous = NULL;
   while (block_index != block_buffer_head) {
     Segment *current = &blockBuffer[block_index];
-    if(!previous || !isBlockBusy(previous)) {
+    if(!previous || !motor.isBlockBusy(previous)) {
       recalculate_forward_kernel(previous, current,block_index);
     }
     previous = current;
@@ -130,31 +138,31 @@ void recalculate_forward() {
   }
 }
 
-float estimate_acceleration_distance(const float &initial_rate, const float &target_rate, const float &accel) {
-  if (accel == 0) return 0;
+float Planner::estimate_acceleration_distance(const float &initial_rate, const float &target_rate, const float &accel) {
+  if(accel == 0) return 0;
   return (sq(target_rate) - sq(initial_rate)) / (accel * 2);
 }
 
-int intersection_distance(const float &start_rate, const float &end_rate, const float &accel, const float &distance) {
-  if (accel == 0) return 0;
+int Planner::intersection_distance(const float &start_rate, const float &end_rate, const float &accel, const float &distance) {
+  if(accel == 0) return 0;
   return (2.0 * accel * distance - sq(start_rate) + sq(end_rate)) / (4.0 * accel);
 }
 
-void segment_update_trapezoid(Segment *s, const float &entry_factor, const float &exit_factor) {
+void Planner::segment_update_trapezoid(Segment *s, const float &entry_factor, const float &exit_factor) {
   uint32_t intial_rate = ceil(s->nominal_rate * entry_factor);
   uint32_t final_rate  = ceil(s->nominal_rate * exit_factor);
 
-  if (intial_rate < MIN_STEP_RATE) intial_rate = MIN_STEP_RATE;
-  if (final_rate < MIN_STEP_RATE) final_rate = MIN_STEP_RATE;
+  if(intial_rate < MIN_STEP_RATE) intial_rate = MIN_STEP_RATE;
+  if(final_rate < MIN_STEP_RATE) final_rate = MIN_STEP_RATE;
 
-  const int32_t accel       = s->acceleration_steps_per_s2;
+  const int32_t accel = s->acceleration_steps_per_s2;
   uint32_t accelerate_steps = ceil(estimate_acceleration_distance(intial_rate, s->nominal_rate, accel));
   uint32_t decelerate_steps = floor(estimate_acceleration_distance(s->nominal_rate, final_rate, -accel));
-  int32_t plateau_steps     = s->steps_total - accelerate_steps - decelerate_steps;
-  if (plateau_steps < 0) {
+  int32_t plateau_steps = s->steps_total - accelerate_steps - decelerate_steps;
+  if(plateau_steps < 0) {
     const float accelerate_steps_float = ceil(intersection_distance(intial_rate, final_rate, accel, s->steps_total));
-    accelerate_steps                   = min(((uint32_t)max(accelerate_steps_float, 0.0f)), s->steps_total);
-    plateau_steps                      = 0;
+    accelerate_steps = min(((uint32_t)max(accelerate_steps_float, 0.0f)), s->steps_total);
+    plateau_steps = 0;
   }
   s->accel_until  = accelerate_steps;
   s->decel_after  = accelerate_steps + plateau_steps;
@@ -162,11 +170,11 @@ void segment_update_trapezoid(Segment *s, const float &entry_factor, const float
   s->final_rate   = final_rate;
 }
 
-void recalculate_trapezoids() {
+void Planner::recalculate_trapezoids() {
   uint8_t block_index = block_buffer_tail;
   uint8_t head_block_index = block_buffer_head;
   Segment *block = NULL;
-  Segment *next    = NULL;
+  Segment *next = NULL;
 
   float current_entry_speed = 0, next_entry_speed = 0;
 
@@ -177,7 +185,7 @@ void recalculate_trapezoids() {
       // Recalculate if current block entry or exit junction speed has changed.
       if( TEST(block->flags,BIT_FLAG_RECALCULATE) || TEST(next->flags,BIT_FLAG_RECALCULATE) ) {
         SET_BIT_ON( block->flags, BIT_FLAG_RECALCULATE );
-        if( !isBlockBusy(block) ) {
+        if( !motor.isBlockBusy(block) ) {
           // NOTE: Entry and exit factors always > 0 by all previous logic operations.
           const float inom = 1.0 / block->nominal_speed;
           segment_update_trapezoid(block, current_entry_speed * inom, next_entry_speed * inom);
@@ -186,15 +194,15 @@ void recalculate_trapezoids() {
       // Reset current only to ensure next trapezoid is computed
       SET_BIT_OFF(block->flags,BIT_FLAG_RECALCULATE);
     }
-    block_index         = getNextBlock(block_index);
+    block_index = getNextBlock(block_index);
     current_entry_speed = next_entry_speed;
-    block             = next;
+    block = next;
   }
 
   // Last/newest block in buffer. Make sure the last block always ends motion.
-  if (next) {
+  if(next) {
     SET_BIT_ON(next->flags,BIT_FLAG_RECALCULATE);
-    if( !isBlockBusy(block) ) {
+    if( !motor.isBlockBusy(block) ) {
       const float inom = 1.0 / next->nominal_speed;
       segment_update_trapezoid(next, next_entry_speed * inom, MIN_FEEDRATE * inom);
     }
@@ -202,10 +210,10 @@ void recalculate_trapezoids() {
   }
 }
 
-void describe_segments() {
+void Planner::describeAllSegments() {
   CRITICAL_SECTION_START();
   static uint8_t once = 0;
-  if (once == 0) {
+  if(once == 0) {
     once = 1;
     Serial.println("A = index");
     Serial.println("B = distance");
@@ -228,11 +236,10 @@ void describe_segments() {
 
     Serial.println("P = nominal?");
     Serial.println("Q = recalculate?");
-    Serial.println("R = busy?"); /**/
+    Serial.println("R = busy?");
     Serial.println("\nA\tB\tC\tD\tE\tF\tG\tH\tI\tJ\tK\tL\tM\tN\tO\tP\tQ\tR");
   }
-  Serial.println("-----------------------------------------------------------------------------------------------------"
-                 "----------------------");
+  Serial.println("---------------------------------------------------------------------------------------------------------------------------");
 
   int s = block_buffer_tail;
   while (s != block_buffer_head) {
@@ -261,23 +268,22 @@ void describe_segments() {
 
     Serial.print(F("\t"));   Serial.print(TEST(next->flags,BIT_FLAG_NOMINAL) != 0 ? 'Y' : 'N');
     Serial.print(F("\t"));   Serial.print(TEST(next->flags,BIT_FLAG_RECALCULATE) != 0 ? 'Y' : 'N');
-    Serial.print(F("\t"));   Serial.print(isBlockBusy(next) != 0 ? 'Y' : 'N');
+    Serial.print(F("\t"));   Serial.print(motor.isBlockBusy(next) != 0 ? 'Y' : 'N');
     Serial.println();
     s = getNextBlock(s);
   }
   CRITICAL_SECTION_END();
 }
 
-void recalculate_acceleration() {
+void Planner::recalculate_acceleration() {
   if(getPrevBlock(block_buffer_head) != block_buffer_planned) {
     recalculate_reverse();
     recalculate_forward();
   }
   recalculate_trapezoids();
-  // describe_segments();
 }
 
-void addSteps(Segment *newBlock,const float *const target_position, float fr_units_s, float longest_distance) {
+void Planner::addSteps(Segment *newBlock,const float *const target_position, float fr_units_s, float longest_distance) {
   int prev_segment = getPrevBlock(block_buffer_head);
   Segment &oldBlock = blockBuffer[prev_segment];
 
@@ -306,13 +312,13 @@ void addSteps(Segment *newBlock,const float *const target_position, float fr_uni
 #endif
     newBlock->a[i].delta_units = newBlock->a[i].delta_steps / motor_spu[i];
     newBlock->a[i].absdelta = abs(newBlock->a[i].delta_steps);
-    if (newBlock->steps_total < newBlock->a[i].absdelta) newBlock->steps_total = newBlock->a[i].absdelta;
+    if(newBlock->steps_total < newBlock->a[i].absdelta) newBlock->steps_total = newBlock->a[i].absdelta;
   }
 
   for (ALL_AXIES(i)) axies[i].pos = target_position[i];
 
   // No steps?  No work!  Stop now.
-  if (newBlock->steps_total < MIN_STEPS_PER_SEGMENT) return;
+  if(newBlock->steps_total < MIN_STEPS_PER_SEGMENT) return;
 
   newBlock->distance = longest_distance;
 
@@ -323,7 +329,7 @@ void addSteps(Segment *newBlock,const float *const target_position, float fr_uni
   uint32_t segment_time_us = lroundf(1000000.0f / inverse_secs);
 
 #ifdef BUFFER_EMPTY_SLOWDOWN
-  if (movesQueued >= 2 && movesQueued <= (MAX_SEGMENTS / 2) - 1) {
+  if(movesQueued >= 2 && movesQueued <= (MAX_SEGMENTS / 2) - 1) {
     const int32_t time_diff = min_segment_time_us - segment_time_us;
     if(time_diff > 0) {
       // Serial.print("was ");  Serial.print(inverse_secs);
@@ -343,10 +349,10 @@ void addSteps(Segment *newBlock,const float *const target_position, float fr_uni
   for (ALL_MUSCLES(i)) {
     current_speed[i] = newBlock->a[i].delta_units * inverse_secs;
     const float cs = fabs(current_speed[i]), max_fr = max_step_rate_s[i];
-    if (cs > max_fr) speed_factor = min(speed_factor, max_fr / cs);
+    if(cs > max_fr) speed_factor = min(speed_factor, max_fr / cs);
   }
   // apply the speed limit
-  if (speed_factor < 1.0) {
+  if(speed_factor < 1.0) {
     for (ALL_MUSCLES(i)) {
       current_speed[i] *= speed_factor;
     }
@@ -367,7 +373,7 @@ void addSteps(Segment *newBlock,const float *const target_position, float fr_uni
     float Tx = target_position[0] - oldX;
     float Ty = target_position[1] - oldY;
     float Rlen = sq(Tx) + sq(Ty);  // always >=0
-    if (Rlen > 0) {
+    if(Rlen > 0) {
       // normal vectors pointing from plotter to motor
       float R1x   = axies[0].limitMin - oldX;  // to left
       float R1y   = axies[1].limitMax - oldY;  // to top
@@ -393,16 +399,16 @@ void addSteps(Segment *newBlock,const float *const target_position, float fr_uni
 
       // If c is negative, that means that that support rope doesn't limit the acceleration; discard that c.
       float cT = -1;
-      if (c1 > 0 && c2 > 0) {
+      if(c1 > 0 && c2 > 0) {
         cT = (c1 < c2) ? c1 : c2;
-      } else if (c1 > 0) {
+      } else if(c1 > 0) {
         cT = c1;
-      } else if (c2 > 0) {
+      } else if(c2 > 0) {
         cT = c2;
       }
 
       // The maximum acceleration is given by cT if cT>0
-      if (cT > 0) {
+      if(cT > 0) {
         max_acceleration = max(min(max_acceleration, cT), (float)MIN_ACCELERATION);
       }
     }
@@ -423,14 +429,14 @@ void addSteps(Segment *newBlock,const float *const target_position, float fr_uni
 
   if(newBlock->steps_total <= acceleration_long_cutoff) {
     for (ALL_MUSCLES(i)) {
-      if (newBlock->a[i].absdelta && max_acceleration_steps_per_s2[i] < accel) {
+      if(newBlock->a[i].absdelta && max_acceleration_steps_per_s2[i] < accel) {
         const uint32_t max_possible = max_acceleration_steps_per_s2[i] * newBlock->steps_total / newBlock->a[i].absdelta;
         accel = min( accel, max_possible );
       }
     }
   } else {
     for (ALL_MUSCLES(i)) {
-      if (newBlock->a[i].absdelta && max_acceleration_steps_per_s2[i] < accel) {
+      if(newBlock->a[i].absdelta && max_acceleration_steps_per_s2[i] < accel) {
         const float max_possible = float(max_acceleration_steps_per_s2[i]) * float(newBlock->steps_total) / float(newBlock->a[i].absdelta);
         accel = min( accel, (uint32_t)max_possible );
       }
@@ -449,10 +455,10 @@ void addSteps(Segment *newBlock,const float *const target_position, float fr_uni
   for (ALL_MUSCLES(i)) {
     const float jerk = fabs(current_speed[i]),
                 maxj = max_jerk[i];
-    if (jerk > maxj) {  // new current speed too fast?
-      if (limited) {
+    if(jerk > maxj) {  // new current speed too fast?
+      if(limited) {
         const float mjerk = maxj * newBlock->nominal_speed;          // ns*mj
-        if (jerk * safe_speed > mjerk) safe_speed = mjerk / jerk;  // ns*mj/cs
+        if(jerk * safe_speed > mjerk) safe_speed = mjerk / jerk;  // ns*mj/cs
       } else {
         safe_speed *= maxj / jerk;  // Initial limit: ns*mj/cs
         ++limited;
@@ -462,7 +468,7 @@ void addSteps(Segment *newBlock,const float *const target_position, float fr_uni
 
   // what is the maximum starting speed for this segment?
   float vmax_junction;
-  if (movesQueued > 0 && previous_nominal_speed > 1e-6) {
+  if(movesQueued > 0 && previous_nominal_speed > 1e-6) {
     // Estimate a maximum velocity allowed at a joint of two successive segments.
     // If this maximum velocity allowed is lower than the minimum of the entry / exit safe velocities,
     // then the machine is not coasting anymore and the safe entry / exit velocities shall be used.
@@ -481,7 +487,7 @@ void addSteps(Segment *newBlock,const float *const target_position, float fr_uni
       // Limit an axis. We have to differentiate: coasting, reversal of an axis, full stop.
       float v_exit  = previous_speed[i] * smaller_speed_factor;
       float v_entry = current_speed[i];
-      if (limited) {
+      if(limited) {
         v_exit *= v_factor;
         v_entry *= v_factor;
       }
@@ -493,18 +499,18 @@ void addSteps(Segment *newBlock,const float *const target_position, float fr_uni
           :  // v_exit <= v_entry          coasting             axis reversal
           ((v_entry < 0 || v_exit > 0) ? (v_entry - v_exit) : max(-v_exit, v_entry));
 
-      if (jerk > max_jerk[i]) {
+      if(jerk > max_jerk[i]) {
         v_factor *= max_jerk[i] / jerk;
         ++limited;
       }
     }
 
-    if (limited) vmax_junction *= v_factor;
+    if(limited) vmax_junction *= v_factor;
     // Now the transition velocity is known, which maximizes the shared exit / entry velocity while
     // respecting the jerk factors, it may be possible, that applying separate safe exit / entry velocities will achieve
     // faster prints.
     const float vmax_junction_threshold = vmax_junction * 0.99f;
-    if (previous_safe_speed > vmax_junction_threshold && safe_speed > vmax_junction_threshold) {
+    if(previous_safe_speed > vmax_junction_threshold && safe_speed > vmax_junction_threshold) {
       // Not coasting. The machine will stop and start the movements anyway,
       // better to start the segment from start.
       vmax_junction = safe_speed;
@@ -532,45 +538,25 @@ void addSteps(Segment *newBlock,const float *const target_position, float fr_uni
   // when should we accelerate and decelerate in this segment?
   segment_update_trapezoid(newBlock, newBlock->entry_speed / newBlock->nominal_speed,
                            (float)MIN_FEEDRATE / newBlock->nominal_speed);
-  /*
-    Serial.print("seg:");  Serial.println((long)&new_seg,HEX);
-    Serial.print("distance=");  Serial.println(new_seg.distance);
-    Serial.print("acceleration original=");  Serial.println(acceleration);
-    Serial.print("nominal_speed=");  Serial.println(new_seg.nominal_speed);
-
-    Serial.print("inverse_distance_units=");  Serial.println(inverse_distance_units);
-    Serial.print("inverse_secs=");  Serial.println(inverse_secs);
-    Serial.print("nominal_rate=");  Serial.println(new_seg.nominal_rate);
-    Serial.print("delta_units=");
-    for (ALL_MUSCLES(i)) {
-      if (i > 0) Serial.print(",");
-      Serial.print(new_seg.a[i].delta_units);
-    }
-    Serial.println();
-    Serial.print("speed_factor=");  Serial.println(speed_factor);
-    Serial.print("steps_per_unit=");  Serial.println(steps_per_unit);
-    Serial.print("accel=");  Serial.println(accel);
-    Serial.print("acceleration_steps_per_s2=");  Serial.println(new_seg.acceleration_steps_per_s2);
-    Serial.print("acceleration=");  Serial.println(new_seg.acceleration);
-    Serial.print("limited=");  Serial.println(limited, DEC);
-    Serial.print("nominal_speed=");  Serial.println(new_seg.nominal_speed);
-    Serial.print("vmax_junction=");  Serial.println(vmax_junction);
-    Serial.print("allowable_speed=");  Serial.println(allowable_speed);
-    Serial.print("safe_speed=");  Serial.println(safe_speed);
-    Serial.print("entry_speed_max=");  Serial.println(new_seg.entry_speed_max);
-    Serial.print("entry_speed=");  Serial.println(new_seg.entry_speed);
-    //*/
+  //segmentReport(new_seg);
 }
 
-FORCE_INLINE static Segment *getNextFreeBlock(uint8_t &next_buffer_head,const uint8_t count=1) {
-  // get the next available spot in the segment buffer
-  while (getNextBlock(block_buffer_head) == block_buffer_tail) {
-    // the segment buffer is full, we are way ahead of the motion system.  wait here.
-    meanwhile();
+void Planner::segmentReport(Segment &new_seg) {
+  Serial.print("seg:");  Serial.println((long)&new_seg,HEX);
+  Serial.print("distance=");  Serial.println(new_seg.distance);
+  Serial.print("nominal_speed=");  Serial.println(new_seg.nominal_speed);
+  Serial.print("delta_units=");
+  for (ALL_MUSCLES(i)) {
+    if(i > 0) Serial.print(",");
+    Serial.print(new_seg.a[i].delta_units);
   }
-
-  next_buffer_head = getNextBlock(block_buffer_head);
-  return &blockBuffer[block_buffer_head];
+  Serial.println();
+  Serial.print("nominal_rate=");  Serial.println(new_seg.nominal_rate);
+  Serial.print("acceleration_steps_per_s2=");  Serial.println(new_seg.acceleration_steps_per_s2);
+  Serial.print("acceleration=");  Serial.println(new_seg.acceleration);
+  Serial.print("nominal_speed=");  Serial.println(new_seg.nominal_speed);
+  Serial.print("entry_speed_max=");  Serial.println(new_seg.entry_speed_max);
+  Serial.print("entry_speed=");  Serial.println(new_seg.entry_speed);
 }
 
 /**
@@ -580,18 +566,19 @@ FORCE_INLINE static Segment *getNextFreeBlock(uint8_t &next_buffer_head,const ui
    @input new_feed_rate speed to travel along arc
    @input longest_distance must be >=0
 */
-void planner_addSegment(const float *const target_position, float fr_units_s, float longest_distance) {
+void Planner::addSegment(const float *const target_position, float fr_units_s, float longest_distance) {
   uint8_t next_buffer_head;
   Segment *newBlock = getNextFreeBlock(next_buffer_head);
 
   addSteps(newBlock,target_position,fr_units_s,longest_distance);
 
-  if (block_buffer_tail == block_buffer_head) {
+  if(block_buffer_tail == block_buffer_head) {
     first_segment_delay = BLOCK_DELAY_FOR_1ST_MOVE;
   }
   block_buffer_head = next_buffer_head;
 
   recalculate_acceleration();
+  // describeAllSegments();
 
   ENABLE_STEPPER_DRIVER_INTERRUPT();
 }
@@ -601,7 +588,7 @@ void planner_addSegment(const float *const target_position, float fr_units_s, fl
    @input pos NUM_AXIES floats describing destination coordinates
    @input new_feed_rate speed to travel along arc
 */
-void planner_bufferLine(float *pos, float new_feed_rate_units) {
+void Planner::bufferLine(float *pos, float new_feed_rate_units) {
   // Remember the feed rate.  This value will be used whenever no feedrate is given in a command, so it MUST be saved
   // BEFORE the dial adjustment. otherwise the feedrate will slowly fall or climb as new commands are processed.
   desiredFeedRate = new_feed_rate_units;
@@ -623,23 +610,23 @@ void planner_bufferLine(float *pos, float new_feed_rate_units) {
   }
 
 #if MACHINE_STYLE == POLARGRAPH
-  if (delta[0] == 0 && delta[1] == 0) {
+  if(delta[0] == 0 && delta[1] == 0) {
     // only moving Z, don't split the line.
-    planner_addSegment(pos, new_feed_rate_units, abs(delta[2]));
+    addSegment(pos, new_feed_rate_units, abs(delta[2]));
     return;
   }
 #endif
 
   float len_units = sqrt(lenSquared);
-  if (abs(len_units) < 0.000001f) return;
+  if(abs(len_units) < 0.000001f) return;
 
   const float seconds = len_units / new_feed_rate_units;
   uint16_t segments   = seconds * SEGMENTS_PER_SECOND;
-  if (segments < 1) segments = 1;
+  if(segments < 1) segments = 1;
 
 #ifdef HAS_GRIPPER
   // if we have a gripper and only gripper is moving, don't split the movement.
-  if (lenSquared == sq(delta[6])) {
+  if(lenSquared == sq(delta[6])) {
     Serial.println("only t");
     segments = 1;
     Serial.print("seconds=");
@@ -659,11 +646,11 @@ void planner_bufferLine(float *pos, float new_feed_rate_units) {
   while (--segments) {
     for (ALL_AXIES(i)) startPos[i] += delta[i];
 
-    planner_addSegment(startPos, new_feed_rate_units, segment_len_units);
+    addSegment(startPos, new_feed_rate_units, segment_len_units);
   }
 
   // guarantee we stop exactly at the destination (no rounding errors).
-  planner_addSegment(pos, new_feed_rate_units, segment_len_units);
+  addSegment(pos, new_feed_rate_units, segment_len_units);
 
   //  Serial.print("P");  Serial.println(movesPlanned());
 }
@@ -678,7 +665,7 @@ void planner_bufferLine(float *pos, float new_feed_rate_units) {
    @input dir - ARC_CW or ARC_CCW to control direction of arc
    @input new_feed_rate speed to travel along arc
 */
-void planner_bufferArc(float cx, float cy, float *destination, char clockwise, float new_feed_rate) {
+void Planner::bufferArc(float cx, float cy, float *destination, char clockwise, float new_feed_rate_units) {
   // get radius
   float dx = axies[0].pos - cx;
   float dy = axies[1].pos - cy;
@@ -690,9 +677,9 @@ void planner_bufferArc(float cx, float cy, float *destination, char clockwise, f
   float er = sqrt(dx * dx + dy * dy);
 
   float da = ea - sa;
-  if (clockwise == ARC_CW && da < 0)
+  if(clockwise == ARC_CW && da < 0)
     ea += 2 * PI;
-  else if (clockwise == ARC_CCW && da > 0)
+  else if(clockwise == ARC_CCW && da > 0)
     sa += 2 * PI;
   da       = ea - sa;
   float dr = er - sr;
@@ -726,6 +713,11 @@ void planner_bufferArc(float cx, float cy, float *destination, char clockwise, f
     n[2] = (z - sz) * scale + sz;
 #endif
     // send it to the planner
-    planner_bufferLine(n, new_feed_rate);
+    bufferLine(n, new_feed_rate_units);
   }
+}
+
+void Planner::estop() {
+  // clear segment buffer
+  block_buffer_nonbusy = block_buffer_planned = block_buffer_head = block_buffer_tail;
 }

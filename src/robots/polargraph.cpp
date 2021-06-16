@@ -80,10 +80,10 @@ int FK(long *motorStepArray, float *cartesian) {
 
 void recordHome() {
 #  if defined(CAN_HOME)
-  wait_for_empty_segment_buffer();
-  motor_engage();
+  planner.wait_for_empty_segment_buffer();
+  motor.engage();
 #    ifdef MACHINE_HAS_LIFTABLE_PEN
-  setPenAngle(PEN_UP_ANGLE);
+  motor.setPenAngle(PEN_UP_ANGLE);
 #    endif
   hal_timer_t stepDelay = findStepDelay();
 
@@ -222,10 +222,10 @@ void polargraph_homeAtSpeed(int delayTime) {
 void robot_findHome() {
 #  if defined(CAN_HOME)
   // do not run this code unless you have the hardware to find home!
-  wait_for_empty_segment_buffer();
-  motor_engage();
+  planner.wait_for_empty_segment_buffer();
+  motor.engage();
 #    ifdef MACHINE_HAS_LIFTABLE_PEN
-  setPenAngle(PEN_UP_ANGLE);
+  motor.setPenAngle(PEN_UP_ANGLE);
 #    endif
 
   Serial.println(F("Find Home..."));
@@ -277,7 +277,7 @@ void robot_findHome() {
   // go home
   offset[0] = axies[0].homePos;
   offset[1] = axies[1].homePos;
-  planner_bufferLine(offset, desiredFeedRate);
+  planner.bufferLine(offset, desiredFeedRate);
 
   Serial.println(F("Done."));
 #  endif  // defined(CAN_HOME)
@@ -290,10 +290,10 @@ void robot_findHome() {
  */
 void calibrateBelts() {
 #  if defined(CAN_HOME)
-  wait_for_empty_segment_buffer();
-  motor_engage();
+  planner.wait_for_empty_segment_buffer();
+  motor.engage();
 #    ifdef MACHINE_HAS_LIFTABLE_PEN
-  setPenAngle(PEN_UP_ANGLE);
+  motor.setPenAngle(PEN_UP_ANGLE);
 #    endif
 
   Serial.println(F("Find switches..."));
@@ -356,7 +356,7 @@ void calibrateBelts() {
   get_end_plus_offset(offset);
   offset[0] = axies[0].homePos;
   offset[1] = axies[1].homePos;
-  planner_bufferLine(offset, desiredFeedRate);
+  planner.bufferLine(offset, desiredFeedRate);
   Serial.println(F("Done."));
 #  endif  // defined(CAN_HOME)
 }

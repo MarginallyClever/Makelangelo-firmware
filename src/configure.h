@@ -112,18 +112,19 @@
 #include "robots/sixi3.h"
 #include "robots/stewartLinear.h"
 
+#define NUM_MUSCLES (NUM_MOTORS + NUM_SERVOS)
+
 #include "config_motors.h"
-
 #include <Arduino.h>
-
 #include "clock.h"
+
+extern void meanwhile();
 #include "planner.h"
+
 #include "motor.h"
 #include "parser.h"
 #include "eeprom_manager.h"
-
 #include "gripper_hande.h"
-
 #include "tests.h"
 
 //------------------------------------------------------------------------------
@@ -177,10 +178,7 @@ extern int FK(long *motorStepArray, float *axies);
 extern void robot_findHome();
 extern void robot_setup();
 extern void teleport(float *pos);
-extern void planner_bufferLine(float *pos, float new_feed_rate);
-extern void arc(float cx, float cy, float *destination, char clockwise, float new_feed_rate);
 extern void get_end_plus_offset(float *results);
 extern void set_tool_offset(int toolID, float *pos);
 extern void reportCalibration();
-extern void meanwhile();
 extern void setHome(float *pos);

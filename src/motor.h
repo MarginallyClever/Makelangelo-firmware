@@ -29,19 +29,6 @@
 #  define STEPPER_DIR_LOW  LOW
 #endif
 
-#define NUM_MUSCLES (NUM_MOTORS + NUM_SERVOS)
-
-//------------------------------------------------------------------------------
-// MOVE BUFFERING
-//------------------------------------------------------------------------------
-
-// buffering commands
-#ifndef MAX_SEGMENTS
-#  define MAX_SEGMENTS (32)  // number of line segments to buffer ahead. must be a power of two.
-#endif
-
-#define SEGMOD(x) ((x) & (MAX_SEGMENTS - 1))
-
 //------------------------------------------------------------------------------
 // enable pin.  reverse if your board or drivers are odd.
 //------------------------------------------------------------------------------
@@ -108,63 +95,29 @@ typedef struct {
   uint8_t limit_switch_pin;
 } Motor;
 
-// for line()
-typedef struct {
-  int32_t step_count;   // current motor position, in steps.
-  int32_t delta_steps;  // steps
-  int32_t delta_units;     // in some systems it's mm, in others it's degrees.
-  uint32_t absdelta;
-  int dir;
-#if MACHINE_STYLE == SIXI
-  float expectedPosition;
-  float positionStart;
-  float positionEnd;
-#endif
-} Muscle;
+class Stepper {
+public:
+  static void setup();
+  static void home();
+  static void engage();
+  static void disengage();
+  static void set_step_count(long *a);
+  static void setPenAngle(int arg0);
+  static void clockISRProfile();
 
+  static void onestep(int motor);
 
-enum BlockFlagBits : uint8_t { 
-    BIT_FLAG_NOMINAL,
-    BIT_FLAG_RECALCULATE
+  static bool isBlockBusy(const Segment *block);
+
+#ifdef DEBUG_STEPPING
+  extern void debug_stepping();
+#endif  // DEBUG_STEPPING
 };
-
-enum BlockFlagMask : uint8_t {
-  BLOCK_FLAG_NOMINAL     = _BV(BIT_FLAG_NOMINAL),
-  BLOCK_FLAG_RECALCULATE = _BV(BIT_FLAG_RECALCULATE),
-};
-
-
-typedef struct {
-  Muscle a[NUM_MUSCLES];
-
-  float distance;         // units
-  float nominal_speed;    // units/s
-  float entry_speed;      // units/s
-  float entry_speed_max;  // units/s
-  float acceleration;     // units/sec^2
-
-  uint32_t steps_total;  // steps
-  uint32_t steps_taken;  // steps
-  uint32_t accel_until;  // steps
-  uint32_t decel_after;  // steps
-
-  uint32_t nominal_rate;               // steps/s
-  uint32_t initial_rate;               // steps/s
-  uint32_t final_rate;                 // steps/s
-  uint32_t acceleration_steps_per_s2;  // steps/s^2
-  uint32_t acceleration_rate;  // ?
-
-  uint8_t flags;
-} Segment;
 
 //------------------------------------------------------------------------------
 // GLOBALS
 //------------------------------------------------------------------------------
 
-extern Segment blockBuffer[MAX_SEGMENTS];
-extern Segment *working_block;
-extern volatile int block_buffer_head, block_buffer_nonbusy, block_buffer_planned, block_buffer_tail;
-extern int first_segment_delay;
 extern Motor motors[NUM_MUSCLES];
 extern const char *AxisNames;
 
@@ -185,61 +138,4 @@ extern Servo servos[NUM_SERVOS];
 #endif
 #endif
 
-//------------------------------------------------------------------------------
-// METHODS
-//------------------------------------------------------------------------------
-
-extern void motor_setup();
-extern void motor_home();
-extern void motor_engage();
-extern void motor_disengage();
-extern void motor_set_step_count(long *a);
-extern void setPenAngle(int arg0);
-extern void clockISRProfile();
-
-extern void motor_onestep(int motor);
-
-#ifdef DEBUG_STEPPING
-extern void debug_stepping();
-#endif  // DEBUG_STEPPING
-
-FORCE_INLINE const int planner_movesPlanned() {
-  return SEGMOD(block_buffer_head - block_buffer_tail);
-}
-
-FORCE_INLINE const int movesPlannedNotBusy() {
-  return SEGMOD(block_buffer_head - block_buffer_nonbusy);
-}
-
-FORCE_INLINE const int getNextBlock(int i) {
-  return SEGMOD(i + 1);
-}
-
-FORCE_INLINE const int getPrevBlock(int i) {
-  return SEGMOD(i - 1);
-}
-
-FORCE_INLINE const bool isBlockBusy(const Segment *block) {
-  return block == working_block;
-}
-
-FORCE_INLINE Segment *getCurrentBlock() {
-  if (block_buffer_tail == block_buffer_head) return NULL;
-
-  if (first_segment_delay > 0) {
-    --first_segment_delay;
-    if (planner_movesPlanned() < 3 && first_segment_delay) return NULL;
-    first_segment_delay=0;
-  }
-
-  Segment *block = &blockBuffer[block_buffer_tail];
-
-  if( TEST(block->flags,BIT_FLAG_RECALCULATE) ) return NULL;  // wait, not ready
-
-  block_buffer_nonbusy = getNextBlock(block_buffer_tail);
-  if (block_buffer_tail == block_buffer_planned) {
-    block_buffer_planned = block_buffer_nonbusy;
-  }
-
-  return block;
-}
+extern Stepper motor;

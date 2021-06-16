@@ -114,7 +114,7 @@ void robot_findHome() {
   {
     pos[i] = pos_store[i];
   }
-  planner_bufferLine(pos, desiredFeedRate);
+  planner.bufferLine(pos, desiredFeedRate);
 }
 
 void robot_setup() {
@@ -264,7 +264,7 @@ void SensorManager::resetAll() {
 }
 
 void reportError() {
-  wait_for_empty_segment_buffer();
+  planner.wait_for_empty_segment_buffer();
   sensorManager.updateAll();
 
   Serial.print(F("DP"));
@@ -307,7 +307,7 @@ void drive2(int i, float change) {
   pos[i] += -change;
 
   printGoto(pos);
-  planner_bufferLine(pos, desiredFeedRate);
+  planner.bufferLine(pos, desiredFeedRate);
 }
 
 void sixiDemo3a(int i, float t) {
@@ -471,12 +471,12 @@ void sixiDemo1() {
       pos[i] = posHome[i] - 10;
 
       printGoto(pos);
-      planner_bufferLine(pos, desiredFeedRate);
+      planner.bufferLine(pos, desiredFeedRate);
 
       for (ALL_AXIES(k)) { pos[k] = posHome[k]; }
       pos[i] = posHome[i] + 10;
       printGoto(pos);
-      planner_bufferLine(pos, desiredFeedRate);
+      planner.bufferLine(pos, desiredFeedRate);
     }
     printGoto(posHome);
     robot_findHome();
@@ -487,7 +487,7 @@ void sixiDemo1() {
   for (j = 0; j < 30; ++j) {
     for (ALL_AXIES(i)) { pos[i] = posHome[i] + random(-10, 10); }
     printGoto(pos);
-    planner_bufferLine(pos, desiredFeedRate);
+    planner.bufferLine(pos, desiredFeedRate);
   }
   printGoto(posHome);
   robot_findHome();

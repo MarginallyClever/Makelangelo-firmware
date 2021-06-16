@@ -45,24 +45,24 @@ void stewartDemo() {
   for (j = 0; j < 3; ++j) {
     for (i = 0; i < 5; ++i) {
       pos[j] = 2;
-      planner_bufferLine(pos, desiredFeedRate);
+      planner.bufferLine(pos, desiredFeedRate);
       pos[j] = -2;
-      planner_bufferLine(pos, desiredFeedRate);
+      planner.bufferLine(pos, desiredFeedRate);
     }
     pos[j] = 0;
-    planner_bufferLine(pos, desiredFeedRate);
+    planner.bufferLine(pos, desiredFeedRate);
   }
 
   // tilting
   for (j = 4; j < 6; ++j) {
     for (i = 0; i < 5; ++i) {
       pos[j] = 10;
-      planner_bufferLine(pos, desiredFeedRate);
+      planner.bufferLine(pos, desiredFeedRate);
       pos[j] = -10;
-      planner_bufferLine(pos, desiredFeedRate);
+      planner.bufferLine(pos, desiredFeedRate);
     }
     pos[j] = 0;
-    planner_bufferLine(pos, desiredFeedRate);
+    planner.bufferLine(pos, desiredFeedRate);
   }
 
   // combos
@@ -70,11 +70,11 @@ void stewartDemo() {
     for (i = 0; i < 360 * 5; i += 10) {
       pos[j]           = 2 * sin(((float)i / 180.0) * PI);
       pos[(j + 1) % 3] = 2 * cos(((float)i / 180.0) * PI);
-      planner_bufferLine(pos, desiredFeedRate);
+      planner.bufferLine(pos, desiredFeedRate);
     }
     pos[j]           = 0;
     pos[(j + 1) % 3] = 0;
-    planner_bufferLine(pos, desiredFeedRate);
+    planner.bufferLine(pos, desiredFeedRate);
   }
 
   // combos rotation
@@ -82,11 +82,11 @@ void stewartDemo() {
     for (i = 0; i < 360 * 5; i += 10) {
       pos[j]                     = 10.0 * sin(((float)i / 180.0) * PI);
       pos[3 + ((j - 3 + 1) % 3)] = 10.0 * cos(((float)i / 180.0) * PI);
-      planner_bufferLine(pos, desiredFeedRate);
+      planner.bufferLine(pos, desiredFeedRate);
     }
     pos[j]                     = 0;
     pos[3 + ((j - 3 + 1) % 3)] = 0;
-    planner_bufferLine(pos, desiredFeedRate);
+    planner.bufferLine(pos, desiredFeedRate);
   }
 
   // combos random
@@ -97,10 +97,10 @@ void stewartDemo() {
     pos[3] = 10.0 * cos(((float)random(360) / 180.0) * PI);
     pos[4] = 10.0 * cos(((float)random(360) / 180.0) * PI);
     pos[5] = 10.0 * cos(((float)random(360) / 180.0) * PI);
-    planner_bufferLine(pos, desiredFeedRate);
+    planner.bufferLine(pos, desiredFeedRate);
   }
   for (i = 0; i < NUM_AXIES; ++i) { pos[i] = 0; }
-  planner_bufferLine(pos, desiredFeedRate);
+  planner.bufferLine(pos, desiredFeedRate);
 }
 
 /**
@@ -340,7 +340,7 @@ void stewart_build_shoulders() {
 void robot_setup() {}
 
 void robot_findHome() {
-  wait_for_empty_segment_buffer();
+  planner.wait_for_empty_segment_buffer();
   motor_engage();
 
   hal_timer_t stepDelay = findStepDelay();

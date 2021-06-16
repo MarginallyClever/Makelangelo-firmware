@@ -111,7 +111,7 @@ void testCircle() {
     for(float i=0;i<360;i++) {
       p[0]=r*cos(i*PI/180.0);
       p[1]=r*sin(i*PI/180.0);
-      planner_bufferLine(p,desiredFeedRate);
+      planner.bufferLine(p,desiredFeedRate);
     }
   }
 }

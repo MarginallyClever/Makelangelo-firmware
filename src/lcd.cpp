@@ -374,12 +374,12 @@ void LCD_stop() {
 }
 
 void LCD_disable_motors() {
-  motor_disengage();
+  motor.disengage();
   MENU_POP();
 }
 
 void LCD_enable_motors() {
-  motor_engage();
+  motor.engage();
   MENU_POP();
 }
 
@@ -398,7 +398,7 @@ void LCD_this_is_home() {
 void LCD_go_home() {
   float homes[NUM_AXIES];
   for (ALL_AXIES(i)) homes[i] = axies[i].homePos;
-  planner_bufferLine(homes, DEFAULT_FEEDRATE);
+  planner.bufferLine(homes, DEFAULT_FEEDRATE);
   MENU_POP();
 }
 
@@ -408,7 +408,7 @@ void LCD_togglePenUp() {
   offset[0] = axies[0].pos;
   offset[1] = axies[1].pos;
   offset[2] = (axies[2].pos == PEN_UP_ANGLE) ? PEN_DOWN_ANGLE : PEN_UP_ANGLE;
-  planner_bufferLine(offset, desiredFeedRate);
+  planner.bufferLine(offset, desiredFeedRate);
   MENU_POP();
 }
 
@@ -432,7 +432,7 @@ void LCD_driveX() {
   offset[1] = axies[1].pos;
   offset[2] = axies[2].pos;
 
-  if (lcd_turn) { planner_bufferLine(offset, desiredFeedRate); }
+  if (lcd_turn) { planner.bufferLine(offset, desiredFeedRate); }
 
   LCD_setCursor(0, 0);
   LCD_print('X');
@@ -447,7 +447,7 @@ void LCD_driveY() {
   offset[1] = axies[1].pos + lcd_turn > 0 ? 1 : -1;
   offset[2] = axies[2].pos;
 
-  if (lcd_turn) { planner_bufferLine(offset, desiredFeedRate); }
+  if (lcd_turn) { planner.bufferLine(offset, desiredFeedRate); }
 
   LCD_setCursor(0, 0);
   LCD_print('Y');
@@ -464,7 +464,7 @@ void LCD_driveZ() {
 
   if (lcd_turn) {
     // protect servo, don't drive beyond physical limits
-    planner_bufferLine(offset, desiredFeedRate);
+    planner.bufferLine(offset, desiredFeedRate);
   }
 
   LCD_setCursor(0, 0);
@@ -560,33 +560,33 @@ void draw_border(int width, int height, int landscape) {
   start[0] = pos[0] = axies[0].pos;
   start[1] = pos[1] = axies[1].pos;
   start[2] = pos[2] = PEN_UP_ANGLE;
-  planner_bufferLine(pos, desiredFeedRate);
+  planner.bufferLine(pos, desiredFeedRate);
   // move to first corner
   pos[0] = -width;
   pos[1] = height;
-  planner_bufferLine(pos, desiredFeedRate);
+  planner.bufferLine(pos, desiredFeedRate);
   // lower pen
   pos[2] = PEN_DOWN_ANGLE;
-  planner_bufferLine(pos, desiredFeedRate);
+  planner.bufferLine(pos, desiredFeedRate);
   // move around border
   pos[0] = width;
   pos[1] = height;
-  planner_bufferLine(pos, desiredFeedRate);
+  planner.bufferLine(pos, desiredFeedRate);
   pos[0] = width;
   pos[1] = -height;
-  planner_bufferLine(pos, desiredFeedRate);
+  planner.bufferLine(pos, desiredFeedRate);
   pos[0] = -width;
   pos[1] = -height;
-  planner_bufferLine(pos, desiredFeedRate);
+  planner.bufferLine(pos, desiredFeedRate);
   pos[0] = -width;
   pos[1] = height;
-  planner_bufferLine(pos, desiredFeedRate);
+  planner.bufferLine(pos, desiredFeedRate);
   // lift pen
   pos[2] = PEN_UP_ANGLE;
-  planner_bufferLine(pos, desiredFeedRate);
+  planner.bufferLine(pos, desiredFeedRate);
 
   // return to start position
-  planner_bufferLine(start, desiredFeedRate);
+  planner.bufferLine(start, desiredFeedRate);
 #  endif  // NUM_AXIES == 3
   MENU_POP();
 }

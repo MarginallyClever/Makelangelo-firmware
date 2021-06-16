@@ -32,7 +32,7 @@ int FK(long *motorStepArray, float *axies) {
 }
 
 void robot_findHome() {
-  wait_for_empty_segment_buffer();
+  planner.wait_for_empty_segment_buffer();
   motor_engage();
 
   hal_timer_t stepDelay = findStepDelay();

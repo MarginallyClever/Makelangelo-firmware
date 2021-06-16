@@ -86,7 +86,7 @@ void pause(const uint32_t us) {
  * Instantly move the virtual plotter position.  Does not check if the move is valid.
  */
 void teleport(float *pos) {
-  wait_for_empty_segment_buffer();
+  planner.wait_for_empty_segment_buffer();
 
   // Serial.println(F("Teleport"));
   for (ALL_AXIES(i)) {
@@ -96,7 +96,7 @@ void teleport(float *pos) {
 
   long steps[NUM_MUSCLES];
   IK(pos, steps);
-  motor_set_step_count(steps);
+  motor.set_step_count(steps);
 }
 
 void setHome(float *pos) {
@@ -169,8 +169,9 @@ void setup() {
   LCD_setup();
 #endif
 
+  planner.zeroSpeeds();
   // clockISRProfile();
-  motor_setup();
+  motor.setup();
   // easyPWM_init();
 
   // initialize the plotter position.
@@ -194,7 +195,7 @@ void setup() {
   parser.ready();
 
   // run tests
-  //testCircle();
+  testCircle();
 }
 
 // after setup runs over and over.
@@ -211,7 +212,7 @@ void loop() {
   // The PC will wait forever for the ready signal.
   // if Arduino hasn't received a new instruction in a while, send ready() again
   // just in case USB garbled ready and each half is waiting on the other.
-  if (!planner_segmentBufferFull() && (millis() - parser.lastCmdTimeMs) > TIMEOUT_OK) {
+  if (!planner.segmentBufferFull() && (millis() - parser.lastCmdTimeMs) > TIMEOUT_OK) {
 #ifdef HAS_TMC2130
     // for debugging limit switches
     //tmc2130_status();

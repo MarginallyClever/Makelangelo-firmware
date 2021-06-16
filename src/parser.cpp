@@ -255,25 +255,25 @@ void Parser::processCommand() {
       case 8:        D8();        break;
 #endif
       case 9:        eepromManager.saveCalibration();        break;
-      case 10:       D10();       break;
+      case 10:       D10();        break;
 #ifdef MACHINE_HAS_LIFTABLE_PEN
-      case 13:        setPenAngle(parseNumber('Z', axies[2].pos));        break;
+      case 13:       motor.setPenAngle(parseNumber('Z', axies[2].pos));        break;
 #endif
-      case 14:        D14();        break;
+      case 14:       D14();        break;
 #ifdef IS_STEWART_PLATFORM
-      case 15:        stewartDemo();        break;
+      case 15:       stewartDemo();break;
 #endif
 #if MACHINE_STYLE == SIXI
-      case 15:        sixiDemo();           break;
-      case 17:        D17();        break;
-      case 18:        D18();        break;
-      case 19:        D19();        break;
-      case 20:        SET_BIT_OFF(sensorManager.positionErrorFlags, POSITION_ERROR_FLAG_ERROR);        break;
-      case 21:        FLIP_BIT(sensorManager.positionErrorFlags, POSITION_ERROR_FLAG_ESTOP);        break;  // toggle ESTOP
-      case 23:        D23();        break;
+      case 15:       sixiDemo();   break;
+      case 17:       D17();        break;
+      case 18:       D18();        break;
+      case 19:       D19();        break;
+      case 20:       SET_BIT_OFF(sensorManager.positionErrorFlags, POSITION_ERROR_FLAG_ERROR);        break;
+      case 21:       FLIP_BIT(sensorManager.positionErrorFlags, POSITION_ERROR_FLAG_ESTOP);        break;  // toggle ESTOP
+      case 23:       D23();        break;
 #endif
-      case 50:        D50();        break;
-      default:                      break;
+      case 50:       D50();        break;
+      default:                     break;
     }
     return;
   }
@@ -309,7 +309,7 @@ void Parser::processCommand() {
 void Parser::D0() {
   int j, amount;
 
-  motor_engage();
+  motor.engage();
 
   int stepDelay = findStepDelay();
   Serial.print(F("Step delay="));   Serial.println(stepDelay);
@@ -462,7 +462,7 @@ void Parser::D17() {
 #if MACHINE_STYLE == SIXI
 // D18 copy sensor values to motor step positions.
 void Parser::D18() {
-  wait_for_empty_segment_buffer();
+  planner.wait_for_empty_segment_buffer();
 
   float a[NUM_AXIES];
   int numSamples = 10;
@@ -608,7 +608,7 @@ void Parser::G01() {
 
   if (badAngles == 1) return;
 
-  planner_bufferLine(pos, f);
+  planner.bufferLine(pos, f);
 }
 
 /**
@@ -631,7 +631,7 @@ void Parser::G02(int8_t clockwise) {
 
   float p0 = axies[0].pos;
   float p1 = axies[1].pos;
-  planner_bufferArc(
+  planner.bufferArc(
     parseNumber('I', (absolute_mode ? p0 : 0)) + (absolute_mode ? 0 : p0),
     parseNumber('J', (absolute_mode ? p1 : 0)) + (absolute_mode ? 0 : p1),
     pos,
@@ -645,7 +645,7 @@ void Parser::G02(int8_t clockwise) {
    Wait S milliseconds and P seconds.
 */
 void Parser::G04() {
-  wait_for_empty_segment_buffer();
+  planner.wait_for_empty_segment_buffer();
   uint32_t delayTime = parseNumber('S', 0) + parseNumber('P', 0) * 1000.0f;
   pause(delayTime);
 }
@@ -681,14 +681,14 @@ void Parser::M6() {
 void Parser::M17() {
   Serial.print(F("M17"));
 
-  motor_engage();
+  motor.engage();
 }
 
 
 void Parser::M18() {
   Serial.print(F("M18"));
   
-  motor_disengage();
+  motor.disengage();
 }
 
 
@@ -799,8 +799,7 @@ void Parser::M101() {
  * Emergency stop
  */
 void Parser::M112() {
-  // clear segment buffer
-  block_buffer_head = block_buffer_tail;
+  planner.estop();
 #ifdef HAS_LCD
   LCD_setStatusMessage("ESTOP - PLEASE RESET");
 #endif
@@ -814,7 +813,7 @@ void Parser::M112() {
  * Print the X,Y,Z, feedrate, acceleration, and home position
  */
 void Parser::M114() {
-  wait_for_empty_segment_buffer();
+  planner.wait_for_empty_segment_buffer();
 
   Serial.print(F("M114"));
 

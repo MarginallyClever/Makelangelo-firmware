@@ -25,7 +25,7 @@
 
 #if NORMAL_MOTOR_STEPS == 200
 #  ifndef DEFAULT_FEEDRATE
-#    define DEFAULT_FEEDRATE     (180.0)
+#    define DEFAULT_FEEDRATE     (150.0)
 #  endif
 #  ifndef DEFAULT_ACCELERATION
 #    define DEFAULT_ACCELERATION (1250.0)

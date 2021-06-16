@@ -5,9 +5,6 @@
 //------------------------------------------------------------------------------
 
 #include "configure.h"
-#include "motor.h"
-
-#include "lcd.h"
 #include "speed_lookuptable.h"
 
 //------------------------------------------------------------------------------
@@ -24,7 +21,10 @@
 // GLOBALS
 //------------------------------------------------------------------------------
 
+Stepper motor;
+
 Motor motors[NUM_MUSCLES];
+
 
 #if NUM_SERVOS>0
 #ifndef ESP8266
@@ -32,13 +32,7 @@ Servo servos[NUM_SERVOS];
 #endif
 #endif
 
-Segment blockBuffer[MAX_SEGMENTS];
-Segment *working_block         = NULL;
-volatile int block_buffer_head = 0;
-volatile int block_buffer_planned = 0;
-volatile int block_buffer_nonbusy = 0;
-volatile int block_buffer_tail = 0;
-int first_segment_delay;
+Segment *working_block = NULL;
 
 // used by timer1 to optimize interrupt inner loop
 int steps_total;
@@ -86,6 +80,7 @@ int global_servoStep_dir_0;
 #endif
 
 const char *AxisNames  = "XYZUVWT";
+
 
 //------------------------------------------------------------------------------
 // METHODS
@@ -194,7 +189,7 @@ static FORCE_INLINE uint16_t MultiU24X32toH16(uint32_t longIn1, uint32_t longIn2
 /**
  * set up the pins for each motor
  */
-void motor_setup() {
+void Stepper::setup() {
 #define SETUP_MOT(NN)                                    \
   motors[NN].letter           = MOTOR_##NN##_LETTER;     \
   motors[NN].step_pin         = MOTOR_##NN##_STEP_PIN;   \
@@ -261,18 +256,12 @@ void motor_setup() {
   servos[4].attach(SERVO4_PIN);
 #endif
 
-  block_buffer_tail = 0;
-  block_buffer_head = 0;
-  
   long steps[NUM_MUSCLES];
   memset(steps, 0, (NUM_MUSCLES) * sizeof(long));
-  motor_set_step_count(steps);
-
-  working_block = NULL;
-  first_segment_delay = 0;
+  set_step_count(steps);
 
   HAL_timer_start(STEP_TIMER_NUM);
-  motor_engage();
+  engage();
 }
 
 
@@ -280,11 +269,10 @@ void motor_setup() {
  * Set the step count for each muscle.
  * @input a array of long values.  NUM_MUSCLES in length.
  */
-void motor_set_step_count(long *a) {
-  wait_for_empty_segment_buffer();
-  planner_zeroSpeeds();
+void Stepper::set_step_count(long *a) {
+  planner.zeroSpeeds();
 
-  Segment &old_seg = blockBuffer[getPrevBlock(block_buffer_head)];
+  Segment &old_seg = planner.blockBuffer[planner.getPrevBlock(planner.block_buffer_head)];
   for (ALL_MUSCLES(i)) old_seg.a[i].step_count = a[i];
 
   global_steps_0 = 0;
@@ -310,7 +298,7 @@ void motor_set_step_count(long *a) {
 
 
 // turn on power to the motors (make them immobile)
-void motor_engage() {
+void Stepper::engage() {
   for (ALL_MOTORS(i)) {
     digitalWrite(motors[i].enable_pin, MOTOR_ENABLE_ON);
   }
@@ -324,7 +312,7 @@ void motor_engage() {
 }
 
 // turn off power to the motors (make them move freely)
-void motor_disengage() {
+void Stepper::disengage() {
   for (ALL_MOTORS(i)) {
     digitalWrite(motors[i].enable_pin, MOTOR_ENABLE_OFF);
   }
@@ -338,7 +326,7 @@ void motor_disengage() {
 }
 
 // Change pen state.
-void setPenAngle(int arg0) {
+void Stepper::setPenAngle(int arg0) {
 #if NUM_AXIES >= 3
   if (arg0 < axies[2].limitMin) arg0 = axies[2].limitMin;
   if (arg0 > axies[2].limitMax) arg0 = axies[2].limitMax;
@@ -360,13 +348,17 @@ void setPenAngle(int arg0) {
    @input newx the destination x position
    @input newy the destination y position
  **/
-void motor_onestep(int motor) {
+void Stepper::onestep(int motor) {
 #ifdef VERBOSE
   Serial.print(motors[motor].letter);
 #endif
 
   digitalWrite(motors[motor].step_pin, HIGH);
   digitalWrite(motors[motor].step_pin, LOW);
+}
+
+bool Stepper::isBlockBusy(const Segment *block) {
+  return block == working_block;
 }
 
 
@@ -565,8 +557,8 @@ inline hal_timer_t isr_internal_block() {
     // Is this segment done?
     if (steps_taken >= steps_total) {
       // Move on to next segment without wasting an interrupt tick.
+      planner.releaseCurrentBlock();
       working_block     = NULL;
-      block_buffer_tail = getNextBlock(block_buffer_tail);
     } else {
       if (steps_taken <= accel_until) {
         // accelerating
@@ -622,7 +614,7 @@ inline hal_timer_t isr_internal_block() {
 
   // segment buffer empty? do nothing
   if (working_block == NULL) {
-    working_block = getCurrentBlock();
+    working_block = planner.getCurrentBlock();
 
     if (working_block == NULL) return interval;  // buffer empty
 
