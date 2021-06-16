@@ -355,7 +355,7 @@ void addSteps(Segment *newBlock,const float *const target_position, float fr_uni
   }
 
   // acceleration is a global set with "G0 A*"
-  float max_acceleration = acceleration;
+  float max_acceleration = desiredAcceleration;
 
 #if MACHINE_STYLE == POLARGRAPH && defined(DYNAMIC_ACCELERATION)
   {
@@ -432,7 +432,7 @@ void addSteps(Segment *newBlock,const float *const target_position, float fr_uni
     for (ALL_MUSCLES(i)) {
       if (newBlock->a[i].absdelta && max_acceleration_steps_per_s2[i] < accel) {
         const float max_possible = float(max_acceleration_steps_per_s2[i]) * float(newBlock->steps_total) / float(newBlock->a[i].absdelta);
-        accel = min( accel, max_possible );
+        accel = min( accel, (uint32_t)max_possible );
       }
     }
   }
@@ -447,7 +447,8 @@ void addSteps(Segment *newBlock,const float *const target_position, float fr_uni
   float safe_speed = newBlock->nominal_speed;
   char limited     = 0;
   for (ALL_MUSCLES(i)) {
-    const float jerk = fabs(current_speed[i]), maxj = max_jerk[i];
+    const float jerk = fabs(current_speed[i]),
+                maxj = max_jerk[i];
     if (jerk > maxj) {  // new current speed too fast?
       if (limited) {
         const float mjerk = maxj * newBlock->nominal_speed;          // ns*mj
@@ -461,24 +462,18 @@ void addSteps(Segment *newBlock,const float *const target_position, float fr_uni
 
   // what is the maximum starting speed for this segment?
   float vmax_junction;
-  /*
-  #if MACHINE_STYLE == POLARGRAPH
-    if(new_seg.a[2].absdelta != old_seg.a[2].absdelta) {    // any polargraph change in z (servo horn action) must begin
-  and end with a full stop.
-    //if(new_seg.a[2].absdelta == PEN_DOWN_ANGLE && old_seg.a[2].absdelta == PEN_UP_ANGLE ) {    // any polargraph
-  lowering (servo horn action) must begin with a full stop. vmax_junction=0; } else #endif*/
   if (movesQueued > 0 && previous_nominal_speed > 1e-6) {
     // Estimate a maximum velocity allowed at a joint of two successive segments.
     // If this maximum velocity allowed is lower than the minimum of the entry / exit safe velocities,
     // then the machine is not coasting anymore and the safe entry / exit velocities shall be used.
 
+    // Factor to multiply the previous / current nominal velocities to get componentwise limited velocities.
+    float v_factor = 1.0f;
+    limited = 0;
+
     // The junction velocity will be shared between successive segments. Limit the junction velocity to their minimum.
     // Pick the smaller of the nominal speeds. Higher speed shall not be achieved at the junction during coasting.
     vmax_junction = min(newBlock->nominal_speed, previous_nominal_speed);
-
-    // Factor to multiply the previous / current nominal velocities to get componentwise limited velocities.
-    float v_factor = 1.0f;
-    limited        = 0;
 
     // Now limit the jerk in all axes.
     const float smaller_speed_factor = vmax_junction / previous_nominal_speed;
@@ -492,10 +487,11 @@ void addSteps(Segment *newBlock,const float *const target_position, float fr_uni
       }
 
       // Calculate jerk depending on whether the axis is coasting in the same direction or reversing.
-      const float jerk = (v_exit > v_entry) ?  //                            coasting             axis reversal
-                             ((v_entry > 0 || v_exit < 0) ? (v_exit - v_entry) : max(v_exit, -v_entry))
-                                            :  // v_exit <= v_entry          coasting             axis reversal
-                             ((v_entry < 0 || v_exit > 0) ? (v_entry - v_exit) : max(-v_exit, v_entry));
+      const float jerk = (v_exit > v_entry)
+          ?  //                            coasting             axis reversal
+          ((v_entry > 0 || v_exit < 0) ? (v_exit - v_entry) : max(v_exit, -v_entry))
+          :  // v_exit <= v_entry          coasting             axis reversal
+          ((v_entry < 0 || v_exit > 0) ? (v_entry - v_exit) : max(-v_exit, v_entry));
 
       if (jerk > max_jerk[i]) {
         v_factor *= max_jerk[i] / jerk;
@@ -503,7 +499,7 @@ void addSteps(Segment *newBlock,const float *const target_position, float fr_uni
       }
     }
 
-    if (limited) { vmax_junction *= v_factor; }
+    if (limited) vmax_junction *= v_factor;
     // Now the transition velocity is known, which maximizes the shared exit / entry velocity while
     // respecting the jerk factors, it may be possible, that applying separate safe exit / entry velocities will achieve
     // faster prints.
@@ -608,7 +604,7 @@ void planner_addSegment(const float *const target_position, float fr_units_s, fl
 void planner_bufferLine(float *pos, float new_feed_rate_units) {
   // Remember the feed rate.  This value will be used whenever no feedrate is given in a command, so it MUST be saved
   // BEFORE the dial adjustment. otherwise the feedrate will slowly fall or climb as new commands are processed.
-  feed_rate = new_feed_rate_units;
+  desiredFeedRate = new_feed_rate_units;
 
 #ifdef HAS_LCD
   // use LCD to adjust speed while drawing
