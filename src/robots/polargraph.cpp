@@ -85,7 +85,7 @@ void recordHome() {
 #    ifdef MACHINE_HAS_LIFTABLE_PEN
   setPenAngle(PEN_UP_ANGLE);
 #    endif
-  findStepDelay();
+  hal_timer_t stepDelay = findStepDelay();
 
   Serial.println(F("Record home..."));
 
@@ -128,7 +128,7 @@ void recordHome() {
       digitalWrite(MOTOR_1_STEP_PIN, HIGH);
       digitalWrite(MOTOR_1_STEP_PIN, LOW);
     }
-    pause(step_delay * 2);
+    pause(stepDelay * 2);
   } while (left + right < 2);
 
   Serial.println(F("B..."));
@@ -139,7 +139,7 @@ void recordHome() {
     digitalWrite(MOTOR_0_STEP_PIN, LOW);
     digitalWrite(MOTOR_1_STEP_PIN, HIGH);
     digitalWrite(MOTOR_1_STEP_PIN, LOW);
-    pause(step_delay * 4);
+    pause(stepDelay * 4);
     --count[0];
     --count[1];
   }
@@ -167,7 +167,7 @@ void recordHome() {
       digitalWrite(MOTOR_1_STEP_PIN, HIGH);
       digitalWrite(MOTOR_1_STEP_PIN, LOW);
     }
-    pause(step_delay * 4);
+    pause(stepDelay * 4);
   } while (left + right < 2);
 
   calibrateLeft  = count[0];
@@ -239,8 +239,8 @@ void robot_findHome() {
 
 #    else
 
-  findStepDelay();
-  polargraph_homeAtSpeed(step_delay);
+  hal_timer_t stepDelay = findStepDelay();
+  polargraph_homeAtSpeed(stepDelay);
   // make sure there's no momentum to skip the belt on the pulley.
   delay(500);
   // back off a bit
@@ -252,10 +252,10 @@ void robot_findHome() {
 
     digitalWrite(MOTOR_1_STEP_PIN, HIGH);
     digitalWrite(MOTOR_1_STEP_PIN, LOW);
-    pause(step_delay * 3);
+    pause(stepDelay * 3);
   }
   // find it again, but slower
-  polargraph_homeAtSpeed(step_delay * 10);
+  polargraph_homeAtSpeed(stepDelay * 10);
 
 #    endif  // HAS_TMC2130
 
@@ -277,7 +277,7 @@ void robot_findHome() {
   // go home
   offset[0] = axies[0].homePos;
   offset[1] = axies[1].homePos;
-  planner_bufferLine(offset, feed_rate);
+  planner_bufferLine(offset, desiredFeedRate);
 
   Serial.println(F("Done."));
 #  endif  // defined(CAN_HOME)
@@ -308,7 +308,7 @@ void calibrateBelts() {
   homePos[1] = axies[1].homePos;
   homePos[2] = axies[2].pos;
   IK(homePos, steps);
-  findStepDelay();
+  hal_timer_t stepDelay = findStepDelay();
 
   do {
     if (left == 0) {
@@ -331,7 +331,7 @@ void calibrateBelts() {
       digitalWrite(MOTOR_1_STEP_PIN, LOW);
       steps[1]++;
     }
-    pause(step_delay);
+    pause(stepDelay);
   } while (left + right < NUM_MOTORS);
 
   // make sure there's no momentum to skip the belt on the pulley.
@@ -356,7 +356,7 @@ void calibrateBelts() {
   get_end_plus_offset(offset);
   offset[0] = axies[0].homePos;
   offset[1] = axies[1].homePos;
-  planner_bufferLine(offset, feed_rate);
+  planner_bufferLine(offset, desiredFeedRate);
   Serial.println(F("Done."));
 #  endif  // defined(CAN_HOME)
 }

@@ -124,6 +124,8 @@
 
 #include "gripper_hande.h"
 
+#include "tests.h"
+
 //------------------------------------------------------------------------------
 // SANITY CHECKS
 //------------------------------------------------------------------------------
@@ -162,13 +164,12 @@ extern int robot_uid;
 extern float calibrateRight;
 extern float calibrateLeft;
 
-extern float feed_rate;
-extern float acceleration;
-extern hal_timer_t step_delay;
+extern float desiredFeedRate;
+extern float desiredAcceleration;
 extern Axis axies[NUM_AXIES];
 
 extern void pause(const uint32_t us);
-extern void findStepDelay();
+extern hal_timer_t findStepDelay();
 
 extern void IK(const float *const axies, long *motorStepArray);
 extern int FK(long *motorStepArray, float *axies);

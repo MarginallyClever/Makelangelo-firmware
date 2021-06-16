@@ -20,24 +20,24 @@ void stewartDemo() {
   for (j = 0; j < 3; ++j) {
     for (i = 0; i < 5; ++i) {
       pos[j] = 2;
-      lineSafe(pos, feed_rate);
+      planner_bufferLine(pos, desiredFeedRate);
       pos[j] = -2;
-      lineSafe(pos, feed_rate);
+      planner_bufferLine(pos, desiredFeedRate);
     }
     pos[j] = 0;
-    lineSafe(pos, feed_rate);
+    planner_bufferLine(pos, desiredFeedRate);
   }
 
   // tilting
   for (j = 4; j < 6; ++j) {
     for (i = 0; i < 5; ++i) {
       pos[j] = 10;
-      lineSafe(pos, feed_rate);
+      planner_bufferLine(pos, desiredFeedRate);
       pos[j] = -10;
-      lineSafe(pos, feed_rate);
+      planner_bufferLine(pos, desiredFeedRate);
     }
     pos[j] = 0;
-    lineSafe(pos, feed_rate);
+    planner_bufferLine(pos, desiredFeedRate);
   }
 
   // combos
@@ -45,11 +45,11 @@ void stewartDemo() {
     for (i = 0; i < 360 * 5; i += 10) {
       pos[j]           = 2 * sin(((float)i / 180.0) * PI);
       pos[(j + 1) % 3] = 2 * cos(((float)i / 180.0) * PI);
-      lineSafe(pos, feed_rate);
+      planner_bufferLine(pos, desiredFeedRate);
     }
     pos[j]           = 0;
     pos[(j + 1) % 3] = 0;
-    lineSafe(pos, feed_rate);
+    planner_bufferLine(pos, desiredFeedRate);
   }
 
   // combos rotation
@@ -57,11 +57,11 @@ void stewartDemo() {
     for (i = 0; i < 360 * 5; i += 10) {
       pos[j]                     = 10.0 * sin(((float)i / 180.0) * PI);
       pos[3 + ((j - 3 + 1) % 3)] = 10.0 * cos(((float)i / 180.0) * PI);
-      lineSafe(pos, feed_rate);
+      planner_bufferLine(pos, desiredFeedRate);
     }
     pos[j]                     = 0;
     pos[3 + ((j - 3 + 1) % 3)] = 0;
-    lineSafe(pos, feed_rate);
+    planner_bufferLine(pos, desiredFeedRate);
   }
 
   // combos random
@@ -72,10 +72,10 @@ void stewartDemo() {
     pos[3] = 10.0 * cos(((float)random(360) / 180.0) * PI);
     pos[4] = 10.0 * cos(((float)random(360) / 180.0) * PI);
     pos[5] = 10.0 * cos(((float)random(360) / 180.0) * PI);
-    lineSafe(pos, feed_rate);
+    planner_bufferLine(pos, desiredFeedRate);
   }
   for (i = 0; i < NUM_AXIES; ++i) { pos[i] = 0; }
-  lineSafe(pos, feed_rate);
+  planner_bufferLine(pos, desiredFeedRate);
 }
 
 /**
@@ -112,7 +112,7 @@ void robot_findHome() {
 
   tmc2130_motor_home();
 #else
-  findStepDelay();
+  hal_timer_t stepDelay = findStepDelay();
 
   Serial.println(F("Finding..."));
 
@@ -135,7 +135,7 @@ void robot_findHome() {
       }
     }
     Serial.println();
-    pause(step_delay);
+    pause(stepDelay);
   } while (hits < NUM_MOTORS);
 
 #endif
@@ -152,7 +152,7 @@ void factory_reset() {
   }
   for (ALL_MUSCLES(i)) {
     max_jerk[i] = MAX_JERK_DEFAULT;
-    max_feedrate_units_s[i] = MAX_FEEDRATE;
+    max_step_rate_s[i] = MAX_STEP_RATE_DEFAULT;
   }
   eepromManager.saveAll();
 }

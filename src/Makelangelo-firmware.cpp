@@ -8,7 +8,6 @@
 // INCLUDES
 //------------------------------------------------------------------------------
 #include "configure.h"
-#include "motor.h"
 #include "sdcard.h"
 #include "lcd.h"
 
@@ -31,9 +30,8 @@ float calibrateRight = 1011.0;
 float calibrateLeft  = 1011.0;
 
 // plotter position.
-float feed_rate    = DEFAULT_FEEDRATE;
-float acceleration = DEFAULT_ACCELERATION;
-hal_timer_t step_delay;
+float desiredFeedRate     = DEFAULT_FEEDRATE;
+float desiredAcceleration = DEFAULT_ACCELERATION;
 
 #if MACHINE_STYLE == SIXI
 uint32_t reportDelay = 0;
@@ -63,66 +61,25 @@ unsigned int localPort = 9999;
 
 /**
  * calculate microseconds-per-step.
- * step_per_units = 1mm / UNITS_PER_STEP
- * steps_per_second = step_per_units * feed_rate (mm/s)
+ * step_per_units = 1 / UNITS_PER_STEP
+ * steps_per_second = step_per_units * desiredFeedRate (units/s)
  * microseconds_per_step = 1M microseconds / steps_per_second
  **/
-void findStepDelay() {
-  // feedrate is units/s
-  // mm per step is 
-  float steps_per_second = feed_rate * STEPS_PER_UNIT;
-  step_delay = (hal_timer_t)(1000000.0f / steps_per_second);
-  Serial.print("step_delay=");
-  Serial.println(step_delay);
+hal_timer_t findStepDelay() {
+  float stepsPerSecond = desiredFeedRate * STEPS_PER_UNIT;
+  hal_timer_t delay = (hal_timer_t)(1000000.0f / stepsPerSecond);
+  return delay;
 }
 
 void setFeedRate(float units_per_s) {
-  if (feed_rate != units_per_s) {
-    feed_rate = max(min(units_per_s,MAX_FEEDRATE),MIN_FEEDRATE);
+  if (desiredFeedRate != units_per_s) {
+    desiredFeedRate = max(min(units_per_s,MAX_FEEDRATE),MIN_FEEDRATE);
   }
 }
 
 void pause(const uint32_t us) {
   delay(us / 1000);
   delayMicroseconds(us % 1000);
-}
-
-// Test that IK(FK(A))=A
-void testKinematics() {
-  long A[NUM_MOTORS], i, j;
-  float axies1[NUM_AXIES];
-  float axies2[NUM_AXIES];
-
-  for (i = 0; i < 3000; ++i) {
-    for (j = 0; j < NUM_AXIES; ++j) { axies1[j] = random(axies[j].limitMin, axies[j].limitMax); }
-
-    IK(axies1, A);
-    FK(A, axies2);
-
-    for (j = 0; j < NUM_AXIES; ++j) {
-      Serial.print('\t');
-      Serial.print(AxisNames[j]);
-      Serial.print(axies1[j]);
-    }
-    for (j = 0; j < NUM_MOTORS; ++j) {
-      Serial.print('\t');
-      Serial.print(motors[j].letter);
-      Serial.print(A[j]);
-    }
-    for (j = 0; j < NUM_AXIES; ++j) {
-      Serial.print('\t');
-      Serial.print(AxisNames[j]);
-      Serial.print('\'');
-      Serial.print(axies2[j]);
-    }
-    for (j = 0; j < NUM_AXIES; ++j) {
-      Serial.print(F("\td"));
-      Serial.print(AxisNames[j]);
-      Serial.print('=');
-      Serial.print(axies2[j] - axies1[j]);
-    }
-    Serial.println();
-  }
 }
 
 /**
@@ -174,54 +131,11 @@ void meanwhile() {
 #  if defined(HAS_GRIPPER)
   gripper.update();
 #  endif
-
 #endif  // MACHINE_STYLE == SIXI
 
 #ifdef DEBUG_STEPPING
   debug_stepping();
 #endif  // DEBUG_STEPPING
-}
-
-void unitTestWrapDegrees() {
-  // unit test WRAP_DEGREES
-  for (float i = -360; i <= 360; i += 0.7) {
-    Serial.print(i);
-    Serial.print("\t");
-    Serial.println(WRAP_DEGREES(i));
-  }
-}
-
-void unitTestBitMacros() {
-  uint32_t a = 0;
-  Serial.print("on=");
-  SET_BIT_ON(a, 1);
-  Serial.println(a, BIN);
-
-  Serial.print("test=");
-  Serial.println(TEST(a, 1) ? "on" : "off");
-
-  Serial.print("off=");
-  SET_BIT_OFF(a, 1);
-  Serial.println(a, BIN);
-
-  Serial.print("test=");
-  Serial.println(TEST(a, 1) ? "on" : "off");
-
-  Serial.print("flip=");
-  FLIP_BIT(a, 1);
-  Serial.println(a, BIN);
-
-  Serial.print("test=");
-  Serial.println(TEST(a, 1) ? "on" : "off");
-
-  Serial.print("set=");
-  SET_BIT(a, 1, false);
-  Serial.println(a, BIN);
-
-  Serial.print("test=");
-  Serial.println(TEST(a, 1) ? "on" : "off");
-
-  while (1) {}
 }
 
 void reportAllMotors() {
@@ -235,25 +149,6 @@ void reportAllMotors() {
 #endif
   }
   Serial.println();
-}
-
-void tmc2130_test1() {
-  //tmc2130_ms(2);
-  //tmc2130_status();
-
-  digitalWrite(MOTOR_0_ENABLE_PIN,LOW);
-  digitalWrite(MOTOR_0_DIR_PIN,LOW);
-  for(int i=0;i<1000;++i) {
-    digitalWrite(MOTOR_0_STEP_PIN,HIGH);
-    digitalWrite(MOTOR_0_STEP_PIN,LOW);
-    delay(1);
-  }
-  digitalWrite(MOTOR_0_DIR_PIN,HIGH);
-  for(int i=0;i<1000;++i) {
-    digitalWrite(MOTOR_0_STEP_PIN,HIGH);
-    digitalWrite(MOTOR_0_STEP_PIN,LOW);
-    delay(1);
-  }
 }
 
 // runs once on machine start
@@ -275,10 +170,7 @@ void setup() {
 #endif
 
   // clockISRProfile();
-
   motor_setup();
-  findStepDelay();
-
   // easyPWM_init();
 
   // initialize the plotter position.
@@ -294,15 +186,15 @@ void setup() {
 #endif
 
   teleport(pos);
-
   setFeedRate(DEFAULT_FEEDRATE);
-
   robot_setup();
-
   // reportAllMotors();
 
   parser.M100();
   parser.ready();
+
+  // run tests
+  //testCircle();
 }
 
 // after setup runs over and over.

@@ -159,6 +159,7 @@ void robot_findHome() {
 
   motor_disengage();
 
+  hal_timer_t stepDelay = findStepDelay();
   // back up until the arms hit the limit switches
   float horizontal = DEGREES_ABOVE_HORIZONTAL;
   long j, steps_to_zero = horizontal * MICROSTEP_PER_DEGREE;
@@ -172,7 +173,7 @@ void robot_findHome() {
     while (digitalRead(motors[i].limit_switch_pin) == HIGH) {
       digitalWrite(motors[i].step_pin, HIGH);
       digitalWrite(motors[i].step_pin, LOW);
-      pause(step_delay);
+      pause(stepDelay);
     }
 
     // move to home position
@@ -181,7 +182,7 @@ void robot_findHome() {
       Serial.println(i, DEC);
       digitalWrite(motors[i].step_pin, HIGH);
       digitalWrite(motors[i].step_pin, LOW);
-      pause(step_delay);
+      pause(stepDelay);
     }
   }
 

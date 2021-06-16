@@ -114,7 +114,7 @@ void robot_findHome() {
   {
     pos[i] = pos_store[i];
   }
-  lineSafe(pos, feed_rate);
+  planner_bufferLine(pos, desiredFeedRate);
 }
 
 void robot_setup() {
@@ -307,7 +307,7 @@ void drive2(int i, float change) {
   pos[i] += -change;
 
   printGoto(pos);
-  lineSafe(pos, feed_rate);
+  planner_bufferLine(pos, desiredFeedRate);
 }
 
 void sixiDemo3a(int i, float t) {
@@ -370,14 +370,14 @@ void sixiDemo3a(int i, float t) {
 void sixiDemo3() {
   robot_findHome();
 
-  float of  = feed_rate;
-  feed_rate = 60;
+  float of  = desiredFeedRate;
+  desiredFeedRate = 60;
 
   Serial.println("Jn\tU\tV\tW");
 
   for (int i = 3; i < 6; ++i) { sixiDemo3a(i, 5); }
 
-  feed_rate = of;
+  desiredFeedRate = of;
 }
 
 void sixiDemo2a(float t) {
@@ -454,11 +454,11 @@ void sixiDemo1() {
 
   int j;
 
-  float fr = feed_rate;
-  float aa = acceleration;
+  float fr = desiredFeedRate;
+  float aa = desiredAcceleration;
 
-  feed_rate    = 80;
-  acceleration = 25;
+  desiredFeedRate    = 80;
+  desiredAcceleration = 25;
 
   printGoto(posHome);
   robot_findHome();
@@ -471,12 +471,12 @@ void sixiDemo1() {
       pos[i] = posHome[i] - 10;
 
       printGoto(pos);
-      lineSafe(pos, feed_rate);
+      planner_bufferLine(pos, desiredFeedRate);
 
       for (ALL_AXIES(k)) { pos[k] = posHome[k]; }
       pos[i] = posHome[i] + 10;
       printGoto(pos);
-      lineSafe(pos, feed_rate);
+      planner_bufferLine(pos, desiredFeedRate);
     }
     printGoto(posHome);
     robot_findHome();
@@ -487,14 +487,14 @@ void sixiDemo1() {
   for (j = 0; j < 30; ++j) {
     for (ALL_AXIES(i)) { pos[i] = posHome[i] + random(-10, 10); }
     printGoto(pos);
-    lineSafe(pos, feed_rate);
+    planner_bufferLine(pos, desiredFeedRate);
   }
   printGoto(posHome);
   robot_findHome();
   reportError();
 
-  feed_rate    = fr;
-  acceleration = aa;
+  desiredFeedRate    = fr;
+  desiredAcceleration = aa;
 
   Serial.println(F("SIXI DEMO END"));
 }

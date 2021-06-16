@@ -21,15 +21,17 @@
 #  define NUM_MOTORS (6)
 #  define NUM_SERVOS (0)
 
-#  define MAX_FEEDRATE     (80.0)  // depends on timer interrupt & hardware
-#  define MIN_FEEDRATE     (0)
-#  define DEFAULT_FEEDRATE (10.0)
+#  define MAX_FEEDRATE     (80.0f)  // depends on timer interrupt & hardware
+#  define MIN_FEEDRATE     (0.0f)
+#  define DEFAULT_FEEDRATE (10.0f)
+#define MAX_STEP_RATE_DEFAULT (160.0f)
 
-#  define MAX_ACCELERATION     (1000)
-#  define MIN_ACCELERATION     (0)
-#  define DEFAULT_ACCELERATION (500)
+#  define MAX_ACCELERATION     (1000.0f)
+#  define MIN_ACCELERATION     (0.0f)
+#  define DEFAULT_ACCELERATION (500.0f)
 
-#  define MAX_JERK (5.0)
+#  define MAX_JERK (50.0)
+#  define MAX_JERK_DEFAULT (5.0)
 
 #  define MAX_SEGMENTS (16)
 

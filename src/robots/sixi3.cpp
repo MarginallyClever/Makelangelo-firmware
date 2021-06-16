@@ -49,7 +49,7 @@ void robot_findHome() {
   wait_for_empty_segment_buffer();
   motor_engage();
 
-  findStepDelay();
+  hal_timer_t stepDelay = findStepDelay();
 
   Serial.println(F("Finding..."));
 
@@ -72,7 +72,7 @@ void robot_findHome() {
       }
     }
     Serial.println();
-    pause(step_delay);
+    pause(stepDelay);
   } while (hits < NUM_MOTORS);
   Serial.println(F("Found."));
 

@@ -311,9 +311,9 @@ void Parser::D0() {
 
   motor_engage();
 
-  findStepDelay();
-  Serial.print(F("Step delay="));   Serial.println(step_delay);
-  Serial.print(F("feed rate="));    Serial.println(feed_rate);
+  int stepDelay = findStepDelay();
+  Serial.print(F("Step delay="));   Serial.println(stepDelay);
+  Serial.print(F("feed rate="));    Serial.println(desiredFeedRate);
   Serial.print(F("UNITS_PER_STEP="));  Serial.println(UNITS_PER_STEP,4);
 
   Serial.print(F("STEPPER_TIMER_PRESCALE="));      Serial.println(STEPPER_TIMER_PRESCALE);
@@ -343,7 +343,7 @@ void Parser::D0() {
       for (j = 0; j < amount; ++j) {
         digitalWrite(motors[i].step_pin, HIGH);
         digitalWrite(motors[i].step_pin, LOW);
-        pause(step_delay);
+        pause(stepDelay);
         if(j%100) Serial.print('.');
         digitalWrite(LED_BUILTIN,!digitalRead(LED_BUILTIN));
       }
@@ -572,11 +572,11 @@ void Parser::G01() {
 #endif
 
   if (hasGCode('A')) {
-    acceleration = parseNumber('A', acceleration);
-    acceleration = min(max(acceleration, (float)MIN_ACCELERATION), (float)MAX_ACCELERATION);
+    desiredAcceleration = parseNumber('A', desiredAcceleration);
+    desiredAcceleration = min(max(desiredAcceleration, (float)MIN_ACCELERATION), (float)MAX_ACCELERATION);
   }
 
-  float f = parseNumber('F', feed_rate);
+  float f = parseNumber('F', desiredFeedRate);
   f = min(max(f, (float)MIN_FEEDRATE), (float)MAX_FEEDRATE);
 
   uint8_t badAngles = 0;
@@ -617,9 +617,9 @@ void Parser::G01() {
    @param clockwise (G2) 1 for cw, (G3) 0 for ccw
 */
 void Parser::G02(int8_t clockwise) {
-  acceleration = parseNumber('A', acceleration);
-  acceleration = min(max(acceleration, (float)MIN_ACCELERATION), (float)MAX_ACCELERATION);
-  float f      = parseNumber('F', feed_rate);
+  desiredAcceleration = parseNumber('A', desiredAcceleration);
+  desiredAcceleration = min(max(desiredAcceleration, (float)MIN_ACCELERATION), (float)MAX_ACCELERATION);
+  float f      = parseNumber('F', desiredFeedRate);
   f            = min(max(f, (float)MIN_FEEDRATE), (float)MAX_FEEDRATE);
 
   int i;
@@ -631,8 +631,13 @@ void Parser::G02(int8_t clockwise) {
 
   float p0 = axies[0].pos;
   float p1 = axies[1].pos;
-  arc(parseNumber('I', (absolute_mode ? p0 : 0)) + (absolute_mode ? 0 : p0),
-      parseNumber('J', (absolute_mode ? p1 : 0)) + (absolute_mode ? 0 : p1), pos, clockwise, f);
+  planner_bufferArc(
+    parseNumber('I', (absolute_mode ? p0 : 0)) + (absolute_mode ? 0 : p0),
+    parseNumber('J', (absolute_mode ? p1 : 0)) + (absolute_mode ? 0 : p1),
+    pos,
+    clockwise,
+    f
+  );
 }
 
 /**
@@ -820,10 +825,10 @@ void Parser::M114() {
   }
 
   Serial.print(F(" F"));
-  Serial.print(feed_rate);
+  Serial.print(desiredFeedRate);
 
   Serial.print(F(" A"));
-  Serial.print(acceleration);
+  Serial.print(desiredAcceleration);
 
   Serial.println();
 }

@@ -408,7 +408,7 @@ void LCD_togglePenUp() {
   offset[0] = axies[0].pos;
   offset[1] = axies[1].pos;
   offset[2] = (axies[2].pos == PEN_UP_ANGLE) ? PEN_DOWN_ANGLE : PEN_UP_ANGLE;
-  planner_bufferLine(offset, feed_rate);
+  planner_bufferLine(offset, desiredFeedRate);
   MENU_POP();
 }
 
@@ -432,7 +432,7 @@ void LCD_driveX() {
   offset[1] = axies[1].pos;
   offset[2] = axies[2].pos;
 
-  if (lcd_turn) { planner_bufferLine(offset, feed_rate); }
+  if (lcd_turn) { planner_bufferLine(offset, desiredFeedRate); }
 
   LCD_setCursor(0, 0);
   LCD_print('X');
@@ -447,7 +447,7 @@ void LCD_driveY() {
   offset[1] = axies[1].pos + lcd_turn > 0 ? 1 : -1;
   offset[2] = axies[2].pos;
 
-  if (lcd_turn) { planner_bufferLine(offset, feed_rate); }
+  if (lcd_turn) { planner_bufferLine(offset, desiredFeedRate); }
 
   LCD_setCursor(0, 0);
   LCD_print('Y');
@@ -464,7 +464,7 @@ void LCD_driveZ() {
 
   if (lcd_turn) {
     // protect servo, don't drive beyond physical limits
-    planner_bufferLine(offset, feed_rate);
+    planner_bufferLine(offset, desiredFeedRate);
   }
 
   LCD_setCursor(0, 0);
@@ -477,16 +477,16 @@ void LCD_driveF() {
 
   if (lcd_turn) {
     // protect servo, don't drive beyond physical limits
-    float newF = feed_rate + lcd_turn > 0 ? 1 : -1;
+    float newF = desiredFeedRate + lcd_turn > 0 ? 1 : -1;
     if (newF < MIN_FEEDRATE) newF = MIN_FEEDRATE;
     if (newF > MAX_FEEDRATE) newF = MAX_FEEDRATE;
     // move
-    feed_rate = newF;
+    desiredFeedRate = newF;
   }
 
   LCD_setCursor(0, 0);
   LCD_print('F');
-  LCD_print_float(feed_rate);
+  LCD_print_float(desiredFeedRate);
 }
 
 void LCD_start_menu() {
@@ -560,33 +560,33 @@ void draw_border(int width, int height, int landscape) {
   start[0] = pos[0] = axies[0].pos;
   start[1] = pos[1] = axies[1].pos;
   start[2] = pos[2] = PEN_UP_ANGLE;
-  planner_bufferLine(pos, feed_rate);
+  planner_bufferLine(pos, desiredFeedRate);
   // move to first corner
   pos[0] = -width;
   pos[1] = height;
-  planner_bufferLine(pos, feed_rate);
+  planner_bufferLine(pos, desiredFeedRate);
   // lower pen
   pos[2] = PEN_DOWN_ANGLE;
-  planner_bufferLine(pos, feed_rate);
+  planner_bufferLine(pos, desiredFeedRate);
   // move around border
   pos[0] = width;
   pos[1] = height;
-  planner_bufferLine(pos, feed_rate);
+  planner_bufferLine(pos, desiredFeedRate);
   pos[0] = width;
   pos[1] = -height;
-  planner_bufferLine(pos, feed_rate);
+  planner_bufferLine(pos, desiredFeedRate);
   pos[0] = -width;
   pos[1] = -height;
-  planner_bufferLine(pos, feed_rate);
+  planner_bufferLine(pos, desiredFeedRate);
   pos[0] = -width;
   pos[1] = height;
-  planner_bufferLine(pos, feed_rate);
+  planner_bufferLine(pos, desiredFeedRate);
   // lift pen
   pos[2] = PEN_UP_ANGLE;
-  planner_bufferLine(pos, feed_rate);
+  planner_bufferLine(pos, desiredFeedRate);
 
   // return to start position
-  planner_bufferLine(start, feed_rate);
+  planner_bufferLine(start, desiredFeedRate);
 #  endif  // NUM_AXIES == 3
   MENU_POP();
 }
@@ -829,8 +829,8 @@ void LCD_settings_menu() {
   MENU_START()
   MENU_BACK("Main");
 
-  MENU_FLOAT("mm/s", feed_rate);
-  MENU_FLOAT("mm/s/s", acceleration);
+  MENU_FLOAT("mm/s", desiredFeedRate);
+  MENU_FLOAT("mm/s/s", desiredAcceleration);
   MENU_LONG("seg min", min_segment_time_us);
 
 #  if MACHINE_STYLE == POLARGRAPH
@@ -954,7 +954,7 @@ void LCD_status_menu() {
 
   LCD_setCursor(0, 0);
   LCD_print('F');
-  LCD_print_float(feed_rate, 6);
+  LCD_print_float(desiredFeedRate, 6);
   // LCD_setCursor(0, 0);  LCD_print('X');  LCD_print_float(axies[0].pos,6);
   // LCD_setCursor(9, 0);  LCD_print('Z');  LCD_print_float(axies[2].pos,6);
 #  if MACHINE_STYLE == POLARGRAPH && defined(USE_LIMIT_SWITCH)
@@ -964,7 +964,7 @@ void LCD_status_menu() {
 
   LCD_setCursor(0, 1);
   LCD_print('A');
-  LCD_print_float(acceleration, 6);
+  LCD_print_float(desiredAcceleration, 6);
   // LCD_setCursor(0, 1);  LCD_print('Y');  LCD_print_float(axies[1].pos,6);
   LCD_setCursor(9, 1);
   LCD_print('%');
