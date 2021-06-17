@@ -36,9 +36,9 @@ typedef struct {
   Muscle a[NUM_MUSCLES];
 
   float distance;         // units
-  float nominal_speed;    // units/s
-  float entry_speed;      // units/s
-  float entry_speed_max;  // units/s
+  float nominal_speed_sqr;    // units/s
+  float entry_speed_sqr;      // units/s
+  float entry_speed_max_sqr;  // units/s
   float acceleration;     // units/sec^2
 
   uint32_t steps_total;  // steps
@@ -65,7 +65,7 @@ class Planner {
                block_buffer_tail;
   static int first_segment_delay;
 
-  static float previous_nominal_speed;
+  static float previous_nominal_speed_sqr;
   static float previous_safe_speed;
   static float previous_speed[NUM_MUSCLES];
 
@@ -140,23 +140,28 @@ class Planner {
     return (next_segment == block_buffer_tail);
   }
 
-  float max_speed_allowed(const float &acc, const float &target_velocity, const float &distance);
+  float max_speed_allowed_sqr(const float &acc, const float &target_velocity, const float &distance);
 
   void recalculate_reverse_kernel(Segment *const current, const Segment *next);
-  void recalculate_reverse();
+  void reversePass();
   void recalculate_forward_kernel(const Segment *prev, Segment *const current,uint8_t block_index);
-  void recalculate_forward();
-  void recalculate_acceleration();
+  void forwardPass();
+  void recalculate();
 
   float estimate_acceleration_distance(const float &initial_rate, const float &target_rate, const float &accel);
   int intersection_distance(const float &start_rate, const float &end_rate, const float &accel, const float &distance);
-  void segment_update_trapezoid(Segment *s, const float &entry_factor, const float &exit_factor);
+  
+  void update_trapezoid_for_block(Segment *s, const float &entry_factor, const float &exit_factor);
   void recalculate_trapezoids();
 
   void describeAllSegments();
   void segmentReport(Segment &new_seg);
 
   void estop();
+
+  #if MACHINE_STYLE == POLARGRAPH && defined(DYNAMIC_ACCELERATION)
+    float limitPolargraphAcceleration(const float *target_position,const float *oldP,float maxAcceleration);
+  #endif
 };
 
 extern Planner planner;
