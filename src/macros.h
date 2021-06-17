@@ -89,3 +89,12 @@ FORCE_INLINE float WRAP_RADIANS(float n) {
   int NN = 0;           \
   NN < NUM_MUSCLES;     \
   ++NN
+
+#define USE_CACHED_SQRT
+#ifdef USE_CACHED_SQRT
+#  define CACHED_SQRT(N, V) \
+    static float saved_V, N; \
+    if (V != saved_V) { N = SQRT(V); saved_V = V; }
+#else
+  #define CACHED_SQRT(N, V) const float N = SQRT(V)
+#endif
