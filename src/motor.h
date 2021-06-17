@@ -18,6 +18,9 @@
 #endif
 #endif
 
+#include "assembly_math.h"
+#include "speed_lookuptable.h"
+
 //------------------------------------------------------------------------------
 // CONSTANTS
 //------------------------------------------------------------------------------
@@ -28,6 +31,40 @@
 #  define STEPPER_DIR_HIGH HIGH
 #  define STEPPER_DIR_LOW  LOW
 #endif
+
+//------------------------------------------------------------------------------
+// timing stuff
+//------------------------------------------------------------------------------
+
+#ifdef CPU_32_BIT
+#define ISR_BASE_CYCLES                 800UL
+#define ISR_LOOP_BASE_CYCLES            4UL
+#else
+#define ISR_BASE_CYCLES                 800UL
+#define ISR_LOOP_BASE_CYCLES            32UL
+#endif
+#define ISR_STEPPER_CYCLES              88UL
+
+#define MIN_ISR_LOOP_CYCLES             (ISR_STEPPER_CYCLES * NUM_MUSCLES)
+#define MAXIMUM_STEPPER_RATE            500000UL
+#define MINIMUM_STEPPER_PULSE           1UL
+  
+#define _MIN_STEPPER_PULSE_CYCLES(N) max(  (F_CPU / MAXIMUM_STEPPER_RATE),  (F_CPU / 500000UL) * (N) )
+  
+#define MIN_STEPPER_PULSE_CYCLES       _MIN_STEPPER_PULSE_CYCLES(MINIMUM_STEPPER_PULSE)
+#define ISR_LOOP_CYCLES                (ISR_LOOP_BASE_CYCLES + (long)max(MIN_STEPPER_PULSE_CYCLES, MIN_ISR_LOOP_CYCLES))
+  
+#define ISR_EXECUTION_CYCLES(R)  (  ( (ISR_BASE_CYCLES) + ((ISR_LOOP_CYCLES) * (R)) ) / (R) )
+
+// The maximum allowable stepping frequency when doing x128-x1 stepping (in Hz)
+#define MAX_STEP_ISR_FREQUENCY_128X ((F_CPU) / ISR_EXECUTION_CYCLES(128))
+#define MAX_STEP_ISR_FREQUENCY_64X  ((F_CPU) / ISR_EXECUTION_CYCLES(64))
+#define MAX_STEP_ISR_FREQUENCY_32X  ((F_CPU) / ISR_EXECUTION_CYCLES(32))
+#define MAX_STEP_ISR_FREQUENCY_16X  ((F_CPU) / ISR_EXECUTION_CYCLES(16))
+#define MAX_STEP_ISR_FREQUENCY_8X   ((F_CPU) / ISR_EXECUTION_CYCLES(8))
+#define MAX_STEP_ISR_FREQUENCY_4X   ((F_CPU) / ISR_EXECUTION_CYCLES(4))
+#define MAX_STEP_ISR_FREQUENCY_2X   ((F_CPU) / ISR_EXECUTION_CYCLES(2))
+#define MAX_STEP_ISR_FREQUENCY_1X   ((F_CPU) / ISR_EXECUTION_CYCLES(1))
 
 //------------------------------------------------------------------------------
 // enable pin.  reverse if your board or drivers are odd.
@@ -116,6 +153,57 @@ public:
 #ifdef DEBUG_STEPPING
   extern void debug_stepping();
 #endif  // DEBUG_STEPPING
+
+  /**
+     Set the clock 2 timer frequency.
+    @input desired_freq_hz the desired frequency
+  */
+  FORCE_INLINE static unsigned short calc_timer(uint32_t desired_freq_hz, uint8_t * loops) {
+    uint32_t timer;
+    uint8_t step_multiplier = 1;
+    int idx=0;
+    
+    // The stepping frequency limits for each multistepping rate
+    static const uint32_t limit[] PROGMEM = {
+      (  MAX_STEP_ISR_FREQUENCY_1X     ),
+      (  MAX_STEP_ISR_FREQUENCY_2X >> 1),
+      (  MAX_STEP_ISR_FREQUENCY_4X >> 2),
+      (  MAX_STEP_ISR_FREQUENCY_8X >> 3),
+      ( MAX_STEP_ISR_FREQUENCY_16X >> 4),
+      ( MAX_STEP_ISR_FREQUENCY_32X >> 5),
+      ( MAX_STEP_ISR_FREQUENCY_64X >> 6),
+      (MAX_STEP_ISR_FREQUENCY_128X >> 7)
+    };
+
+    while( idx<7 && desired_freq_hz > (uint32_t)pgm_read_dword(&limit[idx]) ) {
+      step_multiplier <<= 1;
+      desired_freq_hz >>= 1;
+      idx++;
+    }
+    *loops = step_multiplier;
+
+
+    #ifdef CPU_32_BIT
+      timer = uint32_t(STEPPER_TIMER_RATE) / desired_freq_hz;
+    #else
+      if(desired_freq_hz < CLOCK_MIN_STEP_FREQUENCY) desired_freq_hz = CLOCK_MIN_STEP_FREQUENCY;
+      desired_freq_hz -= CLOCK_MIN_STEP_FREQUENCY;
+      if(desired_freq_hz >= 8 * 256) {
+        const uint8_t tmp_step_rate  = (desired_freq_hz & 0x00FF);
+        const uint16_t table_address = (uint16_t)&speed_lookuptable_fast[(uint8_t)(desired_freq_hz >> 8)][0],
+                      gain          = (uint16_t)pgm_read_word_near(table_address + 2);
+        timer                        = MultiU16X8toH16(tmp_step_rate, gain);
+        timer                        = (uint16_t)pgm_read_word_near(table_address) - timer;
+      } else {  // lower step rates
+        uint16_t table_address = (uint16_t)&speed_lookuptable_slow[0][0];
+        table_address += ((desired_freq_hz) >> 1) & 0xFFFC;
+        timer = (uint16_t)pgm_read_word_near(table_address) -
+                (((uint16_t)pgm_read_word_near(table_address + 2) * (uint8_t)(desired_freq_hz & 0x0007)) >> 3);
+      }
+    #endif
+
+    return timer;
+  }
 };
 
 //------------------------------------------------------------------------------
