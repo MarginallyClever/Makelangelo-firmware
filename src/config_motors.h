@@ -28,7 +28,7 @@
 #    define DEFAULT_FEEDRATE     (150.0)
 #  endif
 #  ifndef DEFAULT_ACCELERATION
-#    define DEFAULT_ACCELERATION (1250.0)
+#    define DEFAULT_ACCELERATION (1000.0)
 #  endif
 #  ifndef UNITS_PER_STEP
 #    define UNITS_PER_STEP     (1.8)  // units=degrees this time
