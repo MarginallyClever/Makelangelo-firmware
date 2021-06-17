@@ -38,9 +38,7 @@ Segment *working_block = NULL;
 int steps_total;
 int steps_taken;
 int accel_until, decel_after;
-uint32_t current_feed_rate;
-uint32_t current_acceleration;
-uint32_t start_feed_rate, end_feed_rate;
+uint32_t acc_step_rate;
 int32_t isr_nominal_rate = -1;
 uint32_t time_accelerating, time_decelerating;
 float max_jerk[NUM_MUSCLES];
@@ -328,8 +326,8 @@ void Stepper::disengage() {
 // Change pen state.
 void Stepper::setPenAngle(int arg0) {
 #if NUM_AXIES >= 3
-  if (arg0 < axies[2].limitMin) arg0 = axies[2].limitMin;
-  if (arg0 > axies[2].limitMax) arg0 = axies[2].limitMax;
+  if(arg0 < axies[2].limitMin) arg0 = axies[2].limitMin;
+  if(arg0 > axies[2].limitMax) arg0 = axies[2].limitMax;
 
   axies[2].pos = arg0;
 #endif  // NUM_AXIES>=3
@@ -366,7 +364,7 @@ bool Stepper::isBlockBusy(const Segment *block) {
 #define ISR_BASE_CYCLES                 900UL
 #define ISR_LOOP_BASE_CYCLES            4UL
 #else
-#define ISR_BASE_CYCLES                 900UL
+#define ISR_BASE_CYCLES                 800UL
 #define ISR_LOOP_BASE_CYCLES            32UL
 #endif
 #define ISR_STEPPER_CYCLES              88UL
@@ -424,9 +422,9 @@ FORCE_INLINE static unsigned short calc_timer(uint32_t desired_freq_hz, uint8_t 
   #ifdef CPU_32_BIT
     timer = uint32_t(STEPPER_TIMER_RATE) / desired_freq_hz;
   #else
-    if (desired_freq_hz < CLOCK_MIN_STEP_FREQUENCY) desired_freq_hz = CLOCK_MIN_STEP_FREQUENCY;
+    if(desired_freq_hz < CLOCK_MIN_STEP_FREQUENCY) desired_freq_hz = CLOCK_MIN_STEP_FREQUENCY;
     desired_freq_hz -= CLOCK_MIN_STEP_FREQUENCY;
-    if (desired_freq_hz >= 8 * 256) {
+    if(desired_freq_hz >= 8 * 256) {
       const uint8_t tmp_step_rate  = (desired_freq_hz & 0x00FF);
       const uint16_t table_address = (uint16_t)&speed_lookuptable_fast[(uint8_t)(desired_freq_hz >> 8)][0],
                     gain          = (uint16_t)pgm_read_word_near(table_address + 2);
@@ -444,15 +442,15 @@ FORCE_INLINE static unsigned short calc_timer(uint32_t desired_freq_hz, uint8_t 
 }
 
 // Process pulsing in the isr step
-inline void isr_internal_pulse() {
-  if (working_block == NULL) return;
+void Stepper::isrPulsePhase() {
+  if(!working_block) return;
 
-  //digitalWrite(LED_BUILTIN,!digitalRead(LED_BUILTIN));
-  
-  uint8_t i;
+  const uint32_t pendingSteps = steps_total - steps_taken;
+  uint8_t stepsToDo = min(pendingSteps,isr_step_multiplier);
+  steps_taken+=stepsToDo;
 
 #if MACHINE_STYLE == SIXI
-  if (TEST(sensorManager.positionErrorFlags, POSITION_ERROR_FLAG_ESTOP)) {
+  if(TEST(sensorManager.positionErrorFlags, POSITION_ERROR_FLAG_ESTOP)) {
     // check if the sensor position differs from the estimated position.
     float fraction = (float)steps_taken / (float)steps_total;
 
@@ -463,7 +461,7 @@ inline void isr_internal_pulse() {
           working_block->a[i].positionStart;
 
       float diff = abs(working_block->a[i].expectedPosition - sensorManager.sensors[i].angle);
-      if (diff > POSITION_EPSILON) {
+      if(diff > POSITION_EPSILON) {
         // do nothing while the margin is too big.
         // Only end this condition is stopping the ISR, either via software disable or hardware reset.
         SET_BIT_ON(sensorManager.positionErrorFlags, POSITION_ERROR_FLAG_ERROR);
@@ -474,62 +472,60 @@ inline void isr_internal_pulse() {
 #endif
 
   // move each axis
-  for (i = 0; i < isr_step_multiplier; ++i) {
+  do {
 #ifdef DEBUG_STEPPING
     delayMicroseconds(150);
 #endif
-    over0 += delta0;
-    if (over0 > 0) digitalWrite(MOTOR_0_STEP_PIN, START0);
-#if NUM_MOTORS > 1
-    over1 += delta1;
-    if (over1 > 0) digitalWrite(MOTOR_1_STEP_PIN, START1);
-#endif
-#if NUM_MOTORS > 2
-    over2 += delta2;
-    if (over2 > 0) digitalWrite(MOTOR_2_STEP_PIN, START2);
-#endif
-#if NUM_MOTORS > 3
-    over3 += delta3;
-    if (over3 > 0) digitalWrite(MOTOR_3_STEP_PIN, START3);
-#endif
-#if NUM_MOTORS > 4
-    over4 += delta4;
-    if (over4 > 0) digitalWrite(MOTOR_4_STEP_PIN, START4);
-#endif
-#if NUM_MOTORS > 5
-    over5 += delta5;
-    if (over5 > 0) digitalWrite(MOTOR_5_STEP_PIN, START5);
-#endif
-#if NUM_SERVOS > 0
-    servoOver0 += servoDelta0;
-#endif
-    // now that the pins have had a moment to settle, do the second half of the steps.
-#define MOTOR_OVER(NN) \
+#define PULSE_START(NN) over##NN += delta##NN; \
+    if(over##NN > 0) digitalWrite(MOTOR_##NN##_STEP_PIN, START##NN)
+
+#define PULSE_FINISH(NN) \
     if(over##NN > 0) { \
       over##NN -= steps_total; \
       global_steps_##NN += global_step_dir_##NN; \
       digitalWrite(MOTOR_##NN##_STEP_PIN, END##NN); \
     }
 
-    MOTOR_OVER(0);
+
+    PULSE_START(0);
 #if NUM_MOTORS > 1
-    MOTOR_OVER(1);
+    PULSE_START(1);
 #endif
 #if NUM_MOTORS > 2
-    MOTOR_OVER(2);
+    PULSE_START(2);
 #endif
 #if NUM_MOTORS > 3
-    MOTOR_OVER(3);
+    PULSE_START(3);
 #endif
 #if NUM_MOTORS > 4
-    MOTOR_OVER(4);
+    PULSE_START(4);
 #endif
 #if NUM_MOTORS > 5
-    MOTOR_OVER(5);
+    PULSE_START(5);
+#endif
+#if NUM_SERVOS > 0
+    servoOver0 += servoDelta0;
+#endif
+    // now that the pins have had a moment to settle, do the second half of the steps.
+    PULSE_FINISH(0);
+#if NUM_MOTORS > 1
+    PULSE_FINISH(1);
+#endif
+#if NUM_MOTORS > 2
+    PULSE_FINISH(2);
+#endif
+#if NUM_MOTORS > 3
+    PULSE_FINISH(3);
+#endif
+#if NUM_MOTORS > 4
+    PULSE_FINISH(4);
+#endif
+#if NUM_MOTORS > 5
+    PULSE_FINISH(5);
 #endif
 #if NUM_SERVOS > 0
     // servo 0
-    if (servoOver0 > 0) {
+    if(servoOver0 > 0) {
       servoOver0 -= steps_total;
       global_servoSteps_0 += global_servoStep_dir_0;
 
@@ -542,50 +538,45 @@ inline void isr_internal_pulse() {
 #  endif
     }
 #endif
-
-    // make a step
-    steps_taken++;
-    if(steps_taken >= steps_total) break;
-  }
+  } while( --stepsToDo);
 }
 
 // Process blocks in the isr
-inline hal_timer_t isr_internal_block() {
+hal_timer_t Stepper::isrBlockPhase() {
   hal_timer_t interval = (HAL_TIMER_RATE) / 1000;
 
-  if (working_block != NULL) {
+  if(working_block) {
     // Is this segment done?
-    if (steps_taken >= steps_total) {
+    if(steps_taken >= steps_total) {
       // Move on to next segment without wasting an interrupt tick.
       planner.releaseCurrentBlock();
       working_block     = NULL;
     } else {
-      if (steps_taken <= accel_until) {
+      if(steps_taken <= accel_until) {
         // accelerating
-        current_feed_rate = start_feed_rate + STEP_MULTIPLY(time_accelerating, current_acceleration);
-        current_feed_rate = min(current_feed_rate, working_block->nominal_rate);
-        interval          = calc_timer(current_feed_rate, &isr_step_multiplier);
+        acc_step_rate = STEP_MULTIPLY(time_accelerating, working_block->acceleration_rate);
+        acc_step_rate = min(acc_step_rate, working_block->nominal_rate);
+        interval = calc_timer(acc_step_rate, &isr_step_multiplier);
         time_accelerating += interval;
 #ifdef DEBUG_STEPPING
         /*
         Serial.print("A >> ");   Serial.print(interval);
         Serial.print("\t");      Serial.print(isr_step_multiplier);
         Serial.print("\t");      Serial.print(current_feed_rate);
-        Serial.print(" = ");     Serial.print(start_feed_rate);
         Serial.print(" + ");     Serial.print(current_acceleration);
         Serial.print(" * ");     Serial.print(time_accelerating);
         Serial.println();//*/
 #endif
-      } else if (steps_taken > decel_after) {
+      } else if(steps_taken > decel_after) {
         // decelerating
-        hal_timer_t end_feed_rate = STEP_MULTIPLY(time_decelerating, current_acceleration);
-        if (end_feed_rate < current_feed_rate) {
-          end_feed_rate = current_feed_rate - end_feed_rate;
-          end_feed_rate = max(end_feed_rate, working_block->final_rate);
+        uint32_t step_rate = STEP_MULTIPLY(time_decelerating, working_block->acceleration_rate);
+        if(step_rate < acc_step_rate) {
+          step_rate = acc_step_rate - step_rate;
+          step_rate = max(step_rate, working_block->final_rate);
         } else {
-          end_feed_rate = working_block->final_rate;
+          step_rate = working_block->final_rate;
         }
-        interval = calc_timer(end_feed_rate, &isr_step_multiplier);
+        interval = calc_timer(step_rate, &isr_step_multiplier);
         time_decelerating += interval;
 #ifdef DEBUG_STEPPING
         /*
@@ -593,13 +584,14 @@ inline hal_timer_t isr_internal_block() {
         Serial.print("\t");      Serial.print(isr_step_multiplier);
         Serial.print("\t");      Serial.print(end_feed_rate);
         Serial.print(" = ");     Serial.print(current_feed_rate);
-        Serial.print(" - ");     Serial.print(current_acceleration);
         Serial.print(" * ");     Serial.print(time_decelerating);
         Serial.println();//*/
 #endif
       } else {
         // cruising at nominal speed (flat top of the trapezoid)
-        if (isr_nominal_rate < 0) { isr_nominal_rate = calc_timer(working_block->nominal_rate, &isr_step_multiplier); }
+        if(isr_nominal_rate < 0) {
+          isr_nominal_rate = calc_timer(working_block->nominal_rate, &isr_step_multiplier);
+        }
         interval = isr_nominal_rate;
 #ifdef DEBUG_STEPPING
         /*
@@ -613,10 +605,10 @@ inline hal_timer_t isr_internal_block() {
   }
 
   // segment buffer empty? do nothing
-  if (working_block == NULL) {
+  if(working_block == NULL) {
     working_block = planner.getCurrentBlock();
 
-    if (working_block == NULL) return interval;  // buffer empty
+    if(working_block == NULL) return interval;  // buffer empty
 
     // set the direction pins
     digitalWrite(MOTOR_0_DIR_PIN, working_block->a[0].dir);
@@ -646,17 +638,14 @@ inline hal_timer_t isr_internal_block() {
     global_servoStep_dir_0 = (working_block->a[NUM_MOTORS].dir == STEPPER_DIR_HIGH) ? -1 : 1;
 #endif
 
-    start_feed_rate      = working_block->initial_rate;
-    end_feed_rate        = working_block->final_rate;
-    current_feed_rate    = start_feed_rate;
-    current_acceleration = working_block->acceleration_rate;
+    acc_step_rate        = working_block->initial_rate;
     accel_until          = working_block->accel_until;
     decel_after          = working_block->decel_after;
     time_accelerating    = 0;
     time_decelerating    = 0;
     isr_nominal_rate     = -1;
 
-    interval = calc_timer(current_feed_rate, &isr_step_multiplier);
+    interval = calc_timer(acc_step_rate, &isr_step_multiplier);
 
     // defererencing some data so the loop runs faster.
     steps_total = working_block->steps_total;
@@ -728,14 +717,18 @@ inline hal_timer_t isr_internal_block() {
 }
 
 #ifdef DEBUG_STEPPING
-void debug_stepping() {
-  isr_internal_pulse();
+void Stepper::debugStepping() {
+  isrPulsePhase();
   uint32_t interval = isr_internal_block();
   // Serial.println(interval);
 }
 #endif
 
 HAL_STEP_TIMER_ISR {
+  Stepper::isr();
+}
+
+void Stepper::isr() {
   static hal_timer_t nextMainISR=0;
   
   //digitalWrite(LED_BUILTIN,!digitalRead(LED_BUILTIN));
@@ -749,7 +742,7 @@ HAL_STEP_TIMER_ISR {
   // set the timer interrupt value as big as possible so there's little chance it triggers while i'm still in the ISR.
   HAL_timer_set_compare(STEP_TIMER_NUM, hal_timer_t(HAL_TIMER_TYPE_MAX));
 
-  uint8_t max_loops       = 10;
+  uint8_t max_loops = 10;
   hal_timer_t next_isr_ticks = 0;
   hal_timer_t min_ticks;
   do {
@@ -758,13 +751,13 @@ HAL_STEP_TIMER_ISR {
 
 #ifndef DEBUG_STEPPING
 #  ifdef HAS_TMC2130
-    if (homing == true) {
+    if(homing == true) {
       tmc2130_homing_sequence();
       nextMainISR = HOMING_OCR1A;
     } else {
 #  endif
-      if (!nextMainISR) isr_internal_pulse();
-      if (!nextMainISR) nextMainISR = isr_internal_block();
+      if(!nextMainISR) isrPulsePhase();
+      if(!nextMainISR) nextMainISR = isrBlockPhase();
 #  ifdef HAS_TMC2130
     }
 #  endif
@@ -785,7 +778,7 @@ HAL_STEP_TIMER_ISR {
       * (STEPPER_TIMER_TICKS_PER_US)
     );
 
-    if (!--max_loops) next_isr_ticks = min_ticks;
+    if(!--max_loops) next_isr_ticks = min_ticks;
     // ORC1A has been advancing while the interrupt was running.
     // if OCR1A is too close to the timer, do the step again immediately
   } while (next_isr_ticks < min_ticks);
@@ -808,7 +801,7 @@ void clockISRProfile() {
   // get set... go!
   uint32_t tStart = micros();
 
-  for (int i = 0; i < count; ++i) isr_internal_pulse();
+  for (int i = 0; i < count; ++i) Stepper::isrPulsePhase();
 
   uint32_t tEnd = micros();
 

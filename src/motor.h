@@ -109,6 +109,10 @@ public:
 
   static bool isBlockBusy(const Segment *block);
 
+  static void isr();
+  static void isrPulsePhase();
+  static hal_timer_t isrBlockPhase();
+
 #ifdef DEBUG_STEPPING
   extern void debug_stepping();
 #endif  // DEBUG_STEPPING
