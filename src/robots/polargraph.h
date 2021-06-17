@@ -20,7 +20,7 @@
 #  define MACHINE_HAS_LIFTABLE_PEN
 
 // what is the maximum length of a subdivided line?
-#  define SEGMENTS_PER_SECOND (10)
+#  define SEGMENTS_PER_SECOND (20)
 
 // servo angles for pen control
 #  define PEN_UP_ANGLE   (90)
@@ -31,14 +31,14 @@
 #  define NUM_SERVOS (1)
 #  define NUM_TOOLS  (1)
 
-#  define MAX_FEEDRATE (1000.0f)  // linear travel speed
+#  define MAX_FEEDRATE (200.0f)  // linear travel speed
 #  define MIN_FEEDRATE (0.0f)
 
 #  define MAX_FEEDRATE_Z (180.0)  // linear travel speed
 
 #  define MAX_STEP_RATE_DEFAULT (160.0)  // maximum stepping speed of motor
 
-#  define MAX_ACCELERATION (2000.0)
+#  define MAX_ACCELERATION (1000.0)
 #  define MIN_ACCELERATION (0.0)
 
 #  define MAX_JERK   (50.0)
