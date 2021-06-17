@@ -195,7 +195,7 @@ void setup() {
   parser.ready();
 
   // run tests
-  testCircle();
+  //testCircle();
 }
 
 // after setup runs over and over.
