@@ -150,8 +150,8 @@ class Planner {
 
   float estimate_acceleration_distance(const float &initial_rate, const float &target_rate, const float &accel);
   int intersection_distance(const float &start_rate, const float &end_rate, const float &accel, const float &distance);
-  
-  void update_trapezoid_for_block(Segment *s, const float &entry_factor, const float &exit_factor);
+
+  void calculate_trapezoid_for_block(Segment *s, const float &entry_factor, const float &exit_factor);
   void recalculate_trapezoids();
 
   void describeAllSegments();

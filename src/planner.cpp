@@ -147,7 +147,7 @@ int Planner::intersection_distance(const float &start_rate, const float &end_rat
   return (2.0 * accel * distance - sq(start_rate) + sq(end_rate)) / (4.0 * accel);
 }
 
-void Planner::update_trapezoid_for_block(Segment *s, const float &entry_factor, const float &exit_factor) {
+void Planner::calculate_trapezoid_for_block(Segment *s, const float &entry_factor, const float &exit_factor) {
   uint32_t intial_rate = ceil(s->nominal_rate * entry_factor);
   uint32_t final_rate  = ceil(s->nominal_rate * exit_factor);
 
@@ -187,7 +187,7 @@ void Planner::recalculate_trapezoids() {
         if( !motor.isBlockBusy(block) ) {
           // NOTE: Entry and exit factors always > 0 by all previous logic operations.
           const float inom = 1.0 / sqrt(block->nominal_speed_sqr);
-          update_trapezoid_for_block(block, current_entry_speed * inom, next_entry_speed * inom);
+          calculate_trapezoid_for_block(block, current_entry_speed * inom, next_entry_speed * inom);
         }
       }
       // Reset current only to ensure next trapezoid is computed
@@ -203,7 +203,7 @@ void Planner::recalculate_trapezoids() {
     SET_BIT_ON(next->flags,BIT_FLAG_RECALCULATE);
     if( !motor.isBlockBusy(block) ) {
       const float inom = 1.0 / sqrt(next->nominal_speed_sqr);
-      update_trapezoid_for_block(next, next_entry_speed * inom, MIN_FEEDRATE * inom);
+      calculate_trapezoid_for_block(next, next_entry_speed * inom, MIN_FEEDRATE * inom);
     }
     SET_BIT_OFF(next->flags,BIT_FLAG_RECALCULATE);
   }
