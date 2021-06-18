@@ -16,23 +16,30 @@
 //------------------------------------------------------------------------------
 // GLOBALS
 //------------------------------------------------------------------------------
-SdFat sd;
-File root;
-char sd_inserted;
-char sd_printing_now;
-char sd_printing_paused;
 
-File sd_print_file;
-float sd_percent_complete;
-long sd_file_size;
-long sd_bytes_read;
+SDCard sd;
+
+SdFat SDCard::sd;
+File SDCard::root;
+
+char SDCard::sd_inserted;
+char SDCard::sd_printing_now;
+char SDCard::sd_printing_paused;
+
+File SDCard::sd_print_file;
+float SDCard::sd_percent_complete;
+long SDCard::sd_file_size;
+long SDCard::sd_bytes_read;
+
+char SDCard::buffer[PARSER_BUFFER_LENGTH];
+uint8_t SDCard::bufferPos;
 
 //------------------------------------------------------------------------------
 // METHODS
 //------------------------------------------------------------------------------
 
 // initialize the SD card and print some info.
-void SD_setup() {
+void SDCard::setup() {
   pinMode(SDSS, OUTPUT);
   pinMode(SDCARDDETECT, INPUT);
   digitalWrite(SDCARDDETECT, HIGH);
@@ -40,17 +47,18 @@ void SD_setup() {
   sd_inserted         = false;
   sd_printing_now     = false;
   sd_percent_complete = 0;
-  SD_check();
+  bufferPos=0;
+  check();
 }
 
 // Load the SD card and read some info about it
-void SD_load_card() {
+void SDCard::load_card() {
   sd.begin(SDSS);
   root.open("/");
 }
 
 // Check if the SD card has been added or removed
-void SD_check() {
+void SDCard::check() {
   int state = (digitalRead(SDCARDDETECT) == LOW);
   if (sd_inserted != state) {
     Serial.print("SD is ");
@@ -64,7 +72,7 @@ void SD_check() {
       sd_printing_now = false;
     } else {
       Serial.println(F("added"));
-      SD_load_card();
+      load_card();
       // TODO: is flag waiting for SD return active?
       // TODO: lower pen if needed
       // TODO: resume printing
@@ -79,8 +87,13 @@ void SD_check() {
       c = sd_print_file.read();
       // sd_bytes_read++;
       if (c == '\r') continue;
-      if (parser.sofar < MAX_BUF) {
-        parser.serialBuffer[parser.sofar++] = c;
+      if (parser.sofar < PARSER_BUFFER_LENGTH) {
+        buffer[bufferPos++]=c;
+        if(c=='\0'||c=='\n') {
+          buffer[bufferPos]=0;
+          parser.ringBuffer.waitToAdd(buffer);
+          bufferPos=0;
+        }
       } /*
        if(c==';') {
          // eat to the end of the line
@@ -126,7 +139,7 @@ void SD_check() {
 }
 
 
-void SD_StartPrintingFile(File toPrint) {
+void SDCard::StartPrintingFile(File toPrint) {
   sd_print_file = toPrint;
 
   // count the number of lines (\n characters) for displaying % complete.
@@ -141,7 +154,7 @@ void SD_StartPrintingFile(File toPrint) {
   sd_printing_paused = false;
 }
 
-void SD_listFiles() {
+void SDCard::listFiles() {
   if (!sd_inserted) return;
 
   root.rewindDirectory();

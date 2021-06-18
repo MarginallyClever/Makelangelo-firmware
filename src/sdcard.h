@@ -9,17 +9,34 @@
 
 #  include <SPI.h>
 #  include "SdFat.h"
-
+#include "parser.h"
 
 extern File root;
 
-extern char sd_inserted;
-extern char sd_printing_now;
-extern char sd_printing_paused;
+class SDCard {
+public:
+  static SdFat sd;
+  static File root;
+  static char sd_inserted;
+  static char sd_printing_now;
+  static char sd_printing_paused;
 
-extern void SD_check();
-extern void SD_setup();
-extern void SD_listFiles();
-extern void SD_StartPrintingFile(File toPrint);
+  static File sd_print_file;
+  static float sd_percent_complete;
+  static long sd_file_size;
+  static long sd_bytes_read;
+
+  static char buffer[PARSER_BUFFER_LENGTH];
+  static uint8_t bufferPos;
+
+  void load_card();
+
+  void check();
+  void setup();
+  void listFiles();
+  void StartPrintingFile(File toPrint);
+};
+
+extern SDCard sd;
 
 #endif  // HAS_SD

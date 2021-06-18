@@ -163,7 +163,7 @@ void setup() {
   // unitTestBitMacros();
 
 #ifdef HAS_SD
-  SD_setup();
+  sd.setup();
 #endif
 #ifdef HAS_LCD
   LCD_setup();
@@ -201,7 +201,7 @@ void setup() {
 // after setup runs over and over.
 void loop() {
 #ifdef HAS_SD
-  SD_check();
+  sd.check();
 #endif
 #ifdef HAS_LCD
   LCD_update();

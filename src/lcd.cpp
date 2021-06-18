@@ -361,14 +361,14 @@ void LCD_pause() {
   // TODO: if pen down before pause, lift pen on pause, lower pen on unpause.
   // problem: machine does not know what is pen up or down.
 #  ifdef HAS_SD
-  sd_printing_paused = (sd_printing_paused == true ? false : true);
+  sd.sd_printing_paused = (sd.sd_printing_paused == true ? false : true);
 #  endif
   MENU_POP();
 }
 
 void LCD_stop() {
 #  ifdef HAS_SD
-  sd_printing_now = false;
+  sd.sd_printing_now = false;
 #  endif
   MENU_POP();
 }
@@ -491,7 +491,7 @@ void LCD_driveF() {
 
 void LCD_start_menu() {
 #  ifdef HAS_SD
-  if (!sd_inserted) MENU_POP();
+  if (!sd.sd_inserted) MENU_POP();
 
   if(lcd_turn!=0 || lcd_click_now==1) lcd_dirty=1;
 
@@ -504,10 +504,10 @@ void LCD_start_menu() {
     MENU_START()
     MENU_BACK("Main");
     
-    root.rewindDirectory();
+    sd.root.rewindDirectory();
     File entry;
     char filename[20];
-    while (entry.openNext(&root)) {
+    while (entry.openNext(&sd.root)) {
       if (!entry.isSubDir() && !entry.isHidden()) {
         entry.getName(filename, 18);
         MENU_ITEM_START(filename)
@@ -518,7 +518,7 @@ void LCD_start_menu() {
           // go back to status menu
           while (menuStackDepth > 0) MENU_POP();
 
-          SD_StartPrintingFile(entry);
+          sd.StartPrintingFile(entry);
           return;
         }
         MENU_ITEM_END()
@@ -900,7 +900,7 @@ void LCD_main_menu() {
 
   MENU_BACK("Info screen");
 #  ifdef HAS_SD
-  if (!sd_printing_now) {
+  if (!sd.sd_printing_now) {
 #  endif
 #  ifdef USE_LIMIT_SWITCH
     MENU_ACTION("Find home", LCD_find_home);
@@ -909,7 +909,7 @@ void LCD_main_menu() {
   MENU_ACTION("Go home", LCD_go_home);
 #  endif
 #  ifdef HAS_SD
-    if (sd_inserted) {
+    if (sd.sd_inserted) {
       MENU_SUBMENU("Print from SD card", LCD_start_menu);
     } else {
       MENU_LABEL("No SD card");
@@ -928,7 +928,7 @@ void LCD_main_menu() {
     MENU_SUBMENU("Drive", LCD_drive_menu);
 #  ifdef HAS_SD
   } else {
-    if (sd_printing_paused) {
+    if (sd.sd_printing_paused) {
       MENU_ACTION("Unpause", LCD_pause);
     } else {
       MENU_ACTION("Pause", LCD_pause);

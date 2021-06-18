@@ -10,7 +10,7 @@
 #endif
 
 // What is the longest message the FTDI buffer can store?
-#define MAX_BUF (63)
+#define PARSER_BUFFER_LENGTH (63)
 
 // for arc directions
 #define ARC_CW  (1)
@@ -27,7 +27,7 @@
 
 class ParserCommand {
 public:
-  char buffer[MAX_BUF + 1];  // Serial buffer
+  char buffer[PARSER_BUFFER_LENGTH + 1];  // Serial buffer
 };
 
 #define RING_BUFFER_SIZE (8)
@@ -78,7 +78,7 @@ class Parser {
  public:
   RingBuffer ringBuffer;
 
-  char serialBuffer[MAX_BUF + 1];  // Serial buffer
+  char serialBuffer[PARSER_BUFFER_LENGTH + 1];  // Serial buffer
   int sofar;                       // Serial buffer progress
 
   char *currentCommand;

@@ -161,7 +161,7 @@ void Parser::update() {
   if(Serial.available() > 0) {
     char c = Serial.read();
     // Serial.print(c);
-    if(sofar < MAX_BUF) serialBuffer[sofar++] = c;
+    if(sofar < PARSER_BUFFER_LENGTH) serialBuffer[sofar++] = c;
     if(c == '\r' || c == '\n') {
       serialBuffer[sofar - 1] = 0;
 
@@ -242,7 +242,7 @@ void Parser::processCommand() {
       case  17:        M17();         break;
       case  18:        M18();         break;
 #ifdef HAS_SD
-      case  20:        SD_listFiles(); break;
+      case  20:        sd.listFiles(); break;
 #endif
       case  42:        M42();         break;
       case  92:        M92();         break;
@@ -984,7 +984,7 @@ void Parser::M226() {
   }
   Serial.print("pausing");
 #ifdef HAS_SD
-  sd_printing_paused = true;
+  sd.sd_printing_paused = true;
 #endif
 
   // while pin is in oldState (opposite of state for which we are waiting)
@@ -1000,7 +1000,7 @@ void Parser::M226() {
   }
 
 #ifdef HAS_SD
-  sd_printing_paused = false;
+  sd.sd_printing_paused = false;
 #endif
 
   Serial.println(" ended.");
