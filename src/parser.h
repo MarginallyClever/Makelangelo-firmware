@@ -10,7 +10,7 @@
 #endif
 
 // What is the longest message the FTDI buffer can store?
-#define MAX_BUF (60)
+#define MAX_BUF (63)
 
 // for arc directions
 #define ARC_CW  (1)
@@ -25,10 +25,64 @@
 #define IS_STRICT      (TEST(parserFlags, FLAG_STRICT))
 #define MUST_ECHO      (TEST(parserFlags, FLAG_ECHO))
 
+class ParserCommand {
+public:
+  char buffer[MAX_BUF + 1];  // Serial buffer
+};
+
+#define RING_BUFFER_SIZE (8)
+
+class RingBuffer {
+public:
+  uint8_t length;
+  uint8_t current_r;
+  uint8_t current_w;
+  ParserCommand commands[RING_BUFFER_SIZE];
+
+  bool add(const char *cmd) {
+    if(*cmd=='\n'||length==RING_BUFFER_SIZE) return false;
+
+    strcpy(commands[current_w].buffer,cmd);
+    advanceHead(current_w,1);
+
+    return true;
+  }
+
+  void waitToAdd(const char *cmd) {
+    while(!add(cmd)) meanwhile();
+  }
+
+  bool isEmpty() {
+    return length==0;
+  }
+
+  bool isFull() {
+    return length == RING_BUFFER_SIZE;
+  }
+
+  char *peekNextCommand() {
+    return commands[current_r].buffer;
+  }
+
+  void clear() {
+    length = current_r = current_w = 0;
+  }
+
+  void advanceHead(uint8_t &p,const uint8_t inc) {
+    p = (p+1) % RING_BUFFER_SIZE;
+    length+=inc;
+  }
+};
+
 class Parser {
  public:
+  RingBuffer ringBuffer;
+
   char serialBuffer[MAX_BUF + 1];  // Serial buffer
   int sofar;                       // Serial buffer progress
+
+  char *currentCommand;
+
   uint32_t lastCmdTimeMs;          // prevent timeouts
   int32_t lineNumber   = 0;        // make sure commands arrive in order
   uint8_t lastGcommand = -1;
@@ -36,10 +90,14 @@ class Parser {
   uint8_t parserFlags = 0;
 
   void start();
-  // does this command have the matching code?
-  uint8_t hasGCode(char code);
+  // parse the number starting at p.
+  float parseNumber(char *p,float val);
   // find the matching code and return the number that immediately follows it.
-  float parseNumber(char code, float val);
+  float parseNumber(char code,float val);
+
+  // does this command have the matching code?
+  int8_t hasGCode(char *p,char code);
+  int8_t hasGCode(char code);
   // if there is a line number, checks it is the correct line number.  if there is a * at the end, checks the string is
   // valid.
   char checkLineNumberAndCRCisOK();
@@ -47,6 +105,11 @@ class Parser {
   void ready();
   // read any available serial data
   void update();
+
+  void advance();
+
+  void reportQueue();
+
   // called by update when an entire command is received.
   void processCommand();
 
@@ -62,6 +125,7 @@ class Parser {
   // void D13();  // D13 Znn - Polargraph only.  Set pen angle
 #endif
   void D10();  // D10 - get hardware version
+  void D13();  // D12 Zn - move servo
   void D14();  // D14 - get machine style
 #if MACHINE_STYLE == SIXI
   void D15();  // D15 - Sixi only.  Sixi demo

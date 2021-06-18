@@ -37,6 +37,8 @@ void Parser::start() {
   // clear input buffer
   sofar = 0;
 
+  ringBuffer.clear();
+
 #ifdef HAS_WIFI
   // Start WIFI
   WiFi.mode(WIFI_AP);
@@ -51,43 +53,52 @@ void Parser::start() {
 #endif  // HAS_WIFI
 }
 
-/**
- * Look for character /code/ in the buffer and read the float that immediately follows it.
- * @return the value found.  If nothing is found, /val/ is returned.
- * @input code the character to look for.
- * @input val the return value if /code/ is not found.
-*/
-float Parser::parseNumber(char code, float val) {
-  char *ptr    = serialBuffer;  // start at the beginning of buffer
-  char *finale = serialBuffer + sofar;
-  for (ptr = serialBuffer; ptr < finale; ++ptr) {  // walk to the end
-    if (*ptr == ';') break;
-    if (toupper(*ptr) == code) {  // if you find code on your walk,
-      return atof(ptr + 1);       // convert the digits that follow into a float and return it
+float Parser::parseNumber(char *p,float val) {
+  char *ptr = p;  // start at the beginning of buffer
+  for(;;) {  // walk to the end
+    char c = *ptr;
+    if(c==';'||c=='\0'||c==' ') break;
+    if(c=='E'||c=='c') {
+      *ptr = '\0';
+      const float ret = atof(p);
+      *ptr = c;
+      return ret;
     }
+    ++ptr;
   }
-  return val;  // end reached, nothing found, return default val.
+  float g = atof(p);  // convert the digits that follow into a float and return it
+  return g;
 }
 
-// @return 1 if the character is found in the serial buffer, 0 if it is not found.
-uint8_t Parser::hasGCode(char code) {
-  char *ptr    = serialBuffer;  // start at the beginning of buffer
-  char *finale = serialBuffer + sofar;
-  for (ptr = serialBuffer; ptr < finale; ++ptr) {  // walk to the end
-    if (*ptr == ';') break;
-    if (toupper(*ptr) == code) {  // if you find code on your walk,
-      return 1;                   // found
+float Parser::parseNumber(char code,float val) {
+  int8_t n = hasGCode(currentCommand,code);
+  if(n>=0) return parseNumber(currentCommand+n+1,val);
+  return val;
+}
+
+int8_t Parser::hasGCode(char *p,char code) {
+  char *ptr = p;  // start at the beginning of buffer
+  for(;;) {  // walk to the end
+    char c = *ptr;
+    if(c==';' || c=='\0') break;
+    if(toupper(c) == code) {  // if you find code on your walk,
+      return (uint8_t)(ptr-p);
     }
+    ptr++;
   }
-  return 0;  // not found
+  return -1;  // not found
+}
+
+int8_t Parser::hasGCode(char code) {
+  return hasGCode(currentCommand,code);
 }
 
 // @return 1 if CRC ok or not present, 0 if CRC check fails.
 char Parser::checkLineNumberAndCRCisOK() {
   // is there a line number?
-  if (serialBuffer[0] == 'N') {  // line number must appear first on the line
-    int32_t cmd = parseNumber('N', -1);
-    if (cmd != lineNumber) {
+  if(serialBuffer[0] == 'N') {  // line number must appear first on the line
+    int32_t cmd = parseNumber(serialBuffer+1, -1);
+    if(cmd != lineNumber) {
       // wrong line number error
       Serial.print(F("BADLINENUM "));
       Serial.println(lineNumber);
@@ -96,7 +107,7 @@ char Parser::checkLineNumberAndCRCisOK() {
 
     // next time around, wait for the next line number.
     lineNumber++;
-  } else if (IS_STRICT) {
+  } else if(IS_STRICT) {
     Serial.print(F("NOLINENUM"));
     return 0;
   }
@@ -105,13 +116,13 @@ char Parser::checkLineNumberAndCRCisOK() {
   int found = -1;
   int i;
   for (i = strlen(serialBuffer) - 1; i >= 0; --i) {
-    if (serialBuffer[i] == '*') {
+    if(serialBuffer[i] == '*') {
       found = i;
       break;
     }
   }
 
-  if (IS_STRICT && found == -1) {
+  if(IS_STRICT && found == -1) {
     Serial.println("NOCHECKSUM");
     return 0;
   }
@@ -122,7 +133,7 @@ char Parser::checkLineNumberAndCRCisOK() {
   for (c = 0; c < i; ++c) { checksum = (checksum ^ serialBuffer[c]) & 0xFF; }
   c++;  // skip *
   int against = strtod(serialBuffer + c, NULL);
-  if (found != -1 && checksum != against) {
+  if(found != -1 && checksum != against) {
     Serial.print("BADCHECKSUM calc=");
     Serial.print(checksum);
     Serial.print(" sent=");
@@ -147,20 +158,22 @@ void Parser::ready() {
 // See also http://www.marginallyclever.com/2011/10/controlling-your-arduino-through-the-serial-monitor/
 void Parser::update() {
   // listen for serial commands
-  if (Serial.available() > 0) {
+  if(Serial.available() > 0) {
     char c = Serial.read();
     // Serial.print(c);
-    if (sofar < MAX_BUF) serialBuffer[sofar++] = c;
-    if (c == '\r' || c == '\n') {
+    if(sofar < MAX_BUF) serialBuffer[sofar++] = c;
+    if(c == '\r' || c == '\n') {
       serialBuffer[sofar - 1] = 0;
 
+      checkLineNumberAndCRCisOK();
+
       // echo confirmation
-      if (MUST_ECHO) { 
+      if(MUST_ECHO) { 
         Serial.println(serialBuffer);
       }
 
-      // do something with the command
-      processCommand();
+      ringBuffer.waitToAdd(serialBuffer);
+
       // clear input buffer
       sofar = 0;
       // go again
@@ -170,10 +183,10 @@ void Parser::update() {
 
 #ifdef HAS_WIFI
   int packetSize = port.parsePacket();
-  if (packetSize) {
+  if(packetSize) {
     int len = port.read(serialBuffer, MAX_BUF);
     sofar   = len;
-    if (len > 0) serialBuffer[len - 1] = 0;
+    if(len > 0) serialBuffer[len - 1] = 0;
     Serial.println(serialBuffer);
     processCommand();
     port.beginPacket(port.remoteIP(), port.remotePort());
@@ -183,27 +196,46 @@ void Parser::update() {
 #endif  // HAS_WIFI
 }
 
-/**
- * process commands in the serial receive buffer
- */
+void Parser::advance() {
+  if(ringBuffer.isEmpty()) return;
+
+  currentCommand = ringBuffer.peekNextCommand();
+  if(currentCommand[0] == '\0' || currentCommand[0] == ';') {  // blank lines
+    ringBuffer.advanceHead(ringBuffer.current_r,-1);
+    return;
+  }
+
+  //reportQueue();
+  processCommand();
+
+  ringBuffer.advanceHead(ringBuffer.current_r,-1);
+}
+
+void Parser::reportQueue() {
+  Serial.print(F("length="));  Serial.println(ringBuffer.length);
+  Serial.print(F("current_r="));  Serial.println(ringBuffer.current_r);
+  Serial.print(F("current_w="));  Serial.println(ringBuffer.current_w);
+  for(uint8_t i=0;i<ringBuffer.length;++i) {
+    uint8_t n = (ringBuffer.current_r+i)%RING_BUFFER_SIZE;
+    Serial.print(F("  "));
+    Serial.println(ringBuffer.commands[n].buffer);
+  }
+}
+
 void Parser::processCommand() {
-  if (serialBuffer[0] == '\0' || serialBuffer[0] == ';') return;  // blank lines
-
-  if (!checkLineNumberAndCRCisOK()) return;  // message garbled
-
   // remove any trailing semicolon.
-  int last = strlen(serialBuffer) - 1;
-  if (serialBuffer[last] == ';') serialBuffer[last] = 0;
+  int last = strlen(currentCommand) - 1;
+  if(currentCommand[last] == ';') currentCommand[last] = 0;
 
-  if (!strncmp(serialBuffer, "UID", 3)) {
-    robot_uid = atoi(strchr(serialBuffer, ' ') + 1);
+  if(!strncmp(currentCommand, "UID", 3)) {
+    robot_uid = atoi(strchr(currentCommand, ' ') + 1);
     eepromManager.saveUID();
   }
 
   int16_t cmd;
 
   // M codes
-  if (hasGCode('M')) {
+  if(hasGCode('M')>=0) {
     cmd = parseNumber('M', -1);
     switch (cmd) {
       case   6:        M6();          break;
@@ -216,7 +248,7 @@ void Parser::processCommand() {
       case  92:        M92();         break;
       case 100:        M100();        break;
       case 101:        M101();        break;
-      case 110:        lineNumber = parseNumber('N', lineNumber);  break;
+      case 110:        M110();        break;
       case 112:        M112();        break;
       case 114:        M114();        break;
 #ifdef HAS_LCD
@@ -241,12 +273,12 @@ void Parser::processCommand() {
   }
 
   // machine style-specific codes
-  if (hasGCode('D')) {
-    cmd = parseNumber('D', -1);
+  cmd = parseNumber('D',-1);
+  if(cmd!=-1) {
     switch (cmd) {
       case 0:        D0();        break;
 #ifdef HAS_SD
-//    case  4:  SD_StartPrintingFile(strchr(serialBuffer, ' ') + 1);  break;
+//    case  4:  SD_StartPrintingFile(strchr(currentCommand, ' ') + 1);  break;
 #endif
       case 5:        D5();        break;
       case 6:        D6();        break;
@@ -257,7 +289,7 @@ void Parser::processCommand() {
       case 9:        eepromManager.saveCalibration();        break;
       case 10:       D10();        break;
 #ifdef MACHINE_HAS_LIFTABLE_PEN
-      case 13:       motor.setPenAngle(parseNumber('Z', axies[2].pos));        break;
+      case 13:       D13();        break;
 #endif
       case 14:       D14();        break;
 #ifdef IS_STEWART_PLATFORM
@@ -280,7 +312,7 @@ void Parser::processCommand() {
 
   // no M or D commands were found.  This is probably a G-command.
   // G codes
-  cmd          = parseNumber('G', lastGcommand);
+  cmd = parseNumber('G', lastGcommand);
   lastGcommand = -1;
   switch (cmd) {
     case 0:
@@ -297,6 +329,7 @@ void Parser::processCommand() {
     case 92:      G92();                  break;
     default:                              break;
   }
+  return;
 }
 
 // D commands
@@ -322,9 +355,9 @@ void Parser::D0() {
   Serial.print(F("STEPPER_TIMER_TICKS_PER_US="));  Serial.println(STEPPER_TIMER_TICKS_PER_US);
 
   for(ALL_MOTORS(i)) {
-    if (motors[i].letter == 0) continue;
+    if(motors[i].letter == 0) continue;
     amount = parseNumber(motors[i].letter, 0);
-    if (amount != 0) {
+    if(amount != 0) {
       Serial.print(F("Moving "));
       Serial.print(motors[i].letter);
       Serial.print(F("("));
@@ -412,6 +445,10 @@ void Parser::D8() {
 void Parser::D10() {
   Serial.print(F("D10 V"));
   Serial.println(MACHINE_HARDWARE_VERSION);
+}
+
+void Parser::D13() {
+  motor.setPenAngle(parseNumber('Z', axies[2].pos));
 }
 
 void Parser::D14() {
@@ -554,9 +591,9 @@ void Parser::D50() {
 void Parser::G01() {
 #if MACHINE_STYLE == SIXI
   // if limit testing is on
-  if (TEST_LIMITS) {
+  if(TEST_LIMITS) {
     // and a limit is exceeeded
-    if (TEST(sensorManager.positionErrorFlags, POSITION_ERROR_FLAG_ERROR)) {
+    if(TEST(sensorManager.positionErrorFlags, POSITION_ERROR_FLAG_ERROR)) {
       // refuse to move
       Serial.println(F("LIMIT ERROR"));
       return;
@@ -565,13 +602,13 @@ void Parser::G01() {
 #endif  // MACHINE_STYLE == SIXI
 
 #ifdef HAS_GRIPPER
-  if (hasGCode('T')) {
+  if(hasGCode('T')>=0) {
     float toolStatus = parseNumber('T', 0);
     gripperUpdate(toolStatus);
   }
 #endif
 
-  if (hasGCode('A')) {
+  if(hasGCode('A')>=0) {
     desiredAcceleration = parseNumber('A', desiredAcceleration);
     desiredAcceleration = min(max(desiredAcceleration, (float)MIN_ACCELERATION), (float)MAX_ACCELERATION);
   }
@@ -586,7 +623,7 @@ void Parser::G01() {
     float p = axies[i].pos;
     pos[i]  = parseNumber(AxisNames[i], (absolute_mode ? p : 0)) + (absolute_mode ? 0 : p);
 
-    if (pos[i] > axies[i].limitMax) {
+    if(pos[i] > axies[i].limitMax) {
       Serial.print(F("LIMIT MAX "));
       Serial.print(i);
       Serial.print(" | pos[i] = ");
@@ -595,7 +632,7 @@ void Parser::G01() {
       Serial.println(axies[i].limitMax);
       badAngles = 1;
     }
-    if (pos[i] < axies[i].limitMin) {
+    if(pos[i] < axies[i].limitMin) {
       Serial.print(F("LIMIT MIN "));
       Serial.print(i);
       Serial.print(" | pos[i] = ");
@@ -606,7 +643,7 @@ void Parser::G01() {
     }
   }
 
-  if (badAngles == 1) return;
+  if(badAngles == 1) return;
 
   planner.bufferLine(pos, f);
 }
@@ -672,8 +709,8 @@ void Parser::G92() {
 */
 void Parser::M6() {
   int tool_id = parseNumber('T', current_tool);
-  if (tool_id < 0) tool_id = 0;
-  if (tool_id >= NUM_TOOLS) tool_id = NUM_TOOLS - 1;
+  if(tool_id < 0) tool_id = 0;
+  if(tool_id >= NUM_TOOLS) tool_id = NUM_TOOLS - 1;
   current_tool = tool_id;
 }
 
@@ -761,37 +798,41 @@ void Parser::M100() {
 */
 void Parser::M101() {
   int axisNumber = parseNumber('A', -1);
-  if (axisNumber >= 0 && axisNumber < NUM_AXIES) {
+  if(axisNumber >= 0 && axisNumber < NUM_AXIES) {
     float newT      = parseNumber('T', axies[axisNumber].limitMax);
     float newB      = parseNumber('B', axies[axisNumber].limitMin);
     uint8_t changed = 0;
 
-    if (!equalEpsilon(axies[axisNumber].limitMax, newT)) {
+    if(!equalEpsilon(axies[axisNumber].limitMax, newT)) {
       axies[axisNumber].limitMax = newT;
       changed                    = 1;
     }
-    if (!equalEpsilon(axies[axisNumber].limitMin, newB)) {
+    if(!equalEpsilon(axies[axisNumber].limitMin, newB)) {
       axies[axisNumber].limitMin = newB;
       changed                    = 1;
     }
-    if (changed == 1) { eepromManager.saveLimits(); }
+    if(changed == 1) { eepromManager.saveLimits(); }
   }
 
   Serial.print(F("M101 ("));
 
   for (ALL_AXIES(i)) {
     Serial.print(axies[i].limitMin);
-    if (i < NUM_AXIES - 1) Serial.print(',');
+    if(i < NUM_AXIES - 1) Serial.print(',');
   }
 
   Serial.print(F(") - ("));
 
   for (ALL_AXIES(i)) {
     Serial.print(axies[i].limitMax);
-    if (i < NUM_AXIES - 1) Serial.print(',');
+    if(i < NUM_AXIES - 1) Serial.print(',');
   }
 
   Serial.print(F(")\n"));
+}
+
+void Parser::M110() {
+  lineNumber = parseNumber('N', lineNumber);
 }
 
 /**
@@ -841,10 +882,10 @@ void Parser::M117() {
   // find M
   uint16_t i = 0;
   // skip "N*** M117 "
-  while (serialBuffer[i] != 'M') ++i;
+  while (currentCommand[i] != 'M') ++i;
   i += 5;
   // anything left?
-  if (i >= strlen(serialBuffer)) {
+  if(i >= strlen(currentCommand)) {
     // no message
     LCD_setStatusMessage(0);
     return;
@@ -852,7 +893,7 @@ void Parser::M117() {
 
   // read in any remaining message
   char message[M117_MAX_LEN];
-  char *buf = serialBuffer + i;
+  char *buf = currentCommand + i;
   i         = 0;
   while (isPrintable(*buf) && (*buf) != '\r' && (*buf) != '\n' && i < M117_MAX_LEN) {
     message[i++] = *buf;
@@ -931,10 +972,10 @@ void Parser::M226() {
 #else
   int pin = parseNumber('P', -1);
 #endif
-  if (pin == -1) return;  // no pin specified.
+  if(pin == -1) return;  // no pin specified.
 
   int oldState = parseNumber('S', -1);
-  if (oldState == -1) {
+  if(oldState == -1) {
     // default: assume the pin is not in the requested state
     oldState = digitalRead(pin);
   } else {

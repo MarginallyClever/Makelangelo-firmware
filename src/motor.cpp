@@ -294,21 +294,45 @@ void Stepper::isrPulsePhase() {
   }
 #endif
 
+bool stepNeeded[NUM_MUSCLES];
+
   // move each axis
   do {
 #ifdef DEBUG_STEPPING
     delayMicroseconds(150);
 #endif
-#define PULSE_START(NN) over##NN += delta##NN; \
-    if(over##NN > 0) digitalWrite(MOTOR_##NN##_STEP_PIN, START##NN)
 
-#define PULSE_FINISH(NN) \
-    if(over##NN > 0) { \
-      over##NN -= steps_total; \
+#define PULSE_PREP(NN) { \
+    over##NN += delta##NN; \
+    stepNeeded[NN] = over##NN > 0; \
+    if(stepNeeded[NN]) { \
       global_steps_##NN += global_step_dir_##NN; \
-      digitalWrite(MOTOR_##NN##_STEP_PIN, END##NN); \
-    }
+      over##NN -= steps_total; \
+    } \
+  }
+#define PULSE_START(NN)      if(stepNeeded[NN]) digitalWrite(MOTOR_##NN##_STEP_PIN, START##NN)
+#define PULSE_FINISH(NN)     if(stepNeeded[NN]) digitalWrite(MOTOR_##NN##_STEP_PIN, END##NN)
 
+    PULSE_PREP(0);
+#if NUM_MOTORS > 1
+    PULSE_PREP(1);
+#endif
+#if NUM_MOTORS > 2
+    PULSE_PREP(2);
+#endif
+#if NUM_MOTORS > 3
+    PULSE_PREP(3);
+#endif
+#if NUM_MOTORS > 4
+    PULSE_PREP(4);
+#endif
+#if NUM_MOTORS > 5
+    PULSE_PREP(5);
+#endif
+
+#if NUM_SERVOS > 0
+    servoOver0 += servoDelta0;
+#endif
 
     PULSE_START(0);
 #if NUM_MOTORS > 1
@@ -326,9 +350,7 @@ void Stepper::isrPulsePhase() {
 #if NUM_MOTORS > 5
     PULSE_START(5);
 #endif
-#if NUM_SERVOS > 0
-    servoOver0 += servoDelta0;
-#endif
+
     // now that the pins have had a moment to settle, do the second half of the steps.
     PULSE_FINISH(0);
 #if NUM_MOTORS > 1

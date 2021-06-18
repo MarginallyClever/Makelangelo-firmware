@@ -200,8 +200,6 @@ void setup() {
 
 // after setup runs over and over.
 void loop() {
-  parser.update();
-
 #ifdef HAS_SD
   SD_check();
 #endif
@@ -209,6 +207,9 @@ void loop() {
   LCD_update();
 #endif
 
+  parser.update();
+
+  parser.advance();
   // The PC will wait forever for the ready signal.
   // if Arduino hasn't received a new instruction in a while, send ready() again
   // just in case USB garbled ready and each half is waiting on the other.
