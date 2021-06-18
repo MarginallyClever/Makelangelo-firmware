@@ -310,7 +310,7 @@ void Planner::addSteps(Segment *newBlock,const float *const target_position, flo
 #endif
     newBlock->a[i].delta_units = newBlock->a[i].delta_steps / motor_spu[i];
     newBlock->a[i].absdelta = abs(newBlock->a[i].delta_steps);
-    if(newBlock->steps_total < newBlock->a[i].absdelta) newBlock->steps_total = newBlock->a[i].absdelta;
+    newBlock->steps_total = max(newBlock->steps_total, newBlock->a[i].absdelta);
   }
 
   for (ALL_AXIES(i)) axies[i].pos = target_position[i];
@@ -594,7 +594,7 @@ void Planner::bufferLine(float *pos, float new_feed_rate_units) {
   }
 #endif
 
-  const float inv_segments   = 1.0f / float(segments);
+  const float inv_segments = 1.0f / float(segments);
   const float segment_len_units = len_units * inv_segments;
 
   for (ALL_AXIES(i)) delta[i] *= inv_segments;

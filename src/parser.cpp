@@ -53,7 +53,7 @@ void Parser::start() {
 #endif  // HAS_WIFI
 }
 
-float Parser::parseNumber(char *p,float val) {
+float Parser::parseNumber(char *p) {
   char *ptr = p;  // start at the beginning of buffer
   for(;;) {  // walk to the end
     char c = *ptr;
@@ -70,10 +70,10 @@ float Parser::parseNumber(char *p,float val) {
   return g;
 }
 
-float Parser::parseNumber(char code,float val) {
+float Parser::parseNumber(char code,float valueIfNotFound) {
   int8_t n = hasGCode(currentCommand,code);
-  if(n>=0) return parseNumber(currentCommand+n+1,val);
-  return val;
+  if(n>=0) return parseNumber(currentCommand+n+1);
+  return valueIfNotFound;
 }
 
 int8_t Parser::hasGCode(char *p,char code) {
@@ -81,7 +81,7 @@ int8_t Parser::hasGCode(char *p,char code) {
   for(;;) {  // walk to the end
     char c = *ptr;
     if(c==';' || c=='\0') break;
-    if(toupper(c) == code) {  // if you find code on your walk,
+    if(toupper(c) == code) {
       return (uint8_t)(ptr-p);
     }
     ptr++;
@@ -97,7 +97,7 @@ int8_t Parser::hasGCode(char code) {
 char Parser::checkLineNumberAndCRCisOK() {
   // is there a line number?
   if(serialBuffer[0] == 'N') {  // line number must appear first on the line
-    int32_t cmd = parseNumber(serialBuffer+1, -1);
+    int32_t cmd = parseNumber(serialBuffer+1);
     if(cmd != lineNumber) {
       // wrong line number error
       Serial.print(F("BADLINENUM "));
@@ -227,16 +227,24 @@ void Parser::processCommand() {
   int last = strlen(currentCommand) - 1;
   if(currentCommand[last] == ';') currentCommand[last] = 0;
 
-  if(!strncmp(currentCommand, "UID", 3)) {
-    robot_uid = atoi(strchr(currentCommand, ' ') + 1);
-    eepromManager.saveUID();
-  }
+  // eat whitespace
+  while(*currentCommand==' ') currentCommand++;
+
+  char c = toupper(currentCommand[0]);
 
   int16_t cmd;
 
+  if(c=='U') {
+    if(!strncmp(currentCommand, "UID", 3)) {
+      robot_uid = atoi(strchr(currentCommand, ' ') + 1);
+      eepromManager.saveUID();
+    }
+    return;
+  }
+  
   // M codes
-  if(hasGCode('M')>=0) {
-    cmd = parseNumber('M', -1);
+  if(c=='M') {
+    cmd = parseNumber(currentCommand+1);
     switch (cmd) {
       case   6:        M6();          break;
       case  17:        M17();         break;
@@ -273,46 +281,50 @@ void Parser::processCommand() {
   }
 
   // machine style-specific codes
-  cmd = parseNumber('D',-1);
-  if(cmd!=-1) {
-    switch (cmd) {
-      case 0:        D0();        break;
-#ifdef HAS_SD
-//    case  4:  SD_StartPrintingFile(strchr(currentCommand, ' ') + 1);  break;
-#endif
-      case 5:        D5();        break;
-      case 6:        D6();        break;
-#if MACHINE_STYLE == POLARGRAPH
-      case 7:        D7();        break;
-      case 8:        D8();        break;
-#endif
-      case 9:        eepromManager.saveCalibration();        break;
-      case 10:       D10();        break;
-#ifdef MACHINE_HAS_LIFTABLE_PEN
-      case 13:       D13();        break;
-#endif
-      case 14:       D14();        break;
-#ifdef IS_STEWART_PLATFORM
-      case 15:       stewartDemo();break;
-#endif
-#if MACHINE_STYLE == SIXI
-      case 15:       sixiDemo();   break;
-      case 17:       D17();        break;
-      case 18:       D18();        break;
-      case 19:       D19();        break;
-      case 20:       SET_BIT_OFF(sensorManager.positionErrorFlags, POSITION_ERROR_FLAG_ERROR);        break;
-      case 21:       FLIP_BIT(sensorManager.positionErrorFlags, POSITION_ERROR_FLAG_ESTOP);        break;  // toggle ESTOP
-      case 23:       D23();        break;
-#endif
-      case 50:       D50();        break;
-      default:                     break;
+  if(c=='D') {
+    cmd = parseNumber(currentCommand+1);
+    if(cmd!=-1) {
+      switch (cmd) {
+        case 0:        D0();        break;
+  #ifdef HAS_SD
+  //    case  4:  SD_StartPrintingFile(strchr(currentCommand, ' ') + 1);  break;
+  #endif
+        case 5:        D5();        break;
+        case 6:        D6();        break;
+  #if MACHINE_STYLE == POLARGRAPH
+        case 7:        D7();        break;
+        case 8:        D8();        break;
+  #endif
+        case 9:        eepromManager.saveCalibration();        break;
+        case 10:       D10();        break;
+  #ifdef MACHINE_HAS_LIFTABLE_PEN
+        case 13:       D13();        break;
+  #endif
+        case 14:       D14();        break;
+  #ifdef IS_STEWART_PLATFORM
+        case 15:       stewartDemo();break;
+  #endif
+  #if MACHINE_STYLE == SIXI
+        case 15:       sixiDemo();   break;
+        case 17:       D17();        break;
+        case 18:       D18();        break;
+        case 19:       D19();        break;
+        case 20:       SET_BIT_OFF(sensorManager.positionErrorFlags, POSITION_ERROR_FLAG_ERROR);        break;
+        case 21:       FLIP_BIT(sensorManager.positionErrorFlags, POSITION_ERROR_FLAG_ESTOP);        break;  // toggle ESTOP
+        case 23:       D23();        break;
+  #endif
+        case 50:       D50();        break;
+        default:                     break;
+      }
+      return;
     }
-    return;
   }
 
-  // no M or D commands were found.  This is probably a G-command.
-  // G codes
-  cmd = parseNumber('G', lastGcommand);
+  // no M or D commands were found.  This is a G* command.
+  if(c=='G') {
+    cmd = parseNumber(currentCommand+1);
+  } else cmd = lastGcommand;
+
   lastGcommand = -1;
   switch (cmd) {
     case 0:
@@ -608,42 +620,53 @@ void Parser::G01() {
   }
 #endif
 
-  if(hasGCode('A')>=0) {
-    desiredAcceleration = parseNumber('A', desiredAcceleration);
+  int8_t offset=hasGCode('A');
+  if(offset>=0) {
+    desiredAcceleration = parseNumber(currentCommand+offset+1);
     desiredAcceleration = min(max(desiredAcceleration, (float)MIN_ACCELERATION), (float)MAX_ACCELERATION);
   }
 
-  float f = parseNumber('F', desiredFeedRate);
-  f = min(max(f, (float)MIN_FEEDRATE), (float)MAX_FEEDRATE);
+  float f;
+  offset=hasGCode('F');
+  if(offset>=0) {
+    f = parseNumber(currentCommand+offset+1);
+    f = min(max(f, (float)MIN_FEEDRATE), (float)MAX_FEEDRATE);
+  } else f = desiredFeedRate;
 
-  uint8_t badAngles = 0;
+  bool bad=false;
 
   float pos[NUM_AXIES];
   for (ALL_AXIES(i)) {
     float p = axies[i].pos;
-    pos[i]  = parseNumber(AxisNames[i], (absolute_mode ? p : 0)) + (absolute_mode ? 0 : p);
+    offset=hasGCode(AxisNames[i]);
+    if(offset>=0) {
+      float g = parseNumber(currentCommand+offset+1);
+      if(absolute_mode) p = g;
+      else p += g;
+      Serial.println(p);
 
-    if(pos[i] > axies[i].limitMax) {
-      Serial.print(F("LIMIT MAX "));
-      Serial.print(i);
-      Serial.print(" | pos[i] = ");
-      Serial.print(pos[i]);
-      Serial.print(" | axies[i].limitMax = ");
-      Serial.println(axies[i].limitMax);
-      badAngles = 1;
+      if(p > axies[i].limitMax) {
+        Serial.print(F("LIMIT MAX "));
+        Serial.print(i);
+        Serial.print(F(" | pos[i] = "));
+        Serial.print(p);
+        Serial.print(F(" | axies[i].limitMax = "));
+        Serial.println(axies[i].limitMax);
+        bad=true;
+      } else if(p < axies[i].limitMin) {
+        Serial.print(F("LIMIT MIN "));
+        Serial.print(i);
+        Serial.print(F(" | pos[i] = "));
+        Serial.print(p);
+        Serial.print(F(" | axies[i].limitMin = "));
+        Serial.println(axies[i].limitMin);
+        bad=true;
+      }
     }
-    if(pos[i] < axies[i].limitMin) {
-      Serial.print(F("LIMIT MIN "));
-      Serial.print(i);
-      Serial.print(" | pos[i] = ");
-      Serial.print(pos[i]);
-      Serial.print(" | axies[i].limitMin = ");
-      Serial.println(axies[i].limitMin);
-      badAngles = 1;
-    }
+    pos[i]=p;
   }
 
-  if(badAngles == 1) return;
+  if(bad) return;
 
   planner.bufferLine(pos, f);
 }
