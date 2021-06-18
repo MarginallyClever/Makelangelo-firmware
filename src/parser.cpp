@@ -643,7 +643,6 @@ void Parser::G01() {
       float g = parseNumber(currentCommand+offset+1);
       if(absolute_mode) p = g;
       else p += g;
-      Serial.println(p);
 
       if(p > axies[i].limitMax) {
         Serial.print(F("LIMIT MAX "));
