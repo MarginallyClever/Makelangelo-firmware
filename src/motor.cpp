@@ -45,6 +45,7 @@ float max_step_rate_s[NUM_MUSCLES];
 float motor_spu[NUM_MUSCLES];
 uint8_t isr_step_multiplier  = 1;
 uint32_t min_segment_time_us = DEFAULT_MIN_SEGMENT_TIME_US;
+uint16_t directionBits=0;
 
 #define DECL_MOT(NN)      \
   int delta##NN;          \
@@ -178,22 +179,9 @@ void Stepper::set_step_count(long *a) {
   Segment &old_seg = planner.blockBuffer[planner.getPrevBlock(planner.block_buffer_head)];
   for (ALL_MUSCLES(i)) old_seg.a[i].step_count = a[i];
 
-  global_steps_0 = 0;
-#if NUM_MOTORS > 1
-  global_steps_1 = 0;
-#endif
-#if NUM_MOTORS > 2
-  global_steps_2 = 0;
-#endif
-#if NUM_MOTORS > 3
-  global_steps_3 = 0;
-#endif
-#if NUM_MOTORS > 4
-  global_steps_4 = 0;
-#endif
-#if NUM_MOTORS > 5
-  global_steps_5 = 0;
-#endif
+#define SETUP_STEP(NN) global_steps_##NN = 0;
+  ALL_MOTOR_MACRO(SETUP_STEP);
+
 #if NUM_SERVOS > 0
   global_servoSteps_0 = 0;
 #endif
@@ -310,64 +298,19 @@ bool stepNeeded[NUM_MUSCLES];
       over##NN -= steps_total; \
     } \
   }
-#define PULSE_START(NN)      if(stepNeeded[NN]) digitalWrite(MOTOR_##NN##_STEP_PIN, START##NN)
-#define PULSE_FINISH(NN)     if(stepNeeded[NN]) digitalWrite(MOTOR_##NN##_STEP_PIN, END##NN)
+#define PULSE_START(NN)      if(stepNeeded[NN]) digitalWrite(MOTOR_##NN##_STEP_PIN, START##NN);
+#define PULSE_FINISH(NN)     if(stepNeeded[NN]) digitalWrite(MOTOR_##NN##_STEP_PIN, END##NN);
 
-    PULSE_PREP(0);
-#if NUM_MOTORS > 1
-    PULSE_PREP(1);
-#endif
-#if NUM_MOTORS > 2
-    PULSE_PREP(2);
-#endif
-#if NUM_MOTORS > 3
-    PULSE_PREP(3);
-#endif
-#if NUM_MOTORS > 4
-    PULSE_PREP(4);
-#endif
-#if NUM_MOTORS > 5
-    PULSE_PREP(5);
-#endif
+    ALL_MOTOR_MACRO(PULSE_PREP);
 
 #if NUM_SERVOS > 0
     servoOver0 += servoDelta0;
 #endif
 
-    PULSE_START(0);
-#if NUM_MOTORS > 1
-    PULSE_START(1);
-#endif
-#if NUM_MOTORS > 2
-    PULSE_START(2);
-#endif
-#if NUM_MOTORS > 3
-    PULSE_START(3);
-#endif
-#if NUM_MOTORS > 4
-    PULSE_START(4);
-#endif
-#if NUM_MOTORS > 5
-    PULSE_START(5);
-#endif
-
+    ALL_MOTOR_MACRO(PULSE_START);
     // now that the pins have had a moment to settle, do the second half of the steps.
-    PULSE_FINISH(0);
-#if NUM_MOTORS > 1
-    PULSE_FINISH(1);
-#endif
-#if NUM_MOTORS > 2
-    PULSE_FINISH(2);
-#endif
-#if NUM_MOTORS > 3
-    PULSE_FINISH(3);
-#endif
-#if NUM_MOTORS > 4
-    PULSE_FINISH(4);
-#endif
-#if NUM_MOTORS > 5
-    PULSE_FINISH(5);
-#endif
+    ALL_MOTOR_MACRO(PULSE_FINISH);
+
 #if NUM_SERVOS > 0
     // servo 0
     if(servoOver0 > 0) {
@@ -388,7 +331,7 @@ bool stepNeeded[NUM_MUSCLES];
 
 // Process blocks in the isr
 hal_timer_t Stepper::isrBlockPhase() {
-  hal_timer_t interval = (HAL_TIMER_RATE) / 1000;
+  hal_timer_t interval = (STEPPER_TIMER_RATE) / 1000UL;
 
   if(working_block) {
     // Is this segment done?
@@ -453,109 +396,82 @@ hal_timer_t Stepper::isrBlockPhase() {
   if(working_block == NULL) {
     working_block = planner.getCurrentBlock();
 
-    if(working_block == NULL) return interval;  // buffer empty
+    if(working_block) {
+      // defererencing some data so the loop runs faster.
+      steps_total = working_block->steps_total;
+      steps_taken = 0;
+      acc_step_rate        = working_block->initial_rate;
+      accel_until          = working_block->accel_until;
+      decel_after          = working_block->decel_after;
+      time_accelerating    = 0;
+      time_decelerating    = 0;
+      isr_nominal_rate     = -1;
 
-    // set the direction pins
-    digitalWrite(MOTOR_0_DIR_PIN, working_block->a[0].dir);
-    global_step_dir_0 = (working_block->a[0].dir == STEPPER_DIR_HIGH) ? 1 : -1;
+      // set the direction pins
+      if(directionBits != working_block->dir) {
+        directionBits = working_block->dir;
+#define SET_STEP_DIR(NN) \
+        if(!!(directionBits&(1<<NN))) { \
+          digitalWrite(MOTOR_##NN##_DIR_PIN, STEPPER_DIR_HIGH); \
+          global_step_dir_##NN = 1; \
+        } else { \
+          digitalWrite(MOTOR_##NN##_DIR_PIN, STEPPER_DIR_LOW); \
+          global_step_dir_##NN = -1; \
+        }
 
-#if NUM_MOTORS > 1
-    digitalWrite(MOTOR_1_DIR_PIN, working_block->a[1].dir);
-    global_step_dir_1 = (working_block->a[1].dir == STEPPER_DIR_HIGH) ? 1 : -1;
-#endif
-#if NUM_MOTORS > 2
-    digitalWrite(MOTOR_2_DIR_PIN, working_block->a[2].dir);
-    global_step_dir_2 = (working_block->a[2].dir == STEPPER_DIR_HIGH) ? 1 : -1;
-#endif
-#if NUM_MOTORS > 3
-    digitalWrite(MOTOR_3_DIR_PIN, working_block->a[3].dir);
-    global_step_dir_3 = (working_block->a[3].dir == STEPPER_DIR_HIGH) ? 1 : -1;
-#endif
-#if NUM_MOTORS > 4
-    digitalWrite(MOTOR_4_DIR_PIN, working_block->a[4].dir);
-    global_step_dir_4 = (working_block->a[4].dir == STEPPER_DIR_HIGH) ? 1 : -1;
-#endif
-#if NUM_MOTORS > 5
-    digitalWrite(MOTOR_5_DIR_PIN, working_block->a[5].dir);
-    global_step_dir_5 = (working_block->a[5].dir == STEPPER_DIR_HIGH) ? 1 : -1;
-#endif
+        ALL_MOTOR_MACRO(SET_STEP_DIR);
+      }
+
 #if NUM_SERVOS > 0
-    global_servoStep_dir_0 = (working_block->a[NUM_MOTORS].dir == STEPPER_DIR_HIGH) ? -1 : 1;
+      global_servoStep_dir_0 = (!!(working_block->dir&(1<<NUM_MOTORS))) ? -1 : 1;
 #endif
 
-    acc_step_rate        = working_block->initial_rate;
-    accel_until          = working_block->accel_until;
-    decel_after          = working_block->decel_after;
-    time_accelerating    = 0;
-    time_decelerating    = 0;
-    isr_nominal_rate     = -1;
+#define PREPARE_DELTA(NN) \
+      delta##NN = working_block->a[NN].absdelta; \
+      over##NN = -(steps_total >> 1);
 
-    interval = calc_timer(acc_step_rate, &isr_step_multiplier);
-
-    // defererencing some data so the loop runs faster.
-    steps_total = working_block->steps_total;
-    steps_taken = 0;
-    delta0      = working_block->a[0].absdelta;
-    over0       = -(steps_total >> 1);
-#if NUM_MOTORS > 1
-    delta1 = working_block->a[1].absdelta;
-    over1  = -(steps_total >> 1);
-#endif
-#if NUM_MOTORS > 2
-    delta2 = working_block->a[2].absdelta;
-    over2  = -(steps_total >> 1);
-#endif
-#if NUM_MOTORS > 3
-    delta3 = working_block->a[3].absdelta;
-    over3  = -(steps_total >> 1);
-#endif
-#if NUM_MOTORS > 4
-    delta4 = working_block->a[4].absdelta;
-    over4  = -(steps_total >> 1);
-#endif
-#if NUM_MOTORS > 5
-    delta5 = working_block->a[5].absdelta;
-    over5  = -(steps_total >> 1);
-#endif
+      ALL_MOTOR_MACRO(PREPARE_DELTA);
 #if NUM_SERVOS > 0
-    global_servoSteps_0 = working_block->a[NUM_MOTORS].step_count - working_block->a[NUM_MOTORS].delta_steps;
-    servoDelta0 = working_block->a[NUM_MOTORS].absdelta;
-    servoOver0  = -(steps_total >> 1);
+      global_servoSteps_0 = working_block->a[NUM_MOTORS].step_count - working_block->a[NUM_MOTORS].delta_steps;
+      servoDelta0 = working_block->a[NUM_MOTORS].absdelta;
+      servoOver0  = -(steps_total >> 1);
 
 #    if defined(HAS_GRIPPER)
-      gripper.sendPositionRequest(working_block->a[NUM_MOTORS].step_count, 255, 32);
+        gripper.sendPositionRequest(working_block->a[NUM_MOTORS].step_count, 255, 32);
 #    endif
 #endif
 
 #ifdef DEBUG_STEPPING
-    int decel   = working_block->steps_total - working_block->decel_after;
-    int nominal = working_block->decel_after - working_block->accel_until;
-    Serial.print("seg: ");
-    Serial.print((long)working_block, HEX);
-    // Serial.print("  distance: ");  Serial.println(working_block->distance);
-    // Serial.print("  nominal_speed: ");  Serial.println(working_block->nominal_speed);
-    Serial.print("  entry_speed: ");
-    Serial.print(working_block->entry_speed);
-    Serial.print("  entry_speed_max: ");
-    Serial.print(working_block->entry_speed_max);
-    // Serial.print("  acceleration: ");  Serial.println(working_block->acceleration);
-    Serial.print("  accel: ");
-    Serial.print(working_block->accel_until);
-    Serial.print("  nominal: ");
-    Serial.print(nominal);
-    Serial.print("  decel: ");
-    Serial.println(decel);
-    // Serial.print("  initial_rate: ");  Serial.println(working_block->initial_rate);
-    // Serial.print("  nominal_rate: ");  Serial.println(working_block->nominal_rate);
-    // Serial.print("  final_rate: ");  Serial.println(working_block->final_rate);
-    // Serial.print("  acceleration_steps_per_s2: ");  Serial.println(working_block->acceleration_steps_per_s2);
-    // Serial.print("  acceleration_rate: ");  Serial.println(working_block->acceleration_rate);
-    // Serial.print("  nominal_length_flag: ");  Serial.println(working_block->nominal_length_flag==0?"n":"y");
-    // Serial.print("  recalculate_flag: ");  Serial.println(working_block->recalculate_flag==0?"n":"y");
-    // Serial.print("  dx: ");  Serial.println(working_block->a[0].delta_units);
-    // Serial.print("  dy: ");  Serial.println(working_block->a[1].delta_units);
-    // Serial.print("  dz: ");  Serial.println(working_block->a[2].delta_units);
+      int decel   = working_block->steps_total - working_block->decel_after;
+      int nominal = working_block->decel_after - working_block->accel_until;
+      Serial.print("seg: ");
+      Serial.print((long)working_block, HEX);
+      // Serial.print("  distance: ");  Serial.println(working_block->distance);
+      // Serial.print("  nominal_speed: ");  Serial.println(working_block->nominal_speed);
+      Serial.print("  entry_speed: ");
+      Serial.print(working_block->entry_speed);
+      Serial.print("  entry_speed_max: ");
+      Serial.print(working_block->entry_speed_max);
+      // Serial.print("  acceleration: ");  Serial.println(working_block->acceleration);
+      Serial.print("  accel: ");
+      Serial.print(working_block->accel_until);
+      Serial.print("  nominal: ");
+      Serial.print(nominal);
+      Serial.print("  decel: ");
+      Serial.println(decel);
+      // Serial.print("  initial_rate: ");  Serial.println(working_block->initial_rate);
+      // Serial.print("  nominal_rate: ");  Serial.println(working_block->nominal_rate);
+      // Serial.print("  final_rate: ");  Serial.println(working_block->final_rate);
+      // Serial.print("  acceleration_steps_per_s2: ");  Serial.println(working_block->acceleration_steps_per_s2);
+      // Serial.print("  acceleration_rate: ");  Serial.println(working_block->acceleration_rate);
+      // Serial.print("  nominal_length_flag: ");  Serial.println(working_block->nominal_length_flag==0?"n":"y");
+      // Serial.print("  recalculate_flag: ");  Serial.println(working_block->recalculate_flag==0?"n":"y");
+      // Serial.print("  dx: ");  Serial.println(working_block->a[0].delta_units);
+      // Serial.print("  dy: ");  Serial.println(working_block->a[1].delta_units);
+      // Serial.print("  dz: ");  Serial.println(working_block->a[2].delta_units);
 #endif
+      interval = calc_timer(acc_step_rate, &isr_step_multiplier);
+    }
   }
 
   return interval;
