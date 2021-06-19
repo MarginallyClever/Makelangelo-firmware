@@ -92,36 +92,16 @@ void SDCard::check() {
         if(c=='\0'||c=='\n') {
           buffer[bufferPos]=0;
           parser.ringBuffer.waitToAdd(buffer);
+
+          // update the % visible on the LCD.
+          sd_percent_complete = 100.0 * (float)sd_bytes_read / (float)sd_file_size;
+          // echo command?
+          // Serial.println(buffer);
+
           bufferPos=0;
+          // quit this loop so we can update the LCD and listen for commands from the laptop (if any)
+          break;
         }
-      } /*
-       if(c==';') {
-         // eat to the end of the line
-         while(sd_print_file.peek() != -1) {
-           c=sd_print_file.read();
-           sd_bytes_read++;
-           if(c=='\n' || c=='\r') break;
-         }
-       }*/
-      if (c == '\n') {
-        // update the % visible on the LCD.
-        sd_percent_complete = 100.0 * (float)sd_bytes_read / (float)sd_file_size;
-
-        // end string
-        parser.serialBuffer[parser.sofar - 1] = 0;
-
-        // echo command?
-        // Serial.println(serialBuffer);
-
-        // process command
-        parser.processCommand();
-
-        // reset buffer for next line
-        parser.sofar = 0;
-
-        parser.ready();
-        // quit this loop so we can update the LCD and listen for commands from the laptop (if any)
-        break;
       }
     }
 
