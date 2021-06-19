@@ -121,6 +121,8 @@ void Planner::recalculate_forward_kernel(const Segment *prev, Segment *const cur
       }
     }
   }
+  if(current->entry_speed_sqr == current->entry_speed_max_sqr)
+    block_buffer_planned = block_index;
 }
 
 void Planner::forwardPass() {
@@ -298,12 +300,13 @@ void Planner::addSteps(Segment *newBlock,const float *const target_position, flo
   // find the number of steps for each motor, the direction, and the absolute steps
   // The axis that has the most steps will control the overall acceleration as per bresenham's algorithm.
   newBlock->steps_total = 0;
+  newBlock->dir=0;
 
   for (ALL_MUSCLES(i)) {
     newBlock->a[i].step_count  = steps[i];
     newBlock->a[i].delta_steps = steps[i] - oldBlock.a[i].step_count;
 
-    newBlock->a[i].dir = (newBlock->a[i].delta_steps < 0 ? STEPPER_DIR_HIGH : STEPPER_DIR_LOW);
+    if(newBlock->a[i].delta_steps < 0) newBlock->dir |= (1UL<<i);
 #if MACHINE_STYLE == SIXI
     new_seg.a[i].positionStart = axies[i].pos;
     new_seg.a[i].positionEnd   = target_position[i];
@@ -564,7 +567,7 @@ void Planner::bufferLine(float *pos, float new_feed_rate_units) {
     delta[i]    = pos[i] - startPos[i];
     lenSquared += sq(delta[i]);
   }
-
+/*
 #if MACHINE_STYLE == POLARGRAPH
   if(delta[0] == 0 && delta[1] == 0) {
     // only moving Z, don't split the line.
@@ -572,13 +575,14 @@ void Planner::bufferLine(float *pos, float new_feed_rate_units) {
     return;
   }
 #endif
-
+*/
   float len_units = sqrt(lenSquared);
   if(abs(len_units) < 0.000001f) return;
 
   const float seconds = len_units / new_feed_rate_units;
   uint16_t segments   = seconds * SEGMENTS_PER_SECOND;
-  if(segments < 1) segments = 1;
+  segments = min(segments, len_units * 0.5);
+  segments = max(segments, 1);
 
 #ifdef HAS_GRIPPER
   // if we have a gripper and only gripper is moving, don't split the movement.
@@ -599,16 +603,19 @@ void Planner::bufferLine(float *pos, float new_feed_rate_units) {
 
   for (ALL_AXIES(i)) delta[i] *= inv_segments;
 
+  uint32_t until = millis() + 200UL;
   while (--segments) {
-    for (ALL_AXIES(i)) startPos[i] += delta[i];
+    if(millis()>until) {
+      meanwhile();
+      until = millis() + 200UL;
+    }
 
+    for (ALL_AXIES(i)) startPos[i] += delta[i];
     addSegment(startPos, new_feed_rate_units, segment_len_units);
   }
 
   // guarantee we stop exactly at the destination (no rounding errors).
   addSegment(pos, new_feed_rate_units, segment_len_units);
-
-  //  Serial.print("P");  Serial.println(movesPlanned());
 }
 
 /**

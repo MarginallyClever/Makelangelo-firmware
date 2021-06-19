@@ -12,7 +12,6 @@ typedef struct {
   int32_t step_count;   // current motor position, in steps.
   int32_t delta_units;  // in some systems it's mm, in others it's degrees.
   uint32_t absdelta;
-  int dir;
 #if MACHINE_STYLE == SIXI
   float expectedPosition;
   float positionStart;
@@ -34,6 +33,7 @@ enum BlockFlagMask : uint8_t {
 
 typedef struct {
   Muscle a[NUM_MUSCLES];
+  uint16_t dir;
 
   float distance;         // units
   float nominal_speed_sqr;    // units/s
@@ -60,9 +60,9 @@ class Planner {
   public:
   static Segment blockBuffer[MAX_SEGMENTS];
   static volatile int block_buffer_head, 
-               block_buffer_nonbusy,
-               block_buffer_planned,
-               block_buffer_tail;
+                      block_buffer_nonbusy,
+                      block_buffer_planned,
+                      block_buffer_tail;
   static int first_segment_delay;
 
   static float previous_nominal_speed_sqr;
