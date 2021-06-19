@@ -121,6 +121,33 @@
 #endif
 
 //------------------------------------------------------------------------------
+// loop unrolling
+//------------------------------------------------------------------------------
+
+
+#if NUM_MOTORS == 0
+#define ALL_MOTOR_MACRO(NN) 
+#endif
+#if NUM_MOTORS == 1
+#define ALL_MOTOR_MACRO(NN) NN(0) 
+#endif
+#if NUM_MOTORS == 2
+#define ALL_MOTOR_MACRO(NN) NN(0) NN(1)
+#endif
+#if NUM_MOTORS == 3
+#define ALL_MOTOR_MACRO(NN) NN(0) NN(1) NN(2)
+#endif
+#if NUM_MOTORS == 4
+#define ALL_MOTOR_MACRO(NN) NN(0) NN(1) NN(2) NN(3)
+#endif
+#if NUM_MOTORS == 5
+#define ALL_MOTOR_MACRO(NN) NN(0) NN(1) NN(2) NN(3) NN(4)
+#endif
+#if NUM_MOTORS == 6
+#define ALL_MOTOR_MACRO(NN) NN(0) NN(1) NN(2) NN(3) NN(4) NN(5)
+#endif
+
+//------------------------------------------------------------------------------
 // STRUCTURES
 //------------------------------------------------------------------------------
 
