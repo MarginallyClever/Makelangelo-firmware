@@ -164,6 +164,8 @@ void Stepper::setup() {
   memset(steps, 0, (NUM_MUSCLES) * sizeof(long));
   set_step_count(steps);
 
+  setDirections(0);
+
   HAL_timer_start(STEP_TIMER_NUM);
   engage();
 }
@@ -257,7 +259,7 @@ void Stepper::isrPulsePhase() {
   if(!working_block) return;
 
   const uint32_t pendingSteps = steps_total - steps_taken;
-  uint8_t stepsToDo = min(pendingSteps,isr_step_multiplier);
+  uint8_t stepsToDo = _MIN(pendingSteps,isr_step_multiplier);
   steps_taken+=stepsToDo;
 
 #if MACHINE_STYLE == SIXI
@@ -343,8 +345,8 @@ hal_timer_t Stepper::isrBlockPhase() {
       if(steps_taken <= accel_until) {
         // accelerating
         acc_step_rate = STEP_MULTIPLY(time_accelerating, working_block->acceleration_rate);
-        acc_step_rate = min(acc_step_rate, working_block->nominal_rate);
-        interval = calc_timer(acc_step_rate, &isr_step_multiplier);
+        acc_step_rate = _MIN(acc_step_rate, working_block->nominal_rate);
+        interval = calc_interval(acc_step_rate, &isr_step_multiplier);
         time_accelerating += interval;
 #ifdef DEBUG_STEPPING
         /*
@@ -360,11 +362,11 @@ hal_timer_t Stepper::isrBlockPhase() {
         uint32_t step_rate = STEP_MULTIPLY(time_decelerating, working_block->acceleration_rate);
         if(step_rate < acc_step_rate) {
           step_rate = acc_step_rate - step_rate;
-          step_rate = max(step_rate, working_block->final_rate);
+          step_rate = _MAX(step_rate, working_block->final_rate);
         } else {
           step_rate = working_block->final_rate;
         }
-        interval = calc_timer(step_rate, &isr_step_multiplier);
+        interval = calc_interval(step_rate, &isr_step_multiplier);
         time_decelerating += interval;
 #ifdef DEBUG_STEPPING
         /*
@@ -378,7 +380,7 @@ hal_timer_t Stepper::isrBlockPhase() {
       } else {
         // cruising at nominal speed (flat top of the trapezoid)
         if(isr_nominal_rate < 0) {
-          isr_nominal_rate = calc_timer(working_block->nominal_rate, &isr_step_multiplier);
+          isr_nominal_rate = calc_interval(working_block->nominal_rate, &isr_step_multiplier);
         }
         interval = isr_nominal_rate;
 #ifdef DEBUG_STEPPING
@@ -409,19 +411,8 @@ hal_timer_t Stepper::isrBlockPhase() {
 
       // set the direction pins
       if(directionBits != working_block->dir) {
-        directionBits = working_block->dir;
-#define SET_STEP_DIR(NN) \
-        if(!!(directionBits&(1<<NN))) { \
-          digitalWrite(MOTOR_##NN##_DIR_PIN, STEPPER_DIR_HIGH); \
-          global_step_dir_##NN = 1; \
-        } else { \
-          digitalWrite(MOTOR_##NN##_DIR_PIN, STEPPER_DIR_LOW); \
-          global_step_dir_##NN = -1; \
-        }
-
-        ALL_MOTOR_MACRO(SET_STEP_DIR);
+        setDirections(working_block->dir);
       }
-
 #if NUM_SERVOS > 0
       global_servoStep_dir_0 = (!!(working_block->dir&(1<<NUM_MOTORS))) ? -1 : 1;
 #endif
@@ -470,7 +461,7 @@ hal_timer_t Stepper::isrBlockPhase() {
       // Serial.print("  dy: ");  Serial.println(working_block->a[1].delta_units);
       // Serial.print("  dz: ");  Serial.println(working_block->a[2].delta_units);
 #endif
-      interval = calc_timer(acc_step_rate, &isr_step_multiplier);
+      interval = calc_interval(acc_step_rate, &isr_step_multiplier);
     }
   }
 
@@ -524,7 +515,7 @@ void Stepper::isr() {
 #  endif
 #endif  // DEBUG_STEPPING
 
-    hal_timer_t interval = min(hal_timer_t(HAL_TIMER_TYPE_MAX),nextMainISR);
+    hal_timer_t interval = _MIN(hal_timer_t(HAL_TIMER_TYPE_MAX),nextMainISR);
 
     nextMainISR      -= interval;
     next_isr_ticks   += interval;
@@ -581,4 +572,19 @@ void clockISRProfile() {
   Serial.println(dt);
   Serial.print(F("profile per loop  ="));
   Serial.println(dtPer);
+}
+
+
+void Stepper::setDirections(uint16_t bits) {
+  directionBits = bits;
+#define SET_STEP_DIR(NN) \
+  if(!!(directionBits&(1UL<<NN))) { \
+    digitalWrite(MOTOR_##NN##_DIR_PIN, STEPPER_DIR_HIGH); \
+    global_step_dir_##NN = 1; \
+  } else { \
+    digitalWrite(MOTOR_##NN##_DIR_PIN, STEPPER_DIR_LOW); \
+    global_step_dir_##NN = -1; \
+  }
+
+  ALL_MOTOR_MACRO(SET_STEP_DIR);
 }

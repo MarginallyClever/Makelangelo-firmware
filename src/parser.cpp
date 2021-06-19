@@ -623,14 +623,14 @@ void Parser::G01() {
   int8_t offset=hasGCode('A');
   if(offset>=0) {
     desiredAcceleration = parseNumber(currentCommand+offset+1);
-    desiredAcceleration = min(max(desiredAcceleration, (float)MIN_ACCELERATION), (float)MAX_ACCELERATION);
+    desiredAcceleration = _MIN(_MAX(desiredAcceleration, (float)MIN_ACCELERATION), (float)MAX_ACCELERATION);
   }
 
   float f;
   offset=hasGCode('F');
   if(offset>=0) {
     f = parseNumber(currentCommand+offset+1);
-    f = min(max(f, (float)MIN_FEEDRATE), (float)MAX_FEEDRATE);
+    f = _MIN(_MAX(f, (float)MIN_FEEDRATE), (float)MAX_FEEDRATE);
   } else f = desiredFeedRate;
 
   bool bad=false;
@@ -677,9 +677,9 @@ void Parser::G01() {
 */
 void Parser::G02(int8_t clockwise) {
   desiredAcceleration = parseNumber('A', desiredAcceleration);
-  desiredAcceleration = min(max(desiredAcceleration, (float)MIN_ACCELERATION), (float)MAX_ACCELERATION);
+  desiredAcceleration = _MIN(_MAX(desiredAcceleration, (float)MIN_ACCELERATION), (float)MAX_ACCELERATION);
   float f      = parseNumber('F', desiredFeedRate);
-  f            = min(max(f, (float)MIN_FEEDRATE), (float)MAX_FEEDRATE);
+  f            = _MIN(_MAX(f, (float)MIN_FEEDRATE), (float)MAX_FEEDRATE);
 
   int i;
   float pos[NUM_AXIES];
@@ -955,7 +955,7 @@ void Parser::M205() {
 
 #define PARSE_205_AXIS(AA,BB) \
   f = parseNumber(AA, max_jerk[BB]); \
-  max_jerk[BB] = max(min(f, (float)MAX_JERK), (float)0); \
+  max_jerk[BB] = _MAX(_MIN(f, (float)MAX_JERK), (float)0); \
   Serial.print(" "); \
   Serial.print(AA); \
   Serial.print(max_jerk[BB]);
@@ -977,7 +977,7 @@ void Parser::M205() {
   PARSE_205_AXIS('W',5);
 #endif
   f                   = parseNumber('B', min_segment_time_us);
-  min_segment_time_us = max(min(f, 1000000.0f), (float)0);
+  min_segment_time_us = _MAX(_MIN(f, 1000000.0f), (float)0);
   Serial.print(" B");
   Serial.println(min_segment_time_us);
 }

@@ -61,7 +61,7 @@ void IK(const float *const axies, long *motorStepArray) {
   motorStepArray[5] = J5 / 360.0;  // HAND
 #  ifdef HAS_GRIPPER
   float jT = axies[6] * 255.0 / 180.0;
-  jT       = min(max(jT, 0), 255);
+  jT       = _MIN(_MAX(jT, 0), 255);
   // Serial.print("jT=");
   // Serial.println(jT);
   motorStepArray[6] = jT;

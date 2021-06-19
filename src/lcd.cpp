@@ -755,7 +755,7 @@ void LCD_update() {
     lcd_draw_delay = millis() + LCD_DRAW_DELAY;
 
     dialRotationFrequencyCounter += (lcd_turn != 0)? 1:-1;
-    dialRotationFrequencyCounter = max(dialRotationFrequencyCounter,0);
+    dialRotationFrequencyCounter = _MAX(dialRotationFrequencyCounter,0);
     lcd_turnMultiplier = lcd_turn * (dialRotationFrequencyCounter * 0.5);
 
     // Serial.print(lcd_turn,DEC);

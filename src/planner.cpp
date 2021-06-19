@@ -67,7 +67,7 @@ void Planner::recalculate_reverse_kernel(Segment *const current, const Segment *
     // for max allowable speed if block is decelerating and nominal length is false.
     const float new_entry_speed_sqr = TEST(current->flags, BIT_FLAG_NOMINAL)
                                   ? entry_speed_max_sqr
-                                  : min( entry_speed_max_sqr, max_speed_allowed_sqr(-current->acceleration, (next ? next->entry_speed_sqr : sq(float(MIN_FEEDRATE))), current->distance) );
+                                  : _MIN( entry_speed_max_sqr, max_speed_allowed_sqr(-current->acceleration, (next ? next->entry_speed_sqr : sq(float(MIN_FEEDRATE))), current->distance) );
     if( current->entry_speed_sqr != new_entry_speed_sqr ) {
       SET_BIT_ON(current->flags, BIT_FLAG_RECALCULATE);
       if( motor.isBlockBusy(current) ) {
@@ -162,7 +162,7 @@ void Planner::calculate_trapezoid_for_block(Segment *s, const float &entry_facto
   int32_t plateau_steps = s->steps_total - accelerate_steps - decelerate_steps;
   if(plateau_steps < 0) {
     const float accelerate_steps_float = ceil(intersection_distance(intial_rate, final_rate, accel, s->steps_total));
-    accelerate_steps = min(((uint32_t)max(accelerate_steps_float, 0.0f)), s->steps_total);
+    accelerate_steps = _MIN(((uint32_t)_MAX(accelerate_steps_float, 0.0f)), s->steps_total);
     plateau_steps = 0;
   }
   s->accel_until  = accelerate_steps;
@@ -305,15 +305,14 @@ void Planner::addSteps(Segment *newBlock,const float *const target_position, flo
   for (ALL_MUSCLES(i)) {
     newBlock->a[i].step_count  = steps[i];
     newBlock->a[i].delta_steps = steps[i] - oldBlock.a[i].step_count;
-
     if(newBlock->a[i].delta_steps < 0) newBlock->dir |= (1UL<<i);
+    newBlock->a[i].delta_units = newBlock->a[i].delta_steps / motor_spu[i];
+    newBlock->a[i].absdelta = abs(newBlock->a[i].delta_steps);
+    newBlock->steps_total = _MAX(newBlock->steps_total, newBlock->a[i].absdelta);
 #if MACHINE_STYLE == SIXI
     new_seg.a[i].positionStart = axies[i].pos;
     new_seg.a[i].positionEnd   = target_position[i];
 #endif
-    newBlock->a[i].delta_units = newBlock->a[i].delta_steps / motor_spu[i];
-    newBlock->a[i].absdelta = abs(newBlock->a[i].delta_steps);
-    newBlock->steps_total = max(newBlock->steps_total, newBlock->a[i].absdelta);
   }
 
   for (ALL_AXIES(i)) axies[i].pos = target_position[i];
@@ -326,22 +325,22 @@ void Planner::addSteps(Segment *newBlock,const float *const target_position, flo
   // record the new target position & feed rate for the next movement.
   float inverse_distance_units = 1.0 / longest_distance;
   float inverse_secs = fr_units_s * inverse_distance_units;
-  int movesQueued = movesPlannedNotBusy();
-  uint32_t segment_time_us = lroundf(1000000.0f / inverse_secs);
 
+  int movesQueued = movesPlannedNotBusy();
 #ifdef BUFFER_EMPTY_SLOWDOWN
+  uint32_t segment_time_us = lroundf(1000000.0f / inverse_secs);
     #ifndef SLOWDOWN_DIVISOR
       #define SLOWDOWN_DIVISOR 2
     #endif
-  if(movesQueued >= 2 && movesQueued <= (MAX_SEGMENTS / SLOWDOWN_DIVISOR) - 1) {
+  if(movesQueued>=2 && movesQueued<=(MAX_SEGMENTS / SLOWDOWN_DIVISOR) - 1) {
     const int32_t time_diff = min_segment_time_us - segment_time_us;
     if(time_diff > 0) {
-      // Serial.print("was ");  Serial.print(inverse_secs);
+      //Serial.print("was ");  Serial.print(1.0f/inverse_secs);
       const uint32_t nst = segment_time_us + lroundf(2 * time_diff  / movesQueued);
       inverse_secs       = 1000000.0f / nst;
-      // Serial.print(" now ");  Serial.println(inverse_secs);
+      //REPORT(" now ",1.0f/inverse_secs);
     }
-  }
+  }// else REPORT("Q",movesQueued);
 #endif
 
   newBlock->nominal_speed_sqr = sq(longest_distance * inverse_secs);
@@ -353,7 +352,7 @@ void Planner::addSteps(Segment *newBlock,const float *const target_position, flo
   for (ALL_MUSCLES(i)) {
     current_speed[i] = newBlock->a[i].delta_units * inverse_secs;
     const float cs = fabs(current_speed[i]), max_fr = max_step_rate_s[i];
-    if(cs > max_fr) speed_factor = min(speed_factor, max_fr / cs);
+    if(cs > max_fr) speed_factor = _MIN(speed_factor, max_fr / cs);
   }
   
   // apply the speed limit
@@ -379,7 +378,7 @@ void Planner::addSteps(Segment *newBlock,const float *const target_position, flo
 
   for (ALL_MUSCLES(i)) {
     max_acceleration_steps_per_s2[i] = max_acceleration * motor_spu[i];
-    highest_rate = max( highest_rate, max_acceleration_steps_per_s2[i] );
+    highest_rate = _MAX( highest_rate, max_acceleration_steps_per_s2[i] );
   }
   uint32_t acceleration_long_cutoff = 4294967295UL / highest_rate; // 0xFFFFFFFFUL
 
@@ -387,14 +386,14 @@ void Planner::addSteps(Segment *newBlock,const float *const target_position, flo
     for (ALL_MUSCLES(i)) {
       if(newBlock->a[i].absdelta && max_acceleration_steps_per_s2[i] < accel) {
         const uint32_t max_possible = max_acceleration_steps_per_s2[i] * newBlock->steps_total / newBlock->a[i].absdelta;
-        accel = min( accel, max_possible );
+        accel = _MIN( accel, max_possible );
       }
     }
   } else {
     for (ALL_MUSCLES(i)) {
       if(newBlock->a[i].absdelta && max_acceleration_steps_per_s2[i] < accel) {
         const float max_possible = float(max_acceleration_steps_per_s2[i]) * float(newBlock->steps_total) / float(newBlock->a[i].absdelta);
-        accel = min( accel, (uint32_t)max_possible );
+        accel = _MIN( accel, (uint32_t)max_possible );
       }
     }
   }
@@ -405,6 +404,9 @@ void Planner::addSteps(Segment *newBlock,const float *const target_position, flo
   newBlock->steps_taken               = 0;
 
   // BEGIN JERK LIMITING
+  float vmax_junction_sqr;
+
+#ifdef HAS_CLASSIC_JERK
 
   CACHED_SQRT(nominal_speed,newBlock->nominal_speed_sqr);
 
@@ -439,7 +441,7 @@ void Planner::addSteps(Segment *newBlock,const float *const target_position, flo
 
     // The junction velocity will be shared between successive segments. Limit the junction velocity to their minimum.
     // Pick the smaller of the nominal speeds. Higher speed shall not be achieved at the junction during coasting.
-    vmax_junction = min(newBlock->nominal_speed_sqr, previous_nominal_speed);
+    vmax_junction = _MIN(newBlock->nominal_speed_sqr, previous_nominal_speed);
     float smaller_speed_factor = vmax_junction / previous_nominal_speed;
     // Now limit the jerk in all axes.
     for (ALL_MUSCLES(i)) {
@@ -454,9 +456,9 @@ void Planner::addSteps(Segment *newBlock,const float *const target_position, flo
       // Calculate jerk depending on whether the axis is coasting in the same direction or reversing.
       const float jerk = (v_exit > v_entry)
           ?  //                            coasting             axis reversal
-          ((v_entry > 0 || v_exit < 0) ? (v_exit - v_entry) : max(v_exit, -v_entry))
+          ((v_entry > 0 || v_exit < 0) ? (v_exit - v_entry) : _MAX(v_exit, -v_entry))
           :  // v_exit <= v_entry          coasting             axis reversal
-          ((v_entry < 0 || v_exit > 0) ? (v_entry - v_exit) : max(-v_exit, v_entry));
+          ((v_entry < 0 || v_exit > 0) ? (v_entry - v_exit) : _MAX(-v_exit, v_entry));
 
       if(jerk > max_jerk[i]) {
         v_factor *= max_jerk[i] / jerk;
@@ -477,16 +479,17 @@ void Planner::addSteps(Segment *newBlock,const float *const target_position, flo
   } else {
     vmax_junction = safe_speed;
   }
-
+  
   previous_safe_speed = safe_speed;
-  float vmax_junction_sqr = sq(vmax_junction);
+  vmax_junction_sqr = sq(vmax_junction);
+#endif // HAS_CLASSIC_JERK
 
   // END JERK LIMITING
 
   newBlock->entry_speed_max_sqr = vmax_junction_sqr;
 
   float allowable_speed_sqr = max_speed_allowed_sqr(-newBlock->acceleration, sq(float(MIN_FEEDRATE)), newBlock->distance);
-  newBlock->entry_speed_sqr = min(vmax_junction_sqr, allowable_speed_sqr);
+  newBlock->entry_speed_sqr = _MIN(vmax_junction_sqr, allowable_speed_sqr);
   SET_BIT( newBlock->flags, BIT_FLAG_NOMINAL, ( newBlock->nominal_speed_sqr <= allowable_speed_sqr ) );
   SET_BIT_ON( newBlock->flags, BIT_FLAG_RECALCULATE );
 
@@ -579,10 +582,13 @@ void Planner::bufferLine(float *pos, float new_feed_rate_units) {
   float len_units = sqrt(lenSquared);
   if(abs(len_units) < 0.000001f) return;
 
+#ifndef MIN_SEGMENT_LENGTH
+#define MIN_SEGMENT_LENGTH 0.5f
+#endif
   const float seconds = len_units / new_feed_rate_units;
   uint16_t segments   = seconds * SEGMENTS_PER_SECOND;
-  segments = min(segments, len_units * 0.5);
-  segments = max(segments, 1);
+  segments = _MIN(segments, len_units / MIN_SEGMENT_LENGTH);
+  segments = _MAX(segments, 1);
 
 #ifdef HAS_GRIPPER
   // if we have a gripper and only gripper is moving, don't split the movement.
@@ -731,7 +737,7 @@ float Planner::limitPolargraphAcceleration(const float *target_position,const fl
 
     // The maximum acceleration is given by cT if cT>0
     if(cT > 0) {
-      maxAcceleration = max(min(maxAcceleration, cT), (float)MIN_ACCELERATION);
+      maxAcceleration = _MAX(_MIN(maxAcceleration, cT), (float)MIN_ACCELERATION);
     }
   }
   return maxAcceleration;

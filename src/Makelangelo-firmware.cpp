@@ -73,7 +73,7 @@ hal_timer_t findStepDelay() {
 
 void setFeedRate(float units_per_s) {
   if (desiredFeedRate != units_per_s) {
-    desiredFeedRate = max(min(units_per_s,MAX_FEEDRATE),MIN_FEEDRATE);
+    desiredFeedRate = _MAX(_MIN(units_per_s,MAX_FEEDRATE),MIN_FEEDRATE);
   }
 }
 
