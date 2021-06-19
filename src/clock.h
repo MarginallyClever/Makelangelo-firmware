@@ -4,10 +4,6 @@
 // TIMERS
 //------------------------------------------------------------------------------
 
-// TODO a guess.  use real math here!
-// https://reprap.org/wiki/Step_rates
-#define CLOCK_MIN_STEP_FREQUENCY (F_CPU / 500000U)
-
 #define TIMEOUT_OK (1000)
 
 // uncomment this to slow the machine and smooth movement if the segment buffer is running low.
