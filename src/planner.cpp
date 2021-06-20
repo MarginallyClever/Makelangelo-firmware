@@ -6,7 +6,16 @@
 
 #define BLOCK_DELAY_FOR_1ST_MOVE 100
 #define MIN_STEP_RATE            120
-#define GRAVITYmag               (9800.0)  // mm/s/s
+#define GRAVITYmag               (9800.0)
+
+#define HAS_CLASSIC_JERK
+
+#if !defined(HAS_CLASSIC_JERK)
+#define HAS_JUNCTION_DEVIATION 1
+#define JUNCTION_DEVIATION_UNITS 0.013
+#define JD_HANDLE_SMALL_SEGMENTS
+#endif
+
 
 extern Planner planner;
 
@@ -20,7 +29,6 @@ int Planner::first_segment_delay;
 float Planner::previous_nominal_speed_sqr;
 float Planner::previous_safe_speed;
 float Planner::previous_speed[NUM_MUSCLES];
-
 
 // returns angle of dy/dx as a value from 0...2PI
 float atan3(float dy, float dx) {
@@ -181,14 +189,14 @@ void Planner::recalculate_trapezoids() {
 
   while (block_index != head_block_index) {
     next             = &blockBuffer[block_index];
-    next_entry_speed = sqrt(next->entry_speed_sqr);
+    next_entry_speed = sqrtf(next->entry_speed_sqr);
     if(block) {
       // Recalculate if current block entry or exit junction speed has changed.
       if( TEST(block->flags,BIT_FLAG_RECALCULATE) || TEST(next->flags,BIT_FLAG_RECALCULATE) ) {
         SET_BIT_ON( block->flags, BIT_FLAG_RECALCULATE );
         if( !motor.isBlockBusy(block) ) {
           // NOTE: Entry and exit factors always > 0 by all previous logic operations.
-          const float inom = 1.0 / sqrt(block->nominal_speed_sqr);
+          const float inom = 1.0 / sqrtf(block->nominal_speed_sqr);
           calculate_trapezoid_for_block(block, current_entry_speed * inom, next_entry_speed * inom);
         }
       }
@@ -204,7 +212,7 @@ void Planner::recalculate_trapezoids() {
   if(next) {
     SET_BIT_ON(next->flags,BIT_FLAG_RECALCULATE);
     if( !motor.isBlockBusy(block) ) {
-      const float inom = 1.0 / sqrt(next->nominal_speed_sqr);
+      const float inom = 1.0 / sqrtf(next->nominal_speed_sqr);
       calculate_trapezoid_for_block(next, next_entry_speed * inom, MIN_FEEDRATE * inom);
     }
     SET_BIT_OFF(next->flags,BIT_FLAG_RECALCULATE);
@@ -306,7 +314,7 @@ void Planner::addSteps(Segment *newBlock,const float *const target_position, flo
     newBlock->a[i].step_count  = steps[i];
     newBlock->a[i].delta_steps = steps[i] - oldBlock.a[i].step_count;
     if(newBlock->a[i].delta_steps < 0) newBlock->dir |= (1UL<<i);
-    newBlock->a[i].delta_units = newBlock->a[i].delta_steps / motor_spu[i];
+    newBlock->a[i].delta_units = float(newBlock->a[i].delta_steps) / motor_spu[i];
     newBlock->a[i].absdelta = abs(newBlock->a[i].delta_steps);
     newBlock->steps_total = _MAX(newBlock->steps_total, newBlock->a[i].absdelta);
 #if MACHINE_STYLE == SIXI
@@ -405,6 +413,180 @@ void Planner::addSteps(Segment *newBlock,const float *const target_position, flo
 
   // BEGIN JERK LIMITING
   float vmax_junction_sqr;
+
+#if MACHINE_STYLE == POLARGRAPH
+  vmax_junction_sqr = newBlock->nominal_speed_sqr;
+#else
+  // one or the other
+#endif  // MACHINE_STYLE == POLARGRAPH
+
+#ifdef HAS_JUNCTION_DEVIATION
+  /**
+   * Compute maximum allowable entry speed at junction by centripetal acceleration approximation.
+   * Let a circle be tangent to both previous and current path line segments, where the junction
+   * deviation is defined as the distance from the junction to the closest edge of the circle,
+   * colinear with the circle center. The circular segment joining the two paths represents the
+   * path of centripetal acceleration. Solve for max velocity based on max acceleration about the
+   * radius of the circle, defined indirectly by junction deviation. This may be also viewed as
+   * path width or max_jerk in the previous Grbl version. This approach does not actually deviate
+   * from path, but used as a robust way to compute cornering speeds, as it takes into account the
+   * nonlinearities of both the junction angle and junction velocity.
+   *
+   * NOTE: If the junction deviation value is finite, Grbl executes the motions in an exact path
+   * mode (G61). If the junction deviation value is zero, Grbl will execute the motion in an exact
+   * stop mode (G61.1) manner. In the future, if continuous mode (G64) is desired, the math here
+   * is exactly the same. Instead of motioning all the way to junction point, the machine will
+   * just follow the arc circle defined here. The Arduino doesn't have the CPU cycles to perform
+   * a continuous mode path, but ARM-based microcontrollers most certainly do.
+   *
+   * NOTE: The max junction speed is a fixed value, since machine acceleration limits cannot be
+   * changed dynamically during operation nor can the line move geometry. This must be kept in
+   * memory in the event of a feedrate override changing the nominal speeds of blocks, which can
+   * change the overall maximum entry speed conditions of all blocks.
+   *
+   * #######
+   * https://github.com/MarlinFirmware/Marlin/issues/10341#issuecomment-388191754
+   *
+   * hoffbaked: on May 10 2018 tuned and improved the GRBL algorithm for Marlin:
+        Okay! It seems to be working good. I somewhat arbitrarily cut it off at 1mm
+        on then on anything with less sides than an octagon. With this, and the
+        reverse pass actually recalculating things, a corner acceleration value
+        of 1000 junction deviation of .05 are pretty reasonable. If the cycles
+        can be spared, a better acos could be used. For all I know, it may be
+        already calculated in a different place. */
+
+  // Unit vector of previous path line segment
+  static float prev_unit_vec[NUM_MOTORS];
+
+  float unit_vec[NUM_MOTORS] = {
+    #define COPY_1(NN) newBlock->a[NN].delta_units * inverse_distance_units,
+    ALL_MOTOR_MACRO(COPY_1)
+  };
+
+  // Skip first block or when previous_nominal_speed is used as a flag for homing and offset cycles.
+  if (movesQueued && previous_nominal_speed_sqr > 1e-6) {
+    // Compute cosine of angle between previous and current path. (prev_unit_vec is negative)
+    // NOTE: Max junction velocity is computed without sin() or acos() by trig half angle identity.
+    float junction_cos_theta = (-prev_unit_vec[0] * unit_vec[0]) + (-prev_unit_vec[1] * unit_vec[1])
+                              + (-prev_unit_vec[2] * unit_vec[2]);
+
+    // NOTE: Computed without any expensive trig, sin() or acos(), by trig half angle identity of cos(theta).
+    if (junction_cos_theta > 0.999999f) {
+      // For a 0 degree acute junction, just set minimum junction speed.
+      vmax_junction_sqr = sq(float(MINIMUM_PLANNER_SPEED));
+    } else {
+      junction_cos_theta = _MAX(junction_cos_theta,-0.999999f); // Check for numerical round-off to avoid divide by zero.
+
+      // Convert delta vector to unit vector
+      float junction_unit_vec[NUM_MOTORS] = {
+        #define COPY_2(NN) unit_vec[NN] * prev_unit_vec[NN],
+        ALL_MOTOR_MACRO(COPY_2)
+      };
+
+      normalize_junction_vector(junction_unit_vec);
+
+      const float junction_acceleration = limit_value_by_axis_maximum(newBlock->acceleration, junction_unit_vec),
+                  sin_theta_d2 = sqrtf(0.5f * (1.0f - junction_cos_theta)); // Trig half angle identity. Always positive.
+
+      vmax_junction_sqr = junction_acceleration * JUNCTION_DEVIATION_UNITS * sin_theta_d2 / (1.0f - sin_theta_d2);
+
+      #if defined(JD_HANDLE_SMALL_SEGMENTS)
+
+        // For small moves with >135° junction (octagon) find speed for approximate arc
+        if (block->millimeters < 1 && junction_cos_theta < -0.7071067812f) {
+
+          #if defined(JD_USE_MATH_ACOS)
+
+            #error "TODO: Inline maths with the MCU / FPU."
+
+          #elif defined(JD_USE_LOOKUP_TABLE)
+
+            // Fast acos approximation (max. error +-0.01 rads)
+            // Based on LUT table and linear interpolation
+
+            /**
+             *  // Generate the JD Lookup Table
+             *  constexpr float c = 1.00751495f; // Correction factor to center error around 0
+             *  for (int i = 0; i < jd_lut_count - 1; ++i) {
+             *    const float x0 = (sq(i) - 1) / sq(i),
+             *                y0 = acos(x0) * (i == 0 ? 1 : c),
+             *                x1 = i < jd_lut_count - 1 ?  0.5 * x0 + 0.5 : 0.999999f,
+             *                y1 = acos(x1) * (i < jd_lut_count - 1 ? c : 1);
+             *    jd_lut_k[i] = (y0 - y1) / (x0 - x1);
+             *    jd_lut_b[i] = (y1 * x0 - y0 * x1) / (x0 - x1);
+             *  }
+             *
+             *  // Compute correction factor (Set c to 1.0f first!)
+             *  float min = INFINITY, max = -min;
+             *  for (float t = 0; t <= 1; t += 0.0003f) {
+             *    const float e = acos(t) / approx(t);
+             *    if (isfinite(e)) {
+             *      if (e < min) min = e;
+             *      if (e > max) max = e;
+             *    }
+             *  }
+             *  fprintf(stderr, "%.9gf, ", (min + max) / 2);
+             */
+            static constexpr int16_t  jd_lut_count = 16;
+            static constexpr uint16_t jd_lut_tll   = _BV(jd_lut_count - 1);
+            static constexpr int16_t  jd_lut_tll0  = __builtin_clz(jd_lut_tll) + 1; // i.e., 16 - jd_lut_count + 1
+            static constexpr float jd_lut_k[jd_lut_count] PROGMEM = {
+              -1.03145837f, -1.30760646f, -1.75205851f, -2.41705704f,
+              -3.37769222f, -4.74888992f, -6.69649887f, -9.45661736f,
+              -13.3640480f, -18.8928222f, -26.7136841f, -37.7754593f,
+              -53.4201813f, -75.5458374f, -106.836761f, -218.532821f };
+            static constexpr float jd_lut_b[jd_lut_count] PROGMEM = {
+                1.57079637f,  1.70887053f,  2.04220939f,  2.62408352f,
+                3.52467871f,  4.85302639f,  6.77020454f,  9.50875854f,
+                13.4009285f,  18.9188995f,  26.7321243f,  37.7885055f,
+                53.4293975f,  75.5523529f,  106.841369f,  218.534011f };
+
+            const float neg = junction_cos_theta < 0 ? -1 : 1,
+                        t = neg * junction_cos_theta;
+
+            const int16_t idx = (t < 0.00000003f) ? 0 : __builtin_clz(uint16_t((1.0f - t) * jd_lut_tll)) - jd_lut_tll0;
+
+            float junction_theta = t * pgm_read_float(&jd_lut_k[idx]) + pgm_read_float(&jd_lut_b[idx]);
+            if (neg > 0) junction_theta = RADIANS(180) - junction_theta; // acos(-t)
+
+          #else
+
+            // Fast acos(-t) approximation (max. error +-0.033rad = 1.89°)
+            // Based on MinMax polynomial published by W. Randolph Franklin, see
+            // https://wrf.ecse.rpi.edu/Research/Short_Notes/arcsin/onlyelem.html
+            //  acos( t) = pi / 2 - asin(x)
+            //  acos(-t) = pi - acos(t) ... pi / 2 + asin(x)
+
+            const float neg = junction_cos_theta < 0 ? -1 : 1,
+                        t = neg * junction_cos_theta,
+                        asinx =       0.032843707f
+                              + t * (-1.451838349f
+                              + t * ( 29.66153956f
+                              + t * (-131.1123477f
+                              + t * ( 262.8130562f
+                              + t * (-242.7199627f
+                              + t * ( 84.31466202f ) ))))),
+                        junction_theta = RADIANS(90) + neg * asinx; // acos(-t)
+
+            // NOTE: junction_theta bottoms out at 0.033 which avoids divide by 0.
+
+          #endif
+
+          const float limit_sqr = (block->millimeters * junction_acceleration) / junction_theta;
+          NOMORE(vmax_junction_sqr, limit_sqr);
+        }
+
+      #endif // JD_HANDLE_SMALL_SEGMENTS
+    }
+
+    // Get the lowest speed
+    vmax_junction_sqr = _MIN(vmax_junction_sqr, newBlock->nominal_speed_sqr, previous_nominal_speed_sqr);
+  } else // Init entry speed to zero. Assume it starts from rest. Planner will correct this later.
+    vmax_junction_sqr = 0;
+
+  for(ALL_MOTORS(i)) prev_unit_vec[i] = unit_vec[i];
+
+#endif // HAS_JUNCTION_DEVIATION
 
 #ifdef HAS_CLASSIC_JERK
 
@@ -579,7 +761,7 @@ void Planner::bufferLine(float *pos, float new_feed_rate_units) {
   }
 #endif
 */
-  float len_units = sqrt(lenSquared);
+  float len_units = sqrtf(lenSquared);
   if(abs(len_units) < 0.000001f) return;
 
 #ifndef MIN_SEGMENT_LENGTH
@@ -638,12 +820,12 @@ void Planner::bufferArc(float cx, float cy, float *destination, char clockwise, 
   // get radius
   float dx = axies[0].pos - cx;
   float dy = axies[1].pos - cy;
-  float sr = sqrt(dx * dx + dy * dy);
+  float sr = sqrtf(dx * dx + dy * dy);
 
   // find angle of arc (sweep)
   float sa = atan3(dy, dx);
   float ea = atan3(destination[1] - cy, destination[0] - cx);
-  float er = sqrt(dx * dx + dy * dy);
+  float er = sqrtf(dx * dx + dy * dy);
 
   float da = ea - sa;
   if(clockwise == ARC_CW && da < 0)
@@ -658,7 +840,7 @@ void Planner::bufferArc(float cx, float cy, float *destination, char clockwise, 
   // float len=theta*circ/(PI*2.0);
   // simplifies to
   float len1 = abs(da) * sr;
-  float len  = sqrt(len1 * len1 + dr * dr);  // mm
+  float len  = sqrtf(len1 * len1 + dr * dr);  // mm
 
   int i, segments = ceil(len);
 
@@ -705,18 +887,18 @@ float Planner::limitPolargraphAcceleration(const float *target_position,const fl
     // normal vectors pointing from plotter to motor
     float R1x = axies[0].limitMin - oldP[0];  // to left
     float R1y = axies[1].limitMax - oldP[1];  // to top
-    float Rlen1 = 1.0 / sqrt(sq(R1x) + sq(R1y));//old_seg.a[0].step_count * UNITS_PER_STEP;
+    float Rlen1 = 1.0 / sqrtf(sq(R1x) + sq(R1y));//old_seg.a[0].step_count * UNITS_PER_STEP;
     R1x *= Rlen1;
     R1y *= Rlen1;
 
     float R2x = axies[0].limitMax - oldP[0];  // to right
     float R2y = axies[1].limitMax - oldP[1];  // to top
-    float Rlen2 = 1.0 / sqrt(sq(R2x) + sq(R2y));//old_seg.a[1].step_count * UNITS_PER_STEP;
+    float Rlen2 = 1.0 / sqrtf(sq(R2x) + sq(R2y));//old_seg.a[1].step_count * UNITS_PER_STEP;
     R2x *= Rlen2;
     R2y *= Rlen2;
     
     // only affects XY non-zero movement.  Servo is not touched.
-    Rlen = 1.0 / sqrt(Rlen);
+    Rlen = 1.0 / sqrtf(Rlen);
     Tx *= Rlen;
     Ty *= Rlen;
 
