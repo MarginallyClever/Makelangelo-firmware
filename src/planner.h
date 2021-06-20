@@ -1,5 +1,7 @@
 #pragma once
 
+//------------------------------------------------------------------------------
+
 #ifndef MAX_SEGMENTS
 #  define MAX_SEGMENTS (32)  // number of line segments to buffer ahead. must be a power of two.
 #endif
@@ -7,17 +9,33 @@
 #define SEGMOD(x) ((x) & (MAX_SEGMENTS - 1))
 
 
-typedef struct {
+// uncomment this to slow the machine and smooth movement if the segment buffer is running low.
+// if the segment buffer runs empty the machine will be forced to stop.  if the machine slows just enough
+// for the buffer to keep filling up then the machine will never come to a complete stop.  end result smoother movement and maybe shorter drawing time.
+#define BUFFER_EMPTY_SLOWDOWN
+#ifndef DEFAULT_MIN_SEGMENT_TIME_US
+#  define DEFAULT_MIN_SEGMENT_TIME_US (25000)
+#endif
+
+// if a segment added to the buffer is less than this many motor steps, roll it into the next move.
+#define MIN_STEPS_PER_SEGMENT 6
+
+#define MINIMUM_PLANNER_SPEED 0.05  // (mm/s)
+
+//------------------------------------------------------------------------------
+
+class Muscle {
+public:
   int32_t delta_steps;  // total steps for this move.
   int32_t step_count;   // current motor position, in steps.
-  int32_t delta_units;  // in some systems it's mm, in others it's degrees.
+  float delta_units;  // in some systems it's mm, in others it's degrees.
   uint32_t absdelta;
 #if MACHINE_STYLE == SIXI
   float expectedPosition;
   float positionStart;
   float positionEnd;
 #endif
-} Muscle;
+};
 
 
 enum BlockFlagBits : uint8_t { 
@@ -31,7 +49,8 @@ enum BlockFlagMask : uint8_t {
 };
 
 
-typedef struct {
+class Segment {
+public:
   Muscle a[NUM_MUSCLES];
   uint16_t dir;
 
@@ -53,7 +72,7 @@ typedef struct {
   uint32_t acceleration_rate;  // ?
 
   uint8_t flags;
-} Segment;
+};
 
 
 class Planner {
@@ -134,12 +153,6 @@ class Planner {
   void bufferLine(float *pos, float new_feed_rate_units);
   void bufferArc(float cx, float cy, float *destination, char clockwise, float new_feed_rate_units);
 
-  // return 1 if buffer is full, 0 if it is not.
-  bool segmentBufferFull() {
-    int next_segment = getNextBlock(block_buffer_head);
-    return (next_segment == block_buffer_tail);
-  }
-
   float max_speed_allowed_sqr(const float &acc, const float &target_velocity, const float &distance);
 
   void recalculate_reverse_kernel(Segment *const current, const Segment *next);
@@ -162,6 +175,24 @@ class Planner {
   #if MACHINE_STYLE == POLARGRAPH && defined(DYNAMIC_ACCELERATION)
     float limitPolargraphAcceleration(const float *target_position,const float *oldP,float maxAcceleration);
   #endif
+
+  FORCE_INLINE static void normalize_junction_vector(float *v) {
+    float m=0;
+    for(ALL_MOTORS(i)) m += sq(v[i]);
+    m = 1.0f/sqrtf(m);
+    for(ALL_MOTORS(i)) v[i]*=m;
+  }
+
+  FORCE_INLINE static float limit_value_by_axis_maximum(const float max_value, float *unit_vec) {
+    float limit_value = max_value;
+    for(ALL_MOTORS(i)) {
+      if(unit_vec[i]) {
+        if(limit_value * abs(unit_vec[i]) > MAX_ACCELERATION)
+          limit_value = abs( MAX_ACCELERATION / unit_vec[i] );
+      }
+    }
+    return limit_value;
+  }
 };
 
 extern Planner planner;

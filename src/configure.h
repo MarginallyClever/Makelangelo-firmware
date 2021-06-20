@@ -114,9 +114,11 @@
 
 #define NUM_MUSCLES (NUM_MOTORS + NUM_SERVOS)
 
+// after this many milliseconds with no serial communication, the robot pings anyone connected by calling ready().
+#define TIMEOUT_OK (2000)
+
 #include "config_motors.h"
 #include <Arduino.h>
-#include "clock.h"
 
 extern void meanwhile();
 #include "planner.h"
