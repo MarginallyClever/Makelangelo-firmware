@@ -35,7 +35,7 @@ void IK(const float *const cartesian, long *motorStepArray) {
 
   // from cartesian x,y we can get c, the distance from origin to x,y.
   // use law of cosines to
-  float c = sqrt(sq(x) + sq(y));
+  float c = sqrtf(sq(x) + sq(y));
   // then law of cosines will give us the elbow angle
   float elbowAngle = lawOfCosines(BICEP_LENGTH_MM, FOREARM_LENGTH_MM, c);
 

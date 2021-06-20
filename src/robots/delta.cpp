@@ -8,7 +8,7 @@
 
 #if MACHINE_STYLE == DELTA
 
-#  define SQRT3  (sqrt(3.0))
+#  define SQRT3  (sqrtf(3.0))
 #  define SIN120 (SQRT3 / 2.0)
 #  define COS120 (-0.5)
 #  define TAN60  (SQRT3)
@@ -43,7 +43,7 @@ int delta_calcAngleYZ(float x0, float y0, float z0, long &theta) {
   // Serial.print("d=");  Serial.println(d);
   if (d < 0) return 1;  // non-existing povar.  return error, theta
 
-  float yj = (y1 - a * b - sqrt(d)) / (b * b + 1);  // choosing outer povar
+  float yj = (y1 - a * b - sqrtf(d)) / (b * b + 1);  // choosing outer povar
   float zj = a + b * yj;
   theta    = atan(-zj / (y1 - yj)) * 180.0 / PI + ((yj > y1) ? 180.0 : 0.0);
   theta *= MICROSTEP_PER_DEGREE;
@@ -144,7 +144,7 @@ int FK(long *motorStepArray, float *axies) {
   float d = b * b - 4.0 * a * c;
   if (d < 0.0) return 1;  // no intersection.
 
-  float z0 = -0.5 * (b + sqrt(d)) / a;
+  float z0 = -0.5 * (b + sqrtf(d)) / a;
   float x0 = (a1 * z0 + b1) / dnm;
   float y0 = (a2 * z0 + b2) / dnm;
 
@@ -189,7 +189,7 @@ void robot_findHome() {
   Serial.println("Done.");
   float aa = CENTER_TO_SHOULDER + SHOULDER_TO_ELBOW - EFFECTOR_TO_WRIST;
   float cc = ELBOW_TO_WRIST;
-  float bb = sqrt(cc * cc - aa * aa);
+  float bb = sqrtf(cc * cc - aa * aa);
   // Serial.print("aa=");  Serial.println(aa);
   // Serial.print("bb=");  Serial.println(bb);
   // Serial.print("cc=");  Serial.println(cc);

@@ -26,16 +26,16 @@ void IK(const float *const cartesian, long *motorStepArray) {
   // clockwise from top left.
   dx                = x - left;
   dy                = y - top;
-  motorStepArray[0] = lroundf((sqrt(sq(dx) + sq(dy)))  * motor_spu[0]);  // M0 (top left)
+  motorStepArray[0] = lroundf((sqrtf(sq(dx) + sq(dy)))  * motor_spu[0]);  // M0 (top left)
   dx                = x - right;
   dy                = y - top;
-  motorStepArray[1] = lroundf((sqrt(sq(dx) + sq(dy)))  * motor_spu[1]);  // M1 (top right)
+  motorStepArray[1] = lroundf((sqrtf(sq(dx) + sq(dy)))  * motor_spu[1]);  // M1 (top right)
   dx                = x - right;
   dy                = y - bottom;
-  motorStepArray[2] = lroundf((sqrt(sq(dx) + sq(dy)))  * motor_spu[2]);  // M2 (bottom right)
+  motorStepArray[2] = lroundf((sqrtf(sq(dx) + sq(dy)))  * motor_spu[2]);  // M2 (bottom right)
   dx                = x - left;
   dy                = y - bottom;
-  motorStepArray[3] = lroundf((sqrt(sq(dx) + sq(dy)))  * motor_spu[3]);  // M3 (bottom left)
+  motorStepArray[3] = lroundf((sqrtf(sq(dx) + sq(dy)))  * motor_spu[3]);  // M3 (bottom left)
   /*
     Serial.print(x);    Serial.print('\t');
     Serial.print(y);    Serial.print('\t');
@@ -79,11 +79,11 @@ int FK(long *motorStepArray, float *cartesian) {
   // x = cos(theta)*l1 + limit_xmin;
   // y = sin(theta)*l1 + limit_ymax;
   // and we know that cos(acos(i)) = i
-  // and we know that sin(acos(i)) = sqrt(1-i*i)
+  // and we know that sin(acos(i)) = sqrtf(1-i*i)
   float theta = ((a * a + b * b - c * c) / (2.0 * a * b));
 
   cartesian[0] = theta * a + limit_xmin;
-  cartesian[1] = limit_ymax - (sqrt(1.0 - theta * theta) * a);
+  cartesian[1] = limit_ymax - (sqrtf(1.0 - theta * theta) * a);
   cartesian[2] = motorStepArray[NUM_MOTORS];
 
   return 0;

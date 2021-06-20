@@ -130,7 +130,7 @@ class Vector3 {
     }*/
 
   // METHODS
-  float Length() const { return (float)sqrt(x * x + y * y + z * z); }
+  float Length() const { return sqrtf(x * x + y * y + z * z); }
 
   float LengthSquared() const { return x * x + y * y + z * z; }
 

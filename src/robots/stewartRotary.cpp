@@ -204,7 +204,7 @@ void stewart_update_shoulder_angles() {
 
     // because wop is projected onto the bicep plane, wop-elbow is not the same as wrist-elbow.
     // we need to find wop-elbow to calculate the angle at the shoulder.
-    b = sqrt(FOREARM_LENGTH * FOREARM_LENGTH - a * a);  // e'j distance
+    b = sqrtf(FOREARM_LENGTH * FOREARM_LENGTH - a * a);  // e'j distance
 
     // use intersection of circles to find elbow point.
     // a = (r0r0 - r1r1 + d*d ) / (2 d)
@@ -228,7 +228,7 @@ void stewart_update_shoulder_angles() {
     // find the midpoint
     temp = arm.shoulder + (wop * a);
     // with a and r0 we can find h, the distance from midpoint to intersections.
-    hh = sqrt(r0 * r0 - a * a);
+    hh = sqrtf(r0 * r0 - a * a);
     // get a normal to the line wop in the plane orthogonal to ortho
     r = ortho ^ wop;
     if (i % 2 == 0)
@@ -401,10 +401,10 @@ void robot_findHome() {
   Vector3 wr = robot.arms[0].wrist;
   float aa   = (el.y - wr.y);
   float cc   = FOREARM_LENGTH;
-  float bb   = sqrt((cc * cc) - (aa * aa));
+  float bb   = sqrtf((cc * cc) - (aa * aa));
   aa         = el.x - wr.x;
   cc         = bb;
-  bb         = sqrt((cc * cc) - (aa * aa));
+  bb         = sqrtf((cc * cc) - (aa * aa));
   robot.ee.relative.set(0, 0, bb + B2S_Z - T2W_Z);
 
   float zeros[6] = { 0, 0, 0, 0, 0, 0 };

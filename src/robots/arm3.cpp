@@ -56,7 +56,7 @@ void IK(const float *const axies, long *motorStepArray) {
   // find the midpoint
   Vector3 mid = es * (a / d) + shoulder;
   // with a and r0 we can find h, the distance from midpoint to the intersections.
-  float h = sqrt(r0 * r0 - a * a);
+  float h = sqrtf(r0 * r0 - a * a);
   // the distance h on a line orthogonal to n and plane_normal gives us the two intersections.
   Vector3 n(-arm_plane.y, arm_plane.x, 0);
   Vector3 r = es ^ n;

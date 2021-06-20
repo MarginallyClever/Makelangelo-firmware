@@ -29,16 +29,16 @@ void IK(const float *const cartesian, long *motorStepArray) {
 
   dy                = sq(abs(y - limit_ymax) - SKYCAM_COMPENSATION);
   dx                = sq(abs(x - limit_xmin) - SKYCAM_COMPENSATION);
-  motorStepArray[0] = lround(sqrt(dx + dy + dz));  // M0 (top left)
+  motorStepArray[0] = lround(sqrtf(dx + dy + dz));  // M0 (top left)
   dy                = sq(abs(y - limit_ymax) - SKYCAM_COMPENSATION);
   dx                = sq(abs(x - limit_xmax) - SKYCAM_COMPENSATION);
-  motorStepArray[1] = lround(sqrt(dx + dy + dz));  // M1 (top right)
+  motorStepArray[1] = lround(sqrtf(dx + dy + dz));  // M1 (top right)
   dy                = sq(abs(y - limit_ymin) - SKYCAM_COMPENSATION);
   dx                = sq(abs(x - limit_xmin) - SKYCAM_COMPENSATION);
-  motorStepArray[2] = lround(sqrt(dx + dy + dz));  // M2 (bottom left)
+  motorStepArray[2] = lround(sqrtf(dx + dy + dz));  // M2 (bottom left)
   dy                = sq(abs(y - limit_ymin) - SKYCAM_COMPENSATION);
   dx                = sq(abs(x - limit_xmax) - SKYCAM_COMPENSATION);
-  motorStepArray[3] = lround(sqrt(dx + dy + dz));  // M3 (bottom right)
+  motorStepArray[3] = lround(sqrtf(dx + dy + dz));  // M3 (bottom right)
 
   for(ALL_MUSCLES(i)) {
     motorStepArray[i] *= motor_spu[i];

@@ -18,7 +18,7 @@
 #  define MEASURED_TSTEP            169  // 295
 #  define MEASURED_TSTEP_MARGIN_PCT 15   // +/-% for stall warning
 
-#  define CURRENT         219  // 310ma / sqrt(2)
+#  define CURRENT         219  // 310ma / sqrtf(2)
 #  define R_SENSE         0.11
 #  define HOLD_MULTIPLIER 0.5
 
