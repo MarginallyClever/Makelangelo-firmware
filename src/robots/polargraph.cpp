@@ -21,8 +21,8 @@ void IK(const float *const cartesian, long *motorStepArray) {
   float dy          = sq(cartesian[1] - top  );
   float dx1         = sq(cartesian[0] - left );
   float dx2         = sq(right - cartesian[0]);
-  motorStepArray[0] = lroundf(sqrt(dx1 + dy));
-  motorStepArray[1] = lroundf(sqrt(dx2 + dy));
+  motorStepArray[0] = lroundf(sqrtf(dx1 + dy));
+  motorStepArray[1] = lroundf(sqrtf(dx2 + dy));
   motorStepArray[2] = cartesian[2];
   
   motorStepArray[0] *= motor_spu[0];
@@ -54,7 +54,7 @@ int FK(long *motorStepArray, float *cartesian) {
   // so  x = cos(theta)*l1 + left;
   // and y = sin(theta)*l1 + top;
   // and we know that cos(acos(i)) = i
-  // and we know that sin(acos(i)) = sqrt(1-i*i)
+  // and we know that sin(acos(i)) = sqrtf(1-i*i)
   // so y = sin(  acos((aa+bb-cc)/(2ab))  )*l1 + top;
   float theta = ((a * a + b * b - c * c) / (2.0 * a * b));
 
@@ -68,7 +68,7 @@ int FK(long *motorStepArray, float *cartesian) {
   Serial.print("S0=");     Serial.println(motorStepArray[0]);
   Serial.print("S1=");     Serial.println(motorStepArray[1]);
   */
-  cartesian[1] = top - sqrt(1.0 - theta * theta) * a;
+  cartesian[1] = top - sqrtf(1.0 - theta * theta) * a;
   cartesian[2] = motorStepArray[2];
   /*
   Serial.print("C0=");      Serial.println(cartesian[0]);
@@ -274,6 +274,8 @@ void robot_findHome() {
   teleport(offset);
   parser.M114();
 
+  motor.setDirections(0);
+  
   // go home
   offset[0] = axies[0].homePos;
   offset[1] = axies[1].homePos;
