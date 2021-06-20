@@ -178,7 +178,7 @@ void Parser::update() {
       // clear input buffer
       sofar = 0;
       // go again
-      if(planner.movesFree()) ready();
+      ready();
     }
   }
 
