@@ -43,8 +43,8 @@ void IK(const float *const cartesian, long *motorStepArray) {
   float shoulderAngle = atan2(y, x) + lawOfCosines(c, BICEP_LENGTH_MM, FOREARM_LENGTH_MM);
 
   // angles are in radians.  we need degrees
-  motorStepArray[0] = lround(shoulderAngle * TODEGREES;
-  motorStepArray[1] = lround(elbowAngle * TODEGREES;
+  motorStepArray[0] = lround(DEGREES(shoulderAngle));
+  motorStepArray[1] = lround(DEGREES(elbowAngle));
   motorStepArray[NUM_MOTORS] = z;
 
   motorStepArray[0] *= motor_spu[0];
@@ -59,8 +59,8 @@ void IK(const float *const cartesian, long *motorStepArray) {
  * @return 0 if no problem, 1 on failure.
  */
 int FK(long *motorStepArray, float *axies) {
-  float a = motorStepArray[0] * MICROSTEP_PER_DEGREE * TORADIANS;
-  float b = motorStepArray[1] * MICROSTEP_PER_DEGREE * TORADIANS;
+  float a = RADIANS(motorStepArray[0] * MICROSTEP_PER_DEGREE);
+  float b = RADIANS(motorStepArray[1] * MICROSTEP_PER_DEGREE);
 
   axies[0] = cos(a) * BICEP_LENGTH_MM + cos(a + b) * FOREARM_LENGTH_MM;
   axies[1] = sin(a) * BICEP_LENGTH_MM + sin(a + b) * FOREARM_LENGTH_MM;

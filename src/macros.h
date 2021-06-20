@@ -2,8 +2,8 @@
 
 #include <Arduino.h>
 
-#define TODEGREES (180.0 / PI)
-#define TORADIANS (PI / 180.0)
+#define RADIANS(A) ((A)*180.0f/PI)
+#define DEGREES(A) ((A)*PI/180.0f)
 
 #ifndef _MIN
 #define _MIN(a,b) (a<b?a:b)
