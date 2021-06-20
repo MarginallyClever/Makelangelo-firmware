@@ -8,8 +8,7 @@
 #define MIN_STEP_RATE            120
 #define GRAVITYmag               (9800.0)
 
-#define HAS_CLASSIC_JERK
-
+//#define HAS_CLASSIC_JERK
 #if !defined(HAS_CLASSIC_JERK)
 #define HAS_JUNCTION_DEVIATION 1
 #define JUNCTION_DEVIATION_UNITS 0.013
@@ -493,7 +492,7 @@ void Planner::addSteps(Segment *newBlock,const float *const target_position, flo
       #if defined(JD_HANDLE_SMALL_SEGMENTS)
 
         // For small moves with >135° junction (octagon) find speed for approximate arc
-        if (block->millimeters < 1 && junction_cos_theta < -0.7071067812f) {
+        if (newBlock->distance < 1 && junction_cos_theta < -0.7071067812f) {
 
           #if defined(JD_USE_MATH_ACOS)
 
@@ -572,8 +571,8 @@ void Planner::addSteps(Segment *newBlock,const float *const target_position, flo
 
           #endif
 
-          const float limit_sqr = (block->millimeters * junction_acceleration) / junction_theta;
-          NOMORE(vmax_junction_sqr, limit_sqr);
+          const float limit_sqr = (newBlock->distance * junction_acceleration) / junction_theta;
+          vmax_junction_sqr= _MIN(vmax_junction_sqr, limit_sqr);
         }
 
       #endif // JD_HANDLE_SMALL_SEGMENTS
