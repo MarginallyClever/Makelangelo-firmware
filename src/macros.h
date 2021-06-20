@@ -96,38 +96,63 @@ FORCE_INLINE float WRAP_RADIANS(float n) {
 #ifdef USE_CACHED_SQRT
 #  define CACHED_SQRT(N, V) \
     static float saved_V, N; \
-    if (V != saved_V) { N = sqrt(V); saved_V = V; }
+    if (V != saved_V) { N = sqrtf(V); saved_V = V; }
 #else
-  #define CACHED_SQRT(N, V) const float N = sqrt(V)
+  #define CACHED_SQRT(N, V) const float N = sqrtf(V)
 #endif
 
 
 #define _NUM_ARGS(_,Z,Y,X,W,V,U,T,S,R,Q,P,O,N,M,L,K,J,I,H,G,F,E,D,C,B,A,OUT,...) OUT
 #define NUM_ARGS(V...) _NUM_ARGS(0,V,26,25,24,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0)
 
+/*
+#ifdef __cplusplus
 
-#define MIN_2(a,b)      ((a)<(b)?(a):(b))
-#define MIN_3(a,V...)   MIN_2(a,MIN_2(V))
-#define MIN_4(a,V...)   MIN_2(a,MIN_3(V))
-#define MIN_5(a,V...)   MIN_2(a,MIN_4(V))
-#define MIN_6(a,V...)   MIN_2(a,MIN_5(V))
-#define MIN_7(a,V...)   MIN_2(a,MIN_6(V))
-#define MIN_8(a,V...)   MIN_2(a,MIN_7(V))
-#define MIN_9(a,V...)   MIN_2(a,MIN_8(V))
-#define MIN_10(a,V...)  MIN_2(a,MIN_9(V))
-#define __MIN_N(N,V...) MIN_##N(V)
-#define _MIN_N(N,V...)  __MIN_N(N,V)
-#define _MIN(V...)      _MIN_N(NUM_ARGS(V), V)
+  #ifndef _MINMAX_H_
+  #define _MINMAX_H_
 
-#define MAX_2(a,b)      ((a)>(b)?(a):(b))
-#define MAX_3(a,V...)   MAX_2(a,MAX_2(V))
-#define MAX_4(a,V...)   MAX_2(a,MAX_3(V))
-#define MAX_5(a,V...)   MAX_2(a,MAX_4(V))
-#define MAX_6(a,V...)   MAX_2(a,MAX_5(V))
-#define MAX_7(a,V...)   MAX_2(a,MAX_6(V))
-#define MAX_8(a,V...)   MAX_2(a,MAX_7(V))
-#define MAX_9(a,V...)   MAX_2(a,MAX_8(V))
-#define MAX_10(a,V...)  MAX_2(a,MAX_9(V))
-#define __MAX_N(N,V...) MAX_##N(V)
-#define _MAX_N(N,V...)  __MAX_N(N,V)
-#define _MAX(V...)      _MAX_N(NUM_ARGS(V), V)
+    extern "C++" {
+
+      // C++11 solution that is standards compliant. Return type is deduced automatically
+      template <class L, class R> static inline constexpr auto _MIN(const L lhs, const R rhs) -> decltype(lhs + rhs) {
+        return lhs < rhs ? lhs : rhs;
+      }
+      template <class L, class R> static inline constexpr auto _MAX(const L lhs, const R rhs) -> decltype(lhs + rhs) {
+        return lhs > rhs ? lhs : rhs;
+      }
+      template<class T, class ... Ts> static inline constexpr const T _MIN(T V, Ts... Vs) { return _MIN(V, _MIN(Vs...)); }
+      template<class T, class ... Ts> static inline constexpr const T _MAX(T V, Ts... Vs) { return _MAX(V, _MAX(Vs...)); }
+
+    }
+
+  #endif
+
+#else*/
+
+  #define MIN_2(a,b)      ((a)<(b)?(a):(b))
+  #define MIN_3(a,V...)   MIN_2(a,MIN_2(V))
+  #define MIN_4(a,V...)   MIN_2(a,MIN_3(V))
+  #define MIN_5(a,V...)   MIN_2(a,MIN_4(V))
+  #define MIN_6(a,V...)   MIN_2(a,MIN_5(V))
+  #define MIN_7(a,V...)   MIN_2(a,MIN_6(V))
+  #define MIN_8(a,V...)   MIN_2(a,MIN_7(V))
+  #define MIN_9(a,V...)   MIN_2(a,MIN_8(V))
+  #define MIN_10(a,V...)  MIN_2(a,MIN_9(V))
+  #define __MIN_N(N,V...) MIN_##N(V)
+  #define _MIN_N(N,V...)  __MIN_N(N,V)
+  #define _MIN(V...)      _MIN_N(NUM_ARGS(V), V)
+
+  #define MAX_2(a,b)      ((a)>(b)?(a):(b))
+  #define MAX_3(a,V...)   MAX_2(a,MAX_2(V))
+  #define MAX_4(a,V...)   MAX_2(a,MAX_3(V))
+  #define MAX_5(a,V...)   MAX_2(a,MAX_4(V))
+  #define MAX_6(a,V...)   MAX_2(a,MAX_5(V))
+  #define MAX_7(a,V...)   MAX_2(a,MAX_6(V))
+  #define MAX_8(a,V...)   MAX_2(a,MAX_7(V))
+  #define MAX_9(a,V...)   MAX_2(a,MAX_8(V))
+  #define MAX_10(a,V...)  MAX_2(a,MAX_9(V))
+  #define __MAX_N(N,V...) MAX_##N(V)
+  #define _MAX_N(N,V...)  __MAX_N(N,V)
+  #define _MAX(V...)      _MAX_N(NUM_ARGS(V), V)
+
+//#endif
