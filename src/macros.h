@@ -156,3 +156,5 @@ FORCE_INLINE float WRAP_RADIANS(float n) {
   #define _MAX(V...)      _MAX_N(NUM_ARGS(V), V)
 
 //#endif
+
+#define NUMERIC(A) ((A)>='0'&&(A)<='9')
