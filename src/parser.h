@@ -91,9 +91,9 @@ class Parser {
 
   void start();
   // parse the number starting at p.
-  float parseNumber(char *p);
+  float parseFloat(char *p);
   // find the matching code and return the number that immediately follows it.
-  float parseNumber(char code,float valueIfNotFound);
+  float parseFloat(char code,float valueIfNotFound);
 
   // does this command have the matching code?
   int8_t hasGCode(char *p,char code);

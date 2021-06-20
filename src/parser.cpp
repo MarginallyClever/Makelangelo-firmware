@@ -53,7 +53,7 @@ void Parser::start() {
 #endif  // HAS_WIFI
 }
 
-float Parser::parseNumber(char *p) {
+float Parser::parseFloat(char *p) {
   char *ptr = p;  // start at the beginning of buffer
   for(;;) {  // walk to the end
     char c = *ptr;
@@ -70,9 +70,9 @@ float Parser::parseNumber(char *p) {
   return g;
 }
 
-float Parser::parseNumber(char code,float valueIfNotFound) {
+float Parser::parseFloat(char code,float valueIfNotFound) {
   int8_t n = hasGCode(currentCommand,code);
-  if(n>=0) return parseNumber(currentCommand+n+1);
+  if(n>=0) return parseFloat(currentCommand+n+1);
   return valueIfNotFound;
 }
 
@@ -96,8 +96,8 @@ int8_t Parser::hasGCode(char code) {
 // @return 1 if CRC ok or not present, 0 if CRC check fails.
 char Parser::checkLineNumberAndCRCisOK() {
   // is there a line number?
-  if(serialBuffer[0] == 'N') {  // line number must appear first on the line
-    int32_t cmd = parseNumber(serialBuffer+1);
+  if(*serialBuffer == 'N') {  // line number must appear first on the line
+    int32_t cmd = parseFloat(serialBuffer+1);
     if(cmd != lineNumber) {
       // wrong line number error
       Serial.print(F("BADLINENUM "));
@@ -130,7 +130,9 @@ char Parser::checkLineNumberAndCRCisOK() {
   // yes.  is it valid?
   int checksum = 0;
   int c;
-  for (c = 0; c < i; ++c) { checksum = (checksum ^ serialBuffer[c]) & 0xFF; }
+  for (c = 0; c < i; ++c) {
+    checksum = (checksum ^ serialBuffer[c]) & 0xFF;
+  }
   c++;  // skip *
   int against = strtod(serialBuffer + c, NULL);
   if(found != -1 && checksum != against) {
@@ -165,19 +167,18 @@ void Parser::update() {
     if(c == '\r' || c == '\n') {
       serialBuffer[sofar - 1] = 0;
 
-      checkLineNumberAndCRCisOK();
+      if(checkLineNumberAndCRCisOK()) {
+        // echo confirmation
+        if(MUST_ECHO) { 
+          Serial.println(serialBuffer);
+        }
 
-      // echo confirmation
-      if(MUST_ECHO) { 
-        Serial.println(serialBuffer);
+        ringBuffer.waitToAdd(serialBuffer);
       }
-
-      ringBuffer.waitToAdd(serialBuffer);
-
       // clear input buffer
       sofar = 0;
       // go again
-      ready();
+      if(planner.movesFree()) ready();
     }
   }
 
@@ -200,7 +201,7 @@ void Parser::advance() {
   if(ringBuffer.isEmpty()) return;
 
   currentCommand = ringBuffer.peekNextCommand();
-  if(currentCommand[0] == '\0' || currentCommand[0] == ';') {  // blank lines
+  if(*currentCommand == '\0' || *currentCommand == ';') {  // blank lines
     ringBuffer.advanceHead(ringBuffer.current_r,-1);
     return;
   }
@@ -223,14 +224,28 @@ void Parser::reportQueue() {
 }
 
 void Parser::processCommand() {
-  // remove any trailing semicolon.
-  int last = strlen(currentCommand) - 1;
-  if(currentCommand[last] == ';') currentCommand[last] = 0;
-
   // eat whitespace
   while(*currentCommand==' ') currentCommand++;
+  // eat line number
+  if(toupper(*currentCommand)=='N' && NUMERIC(currentCommand[1])) {
+    currentCommand++;
+    while(NUMERIC(*currentCommand)) ++currentCommand;
+    // eat whitespace
+    while(*currentCommand==' ') currentCommand++;
+  }
 
-  char c = toupper(currentCommand[0]);
+  // remove any trailing semicolon or checksum
+  char *ptr = currentCommand;
+  while(*ptr != '\0') {
+    char c=*ptr;
+    if(c==';' || c=='*') {
+      *ptr=0;
+      break;
+    }
+    ptr++;
+  }
+
+  char c = toupper(*currentCommand);
 
   int16_t cmd;
 
@@ -244,7 +259,7 @@ void Parser::processCommand() {
   
   // M codes
   if(c=='M') {
-    cmd = parseNumber(currentCommand+1);
+    cmd = parseFloat(currentCommand+1);
     switch (cmd) {
       case   6:        M6();          break;
       case  17:        M17();         break;
@@ -282,7 +297,7 @@ void Parser::processCommand() {
 
   // machine style-specific codes
   if(c=='D') {
-    cmd = parseNumber(currentCommand+1);
+    cmd = parseFloat(currentCommand+1);
     if(cmd!=-1) {
       switch (cmd) {
         case 0:        D0();        break;
@@ -322,7 +337,7 @@ void Parser::processCommand() {
 
   // no M or D commands were found.  This is a G* command.
   if(c=='G') {
-    cmd = parseNumber(currentCommand+1);
+    cmd = parseFloat(currentCommand+1);
   } else cmd = lastGcommand;
 
   lastGcommand = -1;
@@ -368,7 +383,7 @@ void Parser::D0() {
 
   for(ALL_MOTORS(i)) {
     if(motors[i].letter == 0) continue;
-    amount = parseNumber(motors[i].letter, 0);
+    amount = parseFloat(motors[i].letter, 0);
     if(amount != 0) {
       Serial.print(F("Moving "));
       Serial.print(motors[i].letter);
@@ -416,7 +431,7 @@ void Parser::D6() {
   Serial.print(F("D6"));
   float homePos[NUM_AXIES];
   for(ALL_AXIES(i)) {
-    homePos[i] = parseNumber(AxisNames[i], axies[i].homePos);
+    homePos[i] = parseFloat(AxisNames[i], axies[i].homePos);
     Serial.print(' ');
     Serial.print(AxisNames[i]);
     Serial.print(homePos[i],2);
@@ -431,8 +446,8 @@ void Parser::D6() {
    Set calibration length of each belt
 */
 void Parser::D7() {
-  calibrateLeft  = parseNumber('L', calibrateLeft);
-  calibrateRight = parseNumber('R', calibrateRight);
+  calibrateLeft  = parseFloat('L', calibrateLeft);
+  calibrateRight = parseFloat('R', calibrateRight);
   D8();
 }
 #endif
@@ -460,7 +475,7 @@ void Parser::D10() {
 }
 
 void Parser::D13() {
-  motor.setPenAngle(parseNumber('Z', axies[2].pos));
+  motor.setPenAngle(parseFloat('Z', axies[2].pos));
 }
 
 void Parser::D14() {
@@ -532,7 +547,7 @@ void Parser::D18() {
 // D19 - Sixi only.  toggle continuous D17 reporting
 void Parser::D19() {
   boolean p = TEST(sensorManager.positionErrorFlags, POSITION_ERROR_FLAG_CONTINUOUS);
-  int state = parseNumber('P', p ? 1 : 0);
+  int state = parseFloat('P', p ? 1 : 0);
   SET_BIT(sensorManager.positionErrorFlags, POSITION_ERROR_FLAG_CONTINUOUS, state);
 
   Serial.print(F("D19 P"));
@@ -544,7 +559,7 @@ void Parser::D20() {
 }
 
 void Parser::D21() {
-  int isOn = parseNumber('P', TEST_LIMITS ? 1 : 0);
+  int isOn = parseFloat('P', TEST_LIMITS ? 1 : 0);
 
   SET_BIT(sensorManager.positionErrorFlags, POSITION_ERROR_FLAG_CHECKLIMIT, isOn);
 
@@ -588,7 +603,7 @@ void Parser::D23() {
 // D50 Snn - Set and report strict mode.  where nn=0 for off and 1 for on.
 void Parser::D50() {
   int oldValue = IS_STRICT;
-  int newValue = parseNumber('S', oldValue);
+  int newValue = parseFloat('S', oldValue);
   SET_BIT(parserFlags, FLAG_STRICT, newValue);
   Serial.print(F("D50 S"));
   Serial.println(newValue ? 1 : 0);
@@ -615,21 +630,21 @@ void Parser::G01() {
 
 #ifdef HAS_GRIPPER
   if(hasGCode('T')>=0) {
-    float toolStatus = parseNumber('T', 0);
+    float toolStatus = parseFloat('T', 0);
     gripperUpdate(toolStatus);
   }
 #endif
 
   int8_t offset=hasGCode('A');
   if(offset>=0) {
-    desiredAcceleration = parseNumber(currentCommand+offset+1);
+    desiredAcceleration = parseFloat(currentCommand+offset+1);
     desiredAcceleration = _MIN(_MAX(desiredAcceleration, (float)MIN_ACCELERATION), (float)MAX_ACCELERATION);
   }
 
   float f;
   offset=hasGCode('F');
   if(offset>=0) {
-    f = parseNumber(currentCommand+offset+1);
+    f = parseFloat(currentCommand+offset+1);
     f = _MIN(_MAX(f, (float)MIN_FEEDRATE), (float)MAX_FEEDRATE);
   } else f = desiredFeedRate;
 
@@ -640,7 +655,7 @@ void Parser::G01() {
     float p = axies[i].pos;
     offset=hasGCode(AxisNames[i]);
     if(offset>=0) {
-      float g = parseNumber(currentCommand+offset+1);
+      float g = parseFloat(currentCommand+offset+1);
       if(absolute_mode) p = g;
       else p += g;
 
@@ -676,23 +691,23 @@ void Parser::G01() {
    @param clockwise (G2) 1 for cw, (G3) 0 for ccw
 */
 void Parser::G02(int8_t clockwise) {
-  desiredAcceleration = parseNumber('A', desiredAcceleration);
+  desiredAcceleration = parseFloat('A', desiredAcceleration);
   desiredAcceleration = _MIN(_MAX(desiredAcceleration, (float)MIN_ACCELERATION), (float)MAX_ACCELERATION);
-  float f      = parseNumber('F', desiredFeedRate);
+  float f      = parseFloat('F', desiredFeedRate);
   f            = _MIN(_MAX(f, (float)MIN_FEEDRATE), (float)MAX_FEEDRATE);
 
   int i;
   float pos[NUM_AXIES];
   for (i = 0; i < NUM_AXIES; ++i) {
     float p = axies[i].pos;
-    pos[i]  = parseNumber(AxisNames[i], (absolute_mode ? p : 0)) + (absolute_mode ? 0 : p);
+    pos[i]  = parseFloat(AxisNames[i], (absolute_mode ? p : 0)) + (absolute_mode ? 0 : p);
   }
 
   float p0 = axies[0].pos;
   float p1 = axies[1].pos;
   planner.bufferArc(
-    parseNumber('I', (absolute_mode ? p0 : 0)) + (absolute_mode ? 0 : p0),
-    parseNumber('J', (absolute_mode ? p1 : 0)) + (absolute_mode ? 0 : p1),
+    parseFloat('I', (absolute_mode ? p0 : 0)) + (absolute_mode ? 0 : p0),
+    parseFloat('J', (absolute_mode ? p1 : 0)) + (absolute_mode ? 0 : p1),
     pos,
     clockwise,
     f
@@ -705,7 +720,7 @@ void Parser::G02(int8_t clockwise) {
 */
 void Parser::G04() {
   planner.wait_for_empty_segment_buffer();
-  uint32_t delayTime = parseNumber('S', 0) + parseNumber('P', 0) * 1000.0f;
+  uint32_t delayTime = parseFloat('S', 0) + parseFloat('P', 0) * 1000.0f;
   pause(delayTime);
 }
 
@@ -718,7 +733,7 @@ void Parser::G92() {
   float pos[NUM_AXIES];
   for (i = 0; i < NUM_AXIES; ++i) {
     float p = axies[i].pos;
-    pos[i]  = parseNumber(AxisNames[i], (absolute_mode ? p : 0)) + (absolute_mode ? 0 : p);
+    pos[i]  = parseFloat(AxisNames[i], (absolute_mode ? p : 0)) + (absolute_mode ? 0 : p);
   }
   teleport(pos);
 }
@@ -730,7 +745,7 @@ void Parser::G92() {
    Change the currently active tool
 */
 void Parser::M6() {
-  int tool_id = parseNumber('T', current_tool);
+  int tool_id = parseFloat('T', current_tool);
   if(tool_id < 0) tool_id = 0;
   if(tool_id >= NUM_TOOLS) tool_id = NUM_TOOLS - 1;
   current_tool = tool_id;
@@ -757,8 +772,8 @@ void Parser::M18() {
    default pin is LED_BUILTIN.  default state is LOW
 */
 void Parser::M42() {
-  int pin      = parseNumber('P', LED_BUILTIN);
-  int newState = parseNumber('S', 0);
+  int pin      = parseFloat('P', LED_BUILTIN);
+  int newState = parseFloat('S', 0);
   digitalWrite(pin, newState ? HIGH : LOW);
 }
 
@@ -768,7 +783,7 @@ void Parser::M42() {
 void Parser::M92() {
   Serial.print(F("M92 "));
   for(ALL_MUSCLES(i)) {
-    motor_spu[i] = parseNumber(motors[i].letter, motor_spu[i]);
+    motor_spu[i] = parseFloat(motors[i].letter, motor_spu[i]);
     Serial.print(motors[i].letter);
     Serial.print(motor_spu[i]);
     Serial.print(' ');
@@ -819,10 +834,10 @@ void Parser::M100() {
    look for change to dimensions in command, apply and save changes.
 */
 void Parser::M101() {
-  int axisNumber = parseNumber('A', -1);
+  int axisNumber = parseFloat('A', -1);
   if(axisNumber >= 0 && axisNumber < NUM_AXIES) {
-    float newT      = parseNumber('T', axies[axisNumber].limitMax);
-    float newB      = parseNumber('B', axies[axisNumber].limitMin);
+    float newT      = parseFloat('T', axies[axisNumber].limitMax);
+    float newB      = parseFloat('B', axies[axisNumber].limitMin);
     uint8_t changed = 0;
 
     if(!equalEpsilon(axies[axisNumber].limitMax, newT)) {
@@ -854,7 +869,7 @@ void Parser::M101() {
 }
 
 void Parser::M110() {
-  lineNumber = parseNumber('N', lineNumber);
+  lineNumber = parseFloat('N', lineNumber);
 }
 
 /**
@@ -936,7 +951,7 @@ void Parser::M117() {
 void Parser::M203() {
   Serial.print(F("M203 "));
   for(ALL_MUSCLES(i)) {
-    max_step_rate_s[i] = parseNumber(motors[i].letter, max_step_rate_s[i]);
+    max_step_rate_s[i] = parseFloat(motors[i].letter, max_step_rate_s[i]);
     Serial.print(motors[i].letter);
     Serial.print(max_step_rate_s[i]);
     Serial.print(' ');
@@ -954,7 +969,7 @@ void Parser::M205() {
   Serial.print("M205");
 
 #define PARSE_205_AXIS(AA,BB) \
-  f = parseNumber(AA, max_jerk[BB]); \
+  f = parseFloat(AA, max_jerk[BB]); \
   max_jerk[BB] = _MAX(_MIN(f, (float)MAX_JERK), (float)0); \
   Serial.print(" "); \
   Serial.print(AA); \
@@ -976,7 +991,7 @@ void Parser::M205() {
 #if NUM_AXIES > 5
   PARSE_205_AXIS('W',5);
 #endif
-  f                   = parseNumber('B', min_segment_time_us);
+  f                   = parseFloat('B', min_segment_time_us);
   min_segment_time_us = _MAX(_MIN(f, 1000000.0f), (float)0);
   Serial.print(" B");
   Serial.println(min_segment_time_us);
@@ -990,13 +1005,13 @@ void Parser::M205() {
 */
 void Parser::M226() {
 #ifdef HAS_LCD
-  int pin = parseNumber('P', BTN_ENC);
+  int pin = parseFloat('P', BTN_ENC);
 #else
-  int pin = parseNumber('P', -1);
+  int pin = parseFloat('P', -1);
 #endif
   if(pin == -1) return;  // no pin specified.
 
-  int oldState = parseNumber('S', -1);
+  int oldState = parseFloat('S', -1);
   if(oldState == -1) {
     // default: assume the pin is not in the requested state
     oldState = digitalRead(pin);
@@ -1033,8 +1048,8 @@ void Parser::M280() {
 #if NUM_SERVOS > 0
   Serial.println("M280");
   
-  int id = parseNumber('P', 0);
-  int v = parseNumber('S', servos[0].read());
+  int id = parseFloat('P', 0);
+  int v = parseFloat('S', servos[0].read());
 
   if(id <0 || id>=NUM_SERVOS) return;
   if(v>=0 && v <=180) {
@@ -1051,8 +1066,8 @@ void Parser::M280() {
 */
 void Parser::M300() {
 #ifdef HAS_LCD
-  int ms = parseNumber('P', 250);
-  // int freq = parseNumber('S', 60);
+  int ms = parseFloat('P', 250);
+  // int freq = parseFloat('S', 60);
 
   digitalWrite(BEEPER, HIGH);
   delay(ms);
