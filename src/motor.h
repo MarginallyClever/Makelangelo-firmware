@@ -26,8 +26,12 @@
 //------------------------------------------------------------------------------
 
 #ifdef HAS_TMC2130
+#define MAXIMUM_STEPPER_RATE            5000000UL  // TMC* max rate
+#  define STEPPER_DIR_HIGH HIGH
+#  define STEPPER_DIR_LOW  LOW
 #else
 // A4988
+#define MAXIMUM_STEPPER_RATE            500000UL  // a4988 max rate
 #  define STEPPER_DIR_HIGH HIGH
 #  define STEPPER_DIR_LOW  LOW
 #endif
@@ -37,16 +41,17 @@
 //------------------------------------------------------------------------------
 
 #ifdef CPU_32_BIT
-#define ISR_BASE_CYCLES                 800UL
-#define ISR_LOOP_BASE_CYCLES            4UL
+#  define ISR_BASE_CYCLES                 792UL
+#  define ISR_LOOP_BASE_CYCLES            4UL
+#  define ISR_STEPPER_CYCLES              16UL
 #else
-#define ISR_BASE_CYCLES                 800UL
-#define ISR_LOOP_BASE_CYCLES            32UL
+#  define ISR_BASE_CYCLES                 752UL
+#  define ISR_LOOP_BASE_CYCLES            32UL
+#  define ISR_STEPPER_CYCLES              88UL
 #endif
-#define ISR_STEPPER_CYCLES              88UL
 
-#define MIN_ISR_LOOP_CYCLES             (ISR_STEPPER_CYCLES * NUM_MUSCLES)
-#define MAXIMUM_STEPPER_RATE            500000UL  // a4988 max rate
+
+#define MIN_ISR_LOOP_CYCLES             (ISR_STEPPER_CYCLES * NUM_MOTORS)
 #define MINIMUM_STEPPER_PULSE           1UL
 
 // TODO a guess.  use real math here!
