@@ -46,12 +46,13 @@ float motor_spu[NUM_MUSCLES];
 uint8_t isr_step_multiplier  = 1;
 uint32_t min_segment_time_us = DEFAULT_MIN_SEGMENT_TIME_US;
 uint16_t directionBits=0;
+uint32_t advance_divisor;
 
 #define DECL_MOT(NN)      \
-  int delta##NN;          \
-  int over##NN;           \
-  long global_steps_##NN; \
-  int global_step_dir_##NN;
+  uint32_t delta##NN;          \
+  int32_t over##NN;           \
+  uint32_t global_steps_##NN; \
+  int8_t global_step_dir_##NN;
 
 DECL_MOT(0)
 
@@ -284,7 +285,7 @@ void Stepper::isrPulsePhase() {
   }
 #endif
 
-bool stepNeeded[NUM_MUSCLES];
+  bool stepNeeded[NUM_MUSCLES];
 
   // move each axis
   do {
@@ -294,10 +295,10 @@ bool stepNeeded[NUM_MUSCLES];
 
 #define PULSE_PREP(NN) { \
     over##NN += delta##NN; \
-    stepNeeded[NN] = over##NN > 0; \
+    stepNeeded[NN] = (over##NN >= 0); \
     if(stepNeeded[NN]) { \
       global_steps_##NN += global_step_dir_##NN; \
-      over##NN -= steps_total; \
+      over##NN -= advance_divisor; \
     } \
   }
 #define PULSE_START(NN)      if(stepNeeded[NN]) digitalWrite(MOTOR_##NN##_STEP_PIN, START##NN);
@@ -321,10 +322,8 @@ bool stepNeeded[NUM_MUSCLES];
 
 #  ifdef ESP8266
       // analogWrite(SERVO0_PIN, global_servoSteps_0);
-#  else
-#    if !defined(HAS_GRIPPER)
+#  elif !defined(HAS_GRIPPER)
       servos[0].write(global_servoSteps_0);
-#    endif
 #  endif
     }
 #endif
@@ -399,15 +398,15 @@ hal_timer_t Stepper::isrBlockPhase() {
     working_block = planner.getCurrentBlock();
 
     if(working_block) {
-      // defererencing some data so the loop runs faster.
+      // defererencing some data so the ISR runs faster.
       steps_total = working_block->steps_total;
       steps_taken = 0;
-      acc_step_rate        = working_block->initial_rate;
-      accel_until          = working_block->accel_until;
-      decel_after          = working_block->decel_after;
-      time_accelerating    = 0;
-      time_decelerating    = 0;
-      isr_nominal_rate     = -1;
+      acc_step_rate = working_block->initial_rate;
+      accel_until = working_block->accel_until;
+      decel_after = working_block->decel_after;
+      time_accelerating = 0;
+      time_decelerating = 0;
+      isr_nominal_rate = -1;
 
       // set the direction pins
       if(directionBits != working_block->dir) {
@@ -417,9 +416,11 @@ hal_timer_t Stepper::isrBlockPhase() {
       global_servoStep_dir_0 = (!!(working_block->dir&(1<<NUM_MOTORS))) ? -1 : 1;
 #endif
 
+      advance_divisor = steps_total << 1;
+
 #define PREPARE_DELTA(NN) \
-      delta##NN = working_block->a[NN].absdelta; \
-      over##NN = -(steps_total >> 1);
+      delta##NN = working_block->a[NN].absdelta << 1; \
+      over##NN = -steps_total;
 
       ALL_MOTOR_MACRO(PREPARE_DELTA);
 #if NUM_SERVOS > 0
@@ -427,9 +428,9 @@ hal_timer_t Stepper::isrBlockPhase() {
       servoDelta0 = working_block->a[NUM_MOTORS].absdelta;
       servoOver0  = -(steps_total >> 1);
 
-#    if defined(HAS_GRIPPER)
-        gripper.sendPositionRequest(working_block->a[NUM_MOTORS].step_count, 255, 32);
-#    endif
+#  if defined(HAS_GRIPPER)
+      gripper.sendPositionRequest(working_block->a[NUM_MOTORS].step_count, 255, 32);
+#  endif
 #endif
 
 #ifdef DEBUG_STEPPING
