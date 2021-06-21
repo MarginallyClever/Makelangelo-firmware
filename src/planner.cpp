@@ -330,7 +330,10 @@ void Planner::addSteps(Segment *newBlock,const float *const target_position, flo
   newBlock->distance = longest_distance;
 
   // record the new target position & feed rate for the next movement.
-  float inverse_distance_units = 1.0 / longest_distance;
+  float inverse_distance_units = 1.0f / longest_distance;
+  // s = v / d
+  // d*s = v
+  //
   float inverse_secs = fr_units_s * inverse_distance_units;
 
   int movesQueued = movesPlannedNotBusy();
@@ -754,15 +757,15 @@ void Planner::bufferLine(float *pos, float new_feed_rate_units) {
   }
 #endif   
 
-  float len_units = sqrtf(lenSquared);
-  if(abs(len_units) < 0.000001f) return;
+  float totalDistance = sqrtf(lenSquared);
+  if(abs(totalDistance) < 0.000001f) return;
 
 #ifndef MIN_SEGMENT_LENGTH
 #define MIN_SEGMENT_LENGTH 0.5f
 #endif
-  const float seconds = len_units / new_feed_rate_units;
+  const float seconds = totalDistance / new_feed_rate_units;
   uint16_t segments   = seconds * SEGMENTS_PER_SECOND;
-  segments = _MIN(segments, len_units / MIN_SEGMENT_LENGTH);
+  segments = _MIN(segments, totalDistance / MIN_SEGMENT_LENGTH);
   segments = _MAX(segments, 1);
 
 #ifdef HAS_GRIPPER
@@ -780,7 +783,7 @@ void Planner::bufferLine(float *pos, float new_feed_rate_units) {
 #endif
 
   const float inv_segments = 1.0f / float(segments);
-  const float segment_len_units = len_units * inv_segments;
+  const float segmentDistance = totalDistance * inv_segments;
 
   for (ALL_AXIES(i)) delta[i] *= inv_segments;
 
@@ -792,11 +795,11 @@ void Planner::bufferLine(float *pos, float new_feed_rate_units) {
     }
 
     for(ALL_AXIES(i)) intermediatePos[i] += delta[i];
-    addSegment(intermediatePos, new_feed_rate_units, segment_len_units);
+    addSegment(intermediatePos, new_feed_rate_units, segmentDistance);
   }
 
   // guarantee we stop exactly at the destination (no rounding errors).
-  addSegment(pos, new_feed_rate_units, segment_len_units);
+  addSegment(pos, new_feed_rate_units, segmentDistance);
 }
 
 /**

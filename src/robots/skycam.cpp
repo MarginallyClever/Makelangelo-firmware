@@ -52,7 +52,7 @@ void IK(const float *const cartesian, int32_t *motorStepArray) {
  * @param axies the resulting cartesian coordinate
  * @return 0 if no problem, 1 on failure.
  */
-int FK(long *motorStepArray, float *axies) {
+int FK(uint32_t *motorStepArray, float *axies) {
   Serial.println(F("UnimplmentedException"));
   return 1;
 }

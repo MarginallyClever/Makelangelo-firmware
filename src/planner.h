@@ -171,9 +171,9 @@ class Planner {
 
   static void estop();
 
-  #if MACHINE_STYLE == POLARGRAPH && defined(DYNAMIC_ACCELERATION)
-    float limitPolargraphAcceleration(const float *target_position,const float *oldP,float maxAcceleration);
-  #endif
+#  if MACHINE_STYLE == POLARGRAPH && defined(DYNAMIC_ACCELERATION)
+  static float limitPolargraphAcceleration(const float *target_position,const float *oldP,float maxAcceleration);
+#  endif
 
   FORCE_INLINE static void normalize_junction_vector(float *v) {
     float m=0;

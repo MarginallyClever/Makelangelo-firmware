@@ -79,7 +79,7 @@ FORCE_INLINE static void HAL_timer_set_compare(const uint8_t timerIndex,hal_time
   OCR1A = (value);
 }
 
-FORCE_INLINE hal_timer_t HAL_timer_get_count(const uint8_t timerIndex) {
+FORCE_INLINE static hal_timer_t HAL_timer_get_count(const uint8_t timerIndex) {
   return OCR1A;
 }
 

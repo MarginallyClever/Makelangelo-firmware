@@ -104,7 +104,7 @@ void IK(const float *const axies, int32_t *motorStepArray) {
  * @param axies the resulting cartesian coordinate
  * @return 0 if no problem, 1 on failure.
  */
-int FK(long *motorStepArray, float *axies) {
+int FK(uint32_t *motorStepArray, float *axies) {
   float t      = (CENTER_TO_SHOULDER - EFFECTOR_TO_WRIST) * TAN30 / 2.0;
   float theta1 = radians((float)motorStepArray[0] / MICROSTEP_PER_DEGREE);
   float theta2 = radians((float)motorStepArray[1] / MICROSTEP_PER_DEGREE);
