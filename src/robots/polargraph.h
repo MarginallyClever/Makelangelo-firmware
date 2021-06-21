@@ -20,7 +20,7 @@
 #  define MACHINE_HAS_LIFTABLE_PEN
 
 // what is the maximum length of a subdivided line?
-#  define SEGMENTS_PER_SECOND (10)
+#  define SEGMENTS_PER_SECOND (40)
 
 // servo angles for pen control
 #  define PEN_UP_ANGLE   (90)
@@ -41,10 +41,10 @@
 #  define MAX_ACCELERATION (1000.0)
 #  define MIN_ACCELERATION (0.0)
 
-#  define MAX_JERK   (50.0)
-#  define MAX_JERK_DEFAULT   (20.0)
+#  define MAX_JERK         (50.0)
+#  define MAX_JERK_DEFAULT (20.0)
 
-#  define MAX_JERK_Z (3.0)
+#  define MAX_JERK_Z         (3.0)
 #  define MAX_JERK_Z_DEFAULT (0.3)
 
 // uncomment this line to adjust acceleration based on pen position
