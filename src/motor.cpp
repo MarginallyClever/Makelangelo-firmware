@@ -330,6 +330,36 @@ void Stepper::isrPulsePhase() {
   } while( --stepsToDo);
 }
 
+
+
+#ifdef DEBUG_STEPPING
+void describeSegment(Segment *block) {
+    int decel   = block->steps_total - block->decel_after;
+    int nominal = block->decel_after - block->accel_until;
+    Serial.print("seg: ");    Serial.print((long)block, HEX);
+    Serial.print("  distance: ");  Serial.print(block->distance);
+    Serial.print("  nominal_speed_sqr: ");  Serial.print(block->nominal_speed_sqr);
+    Serial.print("  entry_speed_sqr: ");    Serial.print(block->entry_speed_sqr);
+    Serial.print("  entry_speed_max: ");    Serial.print(block->entry_speed_max_sqr);
+    Serial.print("  acceleration: ");  Serial.print(block->acceleration);
+    Serial.print("  accel: ");    Serial.print(block->accel_until);
+    Serial.print("  nominal: ");    Serial.print(nominal);
+    Serial.print("  decel: ");    Serial.println(decel);
+    Serial.print("  initial_rate: ");  Serial.print(block->initial_rate);
+    Serial.print("  nominal_rate: ");  Serial.print(block->nominal_rate);
+    Serial.print("  final_rate: ");  Serial.print(block->final_rate);
+    Serial.print("  acceleration_steps_per_s2: ");  Serial.print(block->acceleration_steps_per_s2);
+    Serial.print("  acceleration_rate: ");  Serial.print(block->acceleration_rate);
+    Serial.print(F("  nominal?"));   Serial.print(TEST(block->flags,BIT_FLAG_NOMINAL) != 0 ? 'Y' : 'N');
+    Serial.print(F("  recalc?"));   Serial.print(TEST(block->flags,BIT_FLAG_RECALCULATE) != 0 ? 'Y' : 'N');
+    Serial.print(F("  busy?"));   Serial.print(motor.isBlockBusy(block) != 0 ? 'Y' : 'N');
+    
+#define DESCRIBE_DELTA(NN)  { Serial.print("  ");  Serial.print(AxisNames[NN]);  }
+    ALL_MOTOR_MACRO(DESCRIBE_DELTA);
+}
+#endif
+
+
 // Process blocks in the isr
 hal_timer_t Stepper::isrBlockPhase() {
   hal_timer_t interval = (STEPPER_TIMER_RATE) / 1000UL;
@@ -337,6 +367,9 @@ hal_timer_t Stepper::isrBlockPhase() {
   if(working_block) {
     // Is this segment done?
     if(steps_taken >= steps_total) {
+#ifdef DEBUG_STEPPING
+      Serial.print("E");
+#endif
       // Move on to next segment without wasting an interrupt tick.
       planner.releaseCurrentBlock();
       working_block     = NULL;
@@ -348,13 +381,7 @@ hal_timer_t Stepper::isrBlockPhase() {
         interval = calc_interval(acc_step_rate, &isr_step_multiplier);
         time_accelerating += interval;
 #ifdef DEBUG_STEPPING
-        /*
-        Serial.print("A >> ");   Serial.print(interval);
-        Serial.print("\t");      Serial.print(isr_step_multiplier);
-        Serial.print("\t");      Serial.print(current_feed_rate);
-        Serial.print(" + ");     Serial.print(current_acceleration);
-        Serial.print(" * ");     Serial.print(time_accelerating);
-        Serial.println();//*/
+        Serial.print("A");
 #endif
       } else if(steps_taken > decel_after) {
         // decelerating
@@ -368,13 +395,7 @@ hal_timer_t Stepper::isrBlockPhase() {
         interval = calc_interval(step_rate, &isr_step_multiplier);
         time_decelerating += interval;
 #ifdef DEBUG_STEPPING
-        /*
-        Serial.print("D >> ");   Serial.print(interval);
-        Serial.print("\t");      Serial.print(isr_step_multiplier);
-        Serial.print("\t");      Serial.print(end_feed_rate);
-        Serial.print(" = ");     Serial.print(current_feed_rate);
-        Serial.print(" * ");     Serial.print(time_decelerating);
-        Serial.println();//*/
+        Serial.print("D");
 #endif
       } else {
         // cruising at nominal speed (flat top of the trapezoid)
@@ -383,11 +404,7 @@ hal_timer_t Stepper::isrBlockPhase() {
         }
         interval = isr_nominal_rate;
 #ifdef DEBUG_STEPPING
-        /*
-        Serial.print("N >> ");   Serial.println(interval);
-        Serial.print("\t");      Serial.print(isr_step_multiplier);
-        Serial.print(" / ");     Serial.print(working_block->nominal_rate);
-        Serial.println();//*/
+        Serial.print("N");
 #endif
       }
     }
@@ -398,6 +415,12 @@ hal_timer_t Stepper::isrBlockPhase() {
     working_block = planner.getCurrentBlock();
 
     if(working_block) {
+#ifdef DEBUG_STEPPING
+      Serial.print("S");
+      describeSegment(working_block);
+      Serial.println();
+#endif
+
       // defererencing some data so the ISR runs faster.
       steps_total = working_block->steps_total;
       steps_taken = 0;
@@ -432,36 +455,6 @@ hal_timer_t Stepper::isrBlockPhase() {
       gripper.sendPositionRequest(working_block->a[NUM_MOTORS].step_count, 255, 32);
 #  endif
 #endif
-
-#ifdef DEBUG_STEPPING
-      int decel   = working_block->steps_total - working_block->decel_after;
-      int nominal = working_block->decel_after - working_block->accel_until;
-      Serial.print("seg: ");
-      Serial.print((long)working_block, HEX);
-      // Serial.print("  distance: ");  Serial.println(working_block->distance);
-      // Serial.print("  nominal_speed: ");  Serial.println(working_block->nominal_speed);
-      Serial.print("  entry_speed: ");
-      Serial.print(working_block->entry_speed);
-      Serial.print("  entry_speed_max: ");
-      Serial.print(working_block->entry_speed_max);
-      // Serial.print("  acceleration: ");  Serial.println(working_block->acceleration);
-      Serial.print("  accel: ");
-      Serial.print(working_block->accel_until);
-      Serial.print("  nominal: ");
-      Serial.print(nominal);
-      Serial.print("  decel: ");
-      Serial.println(decel);
-      // Serial.print("  initial_rate: ");  Serial.println(working_block->initial_rate);
-      // Serial.print("  nominal_rate: ");  Serial.println(working_block->nominal_rate);
-      // Serial.print("  final_rate: ");  Serial.println(working_block->final_rate);
-      // Serial.print("  acceleration_steps_per_s2: ");  Serial.println(working_block->acceleration_steps_per_s2);
-      // Serial.print("  acceleration_rate: ");  Serial.println(working_block->acceleration_rate);
-      // Serial.print("  nominal_length_flag: ");  Serial.println(working_block->nominal_length_flag==0?"n":"y");
-      // Serial.print("  recalculate_flag: ");  Serial.println(working_block->recalculate_flag==0?"n":"y");
-      // Serial.print("  dx: ");  Serial.println(working_block->a[0].delta_units);
-      // Serial.print("  dy: ");  Serial.println(working_block->a[1].delta_units);
-      // Serial.print("  dz: ");  Serial.println(working_block->a[2].delta_units);
-#endif
       interval = calc_interval(acc_step_rate, &isr_step_multiplier);
     }
   }
@@ -469,21 +462,19 @@ hal_timer_t Stepper::isrBlockPhase() {
   return interval;
 }
 
-#ifdef DEBUG_STEPPING
-void Stepper::debugStepping() {
-  isrPulsePhase();
-  uint32_t interval = isr_internal_block();
-  // Serial.println(interval);
-}
-#endif
-
 HAL_STEP_TIMER_ISR {
+#ifndef DEBUG_STEPPING
   Stepper::isr();
+#endif
 }
 
 void Stepper::isr() {
   static hal_timer_t nextMainISR=0;
-  
+
+#ifdef DEBUG_STEPPING
+  uint32_t time0 = micros(),time1,time2,time3;
+#endif
+
   //digitalWrite(LED_BUILTIN,!digitalRead(LED_BUILTIN));
 
   #ifndef __AVR__
@@ -514,6 +505,12 @@ void Stepper::isr() {
 #  ifdef HAS_TMC2130
     }
 #  endif
+#else
+    time1 = micros();
+    if(!nextMainISR) isrPulsePhase();
+    time2 = micros();
+    if(!nextMainISR) nextMainISR = isrBlockPhase();
+    time3 = micros();
 #endif  // DEBUG_STEPPING
 
     hal_timer_t interval = _MIN(hal_timer_t(HAL_TIMER_TYPE_MAX),nextMainISR);
@@ -541,40 +538,22 @@ void Stepper::isr() {
 
   // turn the interrupts back on
   ENABLE_ISRS();
+  
+#ifdef DEBUG_STEP_TIMING
+  time1-=time0;
+  time2-=time0;
+  time3-=time0;
+  uint32_t time4=micros()-time0;
+  Serial.print(" T ");
+  Serial.print(time1);
+  Serial.print(" ");
+  Serial.print(time2);
+  Serial.print(" ");
+  Serial.print(time3);
+  Serial.print(" ");
+  Serial.println(time4);
+#endif
 }
-
-void clockISRProfile() {
-  // Disable interrupts, to avoid ISR preemption while we reprogram the period
-  // CRITICAL_SECTION_START();
-  // make sure the isr_step_multiplier is 1
-  int oldMult         = isr_step_multiplier;
-  isr_step_multiplier = 1;
-
-  int count = 1000;
-  // get set... go!
-  uint32_t tStart = micros();
-
-  for (int i = 0; i < count; ++i) Stepper::isrPulsePhase();
-
-  uint32_t tEnd = micros();
-
-  // restore isr_step_multiplier
-  isr_step_multiplier = oldMult;
-
-  // Turn the interrupts back on (reduces UART delay, apparently)
-  // CRITICAL_SECTION_END();
-
-  // report results
-  uint32_t dt = tEnd - tStart;
-  float dtPer = (float)dt / (float)count;
-  Serial.print(F("profile loops     ="));
-  Serial.println(count);
-  Serial.print(F("profile total time="));
-  Serial.println(dt);
-  Serial.print(F("profile per loop  ="));
-  Serial.println(dtPer);
-}
-
 
 void Stepper::setDirections(uint16_t bits) {
   directionBits = bits;
