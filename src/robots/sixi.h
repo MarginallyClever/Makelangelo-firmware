@@ -29,6 +29,8 @@
 #  define MIN_FEEDRATE     (0)
 #  define DEFAULT_FEEDRATE (80.0)
 
+#  define MAX_STEP_RATE_DEFAULT (200.0)  // maximum stepping speed of motor
+
 #  define MAX_ACCELERATION     (50.0)
 #  define MIN_ACCELERATION     (0)
 #  define DEFAULT_ACCELERATION (25.0)

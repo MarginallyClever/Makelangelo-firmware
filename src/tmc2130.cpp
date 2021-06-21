@@ -146,7 +146,7 @@ void tmc2130_motor_home() {
 
   homing = true;
 
-  motor_disengage();
+  Stepper::disengage();
   tmc2130_disable_stealthChop();
   Stepper::engage();
 

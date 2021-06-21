@@ -19,7 +19,7 @@
 #  endif
 
 
-#define HAS_TMC2130  // driver type
+//#define HAS_TMC2130  // driver type defined in platformio
 
 
 #  define CPU_32_BIT

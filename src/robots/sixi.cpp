@@ -521,7 +521,7 @@ void factory_reset() {
 
   for (ALL_MUSCLES(i)) {
     max_jerk[i] = MAX_JERK_DEFAULT;
-    max_feedrate_units_s[i] = MAX_FEEDRATE;
+    max_step_rate_s[i] = MAX_STEP_RATE_DEFAULT;
   }
 
   // Sixi init limits

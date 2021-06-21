@@ -5,13 +5,6 @@
 #define RADIANS(A) ((A)*180.0f/PI)
 #define DEGREES(A) ((A)*PI/180.0f)
 
-#ifndef _MIN
-#define _MIN(a,b) (a<b?a:b)
-#endif
-
-#ifndef _MAX
-#define _MAX(a,b) (a>b?a:b)
-#endif
 
 // for assembly in isr inner loop
 #define A(CODE) " " CODE "\n\t"

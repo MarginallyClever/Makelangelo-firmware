@@ -311,8 +311,8 @@ void Planner::addSteps(Segment *newBlock,const float *const target_position, flo
     newBlock->a[i].absdelta = abs(newBlock->a[i].delta_steps);
     newBlock->steps_total = _MAX(newBlock->steps_total, newBlock->a[i].absdelta);
 #if MACHINE_STYLE == SIXI
-    new_seg.a[i].positionStart = axies[i].pos;
-    new_seg.a[i].positionEnd   = target_position[i];
+    newBlock->a[i].positionStart = axies[i].pos;
+    newBlock->a[i].positionEnd   = target_position[i];
 #endif
   }
 

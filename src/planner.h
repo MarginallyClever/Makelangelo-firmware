@@ -144,32 +144,32 @@ class Planner {
     return &blockBuffer[block_buffer_head];
   }
 
-  void zeroSpeeds();
-  void wait_for_empty_segment_buffer();
+  static void zeroSpeeds();
+  static void wait_for_empty_segment_buffer();
 
-  void addSteps(Segment *newBlock,const float *const target_position, float fr_units_s, float longest_distance);
-  void addSegment(const float *const target_position, float fr_units_s, float millimeters);
-  void bufferLine(float *pos, float new_feed_rate_units);
-  void bufferArc(float cx, float cy, float *destination, char clockwise, float new_feed_rate_units);
+  static void addSteps(Segment *newBlock,const float *const target_position, float fr_units_s, float longest_distance);
+  static void addSegment(const float *const target_position, float fr_units_s, float millimeters);
+  static void bufferLine(float *pos, float new_feed_rate_units);
+  static void bufferArc(float cx, float cy, float *destination, char clockwise, float new_feed_rate_units);
 
-  float max_speed_allowed_sqr(const float &acc, const float &target_velocity, const float &distance);
+  static float max_speed_allowed_sqr(const float &acc, const float &target_velocity, const float &distance);
 
-  void recalculate_reverse_kernel(Segment *const current, const Segment *next);
-  void reversePass();
-  void recalculate_forward_kernel(const Segment *prev, Segment *const current,uint8_t block_index);
-  void forwardPass();
-  void recalculate();
+  static void recalculate_reverse_kernel(Segment *const current, const Segment *next);
+  static void reversePass();
+  static void recalculate_forward_kernel(const Segment *prev, Segment *const current,uint8_t block_index);
+  static void forwardPass();
+  static void recalculate();
 
-  float estimate_acceleration_distance(const float &initial_rate, const float &target_rate, const float &accel);
-  int intersection_distance(const float &start_rate, const float &end_rate, const float &accel, const float &distance);
+  static float estimate_acceleration_distance(const float &initial_rate, const float &target_rate, const float &accel);
+  static int intersection_distance(const float &start_rate, const float &end_rate, const float &accel, const float &distance);
 
-  void calculate_trapezoid_for_block(Segment *s, const float &entry_factor, const float &exit_factor);
-  void recalculate_trapezoids();
+  static void calculate_trapezoid_for_block(Segment *s, const float &entry_factor, const float &exit_factor);
+  static void recalculate_trapezoids();
 
-  void describeAllSegments();
-  void segmentReport(Segment &new_seg);
+  static void describeAllSegments();
+  static void segmentReport(Segment &new_seg);
 
-  void estop();
+  static void estop();
 
   #if MACHINE_STYLE == POLARGRAPH && defined(DYNAMIC_ACCELERATION)
     float limitPolargraphAcceleration(const float *target_position,const float *oldP,float maxAcceleration);

@@ -36,7 +36,7 @@
 
 #  define MAX_FEEDRATE_Z (180.0)  // linear travel speed
 
-#  define MAX_STEP_RATE_DEFAULT (160.0)  // maximum stepping speed of motor
+#  define MAX_STEP_RATE_DEFAULT (200.0)  // maximum stepping speed of motor
 
 #  define MAX_ACCELERATION (1000.0)
 #  define MIN_ACCELERATION (0.0)

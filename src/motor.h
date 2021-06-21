@@ -8,6 +8,7 @@
 #include <Arduino.h>
 
 #include "macros.h"
+
 #include "tmc2130.h"
 
 #if NUM_SERVOS > 0
@@ -27,8 +28,8 @@
 
 #ifdef HAS_TMC2130
 #define MAXIMUM_STEPPER_RATE            5000000UL  // TMC* max rate
-#  define STEPPER_DIR_HIGH HIGH
-#  define STEPPER_DIR_LOW  LOW
+//#  define STEPPER_DIR_HIGH LOW
+//#  define STEPPER_DIR_LOW  HIGH
 #else
 // A4988
 #define MAXIMUM_STEPPER_RATE            500000UL  // a4988 max rate

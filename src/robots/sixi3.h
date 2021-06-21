@@ -39,7 +39,8 @@
 #  define MAX_Z_JERK (5.0)
 #  define MAX_Z_JERK_DEFAULT (0.3)
 
-#define MAX_STEP_RATE_DEFAULT 160
+#  define MAX_STEP_RATE_DEFAULT (200.0)  // maximum stepping speed of motor
+
 
 // plan long moves as a set of submoves to increase accuracy.  Uncomment to turn this off.
 //#define SUBDIVIDE_LINES
