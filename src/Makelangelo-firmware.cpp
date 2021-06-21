@@ -94,7 +94,7 @@ void teleport(float *pos) {
     // Serial.println(pos[i]);
   }
 
-  long steps[NUM_MUSCLES];
+  int32_t steps[NUM_MUSCLES];
   IK(pos, steps);
   motor.set_step_count(steps);
 }
@@ -134,7 +134,7 @@ void meanwhile() {
 #endif  // MACHINE_STYLE == SIXI
 
 #ifdef DEBUG_STEPPING
-  debug_stepping();
+  Stepper::isr();
 #endif  // DEBUG_STEPPING
 }
 
@@ -170,7 +170,6 @@ void setup() {
 #endif
 
   planner.zeroSpeeds();
-  // clockISRProfile();
   motor.setup();
   // easyPWM_init();
 
