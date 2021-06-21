@@ -106,7 +106,7 @@ int FK(long *motorStepArray, float *axies) {
 }
 
 void robot_findHome() {
-  motor_engage();
+  Stepper::engage();
   // sixi always knows where it is.
   float pos[NUM_AXIES];
 

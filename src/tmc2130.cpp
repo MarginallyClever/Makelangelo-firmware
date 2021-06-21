@@ -128,7 +128,7 @@ void tmc2130_enable_stealthChop() {
 #endif
   }
 
-  motor_engage();
+  Stepper::engage();
 }
 
 void tmc2130_motor_home() {
@@ -148,7 +148,7 @@ void tmc2130_motor_home() {
 
   motor_disengage();
   tmc2130_disable_stealthChop();
-  motor_engage();
+  Stepper::engage();
 
   for(ALL_MOTORS(j)) {
     digitalWrite(motors[j].dir_pin, STEPPER_DIR_LOW);

@@ -341,7 +341,7 @@ void robot_setup() {}
 
 void robot_findHome() {
   planner.wait_for_empty_segment_buffer();
-  motor_engage();
+  Stepper::engage();
 
   hal_timer_t stepDelay = findStepDelay();
 

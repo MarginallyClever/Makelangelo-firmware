@@ -8,7 +8,7 @@
 #define MIN_STEP_RATE            120
 #define GRAVITYmag               (9800.0)
 
-//#define HAS_CLASSIC_JERK
+#define HAS_CLASSIC_JERK
 #if !defined(HAS_CLASSIC_JERK)
 #define HAS_JUNCTION_DEVIATION 1
 #define JUNCTION_DEVIATION_UNITS 0.013
@@ -296,13 +296,8 @@ void Planner::addSteps(Segment *newBlock,const float *const target_position, flo
   Segment &oldBlock = blockBuffer[prev_segment];
 
   // convert from the cartesian position to the motor steps
-  long steps[NUM_MUSCLES];
+  int32_t steps[NUM_MUSCLES];
   IK(target_position, steps);
-
-#if MACHINE_STYLE == POLARGRAPH
-  float oldP [] = { axies[0].pos, axies[1].pos };
-  // float oldZ = axies[2].pos;
-#endif
 
   // find the number of steps for each motor, the direction, and the absolute steps
   // The axis that has the most steps will control the overall acceleration as per bresenham's algorithm.
@@ -313,7 +308,6 @@ void Planner::addSteps(Segment *newBlock,const float *const target_position, flo
     newBlock->a[i].step_count  = steps[i];
     newBlock->a[i].delta_steps = steps[i] - oldBlock.a[i].step_count;
     if(newBlock->a[i].delta_steps < 0) newBlock->dir |= (1UL<<i);
-    newBlock->a[i].delta_units = float(newBlock->a[i].delta_steps) / motor_spu[i];
     newBlock->a[i].absdelta = abs(newBlock->a[i].delta_steps);
     newBlock->steps_total = _MAX(newBlock->steps_total, newBlock->a[i].absdelta);
 #if MACHINE_STYLE == SIXI
@@ -322,7 +316,13 @@ void Planner::addSteps(Segment *newBlock,const float *const target_position, flo
 #endif
   }
 
-  for (ALL_AXIES(i)) axies[i].pos = target_position[i];
+  float oldP[NUM_AXIES];
+  float delta[NUM_AXIES];
+  for(ALL_AXIES(i)) {
+    oldP[i] = axies[i].pos;
+    axies[i].pos = target_position[i];
+    delta[i] = target_position[i] - oldP[i];
+  }
 
   // No steps?  No work!  Stop now.
   if(newBlock->steps_total < MIN_STEPS_PER_SEGMENT) return;
@@ -357,7 +357,7 @@ void Planner::addSteps(Segment *newBlock,const float *const target_position, flo
   // All speeds are connected so if one motor slows, they all have to slow the same amount.
   float current_speed[NUM_MUSCLES], speed_factor = 1.0;
   for (ALL_MUSCLES(i)) {
-    current_speed[i] = newBlock->a[i].delta_units * inverse_secs;
+    current_speed[i] = delta[i] * inverse_secs;
     const float cs = fabs(current_speed[i]), max_fr = max_step_rate_s[i];
     if(cs > max_fr) speed_factor = _MIN(speed_factor, max_fr / cs);
   }
@@ -458,7 +458,7 @@ void Planner::addSteps(Segment *newBlock,const float *const target_position, flo
   static float prev_unit_vec[NUM_MOTORS];
 
   float unit_vec[NUM_MOTORS] = {
-    #define COPY_1(NN) newBlock->a[NN].delta_units * inverse_distance_units,
+    #define COPY_1(NN) (target_position[NN] - oldP[NN]) * inverse_distance_units,
     ALL_MOTOR_MACRO(COPY_1)
   };
 
@@ -684,12 +684,6 @@ void Planner::segmentReport(Segment &new_seg) {
   Serial.print("seg:");  Serial.println((long)&new_seg,HEX);
   Serial.print("distance=");  Serial.println(new_seg.distance);
   Serial.print("nominal_speed=");  Serial.println(new_seg.nominal_speed_sqr);
-  Serial.print("delta_units=");
-  for (ALL_MUSCLES(i)) {
-    if(i > 0) Serial.print(",");
-    Serial.print(new_seg.a[i].delta_units);
-  }
-  Serial.println();
   Serial.print("nominal_rate=");  Serial.println(new_seg.nominal_rate);
   Serial.print("acceleration_steps_per_s2=");  Serial.println(new_seg.acceleration_steps_per_s2);
   Serial.print("acceleration=");  Serial.println(new_seg.acceleration);
@@ -743,23 +737,23 @@ void Planner::bufferLine(float *pos, float new_feed_rate_units) {
 
   // split up long lines to make them straighter
   float delta[NUM_AXIES];
-  float startPos[NUM_AXIES];
+  float intermediatePos[NUM_AXIES];
   float lenSquared = 0;
 
   for (ALL_AXIES(i)) {
-    startPos[i] = axies[i].pos;
-    delta[i]    = pos[i] - startPos[i];
+    intermediatePos[i] = axies[i].pos;
+    delta[i]    = pos[i] - intermediatePos[i];
     lenSquared += sq(delta[i]);
   }
-/*
+
 #if MACHINE_STYLE == POLARGRAPH
   if(delta[0] == 0 && delta[1] == 0) {
     // only moving Z, don't split the line.
     addSegment(pos, new_feed_rate_units, abs(delta[2]));
     return;
   }
-#endif
-*/
+#endif   
+
   float len_units = sqrtf(lenSquared);
   if(abs(len_units) < 0.000001f) return;
 
@@ -797,8 +791,8 @@ void Planner::bufferLine(float *pos, float new_feed_rate_units) {
       until = millis() + 200UL;
     }
 
-    for (ALL_AXIES(i)) startPos[i] += delta[i];
-    addSegment(startPos, new_feed_rate_units, segment_len_units);
+    for(ALL_AXIES(i)) intermediatePos[i] += delta[i];
+    addSegment(intermediatePos, new_feed_rate_units, segment_len_units);
   }
 
   // guarantee we stop exactly at the destination (no rounding errors).

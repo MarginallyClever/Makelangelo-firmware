@@ -28,7 +28,6 @@ class Muscle {
 public:
   int32_t delta_steps;  // total steps for this move.
   int32_t step_count;   // current motor position, in steps.
-  float delta_units;  // in some systems it's mm, in others it's degrees.
   uint32_t absdelta;
 #if MACHINE_STYLE == SIXI
   float expectedPosition;

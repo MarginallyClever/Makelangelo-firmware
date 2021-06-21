@@ -103,7 +103,7 @@ void robot_setup() {}
 
 void robot_findHome() {
   planner.wait_for_empty_segment_buffer();
-  motor_engage();
+  Stepper::engage();
 
 #ifdef HAS_TMC2130
   delay(500);
