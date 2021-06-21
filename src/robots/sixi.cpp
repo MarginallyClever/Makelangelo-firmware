@@ -26,7 +26,7 @@ SensorManager sensorManager;
    @param axies the cartesian coordinate
    @param motorStepArray a measure of each belt to that plotter position
 */
-void IK(const float *const axies, long *motorStepArray) {
+void IK(const float *const axies, int32_t *motorStepArray) {
   // each of the xyz motors are differential to each other.
   // to move only one motor means applying the negative of that value to the other two motors
 

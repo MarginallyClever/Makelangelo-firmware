@@ -13,7 +13,7 @@
  * @param axies the cartesian coordinate
  * @param motorStepArray a measure of each belt to that plotter position
  */
-void IK(const float *const cartesian, long *motorStepArray) {
+void IK(const float *const cartesian, int32_t *motorStepArray) {
   float left  = axies[0].limitMin;
   float right = axies[0].limitMax;
   float top   = axies[1].limitMax;
@@ -93,7 +93,7 @@ void recordHome() {
   digitalWrite(MOTOR_1_DIR_PIN, LOW);
   int left  = 0;
   int right = 0;
-  long count[NUM_MUSCLES];
+  int32_t count[NUM_MUSCLES];
 
   // we start at home position, so we know (x,y)->(left,right) value here.
   float homes[NUM_AXIES];
@@ -304,7 +304,7 @@ void calibrateBelts() {
   digitalWrite(MOTOR_0_DIR_PIN, LOW);
   digitalWrite(MOTOR_1_DIR_PIN, LOW);
   int left = 0, right = 0;
-  long steps[NUM_MUSCLES];
+  int32_t steps[NUM_MUSCLES];
   float homePos[NUM_AXIES];
   homePos[0] = axies[0].homePos;
   homePos[1] = axies[1].homePos;

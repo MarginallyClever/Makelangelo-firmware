@@ -60,7 +60,7 @@ int delta_calcAngleYZ(float x0, float y0, float z0, long &theta) {
  * @param axies the cartesian coordinate
  * @param motorStepArray a measure of each belt to that plotter position
  */
-void IK(const float *const axies, long *motorStepArray) {
+void IK(const float *const axies, int32_t *motorStepArray) {
   float x = axies[0];
   float y = axies[1];
   float z = axies[2];

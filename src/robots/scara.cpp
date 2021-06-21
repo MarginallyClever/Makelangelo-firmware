@@ -24,7 +24,7 @@ float lawOfCosines(float a, float b, float c) {
  * @param y cartesian coordinate
  * @param motorStepArray a measure of each belt to that plotter position
  */
-void IK(const float *const cartesian, long *motorStepArray) {
+void IK(const float *const cartesian, int32_t *motorStepArray) {
   // see https://appliedgo.net/roboticarm/
   float x = cartesian[0];
   float y = cartesian[1];

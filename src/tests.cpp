@@ -65,7 +65,7 @@ void unitTestBitMacros() {
 
 // Test that IK(FK(A))=A
 void testKinematics() {
-  long A[NUM_MOTORS], i, j;
+  int32_t A[NUM_MOTORS], i, j;
   float axies1[NUM_AXIES];
   float axies2[NUM_AXIES];
 

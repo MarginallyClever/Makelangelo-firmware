@@ -11,6 +11,9 @@
 
 //#define VERBOSE           (1)  // add to get a lot more serial output.
 //#define DEBUG_STEPPING         // uncomment to debug stepper internal timer
+#ifdef DEBUG_STEPPING
+//#  define DEBUG_STEP_TIMING  // how many ticks per 
+#endif
 
 //------------------------------------------------------------------------------
 // Robot styles supported
@@ -174,7 +177,7 @@ extern Axis axies[NUM_AXIES];
 extern void pause(const uint32_t us);
 extern hal_timer_t findStepDelay();
 
-extern void IK(const float *const axies, long *motorStepArray);
+extern void IK(const float *const axies, int32_t *motorStepArray);
 extern int FK(long *motorStepArray, float *axies);
 
 extern void robot_findHome();

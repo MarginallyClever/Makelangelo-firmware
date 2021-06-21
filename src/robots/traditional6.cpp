@@ -14,7 +14,7 @@
  * @param cartesian array of cartesian coordinates
  * @param motorStepArray number of steps per motor
  */
-void IK(const float *const cartesian, long *motorStepArray) {
+void IK(const float *const cartesian, int32_t *motorStepArray) {
   for (ALL_AXIES(i)) {
     motorStepArray[i] = lround(cartesian[i]) * motor_spu[i];
   }

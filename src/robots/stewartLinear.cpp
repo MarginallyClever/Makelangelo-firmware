@@ -83,7 +83,7 @@ void stewartDemo() {
    @param axies the cartesian coordinate
    @param motorStepArray a measure of each belt to that plotter position
 */
-void IK(const float *const cartesian, long *motorStepArray) {
+void IK(const float *const cartesian, int32_t *motorStepArray) {
   for(ALL_MUSCLES(i)) {
     motorStepArray[i] = cartesian[i] * motor_spu[i];
   }

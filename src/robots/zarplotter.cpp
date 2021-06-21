@@ -13,7 +13,7 @@
  * @param axies the cartesian coordinates
  * @param motorStepArray a measure of each belt to that plotter position
  */
-void IK(const float *const cartesian, long *motorStepArray) {
+void IK(const float *const cartesian, int32_t *motorStepArray) {
   float left   = axies[0].limitMin + ZARPLOTTER_COMPENSATION;
   float right  = axies[0].limitMax - ZARPLOTTER_COMPENSATION;
   float top    = axies[1].limitMax - ZARPLOTTER_COMPENSATION;
