@@ -50,8 +50,7 @@
 #  define ISR_STEPPER_CYCLES              88UL
 #endif
 
-
-#define MIN_ISR_LOOP_CYCLES             (ISR_STEPPER_CYCLES * NUM_MOTORS)
+#define MIN_ISR_LOOP_CYCLES             (ISR_STEPPER_CYCLES * NUM_MUSCLES)
 #define MINIMUM_STEPPER_PULSE           1UL
 
 // TODO a guess.  use real math here!
@@ -187,10 +186,6 @@ public:
   static void isr();
   static void isrPulsePhase();
   static hal_timer_t isrBlockPhase();
-
-#ifdef DEBUG_STEPPING
-  extern void debug_stepping();
-#endif  // DEBUG_STEPPING
 
   /**
      Set the clock 2 timer frequency.
