@@ -968,6 +968,13 @@ void Parser::M205() {
   float f;
   Serial.print("M205");
 
+#ifdef HAS_JUNCTION_DEVIATION
+  f = parseFloat('J',Planner::junction_deviation);
+  Planner::junction_deviation = _MAX(_MIN(f, (float)JUNCTION_DEVIATION_MAX), (float)JUNCTION_DEVIATION_MIN);
+  Serial.print(" J");
+  Serial.print(Planner::junction_deviation);
+#endif
+
 #define PARSE_205_AXIS(AA,BB) \
   f = parseFloat(AA, max_jerk[BB]); \
   max_jerk[BB] = _MAX(_MIN(f, (float)MAX_JERK), (float)0); \

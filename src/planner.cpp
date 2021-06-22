@@ -4,18 +4,6 @@
 #include "lcd.h"
 #include "motor.h"
 
-#define BLOCK_DELAY_FOR_1ST_MOVE 100
-#define MIN_STEP_RATE            120
-#define GRAVITYmag               (9800.0)
-
-#define HAS_CLASSIC_JERK
-#if !defined(HAS_CLASSIC_JERK)
-#define HAS_JUNCTION_DEVIATION 1
-#define JUNCTION_DEVIATION_UNITS 0.013
-#define JD_HANDLE_SMALL_SEGMENTS
-#endif
-
-
 extern Planner planner;
 
 Segment Planner::blockBuffer[MAX_SEGMENTS];
@@ -28,6 +16,10 @@ int Planner::first_segment_delay;
 float Planner::previous_nominal_speed_sqr;
 float Planner::previous_safe_speed;
 float Planner::previous_speed[NUM_MUSCLES];
+
+#ifdef HAS_JUNCTION_DEVIATION
+float Planner::junction_deviation = JUNCTION_DEVIATION_UNITS;
+#endif
 
 // returns angle of dy/dx as a value from 0...2PI
 float atan3(float dy, float dx) {
@@ -487,7 +479,7 @@ void Planner::addSteps(Segment *newBlock,const float *const target_position, flo
 
       normalize_junction_vector(junction_unit_vec);
 
-      const float junction_acceleration = limit_value_by_axis_maximum(newBlock->acceleration, junction_unit_vec),
+      const float junction_acceleration = limit_value_by_axis_maximum(newBlock->acceleration, junction_unit_vec,max_acceleration),
                   sin_theta_d2 = sqrtf(0.5f * (1.0f - junction_cos_theta)); // Trig half angle identity. Always positive.
 
       vmax_junction_sqr = junction_acceleration * JUNCTION_DEVIATION_UNITS * sin_theta_d2 / (1.0f - sin_theta_d2);

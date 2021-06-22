@@ -22,6 +22,19 @@
 
 #define MINIMUM_PLANNER_SPEED 0.05  // (mm/s)
 
+#define BLOCK_DELAY_FOR_1ST_MOVE 100
+#define MIN_STEP_RATE            120
+#define GRAVITYmag               (9800.0)
+
+//#define HAS_CLASSIC_JERK
+#if !defined(HAS_CLASSIC_JERK)
+#define HAS_JUNCTION_DEVIATION 1
+#define JUNCTION_DEVIATION_UNITS 0.05
+#define JUNCTION_DEVIATION_MAX 0.5
+#define JUNCTION_DEVIATION_MIN 0.001
+#define JD_HANDLE_SMALL_SEGMENTS
+#endif
+
 //------------------------------------------------------------------------------
 
 class Muscle {
@@ -86,7 +99,9 @@ class Planner {
   static float previous_nominal_speed_sqr;
   static float previous_safe_speed;
   static float previous_speed[NUM_MUSCLES];
-
+#ifdef HAS_JUNCTION_DEVIATION
+  static float junction_deviation;
+#endif
 
   FORCE_INLINE static uint8_t movesPlanned() {
     return SEGMOD(block_buffer_head - block_buffer_tail);
@@ -182,12 +197,12 @@ class Planner {
     for(ALL_MOTORS(i)) v[i]*=m;
   }
 
-  FORCE_INLINE static float limit_value_by_axis_maximum(const float max_value, float *unit_vec) {
+  FORCE_INLINE static float limit_value_by_axis_maximum(const float max_value, float *unit_vec,float max_acceleration) {
     float limit_value = max_value;
     for(ALL_MOTORS(i)) {
       if(unit_vec[i]) {
-        if(limit_value * abs(unit_vec[i]) > MAX_ACCELERATION)
-          limit_value = abs( MAX_ACCELERATION / unit_vec[i] );
+        if(limit_value * abs(unit_vec[i]) > max_acceleration)
+          limit_value = abs( max_acceleration / unit_vec[i] );
       }
     }
     return limit_value;
