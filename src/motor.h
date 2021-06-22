@@ -174,7 +174,7 @@ public:
   static void home();
   static void engage();
   static void disengage();
-  static void set_step_count(long *a);
+  static void set_step_count(int32_t *a);
   static void setPenAngle(int arg0);
   static void clockISRProfile();
 

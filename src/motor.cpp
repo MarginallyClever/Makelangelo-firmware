@@ -102,22 +102,7 @@ void Stepper::setup() {
   motors[NN].enable_pin       = MOTOR_##NN##_ENABLE_PIN; \
   motors[NN].limit_switch_pin = MOTOR_##NN##_LIMIT_SWITCH_PIN;
 
-  SETUP_MOT(0)
-#if NUM_MOTORS > 1
-  SETUP_MOT(1)
-#endif
-#if NUM_MOTORS > 2
-  SETUP_MOT(2)
-#endif
-#if NUM_MOTORS > 3
-  SETUP_MOT(3)
-#endif
-#if NUM_MOTORS > 4
-  SETUP_MOT(4)
-#endif
-#if NUM_MOTORS > 5
-  SETUP_MOT(5)
-#endif
+  ALL_MOTOR_MACRO(SETUP_MOT);
 
   for(ALL_MOTORS(i)) {
     // set the motor pin & scale
@@ -161,7 +146,7 @@ void Stepper::setup() {
   servos[4].attach(SERVO4_PIN);
 #endif
 
-  long steps[NUM_MUSCLES];
+  int32_t steps[NUM_MUSCLES];
   memset(steps, 0, (NUM_MUSCLES) * sizeof(long));
   set_step_count(steps);
 
@@ -174,9 +159,9 @@ void Stepper::setup() {
 
 /**
  * Set the step count for each muscle.
- * @input a array of long values.  NUM_MUSCLES in length.
+ * @input NUM_MUSCLES in length.
  */
-void Stepper::set_step_count(long *a) {
+void Stepper::set_step_count(int32_t *a) {
   planner.zeroSpeeds();
 
   Segment &old_seg = planner.blockBuffer[planner.getPrevBlock(planner.block_buffer_head)];

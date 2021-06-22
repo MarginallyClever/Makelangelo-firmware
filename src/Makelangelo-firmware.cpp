@@ -212,7 +212,7 @@ void loop() {
   // The PC will wait forever for the ready signal.
   // if Arduino hasn't received a new instruction in a while, send ready() again
   // just in case USB garbled ready and each half is waiting on the other.
-  if (planner.movesFree() && (millis() - parser.lastCmdTimeMs) > TIMEOUT_OK) {
+  if (!planner.movesPlanned() && (millis() - parser.lastCmdTimeMs) > TIMEOUT_OK) {
 #ifdef HAS_TMC2130
     // for debugging limit switches
     //tmc2130_status();
