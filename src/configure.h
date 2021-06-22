@@ -178,7 +178,7 @@ extern void pause(const uint32_t us);
 extern hal_timer_t findStepDelay();
 
 extern void IK(const float *const axies, int32_t *motorStepArray);
-extern int FK(uint32_t *motorStepArray, float *axies);
+extern int FK(int32_t *motorStepArray, float *axies);
 
 extern void robot_findHome();
 extern void robot_setup();

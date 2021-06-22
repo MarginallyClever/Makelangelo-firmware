@@ -111,7 +111,7 @@ void IK(const float *const axies, int32_t *motorStepArray) {
  * @param axies the resulting cartesian coordinate
  * @return 0 if no problem, 1 on failure.
  */
-int FK(uint32_t *motorStepArray, float *axies) {}
+int FK(int32_t *motorStepArray, float *axies) {}
 
 void robot_findHome() {
   // AXIS 1

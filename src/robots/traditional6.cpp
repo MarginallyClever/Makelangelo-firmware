@@ -26,7 +26,7 @@ void IK(const float *const cartesian, int32_t *motorStepArray) {
  * @param axies the resulting cartesian coordinate
  * @return 0 if no problem, 1 on failure.
  */
-int FK(uint32_t *motorStepArray, float *axies) {
+int FK(int32_t *motorStepArray, float *axies) {
   for (ALL_AXIES(i)) { axies[i] = motorStepArray[i] * UNITS_PER_STEP; }
   return 0;
 }

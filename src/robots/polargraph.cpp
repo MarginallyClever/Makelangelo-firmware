@@ -36,7 +36,7 @@ void IK(const float *const cartesian, int32_t *motorStepArray) {
  * @param axies the resulting cartesian coordinate. NUM_AXIES long.
  * @return 0 if no problem, 1 on failure.
  */
-int FK(uint32_t *motorStepArray, float *cartesian) {
+int FK(int32_t *motorStepArray, float *cartesian) {
   float left  = axies[0].limitMin;
   float right = axies[0].limitMax;
   float top   = axies[1].limitMax;

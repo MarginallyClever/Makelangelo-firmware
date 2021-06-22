@@ -20,7 +20,7 @@
 #  define MACHINE_HAS_LIFTABLE_PEN
 
 // what is the maximum length of a subdivided line?
-#  define SEGMENTS_PER_SECOND (40)
+#  define SEGMENTS_PER_SECOND (20)
 
 // servo angles for pen control
 #  define PEN_UP_ANGLE   (90)

@@ -58,7 +58,7 @@ void IK(const float *const cartesian, int32_t *motorStepArray) {
  * @param axies the resulting cartesian coordinate
  * @return 0 if no problem, 1 on failure.
  */
-int FK(uint32_t *motorStepArray, float *axies) {
+int FK(int32_t *motorStepArray, float *axies) {
   float a = RADIANS(motorStepArray[0] * MICROSTEP_PER_DEGREE);
   float b = RADIANS(motorStepArray[1] * MICROSTEP_PER_DEGREE);
 
