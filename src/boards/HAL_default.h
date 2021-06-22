@@ -49,7 +49,6 @@ FORCE_INLINE void HAL_init() {}
 // OCR*  - Output Compare Register
 
 FORCE_INLINE void HAL_timer_start(const uint8_t timerIndex) {
-  Serial.println(F("timer start"));
 #ifndef DEBUG_STEPPING
   // disable global interrupts
   DISABLE_ISRS();

@@ -12,7 +12,7 @@
 //#define VERBOSE           (1)  // add to get a lot more serial output.
 //#define DEBUG_STEPPING         // uncomment to debug stepper internal timer
 #ifdef DEBUG_STEPPING
-//#  define DEBUG_STEP_TIMING  // how many ticks per 
+#  define DEBUG_STEP_TIMING  // how many ticks per 
 #endif
 
 //------------------------------------------------------------------------------

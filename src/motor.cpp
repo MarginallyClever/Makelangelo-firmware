@@ -356,6 +356,8 @@ void describeSegment(Segment *block) {
     
 #define DESCRIBE_DELTA(NN)  { Serial.print("  ");  Serial.print(AxisNames[NN]);  }
     ALL_MOTOR_MACRO(DESCRIBE_DELTA);
+    
+    Serial.println();
 }
 #endif
 
@@ -417,8 +419,7 @@ hal_timer_t Stepper::isrBlockPhase() {
     if(working_block) {
 #ifdef DEBUG_STEPPING
       Serial.print("S");
-      describeSegment(working_block);
-      Serial.println();
+      //describeSegment(working_block);
 #endif
 
       // defererencing some data so the ISR runs faster.
