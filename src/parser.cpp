@@ -104,11 +104,9 @@ char Parser::checkLineNumberAndCRCisOK() {
       Serial.println(lineNumber);
       return 0;
     }
-
-    // next time around, wait for the next line number.
-    lineNumber++;
   } else if(IS_STRICT) {
-    Serial.print(F("NOLINENUM"));
+    Serial.print(F("NOLINENUM "));
+    Serial.println(lineNumber);
     return 0;
   }
 
@@ -123,7 +121,8 @@ char Parser::checkLineNumberAndCRCisOK() {
   }
 
   if(IS_STRICT && found == -1) {
-    Serial.println("NOCHECKSUM");
+    Serial.print(F("NOCHECKSUM "));
+    Serial.println(lineNumber);
     return 0;
   }
 
@@ -136,13 +135,13 @@ char Parser::checkLineNumberAndCRCisOK() {
   c++;  // skip *
   int against = strtod(serialBuffer + c, NULL);
   if(found != -1 && checksum != against) {
-    Serial.print("BADCHECKSUM calc=");
-    Serial.print(checksum);
-    Serial.print(" sent=");
-    Serial.println(against);
+    Serial.print(F("BADCHECKSUM"));
+    Serial.println(lineNumber);
     return 0;
   }
 
+  // next time around, wait for the next line number.
+  lineNumber++;
   // remove checksum
   serialBuffer[i] = 0;
 
