@@ -421,9 +421,6 @@ hal_timer_t Stepper::isrBlockPhase() {
       if(directionBits != working_block->dir) {
         setDirections(working_block->dir);
       }
-#if NUM_SERVOS > 0
-      global_servoStep_dir_0 = (!!(working_block->dir&(1<<NUM_MOTORS))) ? -1 : 1;
-#endif
 
       advance_divisor = steps_total << 1;
 
@@ -432,8 +429,9 @@ hal_timer_t Stepper::isrBlockPhase() {
       over##NN = -steps_total;
 
       ALL_MOTOR_MACRO(PREPARE_DELTA);
+
 #if NUM_SERVOS > 0
-      global_servoSteps_0 = working_block->a[NUM_MOTORS].step_count - working_block->a[NUM_MOTORS].delta_steps;
+      //global_servoSteps_0 = working_block->a[NUM_MOTORS].step_count - working_block->a[NUM_MOTORS].delta_steps;
       servoDelta0 = working_block->a[NUM_MOTORS].absdelta;
       servoOver0  = -(steps_total >> 1);
 
@@ -553,4 +551,8 @@ void Stepper::setDirections(uint16_t bits) {
   }
 
   ALL_MOTOR_MACRO(SET_STEP_DIR);
+
+#if NUM_SERVOS > 0
+  global_servoStep_dir_0 = (!!(working_block->dir&(1<<NUM_MOTORS))) ? -1 : 1;
+#endif
 }
