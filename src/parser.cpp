@@ -22,8 +22,8 @@ uint8_t current_tool  = 0;
    return 1 when abs(a-b)<0.1
 */
 uint8_t equalEpsilon(float a, float b) {
-  int aa = floor(a * 10);
-  int bb = floor(b * 10);
+  int aa = floorf(a * 10);
+  int bb = floorf(b * 10);
   // Serial.print("aa=");        Serial.print(aa);
   // Serial.print("\tbb=");      Serial.print(bb);
   // Serial.print("\taa==bb ");  Serial.println(aa==bb?"yes":"no");
@@ -683,6 +683,14 @@ void Parser::G01() {
   if(bad) return;
 
   planner.bufferLine(pos, f);
+  printOK();
+}
+
+void Parser::printOK() {
+  Serial.print(F("OK"));
+  REPORT(" N",lineNumber);
+  REPORT(" P",Planner::movesFree());
+  REPORTLN(" B",ringBuffer.spaceFree());
 }
 
 /**
@@ -712,6 +720,7 @@ void Parser::G02(int8_t clockwise) {
     clockwise,
     f
   );
+  printOK();
 }
 
 /**

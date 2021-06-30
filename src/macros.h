@@ -16,7 +16,8 @@
 #define PENDING(NOW, SOON) ((uint32_t)(NOW - (SOON)) < 0)
 #define ELAPSED(NOW, SOON) (!PENDING(NOW, SOON))
 
-#define REPORT(AA,BB) {  Serial.print(AA);  Serial.println(BB);  }
+#define REPORT(AA,BB) {  Serial.print(AA);  Serial.print(BB);  }
+#define REPORTLN(AA,BB) {  Serial.print(AA);  Serial.println(BB);  }
 
 // set bit on
 #ifndef SBI

@@ -56,6 +56,10 @@ public:
     return length==0;
   }
 
+  bool spaceFree() {
+    return RING_BUFFER_SIZE - 1 - length;
+  }
+
   bool isFull() {
     return length == RING_BUFFER_SIZE;
   }
@@ -109,6 +113,7 @@ class Parser {
   void advance();
 
   void reportQueue();
+  void printOK();
 
   // called by update when an entire command is received.
   void processCommand();
