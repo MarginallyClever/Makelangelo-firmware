@@ -34,6 +34,9 @@
 #define JUNCTION_DEVIATION_MIN 0.001
 #define JD_HANDLE_SMALL_SEGMENTS
 #endif
+#if !defined(HAS_CLASSIC_JERK) && !defined(HAS_JUNCTION_DEVIATION)
+#define DOT_PRODUCT_JERK
+#endif
 
 //------------------------------------------------------------------------------
 
@@ -99,6 +102,8 @@ class Planner {
   static float previous_nominal_speed_sqr;
   static float previous_safe_speed;
   static float previous_speed[NUM_MUSCLES];
+  static float prev_unit_vec[NUM_AXIES];
+  
 #ifdef HAS_JUNCTION_DEVIATION
   static float junction_deviation;
 #endif
@@ -162,7 +167,7 @@ class Planner {
   static void zeroSpeeds();
   static void wait_for_empty_segment_buffer();
 
-  static void addSteps(Segment *newBlock,const float *const target_position, float fr_units_s, float longest_distance);
+  static void populateBlock(Segment *newBlock,const float *const target_position, float fr_units_s, float longest_distance);
   static void addSegment(const float *const target_position, float fr_units_s, float millimeters);
   static void bufferLine(float *pos, float new_feed_rate_units);
   static void bufferArc(float cx, float cy, float *destination, char clockwise, float new_feed_rate_units);
@@ -190,11 +195,12 @@ class Planner {
   static float limitPolargraphAcceleration(const float *target_position,const float *oldP,float maxAcceleration);
 #  endif
 
-  FORCE_INLINE static void normalize_junction_vector(float *v) {
+  FORCE_INLINE static float normalize_junction_vector(float *v) {
     float m=0;
     for(ALL_MOTORS(i)) m += sq(v[i]);
-    m = 1.0f/sqrtf(m);
-    for(ALL_MOTORS(i)) v[i]*=m;
+    float im = 1.0f/sqrtf(m);
+    for(ALL_MOTORS(i)) v[i]*=im;
+    return m;
   }
 
   FORCE_INLINE static float limit_value_by_axis_maximum(const float max_value, float *unit_vec,float max_acceleration) {
@@ -207,6 +213,13 @@ class Planner {
     }
     return limit_value;
   }
+
+#ifdef HAS_JUNCTION_DEVIATION
+  static float junctionDeviation(Segment *newBlock,float *delta,int movesQueued,float inverseCartesianDistance,float max_acceleration);
+#endif
+#ifdef HAS_CLASSIC_JERK
+  static float classicJerk(Segment *newBlock,float *current_speed,int movesQueued);
+#endif
 };
 
 extern Planner planner;

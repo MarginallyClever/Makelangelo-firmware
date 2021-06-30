@@ -16,6 +16,8 @@ int Planner::first_segment_delay;
 float Planner::previous_nominal_speed_sqr;
 float Planner::previous_safe_speed;
 float Planner::previous_speed[NUM_MUSCLES];
+float Planner::prev_unit_vec[NUM_AXIES];
+
 
 #ifdef HAS_JUNCTION_DEVIATION
 float Planner::junction_deviation = JUNCTION_DEVIATION_UNITS;
@@ -38,7 +40,8 @@ void Planner::zeroSpeeds() {
 
   previous_nominal_speed_sqr = 0;
   previous_safe_speed = 0;
-  for (ALL_MUSCLES(i)) previous_speed[i] = 0;
+  for(ALL_MUSCLES(i)) previous_speed[i] = 0;
+  for(ALL_MOTORS(i)) prev_unit_vec[i] = 0;
 
   block_buffer_tail = 0;
   block_buffer_head = 0;
@@ -149,18 +152,18 @@ int Planner::intersection_distance(const float &start_rate, const float &end_rat
 }
 
 void Planner::calculate_trapezoid_for_block(Segment *s, const float &entry_factor, const float &exit_factor) {
-  uint32_t intial_rate = ceil(s->nominal_rate * entry_factor);
-  uint32_t final_rate  = ceil(s->nominal_rate * exit_factor);
+  uint32_t intial_rate = ceilf(s->nominal_rate * entry_factor);
+  uint32_t final_rate  = ceilf(s->nominal_rate * exit_factor);
 
   if(intial_rate < MIN_STEP_RATE) intial_rate = MIN_STEP_RATE;
   if(final_rate < MIN_STEP_RATE) final_rate = MIN_STEP_RATE;
 
   const int32_t accel = s->acceleration_steps_per_s2;
-  uint32_t accelerate_steps = ceil(estimate_acceleration_distance(intial_rate, s->nominal_rate, accel));
-  uint32_t decelerate_steps = floor(estimate_acceleration_distance(s->nominal_rate, final_rate, -accel));
+  uint32_t accelerate_steps = ceilf(estimate_acceleration_distance(intial_rate, s->nominal_rate, accel));
+  uint32_t decelerate_steps = floorf(estimate_acceleration_distance(s->nominal_rate, final_rate, -accel));
   int32_t plateau_steps = s->steps_total - accelerate_steps - decelerate_steps;
   if(plateau_steps < 0) {
-    const float accelerate_steps_float = ceil(intersection_distance(intial_rate, final_rate, accel, s->steps_total));
+    const float accelerate_steps_float = ceilf(intersection_distance(intial_rate, final_rate, accel, s->steps_total));
     accelerate_steps = _MIN(((uint32_t)_MAX(accelerate_steps_float, 0.0f)), s->steps_total);
     plateau_steps = 0;
   }
@@ -173,38 +176,40 @@ void Planner::calculate_trapezoid_for_block(Segment *s, const float &entry_facto
 void Planner::recalculate_trapezoids() {
   uint8_t block_index = block_buffer_tail;
   uint8_t head_block_index = block_buffer_head;
+
   Segment *block = NULL;
   Segment *next = NULL;
-
   float current_entry_speed = 0, next_entry_speed = 0;
 
   while (block_index != head_block_index) {
-    next             = &blockBuffer[block_index];
+    next = &blockBuffer[block_index];
     next_entry_speed = sqrtf(next->entry_speed_sqr);
     if(block) {
       // Recalculate if current block entry or exit junction speed has changed.
       if( TEST(block->flags,BIT_FLAG_RECALCULATE) || TEST(next->flags,BIT_FLAG_RECALCULATE) ) {
         SET_BIT_ON( block->flags, BIT_FLAG_RECALCULATE );
-        if( !motor.isBlockBusy(block) ) {
+        if( !Stepper::isBlockBusy(block) ) {
           // NOTE: Entry and exit factors always > 0 by all previous logic operations.
-          const float inom = 1.0 / sqrtf(block->nominal_speed_sqr);
+          const float current_nominal_speed = sqrtf(block->nominal_speed_sqr),
+                      inom = 1.0f / current_nominal_speed;
           calculate_trapezoid_for_block(block, current_entry_speed * inom, next_entry_speed * inom);
         }
+        // Reset current only to ensure next trapezoid is computed
+        SET_BIT_OFF(block->flags,BIT_FLAG_RECALCULATE);
       }
-      // Reset current only to ensure next trapezoid is computed
-      SET_BIT_OFF(block->flags,BIT_FLAG_RECALCULATE);
     }
-    block_index = getNextBlock(block_index);
-    current_entry_speed = next_entry_speed;
     block = next;
+    current_entry_speed = next_entry_speed;
+    block_index = getNextBlock(block_index);
   }
 
   // Last/newest block in buffer. Make sure the last block always ends motion.
   if(next) {
     SET_BIT_ON(next->flags,BIT_FLAG_RECALCULATE);
-    if( !motor.isBlockBusy(block) ) {
-      const float inom = 1.0 / sqrtf(next->nominal_speed_sqr);
-      calculate_trapezoid_for_block(next, next_entry_speed * inom, MIN_FEEDRATE * inom);
+    if( !Stepper::isBlockBusy(next) ) {
+      const float current_nominal_speed = sqrtf(next->nominal_speed_sqr),
+                  inom = 1.0f / current_nominal_speed;
+      calculate_trapezoid_for_block(next, next_entry_speed * inom, float(MINIMUM_PLANNER_SPEED) * inom);
     }
     SET_BIT_OFF(next->flags,BIT_FLAG_RECALCULATE);
   }
@@ -283,7 +288,7 @@ void Planner::describeAllSegments() {
   CRITICAL_SECTION_END();
 }
 
-void Planner::addSteps(Segment *newBlock,const float *const target_position, float fr_units_s, float longest_distance) {
+void Planner::populateBlock(Segment *newBlock,const float *const target_position, float fr_units_s, float cartesianDistance) {
   int prev_segment = getPrevBlock(block_buffer_head);
   Segment &oldBlock = blockBuffer[prev_segment];
 
@@ -319,22 +324,22 @@ void Planner::addSteps(Segment *newBlock,const float *const target_position, flo
   // No steps?  No work!  Stop now.
   if(newBlock->steps_total < MIN_STEPS_PER_SEGMENT) return;
 
-  newBlock->distance = longest_distance;
+  newBlock->distance = cartesianDistance;
 
   // record the new target position & feed rate for the next movement.
-  float inverse_distance_units = 1.0f / longest_distance;
+  float inverseCartesianDistance = 1.0f / cartesianDistance;
   // s = v / d
   // d*s = v
   //
-  float inverse_secs = fr_units_s * inverse_distance_units;
+  float inverse_secs = fr_units_s * inverseCartesianDistance;
 
   int movesQueued = movesPlannedNotBusy();
 #ifdef BUFFER_EMPTY_SLOWDOWN
-  uint32_t segment_time_us = lroundf(1000000.0f / inverse_secs);
     #ifndef SLOWDOWN_DIVISOR
       #define SLOWDOWN_DIVISOR 2
     #endif
   if(movesQueued>=2 && movesQueued<=(MAX_SEGMENTS / SLOWDOWN_DIVISOR) - 1) {
+    uint32_t segment_time_us = lroundf(1000000.0f / inverse_secs);
     const int32_t time_diff = min_segment_time_us - segment_time_us;
     if(time_diff > 0) {
       //Serial.print("was ");  Serial.print(1.0f/inverse_secs);
@@ -345,8 +350,8 @@ void Planner::addSteps(Segment *newBlock,const float *const target_position, flo
   }// else REPORT("Q",movesQueued);
 #endif
 
-  newBlock->nominal_speed_sqr = sq(longest_distance * inverse_secs);
-  newBlock->nominal_rate  = ceil(newBlock->steps_total * inverse_secs);
+  newBlock->nominal_speed_sqr = sq(cartesianDistance * inverse_secs);
+  newBlock->nominal_rate  = ceilf(newBlock->steps_total * inverse_secs);
 
   // Calculate the the speed limit for each axis.
   // All speeds are connected so if one motor slows, they all have to slow the same amount.
@@ -372,8 +377,8 @@ void Planner::addSteps(Segment *newBlock,const float *const target_position, flo
   float max_acceleration = desiredAcceleration;
 #endif
 
-  const float steps_per_unit = newBlock->steps_total * inverse_distance_units;
-  uint32_t accel = ceil(max_acceleration * steps_per_unit);
+  const float steps_per_unit = newBlock->steps_total * inverseCartesianDistance;
+  uint32_t accel = ceilf(max_acceleration * steps_per_unit);
 
   uint32_t highest_rate = 1;
   float max_acceleration_steps_per_s2[NUM_MUSCLES];
@@ -408,263 +413,37 @@ void Planner::addSteps(Segment *newBlock,const float *const target_position, flo
   // BEGIN JERK LIMITING
   float vmax_junction_sqr;
 
-#if MACHINE_STYLE == POLARGRAPH
-  vmax_junction_sqr = newBlock->nominal_speed_sqr;
-#else
-  // one or the other
-#endif  // MACHINE_STYLE == POLARGRAPH
-
+#ifdef HAS_CLASSIC_JERK
+  vmax_junction_sqr = classicJerk(newBlock,current_speed,movesQueued);
+#endif
 #ifdef HAS_JUNCTION_DEVIATION
-  /**
-   * Compute maximum allowable entry speed at junction by centripetal acceleration approximation.
-   * Let a circle be tangent to both previous and current path line segments, where the junction
-   * deviation is defined as the distance from the junction to the closest edge of the circle,
-   * colinear with the circle center. The circular segment joining the two paths represents the
-   * path of centripetal acceleration. Solve for max velocity based on max acceleration about the
-   * radius of the circle, defined indirectly by junction deviation. This may be also viewed as
-   * path width or max_jerk in the previous Grbl version. This approach does not actually deviate
-   * from path, but used as a robust way to compute cornering speeds, as it takes into account the
-   * nonlinearities of both the junction angle and junction velocity.
-   *
-   * NOTE: If the junction deviation value is finite, Grbl executes the motions in an exact path
-   * mode (G61). If the junction deviation value is zero, Grbl will execute the motion in an exact
-   * stop mode (G61.1) manner. In the future, if continuous mode (G64) is desired, the math here
-   * is exactly the same. Instead of motioning all the way to junction point, the machine will
-   * just follow the arc circle defined here. The Arduino doesn't have the CPU cycles to perform
-   * a continuous mode path, but ARM-based microcontrollers most certainly do.
-   *
-   * NOTE: The max junction speed is a fixed value, since machine acceleration limits cannot be
-   * changed dynamically during operation nor can the line move geometry. This must be kept in
-   * memory in the event of a feedrate override changing the nominal speeds of blocks, which can
-   * change the overall maximum entry speed conditions of all blocks.
-   *
-   * #######
-   * https://github.com/MarlinFirmware/Marlin/issues/10341#issuecomment-388191754
-   *
-   * hoffbaked: on May 10 2018 tuned and improved the GRBL algorithm for Marlin:
-        Okay! It seems to be working good. I somewhat arbitrarily cut it off at 1mm
-        on then on anything with less sides than an octagon. With this, and the
-        reverse pass actually recalculating things, a corner acceleration value
-        of 1000 junction deviation of .05 are pretty reasonable. If the cycles
-        can be spared, a better acos could be used. For all I know, it may be
-        already calculated in a different place. */
-
-  // Unit vector of previous path line segment
-  static float prev_unit_vec[NUM_MOTORS];
-
+  vmax_junction_sqr = junctionDeviation(newBlock,delta,movesQueued,inverseCartesianDistance,max_acceleration);
+#endif
+#ifdef DOT_PRODUCT_JERK
+  vmax_junction_sqr = newBlock->nominal_speed_sqr;
+  
   float unit_vec[NUM_MOTORS] = {
-    #define COPY_1(NN) (target_position[NN] - oldP[NN]) * inverse_distance_units,
-    ALL_MOTOR_MACRO(COPY_1)
+    #define COPY_4(NN) (delta[NN]) * inverseCartesianDistance,
+    ALL_MOTOR_MACRO(COPY_4)
   };
 
-  // Skip first block or when previous_nominal_speed is used as a flag for homing and offset cycles.
-  if (movesQueued && previous_nominal_speed_sqr > 1e-6) {
-    // Compute cosine of angle between previous and current path. (prev_unit_vec is negative)
-    // NOTE: Max junction velocity is computed without sin() or acos() by trig half angle identity.
-    float junction_cos_theta = (-prev_unit_vec[0] * unit_vec[0]) + (-prev_unit_vec[1] * unit_vec[1])
-                              + (-prev_unit_vec[2] * unit_vec[2]);
-
-    // NOTE: Computed without any expensive trig, sin() or acos(), by trig half angle identity of cos(theta).
-    if (junction_cos_theta > 0.999999f) {
-      // For a 0 degree acute junction, just set minimum junction speed.
-      vmax_junction_sqr = sq(float(MINIMUM_PLANNER_SPEED));
-    } else {
-      junction_cos_theta = _MAX(junction_cos_theta,-0.999999f); // Check for numerical round-off to avoid divide by zero.
-
-      // Convert delta vector to unit vector
-      float junction_unit_vec[NUM_MOTORS] = {
-        #define COPY_2(NN) unit_vec[NN] * prev_unit_vec[NN],
-        ALL_MOTOR_MACRO(COPY_2)
-      };
-
-      normalize_junction_vector(junction_unit_vec);
-
-      const float junction_acceleration = limit_value_by_axis_maximum(newBlock->acceleration, junction_unit_vec,max_acceleration),
-                  sin_theta_d2 = sqrtf(0.5f * (1.0f - junction_cos_theta)); // Trig half angle identity. Always positive.
-
-      vmax_junction_sqr = junction_acceleration * JUNCTION_DEVIATION_UNITS * sin_theta_d2 / (1.0f - sin_theta_d2);
-
-      #if defined(JD_HANDLE_SMALL_SEGMENTS)
-
-        // For small moves with >135° junction (octagon) find speed for approximate arc
-        if (newBlock->distance < 1 && junction_cos_theta < -0.7071067812f) {
-
-          #if defined(JD_USE_MATH_ACOS)
-
-            #error "TODO: Inline maths with the MCU / FPU."
-
-          #elif defined(JD_USE_LOOKUP_TABLE)
-
-            // Fast acos approximation (max. error +-0.01 rads)
-            // Based on LUT table and linear interpolation
-
-            /**
-             *  // Generate the JD Lookup Table
-             *  constexpr float c = 1.00751495f; // Correction factor to center error around 0
-             *  for (int i = 0; i < jd_lut_count - 1; ++i) {
-             *    const float x0 = (sq(i) - 1) / sq(i),
-             *                y0 = acos(x0) * (i == 0 ? 1 : c),
-             *                x1 = i < jd_lut_count - 1 ?  0.5 * x0 + 0.5 : 0.999999f,
-             *                y1 = acos(x1) * (i < jd_lut_count - 1 ? c : 1);
-             *    jd_lut_k[i] = (y0 - y1) / (x0 - x1);
-             *    jd_lut_b[i] = (y1 * x0 - y0 * x1) / (x0 - x1);
-             *  }
-             *
-             *  // Compute correction factor (Set c to 1.0f first!)
-             *  float min = INFINITY, max = -min;
-             *  for (float t = 0; t <= 1; t += 0.0003f) {
-             *    const float e = acos(t) / approx(t);
-             *    if (isfinite(e)) {
-             *      if (e < min) min = e;
-             *      if (e > max) max = e;
-             *    }
-             *  }
-             *  fprintf(stderr, "%.9gf, ", (min + max) / 2);
-             */
-            static constexpr int16_t  jd_lut_count = 16;
-            static constexpr uint16_t jd_lut_tll   = _BV(jd_lut_count - 1);
-            static constexpr int16_t  jd_lut_tll0  = __builtin_clz(jd_lut_tll) + 1; // i.e., 16 - jd_lut_count + 1
-            static constexpr float jd_lut_k[jd_lut_count] PROGMEM = {
-              -1.03145837f, -1.30760646f, -1.75205851f, -2.41705704f,
-              -3.37769222f, -4.74888992f, -6.69649887f, -9.45661736f,
-              -13.3640480f, -18.8928222f, -26.7136841f, -37.7754593f,
-              -53.4201813f, -75.5458374f, -106.836761f, -218.532821f };
-            static constexpr float jd_lut_b[jd_lut_count] PROGMEM = {
-                1.57079637f,  1.70887053f,  2.04220939f,  2.62408352f,
-                3.52467871f,  4.85302639f,  6.77020454f,  9.50875854f,
-                13.4009285f,  18.9188995f,  26.7321243f,  37.7885055f,
-                53.4293975f,  75.5523529f,  106.841369f,  218.534011f };
-
-            const float neg = junction_cos_theta < 0 ? -1 : 1,
-                        t = neg * junction_cos_theta;
-
-            const int16_t idx = (t < 0.00000003f) ? 0 : __builtin_clz(uint16_t((1.0f - t) * jd_lut_tll)) - jd_lut_tll0;
-
-            float junction_theta = t * pgm_read_float(&jd_lut_k[idx]) + pgm_read_float(&jd_lut_b[idx]);
-            if (neg > 0) junction_theta = RADIANS(180) - junction_theta; // acos(-t)
-
-          #else
-
-            // Fast acos(-t) approximation (max. error +-0.033rad = 1.89°)
-            // Based on MinMax polynomial published by W. Randolph Franklin, see
-            // https://wrf.ecse.rpi.edu/Research/Short_Notes/arcsin/onlyelem.html
-            //  acos( t) = pi / 2 - asin(x)
-            //  acos(-t) = pi - acos(t) ... pi / 2 + asin(x)
-
-            const float neg = junction_cos_theta < 0 ? -1 : 1,
-                        t = neg * junction_cos_theta,
-                        asinx =       0.032843707f
-                              + t * (-1.451838349f
-                              + t * ( 29.66153956f
-                              + t * (-131.1123477f
-                              + t * ( 262.8130562f
-                              + t * (-242.7199627f
-                              + t * ( 84.31466202f ) ))))),
-                        junction_theta = RADIANS(90) + neg * asinx; // acos(-t)
-
-            // NOTE: junction_theta bottoms out at 0.033 which avoids divide by 0.
-
-          #endif
-
-          const float limit_sqr = (newBlock->distance * junction_acceleration) / junction_theta;
-          vmax_junction_sqr= _MIN(vmax_junction_sqr, limit_sqr);
-        }
-
-      #endif // JD_HANDLE_SMALL_SEGMENTS
-    }
-
-    // Get the lowest speed
-    vmax_junction_sqr = _MIN(vmax_junction_sqr, newBlock->nominal_speed_sqr, previous_nominal_speed_sqr);
-  } else // Init entry speed to zero. Assume it starts from rest. Planner will correct this later.
-    vmax_junction_sqr = 0;
-
-  for(ALL_MOTORS(i)) prev_unit_vec[i] = unit_vec[i];
-
-#endif // HAS_JUNCTION_DEVIATION
-
-#ifdef HAS_CLASSIC_JERK
-
-  CACHED_SQRT(nominal_speed,newBlock->nominal_speed_sqr);
-
-  float safe_speed = nominal_speed;
-  char limited     = 0;
-  for (ALL_MUSCLES(i)) {
-    const float jerk = fabs(current_speed[i]),
-                maxj = max_jerk[i];
-    if(jerk > maxj) {  // new current speed too fast?
-      if(limited) {
-        const float mjerk = maxj * nominal_speed;          // ns*mj
-        if(jerk * safe_speed > mjerk) safe_speed = mjerk / jerk;  // ns*mj/cs
-      } else {
-        safe_speed *= maxj / jerk;  // Initial limit: ns*mj/cs
-        ++limited;
-      }
-    }
-  }
-
-  // what is the maximum starting speed for this segment?
-  float vmax_junction;
-  if(movesQueued > 0 && previous_nominal_speed_sqr > 1e-6) {
-    // Estimate a maximum velocity allowed at a joint of two successive segments.
-    // If this maximum velocity allowed is lower than the minimum of the entry / exit safe velocities,
-    // then the machine is not coasting anymore and the safe entry / exit velocities shall be used.
-
-    // Factor to multiply the previous / current nominal velocities to get componentwise limited velocities.
-    float v_factor = 1.0f;
-    limited = 0;
-
-    CACHED_SQRT(previous_nominal_speed, previous_nominal_speed_sqr);
-
-    // The junction velocity will be shared between successive segments. Limit the junction velocity to their minimum.
-    // Pick the smaller of the nominal speeds. Higher speed shall not be achieved at the junction during coasting.
-    vmax_junction = _MIN(newBlock->nominal_speed_sqr, previous_nominal_speed);
-    float smaller_speed_factor = vmax_junction / previous_nominal_speed;
-    // Now limit the jerk in all axes.
-    for (ALL_MUSCLES(i)) {
-      // Limit an axis. We have to differentiate: coasting, reversal of an axis, full stop.
-      float v_exit  = previous_speed[i] * smaller_speed_factor;
-      float v_entry = current_speed[i];
-      if(limited) {
-        v_exit *= v_factor;
-        v_entry *= v_factor;
-      }
-
-      // Calculate jerk depending on whether the axis is coasting in the same direction or reversing.
-      const float jerk = (v_exit > v_entry)
-          ?  //                            coasting             axis reversal
-          ((v_entry > 0 || v_exit < 0) ? (v_exit - v_entry) : _MAX(v_exit, -v_entry))
-          :  // v_exit <= v_entry          coasting             axis reversal
-          ((v_entry < 0 || v_exit > 0) ? (v_entry - v_exit) : _MAX(-v_exit, v_entry));
-
-      if(jerk > max_jerk[i]) {
-        v_factor *= max_jerk[i] / jerk;
-        ++limited;
-      }
-    }
-
-    if(limited) vmax_junction *= v_factor;
-    // Now the transition velocity is known, which maximizes the shared exit / entry velocity while
-    // respecting the jerk factors, it may be possible, that applying separate safe exit / entry velocities will achieve
-    // faster prints.
-    const float vmax_junction_threshold = vmax_junction * 0.99f;
-    if(previous_safe_speed > vmax_junction_threshold && safe_speed > vmax_junction_threshold) {
-      // Not coasting. The machine will stop and start the movements anyway,
-      // better to start the segment from start.
-      vmax_junction = safe_speed;
-    }
-  } else {
-    vmax_junction = safe_speed;
-  }
+  #define NORM_MOTOR(NN) +(unit_vec[NN]*prev_unit_vec[NN])
+  float d = 0
+  ALL_MOTOR_MACRO(NORM_MOTOR)
+  ;
+ 
+  vmax_junction_sqr *=d*1.1f;
+  vmax_junction_sqr = _MIN(vmax_junction_sqr, newBlock->nominal_speed_sqr);
+  vmax_junction_sqr = _MAX(vmax_junction_sqr, MINIMUM_PLANNER_SPEED);
   
-  previous_safe_speed = safe_speed;
-  vmax_junction_sqr = sq(vmax_junction);
-#endif // HAS_CLASSIC_JERK
-
+  #define COPY_5(NN) prev_unit_vec[NN] = unit_vec[NN];
+  ALL_MOTOR_MACRO(COPY_5)
+#endif
   // END JERK LIMITING
 
   newBlock->entry_speed_max_sqr = vmax_junction_sqr;
 
-  float allowable_speed_sqr = max_speed_allowed_sqr(-newBlock->acceleration, sq(float(MIN_FEEDRATE)), newBlock->distance);
+  float allowable_speed_sqr = max_speed_allowed_sqr(-newBlock->acceleration, sq(float(MINIMUM_PLANNER_SPEED)), newBlock->distance);
   newBlock->entry_speed_sqr = _MIN(vmax_junction_sqr, allowable_speed_sqr);
   SET_BIT( newBlock->flags, BIT_FLAG_NOMINAL, ( newBlock->nominal_speed_sqr <= allowable_speed_sqr ) );
   SET_BIT_ON( newBlock->flags, BIT_FLAG_RECALCULATE );
@@ -698,7 +477,7 @@ void Planner::addSegment(const float *const target_position, float fr_units_s, f
   uint8_t next_buffer_head;
   Segment *newBlock = getNextFreeBlock(next_buffer_head);
 
-  addSteps(newBlock,target_position,fr_units_s,longest_distance);
+  populateBlock(newBlock,target_position,fr_units_s,longest_distance);
 
   // when should we accelerate and decelerate in this segment?
   //segment_update_trapezoid(newBlock, newBlock->entry_speed_sqr / newBlock->nominal_speed_sqr,(float)MIN_FEEDRATE / newBlock->nominal_speed_sqr);
@@ -830,7 +609,7 @@ void Planner::bufferArc(float cx, float cy, float *destination, char clockwise, 
   float len1 = abs(da) * sr;
   float len  = sqrtf(len1 * len1 + dr * dr);  // mm
 
-  int i, segments = ceil(len);
+  int i, segments = ceilf(len);
 
   float n[NUM_AXIES], scale;
   float a, r;
@@ -872,23 +651,23 @@ float Planner::limitPolargraphAcceleration(const float *target_position,const fl
   float Ty = target_position[1] - oldP[1];
   float Rlen = sq(Tx) + sq(Ty);  // always >=0
   if(Rlen > 0) {
+    // only affects XY non-zero movement.  Servo is not touched.
+    Rlen = 1.0 / sqrtf(Rlen);
+    Tx *= Rlen;
+    Ty *= Rlen;
+
     // normal vectors pointing from plotter to motor
     float R1x = axies[0].limitMin - oldP[0];  // to left
     float R1y = axies[1].limitMax - oldP[1];  // to top
-    float Rlen1 = 1.0 / sqrtf(sq(R1x) + sq(R1y));//old_seg.a[0].step_count * UNITS_PER_STEP;
+    float Rlen1 = 1.0 / sqrtf(sq(R1x) + sq(R1y));
     R1x *= Rlen1;
     R1y *= Rlen1;
 
     float R2x = axies[0].limitMax - oldP[0];  // to right
     float R2y = axies[1].limitMax - oldP[1];  // to top
-    float Rlen2 = 1.0 / sqrtf(sq(R2x) + sq(R2y));//old_seg.a[1].step_count * UNITS_PER_STEP;
+    float Rlen2 = 1.0 / sqrtf(sq(R2x) + sq(R2y));
     R2x *= Rlen2;
     R2y *= Rlen2;
-    
-    // only affects XY non-zero movement.  Servo is not touched.
-    Rlen = 1.0 / sqrtf(Rlen);
-    Tx *= Rlen;
-    Ty *= Rlen;
 
     // solve cT = -gY + k1 R1 for c [and k1]
     // solve cT = -gY + k2 R2 for c [and k2]
@@ -911,5 +690,264 @@ float Planner::limitPolargraphAcceleration(const float *target_position,const fl
     }
   }
   return maxAcceleration;
+}
+#endif
+
+#ifdef HAS_JUNCTION_DEVIATION
+float Planner::junctionDeviation(Segment *newBlock,float *delta,int movesQueued,float inverseCartesianDistance,float max_acceleration) {
+  /**
+   * Compute maximum allowable entry speed at junction by centripetal acceleration approximation.
+   * Let a circle be tangent to both previous and current path line segments, where the junction
+   * deviation is defined as the distance from the junction to the closest edge of the circle,
+   * colinear with the circle center. The circular segment joining the two paths represents the
+   * path of centripetal acceleration. Solve for max velocity based on max acceleration about the
+   * radius of the circle, defined indirectly by junction deviation. This may be also viewed as
+   * path width or max_jerk in the previous Grbl version. This approach does not actually deviate
+   * from path, but used as a robust way to compute cornering speeds, as it takes into account the
+   * nonlinearities of both the junction angle and junction velocity.
+   *
+   * NOTE: If the junction deviation value is finite, Grbl executes the motions in an exact path
+   * mode (G61). If the junction deviation value is zero, Grbl will execute the motion in an exact
+   * stop mode (G61.1) manner. In the future, if continuous mode (G64) is desired, the math here
+   * is exactly the same. Instead of motioning all the way to junction point, the machine will
+   * just follow the arc circle defined here. The Arduino doesn't have the CPU cycles to perform
+   * a continuous mode path, but ARM-based microcontrollers most certainly do.
+   *
+   * NOTE: The max junction speed is a fixed value, since machine acceleration limits cannot be
+   * changed dynamically during operation nor can the line move geometry. This must be kept in
+   * memory in the event of a feedrate override changing the nominal speeds of blocks, which can
+   * change the overall maximum entry speed conditions of all blocks.
+   *
+   * #######
+   * https://github.com/MarlinFirmware/Marlin/issues/10341#issuecomment-388191754
+   *
+   * hoffbaked: on May 10 2018 tuned and improved the GRBL algorithm for Marlin:
+        Okay! It seems to be working good. I somewhat arbitrarily cut it off at 1mm
+        on then on anything with less sides than an octagon. With this, and the
+        reverse pass actually recalculating things, a corner acceleration value
+        of 1000 junction deviation of .05 are pretty reasonable. If the cycles
+        can be spared, a better acos could be used. For all I know, it may be
+        already calculated in a different place. */
+
+  float unit_vec[NUM_MOTORS] = {
+    #define COPY_1(NN) (delta[NN]) * inverseCartesianDistance,
+    ALL_MOTOR_MACRO(COPY_1)
+  };
+
+  float vmax_junction_sqr;
+
+  // Skip first block or when previous_nominal_speed is used as a flag for homing and offset cycles.
+  if (movesQueued && Planner::previous_nominal_speed_sqr > 1e-6) {
+    // Compute cosine of angle between previous and current path. (prev_unit_vec is negative)
+    // NOTE: Max junction velocity is computed without sin() or acos() by trig half angle identity.
+    float junction_cos_theta = (-prev_unit_vec[0] * unit_vec[0]) 
+                             + (-prev_unit_vec[1] * unit_vec[1])
+                             + (-prev_unit_vec[2] * unit_vec[2]);
+
+    // NOTE: Computed without any expensive trig, sin() or acos(), by trig half angle identity of cos(theta).
+    if (junction_cos_theta > 0.999999f) {
+      // For a 0 degree acute junction, just set minimum junction speed.
+      vmax_junction_sqr = sq(float(MINIMUM_PLANNER_SPEED));
+    } else {
+      junction_cos_theta = _MAX(junction_cos_theta,-0.999999f); // Check for numerical round-off to avoid divide by zero.
+
+      // Convert delta vector to unit vector
+      float junction_unit_vec[NUM_MOTORS] = {
+        #define COPY_2(NN) unit_vec[NN] - prev_unit_vec[NN],
+        ALL_MOTOR_MACRO(COPY_2)
+      };
+
+      float m = normalize_junction_vector(junction_unit_vec);
+      if(m==0) {
+        vmax_junction_sqr = newBlock->nominal_speed_sqr;
+      } else {
+        const float junction_acceleration = limit_value_by_axis_maximum(newBlock->acceleration, junction_unit_vec,max_acceleration),
+                    sin_theta_d2 = sqrtf(0.5f * (1.0f - junction_cos_theta)); // Trig half angle identity. Always positive.
+
+        vmax_junction_sqr = junction_acceleration * junction_deviation * sin_theta_d2 / (1.0f - sin_theta_d2);
+
+        #if defined(JD_HANDLE_SMALL_SEGMENTS)
+
+          // For small moves with >135° junction (octagon) find speed for approximate arc
+          if (newBlock->distance < 1 && junction_cos_theta < -0.7071067812f) {
+
+            #if defined(JD_USE_MATH_ACOS)
+
+              #error "TODO: Inline maths with the MCU / FPU."
+
+            #elif defined(JD_USE_LOOKUP_TABLE)
+
+              // Fast acos approximation (max. error +-0.01 rads)
+              // Based on LUT table and linear interpolation
+
+              /**
+               *  // Generate the JD Lookup Table
+               *  constexpr float c = 1.00751495f; // Correction factor to center error around 0
+               *  for (int i = 0; i < jd_lut_count - 1; ++i) {
+               *    const float x0 = (sq(i) - 1) / sq(i),
+               *                y0 = acos(x0) * (i == 0 ? 1 : c),
+               *                x1 = i < jd_lut_count - 1 ?  0.5 * x0 + 0.5 : 0.999999f,
+               *                y1 = acos(x1) * (i < jd_lut_count - 1 ? c : 1);
+               *    jd_lut_k[i] = (y0 - y1) / (x0 - x1);
+               *    jd_lut_b[i] = (y1 * x0 - y0 * x1) / (x0 - x1);
+               *  }
+               *
+               *  // Compute correction factor (Set c to 1.0f first!)
+               *  float min = INFINITY, max = -min;
+               *  for (float t = 0; t <= 1; t += 0.0003f) {
+               *    const float e = acos(t) / approx(t);
+               *    if (isfinite(e)) {
+               *      if (e < min) min = e;
+               *      if (e > max) max = e;
+               *    }
+               *  }
+               *  fprintf(stderr, "%.9gf, ", (min + max) / 2);
+               */
+              static constexpr int16_t  jd_lut_count = 16;
+              static constexpr uint16_t jd_lut_tll   = _BV(jd_lut_count - 1);
+              static constexpr int16_t  jd_lut_tll0  = __builtin_clz(jd_lut_tll) + 1; // i.e., 16 - jd_lut_count + 1
+              static constexpr float jd_lut_k[jd_lut_count] PROGMEM = {
+                -1.03145837f, -1.30760646f, -1.75205851f, -2.41705704f,
+                -3.37769222f, -4.74888992f, -6.69649887f, -9.45661736f,
+                -13.3640480f, -18.8928222f, -26.7136841f, -37.7754593f,
+                -53.4201813f, -75.5458374f, -106.836761f, -218.532821f };
+              static constexpr float jd_lut_b[jd_lut_count] PROGMEM = {
+                  1.57079637f,  1.70887053f,  2.04220939f,  2.62408352f,
+                  3.52467871f,  4.85302639f,  6.77020454f,  9.50875854f,
+                  13.4009285f,  18.9188995f,  26.7321243f,  37.7885055f,
+                  53.4293975f,  75.5523529f,  106.841369f,  218.534011f };
+
+              const float neg = junction_cos_theta < 0 ? -1 : 1,
+                          t = neg * junction_cos_theta;
+
+              const int16_t idx = (t < 0.00000003f) ? 0 : __builtin_clz(uint16_t((1.0f - t) * jd_lut_tll)) - jd_lut_tll0;
+
+              float junction_theta = t * pgm_read_float(&jd_lut_k[idx]) + pgm_read_float(&jd_lut_b[idx]);
+              if (neg > 0) junction_theta = RADIANS(180) - junction_theta; // acos(-t)
+
+            #else
+
+              // Fast acos(-t) approximation (max. error +-0.033rad = 1.89°)
+              // Based on MinMax polynomial published by W. Randolph Franklin, see
+              // https://wrf.ecse.rpi.edu/Research/Short_Notes/arcsin/onlyelem.html
+              //  acos( t) = pi / 2 - asin(x)
+              //  acos(-t) = pi - acos(t) ... pi / 2 + asin(x)
+
+              const float neg = junction_cos_theta < 0 ? -1 : 1,
+                          t = neg * junction_cos_theta,
+                          asinx =       0.032843707f
+                                + t * (-1.451838349f
+                                + t * ( 29.66153956f
+                                + t * (-131.1123477f
+                                + t * ( 262.8130562f
+                                + t * (-242.7199627f
+                                + t * ( 84.31466202f ) ))))),
+                          junction_theta = RADIANS(90) + neg * asinx; // acos(-t)
+
+              // NOTE: junction_theta bottoms out at 0.033 which avoids divide by 0.
+
+            #endif
+
+          const float limit_sqr = (newBlock->distance * junction_acceleration) / junction_theta;
+          vmax_junction_sqr= _MIN(vmax_junction_sqr, limit_sqr);
+        }
+
+        #endif // JD_HANDLE_SMALL_SEGMENTS
+      }
+    }
+
+    // Get the lowest speed
+    vmax_junction_sqr = _MIN(vmax_junction_sqr, newBlock->nominal_speed_sqr, previous_nominal_speed_sqr);
+  } else {
+    // Init entry speed to zero. Assume it starts from rest. Planner will correct this later.
+    vmax_junction_sqr = 0;
+  }
+
+  #define COPY_3(NN) prev_unit_vec[NN] = unit_vec[NN];
+  ALL_MOTOR_MACRO(COPY_3)
+  
+  return vmax_junction_sqr;
+}
+#endif
+
+#ifdef HAS_CLASSIC_JERK
+float Planner::classicJerk(Segment *newBlock,float *current_speed,int movesQueued) {
+  CACHED_SQRT(nominal_speed,newBlock->nominal_speed_sqr);
+
+  float safe_speed = nominal_speed;
+  char limited     = 0;
+  for (ALL_MUSCLES(i)) {
+    const float jerk = fabs(current_speed[i]),
+                maxj = max_jerk[i];
+    if(jerk > maxj) {  // new current speed too fast?
+      if(limited) {
+        const float mjerk = maxj * nominal_speed;          // ns*mj
+        if(jerk * safe_speed > mjerk) safe_speed = mjerk / jerk;  // ns*mj/cs
+      } else {
+        safe_speed *= maxj / jerk;  // Initial limit: ns*mj/cs
+        ++limited;
+      }
+    }
+  }
+
+  // what is the maximum starting speed for this segment?
+  float vmax_junction;
+  if(movesQueued > 0 && previous_nominal_speed_sqr > 1e-6) {
+    // Estimate a maximum velocity allowed at a joint of two successive segments.
+    // If this maximum velocity allowed is lower than the minimum of the entry / exit safe velocities,
+    // then the machine is not coasting anymore and the safe entry / exit velocities shall be used.
+
+    // Factor to multiply the previous / current nominal velocities to get componentwise limited velocities.
+    float v_factor = 1.0f;
+    limited = 0;
+
+    CACHED_SQRT(previous_nominal_speed, previous_nominal_speed_sqr);
+
+    // The junction velocity will be shared between successive segments. Limit the junction velocity to their minimum.
+    // Pick the smaller of the nominal speeds. Higher speed shall not be achieved at the junction during coasting.
+    vmax_junction = _MIN(newBlock->nominal_speed_sqr, previous_nominal_speed);
+    float smaller_speed_factor = vmax_junction / previous_nominal_speed;
+    // Now limit the jerk in all axes.
+    for (ALL_MUSCLES(i)) {
+      // Limit an axis. We have to differentiate: coasting, reversal of an axis, full stop.
+      float v_exit  = previous_speed[i] * smaller_speed_factor;
+      float v_entry = current_speed[i];
+      if(limited) {
+        v_exit *= v_factor;
+        v_entry *= v_factor;
+      }
+
+      // Calculate jerk depending on whether the axis is coasting in the same direction or reversing.
+      const float jerk = (v_exit > v_entry)
+          ?  //                            coasting             axis reversal
+          ((v_entry > 0 || v_exit < 0) ? (v_exit - v_entry) : _MAX(v_exit, -v_entry))
+          :  // v_exit <= v_entry          coasting             axis reversal
+          ((v_entry < 0 || v_exit > 0) ? (v_entry - v_exit) : _MAX(-v_exit, v_entry));
+
+      if(jerk > max_jerk[i]) {
+        v_factor *= max_jerk[i] / jerk;
+        ++limited;
+      }
+    }
+
+    if(limited) vmax_junction *= v_factor;
+    // Now the transition velocity is known, which maximizes the shared exit / entry velocity while
+    // respecting the jerk factors, it may be possible, that applying separate safe exit / entry velocities will achieve
+    // faster prints.
+    const float vmax_junction_threshold = vmax_junction * 0.99f;
+    if(previous_safe_speed > vmax_junction_threshold && safe_speed > vmax_junction_threshold) {
+      // Not coasting. The machine will stop and start the movements anyway,
+      // better to start the segment from start.
+      vmax_junction = safe_speed;
+    }
+  } else {
+    vmax_junction = safe_speed;
+  }
+  
+  previous_safe_speed = safe_speed;
+
+  float vmax_junction_sqr = sq(vmax_junction);
+
+  return vmax_junction_sqr;
 }
 #endif

@@ -87,14 +87,14 @@ void EEPROMManager::adjustLimits(float* limits) {
   float v;
   for (ALL_AXIES(i)) {
     // max test
-    v = floor(limits[j] * 100.0f) / 100.0f;
+    v = floorf(limits[j] * 100.0f) / 100.0f;
     if (v != axies[i].limitMax) {
       axies[i].limitMax = v;
       changed           = 1;
     }
     j++;
     // min test
-    v = floor(limits[j] * 100.0f) / 100.0f;
+    v = floorf(limits[j] * 100.0f) / 100.0f;
     if (v != axies[i].limitMin) {
       axies[i].limitMin = v;
       changed           = 1;
