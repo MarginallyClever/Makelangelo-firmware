@@ -466,11 +466,11 @@ void factory_reset() {
 
   for (ALL_MUSCLES(i)) {
     max_jerk[i] = MAX_JERK_DEFAULT;
-    max_step_rate_s[i] = MAX_STEP_RATE_DEFAULT;
+    max_step_rate[i] = MAX_STEP_RATE_DEFAULT * motor_spu[i];
   }
 
 #ifdef MAX_FEEDRATE_Z
-  max_step_rate_s[NUM_MOTORS] = MAX_FEEDRATE_Z;
+  max_step_rate[NUM_MOTORS] = MAX_FEEDRATE_Z;
 #endif
 #ifdef MAX_JERK_Z_DEFAULT
   max_jerk[NUM_MOTORS] = MAX_JERK_Z_DEFAULT;

@@ -250,8 +250,8 @@ extern const char *AxisNames;
 // max jerk value per axis
 extern float max_jerk[NUM_MUSCLES];
 
-// maximum feedrate (units/s).  one value per motor/servo 
-extern float max_step_rate_s[NUM_MUSCLES];
+// maximum steps/s per motor/servo 
+extern float max_step_rate[NUM_MUSCLES];
 
 // motor steps-per-unit.  one value per motor/servo
 extern float motor_spu[NUM_MUSCLES];

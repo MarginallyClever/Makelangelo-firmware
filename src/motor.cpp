@@ -41,7 +41,7 @@ uint32_t acc_step_rate;
 int32_t isr_nominal_rate = -1;
 uint32_t time_accelerating, time_decelerating;
 float max_jerk[NUM_MUSCLES];
-float max_step_rate_s[NUM_MUSCLES];
+float max_step_rate[NUM_MUSCLES];  // steps/s
 float motor_spu[NUM_MUSCLES];
 uint8_t isr_step_multiplier  = 1;
 uint32_t min_segment_time_us = DEFAULT_MIN_SEGMENT_TIME_US;
@@ -363,7 +363,7 @@ hal_timer_t Stepper::isrBlockPhase() {
     } else {
       if(steps_taken <= accel_until) {
         // accelerating
-        acc_step_rate = STEP_MULTIPLY(time_accelerating, working_block->acceleration_rate);
+        acc_step_rate = STEP_MULTIPLY(time_accelerating, working_block->acceleration_rate) + working_block->initial_rate;
         acc_step_rate = _MIN(acc_step_rate, working_block->nominal_rate);
         interval = calc_interval(acc_step_rate, &isr_step_multiplier);
         time_accelerating += interval;
@@ -399,9 +399,7 @@ hal_timer_t Stepper::isrBlockPhase() {
 
   // segment buffer empty? do nothing
   if(working_block == NULL) {
-    working_block = planner.getCurrentBlock();
-
-    if(working_block) {
+    if((working_block = planner.getCurrentBlock())) {
 #ifdef DEBUG_STEPPING
       Serial.print("S");
       //describeSegment(working_block);
@@ -456,7 +454,7 @@ void Stepper::isr() {
   static hal_timer_t nextMainISR=0;
 
 #ifdef DEBUG_STEPPING
-  uint32_t time0 = micros(),time1,time2,time3;
+  uint32_t time0 = micros(), time1, time2, time3;
 #endif
 
   //digitalWrite(LED_BUILTIN,!digitalRead(LED_BUILTIN));
@@ -477,30 +475,31 @@ void Stepper::isr() {
     // Turn the interrupts back on (reduces UART delay, apparently)
     ENABLE_ISRS();
 
-#ifndef DEBUG_STEPPING
 #  ifdef HAS_TMC2130
     if(homing == true) {
       tmc2130_homing_sequence();
       nextMainISR = HOMING_OCR1A;
     } else {
 #  endif
+#ifdef DEBUG_STEPPING
+      time1 = micros();
+#endif
       if(!nextMainISR) isrPulsePhase();
+#ifdef DEBUG_STEPPING
+      time2 = micros();
+#endif
       if(!nextMainISR) nextMainISR = isrBlockPhase();
+#ifdef DEBUG_STEPPING
+      time3 = micros();
+#endif
 #  ifdef HAS_TMC2130
     }
 #  endif
-#else
-    time1 = micros();
-    if(!nextMainISR) isrPulsePhase();
-    time2 = micros();
-    if(!nextMainISR) nextMainISR = isrBlockPhase();
-    time3 = micros();
-#endif  // DEBUG_STEPPING
 
     hal_timer_t interval = _MIN(hal_timer_t(HAL_TIMER_TYPE_MAX),nextMainISR);
 
-    nextMainISR      -= interval;
-    next_isr_ticks   += interval;
+    nextMainISR    -= interval;
+    next_isr_ticks += interval;
 
     DISABLE_ISRS();
     min_ticks = HAL_timer_get_count(STEP_TIMER_NUM) + hal_timer_t(
@@ -524,10 +523,11 @@ void Stepper::isr() {
   ENABLE_ISRS();
   
 #ifdef DEBUG_STEP_TIMING
+  uint32_t time4=micros();
   time1-=time0;
-  time2-=time0;
-  time3-=time0;
-  uint32_t time4=micros()-time0;
+  time2-=time1;
+  time3-=time2;
+  uint32_t time4-=time3;
   Serial.print(" T ");
   Serial.print(time1);
   Serial.print(" ");

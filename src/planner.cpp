@@ -288,24 +288,26 @@ void Planner::describeAllSegments() {
   CRITICAL_SECTION_END();
 }
 
-void Planner::populateBlock(Segment *newBlock,const float *const target_position, float fr_units_s, float cartesianDistance) {
-  int prev_segment = getPrevBlock(block_buffer_head);
-  Segment &oldBlock = blockBuffer[prev_segment];
+void Planner::populateBlock(Segment *newBlock,const float *const target, float fr_units_s, float cartesianDistance) {
+  int prevBlockID = getPrevBlock(block_buffer_head);
+  Segment &oldBlock = blockBuffer[prevBlockID];
 
   // convert from the cartesian position to the motor steps
   int32_t steps[NUM_MUSCLES];
-  IK(target_position, steps);
+  IK(target, steps);
 
   // find the number of steps for each motor, the direction, and the absolute steps
   // The axis that has the most steps will control the overall acceleration as per bresenham's algorithm.
   newBlock->steps_total = 0;
   newBlock->dir=0;
 
+  float deltaSteps[NUM_MUSCLES];
+
   for (ALL_MUSCLES(i)) {
     newBlock->a[i].step_count  = steps[i];
-    newBlock->a[i].delta_steps = steps[i] - oldBlock.a[i].step_count;
-    if(newBlock->a[i].delta_steps < 0) newBlock->dir |= (1UL<<i);
-    newBlock->a[i].absdelta = abs(newBlock->a[i].delta_steps);
+    deltaSteps[i] = steps[i] - oldBlock.a[i].step_count;
+    if(deltaSteps[i] < 0) newBlock->dir |= (1UL<<i);
+    newBlock->a[i].absdelta = abs(deltaSteps[i]);
     newBlock->steps_total = _MAX(newBlock->steps_total, newBlock->a[i].absdelta);
 #if MACHINE_STYLE == SIXI
     newBlock->a[i].positionStart = axies[i].pos;
@@ -314,11 +316,10 @@ void Planner::populateBlock(Segment *newBlock,const float *const target_position
   }
 
   float oldP[NUM_AXIES];
-  float delta[NUM_AXIES];
+  float deltaCartesian[NUM_AXIES];
   for(ALL_AXIES(i)) {
     oldP[i] = axies[i].pos;
-    axies[i].pos = target_position[i];
-    delta[i] = target_position[i] - oldP[i];
+    deltaCartesian[i] = target[i] - oldP[i];
   }
 
   // No steps?  No work!  Stop now.
@@ -353,15 +354,16 @@ void Planner::populateBlock(Segment *newBlock,const float *const target_position
   newBlock->nominal_speed_sqr = sq(cartesianDistance * inverse_secs);
   newBlock->nominal_rate  = ceilf(newBlock->steps_total * inverse_secs);
 
-  // Calculate the the speed limit for each axis.
+  // Calculate the the speed limit for each motor.
   // All speeds are connected so if one motor slows, they all have to slow the same amount.
   float current_speed[NUM_MUSCLES], speed_factor = 1.0;
   for (ALL_MUSCLES(i)) {
-    current_speed[i] = delta[i] * inverse_secs;
-    const float cs = fabs(current_speed[i]), max_fr = max_step_rate_s[i];
+    current_speed[i] = deltaSteps[i] * inverse_secs;
+    const float cs = fabs(current_speed[i]), max_fr = max_step_rate[i];
     if(cs > max_fr) speed_factor = _MIN(speed_factor, max_fr / cs);
   }
   
+  Serial.println(speed_factor);
   // apply the speed limit
   if(speed_factor < 1.0) {
     for (ALL_MUSCLES(i)) {
@@ -372,7 +374,7 @@ void Planner::populateBlock(Segment *newBlock,const float *const target_position
   }
 
 #if MACHINE_STYLE == POLARGRAPH && defined(DYNAMIC_ACCELERATION)
-  float max_acceleration = limitPolargraphAcceleration(target_position,oldP,desiredAcceleration);
+  float max_acceleration = limitPolargraphAcceleration(target,oldP,desiredAcceleration);
 #else
   float max_acceleration = desiredAcceleration;
 #endif
@@ -417,22 +419,21 @@ void Planner::populateBlock(Segment *newBlock,const float *const target_position
   vmax_junction_sqr = classicJerk(newBlock,current_speed,movesQueued);
 #endif
 #ifdef HAS_JUNCTION_DEVIATION
-  vmax_junction_sqr = junctionDeviation(newBlock,delta,movesQueued,inverseCartesianDistance,max_acceleration);
+  vmax_junction_sqr = junctionDeviation(newBlock,deltaCartesian,movesQueued,inverseCartesianDistance,max_acceleration);
 #endif
 #ifdef DOT_PRODUCT_JERK
-  vmax_junction_sqr = newBlock->nominal_speed_sqr;
   
   float unit_vec[NUM_MOTORS] = {
     #define COPY_4(NN) (delta[NN]) * inverseCartesianDistance,
     ALL_MOTOR_MACRO(COPY_4)
   };
 
+  float dot = 0
   #define NORM_MOTOR(NN) +(unit_vec[NN]*prev_unit_vec[NN])
-  float d = 0
   ALL_MOTOR_MACRO(NORM_MOTOR)
   ;
  
-  vmax_junction_sqr *=d*1.1f;
+  vmax_junction_sqr = newBlock->nominal_speed_sqr * dot * 1.1f;
   vmax_junction_sqr = _MIN(vmax_junction_sqr, newBlock->nominal_speed_sqr);
   vmax_junction_sqr = _MAX(vmax_junction_sqr, MINIMUM_PLANNER_SPEED);
   
@@ -451,6 +452,9 @@ void Planner::populateBlock(Segment *newBlock,const float *const target_position
   previous_nominal_speed_sqr = newBlock->nominal_speed_sqr;
   for(ALL_MUSCLES(i)) {
     previous_speed[i] = current_speed[i];
+  }
+  for(ALL_AXIES(i)) {
+    axies[i].pos = target[i];
   }
 }
 
@@ -510,20 +514,20 @@ void Planner::bufferLine(float *pos, float new_feed_rate_units) {
 #endif
 
   // split up long lines to make them straighter
-  float delta[NUM_AXIES];
+  float deltaCartesian[NUM_AXIES];
   float intermediatePos[NUM_AXIES];
   float lenSquared = 0;
 
   for (ALL_AXIES(i)) {
     intermediatePos[i] = axies[i].pos;
-    delta[i]    = pos[i] - intermediatePos[i];
-    lenSquared += sq(delta[i]);
+    deltaCartesian[i]    = pos[i] - intermediatePos[i];
+    lenSquared += sq(deltaCartesian[i]);
   }
 
 #if MACHINE_STYLE == POLARGRAPH
-  if(delta[0] == 0 && delta[1] == 0) {
+  if(deltaCartesian[0] == 0 && deltaCartesian[1] == 0) {
     // only moving Z, don't split the line.
-    addSegment(pos, new_feed_rate_units, abs(delta[2]));
+    addSegment(pos, new_feed_rate_units, abs(deltaCartesian[2]));
     return;
   }
 #endif   
@@ -541,7 +545,7 @@ void Planner::bufferLine(float *pos, float new_feed_rate_units) {
 
 #ifdef HAS_GRIPPER
   // if we have a gripper and only gripper is moving, don't split the movement.
-  if(lenSquared == sq(delta[6])) {
+  if(lenSquared == sq(deltaCartesian[6])) {
     Serial.println("only t");
     segments = 1;
     Serial.print("seconds=");
@@ -556,7 +560,7 @@ void Planner::bufferLine(float *pos, float new_feed_rate_units) {
   const float inv_segments = 1.0f / float(segments);
   const float segmentDistance = totalDistance * inv_segments;
 
-  for (ALL_AXIES(i)) delta[i] *= inv_segments;
+  for (ALL_AXIES(i)) deltaCartesian[i] *= inv_segments;
 
   uint32_t until = millis() + 200UL;
   while (--segments) {
@@ -565,7 +569,7 @@ void Planner::bufferLine(float *pos, float new_feed_rate_units) {
       until = millis() + 200UL;
     }
 
-    for(ALL_AXIES(i)) intermediatePos[i] += delta[i];
+    for(ALL_AXIES(i)) intermediatePos[i] += deltaCartesian[i];
     addSegment(intermediatePos, new_feed_rate_units, segmentDistance);
   }
 

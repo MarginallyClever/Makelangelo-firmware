@@ -959,9 +959,9 @@ void Parser::M117() {
 void Parser::M203() {
   Serial.print(F("M203 "));
   for(ALL_MUSCLES(i)) {
-    max_step_rate_s[i] = parseFloat(motors[i].letter, max_step_rate_s[i]);
+    max_step_rate[i] = parseFloat(motors[i].letter, max_step_rate[i]);
     Serial.print(motors[i].letter);
-    Serial.print(max_step_rate_s[i]);
+    Serial.print(max_step_rate[i]);
     Serial.print(' ');
   }
   Serial.println();

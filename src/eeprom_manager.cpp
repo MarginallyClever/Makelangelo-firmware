@@ -176,7 +176,7 @@ void EEPROMManager::saveStepRate() {
   Serial.println(F("Saving step rate."));
   int j = EEPROM_STEP_RATE;
   for(ALL_MUSCLES(i)) {
-    writeLong(j, max_step_rate_s[i]*100.0f);
+    writeLong(j, max_step_rate[i]*100.0f);
     j+=SIZEOF_FLOAT_BYTES;
   }
 }
@@ -184,7 +184,7 @@ void EEPROMManager::saveStepRate() {
 void EEPROMManager::loadStepRate() {
   int j = EEPROM_STEP_RATE;
   for(ALL_MUSCLES(i)) {
-    max_step_rate_s[i]  = (float)readLong(j) / 100.0f;
+    max_step_rate[i]  = (float)readLong(j) / 100.0f;
     j+=SIZEOF_FLOAT_BYTES;
   }
 }
