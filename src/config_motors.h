@@ -65,3 +65,6 @@
 #ifndef MICROSTEP_PER_DEGREE
 #define MICROSTEP_PER_DEGREE (STEPS_PER_TURN/360.0)
 #endif
+
+// define to activate smoother acceleration
+#define S_CURVE_ACCELERATION

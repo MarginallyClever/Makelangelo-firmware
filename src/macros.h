@@ -8,6 +8,7 @@
 
 // for assembly in isr inner loop
 #define A(CODE) " " CODE "\n\t"
+#define L(CODE) CODE ":\n\t"
 
 // optimize code, please
 #define FORCE_INLINE __attribute__((always_inline)) inline

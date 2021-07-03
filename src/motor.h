@@ -45,11 +45,24 @@
 #  define ISR_BASE_CYCLES                 792UL
 #  define ISR_LOOP_BASE_CYCLES            4UL
 #  define ISR_STEPPER_CYCLES              16UL
+// S curve interpolation adds 40 cycles
+#  if defined(S_CURVE_ACCELERATION)
+#    define ISR_S_CURVE_CYCLES 40UL
+#  else
+#    define ISR_S_CURVE_CYCLES 0UL
+#  endif
 #else
 #  define ISR_BASE_CYCLES                 752UL
 #  define ISR_LOOP_BASE_CYCLES            32UL
 #  define ISR_STEPPER_CYCLES              88UL
+// S curve interpolation adds 160 cycles
+#  if defined(S_CURVE_ACCELERATION)
+#    define ISR_S_CURVE_CYCLES 160UL
+#  else
+#    define ISR_S_CURVE_CYCLES 0UL
+#  endif
 #endif
+
 
 #define MIN_ISR_LOOP_CYCLES             (ISR_STEPPER_CYCLES * NUM_MUSCLES)
 #define MINIMUM_STEPPER_PULSE           1UL
@@ -63,7 +76,7 @@
 #define MIN_STEPPER_PULSE_CYCLES       _MIN_STEPPER_PULSE_CYCLES(uint32_t(MINIMUM_STEPPER_PULSE))
 #define ISR_LOOP_CYCLES                (ISR_LOOP_BASE_CYCLES + _MAX(MIN_STEPPER_PULSE_CYCLES, MIN_ISR_LOOP_CYCLES))
   
-#define ISR_EXECUTION_CYCLES(R)  (  ( ISR_BASE_CYCLES + (ISR_LOOP_CYCLES * R) ) / R )
+#define ISR_EXECUTION_CYCLES(R)  (  ( ISR_BASE_CYCLES + ISR_S_CURVE_CYCLES + (ISR_LOOP_CYCLES * (R)) ) / (R) )
 
 // The maximum allowable stepping frequency when doing x128-x1 stepping (in Hz)
 #define MAX_STEP_ISR_FREQUENCY_128X ((F_CPU) / ISR_EXECUTION_CYCLES(128))
@@ -170,6 +183,23 @@ typedef struct {
 
 class Stepper {
 public:
+
+#if defined(S_CURVE_ACCELERATION)
+  static int32_t bezier_A,     // A coefficient in Bézier speed curve
+                  bezier_B,     // B coefficient in Bézier speed curve
+                  bezier_C;     // C coefficient in Bézier speed curve
+  static uint32_t bezier_F,    // F coefficient in Bézier speed curve
+                  bezier_AV;   // AV coefficient in Bézier speed curve
+  #ifdef __AVR__
+    static bool A_negative;    // If A coefficient was negative
+  #endif
+  static bool bezier_2nd_half; // If Bézier curve has been initialized or not
+#else
+  static uint32_t acc_step_rate; // needed for deceleration start point
+#endif
+
+  static uint32_t acceleration_time, deceleration_time;
+
   static void setup();
   static void home();
   static void engage();
@@ -187,6 +217,11 @@ public:
   static void isr();
   static void isrPulsePhase();
   static hal_timer_t isrBlockPhase();
+
+#if defined(S_CURVE_ACCELERATION)
+  static void _calc_bezier_curve_coeffs(const int32_t v0, const int32_t v1, const uint32_t av);
+  static int32_t _eval_bezier_curve(const uint32_t curr_step);
+#endif
 
   /**
      Set the clock 2 timer frequency.

@@ -83,7 +83,16 @@ public:
   uint32_t initial_rate;               // steps/s
   uint32_t final_rate;                 // steps/s
   uint32_t acceleration_steps_per_s2;  // steps/s^2
+  
+#if defined(S_CURVE_ACCELERATION)
+  uint32_t cruise_rate,                   // The actual cruise rate to use, between end of the acceleration phase and start of deceleration phase
+            acceleration_time,             // Acceleration time and deceleration time in STEP timer counts
+            deceleration_time,
+            acceleration_time_inverse,     // Inverse of acceleration and deceleration periods, expressed as integer. Scale depends on CPU being used
+            deceleration_time_inverse;
+#else
   uint32_t acceleration_rate;  // ?
+#endif
 
   uint8_t flags;
 };
@@ -202,7 +211,7 @@ class Planner {
     return m;
   }
 
-  FORCE_INLINE static float limit_value_by_axis_maximum(const float max_value, float *unit_vec,float max_acceleration) {
+  FORCE_INLINE static float limit_value_by_axis_maximum(const float max_value, float *unit_vec,const float max_acceleration) {
     float limit_value = max_value;
     for(ALL_MOTORS(i)) {
       if(unit_vec[i]) {
@@ -212,6 +221,14 @@ class Planner {
     }
     return limit_value;
   }
+
+
+#if defined(S_CURVE_ACCELERATION)
+  // Calculate the speed reached given initial speed, acceleration and distance
+  static float final_speed(const float initial_velocity, const float accel, const float distance) {
+    return sqrtf(sq(initial_velocity) + 2 * accel * distance);
+  }
+#endif
 
 #ifdef HAS_JUNCTION_DEVIATION
   static float junctionDeviation(Segment *newBlock,float *delta,int movesQueued,float inverseCartesianDistance,float max_acceleration);
