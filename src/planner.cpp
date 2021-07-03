@@ -363,7 +363,6 @@ void Planner::populateBlock(Segment *newBlock,const float *const target, float f
     if(cs > max_fr) speed_factor = _MIN(speed_factor, max_fr / cs);
   }
   
-  Serial.println(speed_factor);
   // apply the speed limit
   if(speed_factor < 1.0) {
     for (ALL_MUSCLES(i)) {

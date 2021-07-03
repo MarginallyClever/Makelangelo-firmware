@@ -457,7 +457,7 @@ void sixiDemo1() {
   float fr = desiredFeedRate;
   float aa = desiredAcceleration;
 
-  desiredFeedRate    = 80;
+  desiredFeedRate = 80;
   desiredAcceleration = 25;
 
   printGoto(posHome);

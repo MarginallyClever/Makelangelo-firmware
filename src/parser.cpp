@@ -700,8 +700,8 @@ void Parser::printOK() {
 void Parser::G02(int8_t clockwise) {
   desiredAcceleration = parseFloat('A', desiredAcceleration);
   desiredAcceleration = _MIN(_MAX(desiredAcceleration, (float)MIN_ACCELERATION), (float)MAX_ACCELERATION);
-  float f      = parseFloat('F', desiredFeedRate);
-  f            = _MIN(_MAX(f, (float)MIN_FEEDRATE), (float)MAX_FEEDRATE);
+  float f = parseFloat('F', desiredFeedRate);
+  f       = _MIN(_MAX(f, (float)MIN_FEEDRATE), (float)MAX_FEEDRATE);
 
   int i;
   float pos[NUM_AXIES];
