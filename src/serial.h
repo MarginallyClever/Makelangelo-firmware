@@ -21,7 +21,7 @@
  */
 #pragma once
 
-#include "../configure.h"
+#include "configure.h"
 #include "serial_hook.h"
 
 #if HAS_MEATPACK

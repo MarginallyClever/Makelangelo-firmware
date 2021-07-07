@@ -123,7 +123,7 @@
 #define SERIAL_PORT 0
 #define NUM_SERIAL 1
 #include "boards/MarlinSerial.h"
-#include "boards/serial.h"
+#include "serial.h"
 
 #include "config_motors.h"
 #include <Arduino.h>
