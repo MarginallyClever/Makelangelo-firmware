@@ -164,13 +164,13 @@ void stewart_update_wrists() {
 #  if VERBOSE > 0
   for (i = 0; i < NUM_ARMS; ++i) {
     StewartArm &arm = robot.arms[i];
-    Serial.print(i);
-    Serial.print("\twrist =");
-    Serial.print(arm.wrist.x);
-    Serial.print(F(","));
-    Serial.print(arm.wrist.y);
-    Serial.print(F(","));
-    Serial.println(arm.wrist.z);
+    MYSERIAL1.print(i);
+    MYSERIAL1.print("\twrist =");
+    MYSERIAL1.print(arm.wrist.x);
+    MYSERIAL1.print(F(","));
+    MYSERIAL1.print(arm.wrist.y);
+    MYSERIAL1.print(F(","));
+    MYSERIAL1.println(arm.wrist.z);
   }
 #  endif
 }
@@ -187,7 +187,7 @@ void stewart_update_shoulder_angles() {
     StewartArm &arm = robot.arms[i];
 
 #  if VERBOSE > 0
-    Serial.print(i);
+    MYSERIAL1.print(i);
 #  endif
 
     // project wrist position onto plane of bicep (wop)
@@ -215,12 +215,12 @@ void stewart_update_shoulder_angles() {
     a = (r0 * r0 - r1 * r1 + d * d) / (2 * d);
 
 #  if VERBOSE > 0
-    Serial.print("\tb =");
-    Serial.println(b);
-    Serial.print("\td =");
-    Serial.println(d);
-    Serial.print("\ta =");
-    Serial.println(a);
+    MYSERIAL1.print("\tb =");
+    MYSERIAL1.println(b);
+    MYSERIAL1.print("\td =");
+    MYSERIAL1.println(d);
+    MYSERIAL1.print("\ta =");
+    MYSERIAL1.println(a);
 #  endif
 
     // normalize wop
@@ -244,9 +244,9 @@ void stewart_update_shoulder_angles() {
     if ((arm.shoulder_to_elbow | temp) < 0) x = -x;
     arm.angle = degrees(atan2(-y, x));
 #  if VERBOSE > 0
-    Serial.print(i);
-    Serial.print("\tangle =");
-    Serial.println(arm.angle);
+    MYSERIAL1.print(i);
+    MYSERIAL1.print("\tangle =");
+    MYSERIAL1.println(arm.angle);
 #  endif
   }
 }
@@ -319,20 +319,20 @@ void stewart_build_shoulders() {
 #  if VERBOSE > 0
   for (i = 0; i < 6; ++i) {
     StewartArm &arm = robot.arms[i];
-    Serial.print(i);
-    Serial.print("\ts =");
-    Serial.print(arm.shoulder.x);
-    Serial.print(F(","));
-    Serial.print(arm.shoulder.y);
-    Serial.print(F(","));
-    Serial.print(arm.shoulder.z);
+    MYSERIAL1.print(i);
+    MYSERIAL1.print("\ts =");
+    MYSERIAL1.print(arm.shoulder.x);
+    MYSERIAL1.print(F(","));
+    MYSERIAL1.print(arm.shoulder.y);
+    MYSERIAL1.print(F(","));
+    MYSERIAL1.print(arm.shoulder.z);
 
-    Serial.print("\te =");
-    Serial.print(arm.elbow.x);
-    Serial.print(F(","));
-    Serial.print(arm.elbow.y);
-    Serial.print(F(","));
-    Serial.println(arm.elbow.z);
+    MYSERIAL1.print("\te =");
+    MYSERIAL1.print(arm.elbow.x);
+    MYSERIAL1.print(F(","));
+    MYSERIAL1.print(arm.elbow.y);
+    MYSERIAL1.print(F(","));
+    MYSERIAL1.println(arm.elbow.z);
   }
 #  endif
 }
@@ -345,7 +345,7 @@ void robot_findHome() {
 
   hal_timer_t stepDelay = findStepDelay();
 
-  Serial.println(F("Finding..."));
+  MYSERIAL1.println(F("Finding..."));
 
   uint8_t i, hits;
   // back up until all switches are hit
@@ -357,15 +357,15 @@ void robot_findHome() {
       // if this switch hasn't been hit yet
       if (digitalRead(motors[i].limit_switch_pin) == HIGH) {
         // move "down"
-        Serial.print('|');
+        MYSERIAL1.print('|');
         digitalWrite(motors[i].step_pin, HIGH);
         digitalWrite(motors[i].step_pin, LOW);
       } else {
         ++hits;
-        Serial.print('*');
+        MYSERIAL1.print('*');
       }
     }
-    Serial.println();
+    SERIAL_EOL();
     pause(stepDelay);
   } while (hits < NUM_MOTORS);
 
@@ -373,10 +373,10 @@ void robot_findHome() {
   // TODO This could be better customized in firmware.
   uint32_t steps_to_zero = SWITCH_ANGLE * MICROSTEP_PER_DEGREE;
 
-  Serial.println(F("Homing..."));
+  MYSERIAL1.println(F("Homing..."));
 #  if VERBOSE > 0
-  Serial.print("steps=");
-  Serial.println(steps_to_zero);
+  MYSERIAL1.print("steps=");
+  MYSERIAL1.println(steps_to_zero);
 #  endif
   for (uint32_t j = 0; j < steps_to_zero; ++j) {
     for (i = 0; i < NUM_MOTORS; ++i) {
@@ -384,7 +384,7 @@ void robot_findHome() {
       digitalWrite(motors[i].step_pin, HIGH);
       digitalWrite(motors[i].step_pin, LOW);
     }
-    // Serial.println(steps_to_zero-j,DEC);
+    // MYSERIAL1.println(steps_to_zero-j,DEC);
     pause(stepDelay);
   }
 

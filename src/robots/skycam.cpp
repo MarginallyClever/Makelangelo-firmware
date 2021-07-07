@@ -53,7 +53,7 @@ void IK(const float *const cartesian, int32_t *motorStepArray) {
  * @return 0 if no problem, 1 on failure.
  */
 int FK(int32_t *motorStepArray, float *axies) {
-  Serial.println(F("UnimplmentedException"));
+  MYSERIAL1.println(F("UnimplmentedException"));
   return 1;
 }
 

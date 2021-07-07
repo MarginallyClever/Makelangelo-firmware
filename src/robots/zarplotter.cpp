@@ -37,21 +37,21 @@ void IK(const float *const cartesian, int32_t *motorStepArray) {
   dy                = y - bottom;
   motorStepArray[3] = lroundf((sqrtf(sq(dx) + sq(dy)))  * motor_spu[3]);  // M3 (bottom left)
   /*
-    Serial.print(x);    Serial.print('\t');
-    Serial.print(y);    Serial.print('\t');
-    Serial.print(motorStepArray[0]);    Serial.print('\t');
-    Serial.print(motorStepArray[1]);    Serial.print('\t');
-    Serial.print(motorStepArray[2]);    Serial.print('\t');
-    Serial.print(motorStepArray[3]);    Serial.print('\n');
+    MYSERIAL1.print(x);    MYSERIAL1.print('\t');
+    MYSERIAL1.print(y);    MYSERIAL1.print('\t');
+    MYSERIAL1.print(motorStepArray[0]);    MYSERIAL1.print('\t');
+    MYSERIAL1.print(motorStepArray[1]);    MYSERIAL1.print('\t');
+    MYSERIAL1.print(motorStepArray[2]);    MYSERIAL1.print('\t');
+    MYSERIAL1.print(motorStepArray[3]);    MYSERIAL1.print('\n');
     */
   motorStepArray[NUM_MOTORS] = cartesian[2] * motor_spu[1];
   /*
-    Serial.print(cartesian[0]);  Serial.print('\t');
-    Serial.print(cartesian[1]);  Serial.print('\t');
-    Serial.print(L);  Serial.print('\t');
-    Serial.print(R);  Serial.print('\t');
-    Serial.print(U);  Serial.print('\t');
-    Serial.print(V);  Serial.println();
+    MYSERIAL1.print(cartesian[0]);  MYSERIAL1.print('\t');
+    MYSERIAL1.print(cartesian[1]);  MYSERIAL1.print('\t');
+    MYSERIAL1.print(L);  MYSERIAL1.print('\t');
+    MYSERIAL1.print(R);  MYSERIAL1.print('\t');
+    MYSERIAL1.print(U);  MYSERIAL1.print('\t');
+    MYSERIAL1.print(V);  SERIAL_EOL();
   */
 }
 

@@ -88,10 +88,10 @@ void pause(const uint32_t us) {
 void teleport(float *pos) {
   planner.wait_for_empty_segment_buffer();
 
-  // Serial.println(F("Teleport"));
+  // MYSERIAL1.println(F("Teleport"));
   for (ALL_AXIES(i)) {
     axies[i].pos = pos[i];
-    // Serial.println(pos[i]);
+    // MYSERIAL1.println(pos[i]);
   }
 
   int32_t steps[NUM_MUSCLES];
@@ -117,7 +117,7 @@ void setHome(float *pos) {
 
 void meanwhile() {
 #if MACHINE_STYLE == SIXI
-  // Serial.println(REPORT_ANGLES_CONTINUOUSLY?"Y":"N");
+  // MYSERIAL1.println(REPORT_ANGLES_CONTINUOUSLY?"Y":"N");
 
   sensorManager.updateAll();
 
@@ -140,15 +140,45 @@ void meanwhile() {
 
 void reportAllMotors() {
   for (ALL_MOTORS(i)) {
-    Serial.println(motors[i].letter);
-    Serial.print("\tangleHome=");
-    Serial.println(axies[i].homePos);
+    MYSERIAL1.println(motors[i].letter);
+    MYSERIAL1.print("\tangleHome=");
+    MYSERIAL1.println(axies[i].homePos);
 #if MACHINE_STYLE == SIXI
-    Serial.print("\tsensor=");
-    Serial.println(sensorManager.sensors[i].angle);
+    MYSERIAL1.print("\tsensor=");
+    MYSERIAL1.println(sensorManager.sensors[i].angle);
 #endif
   }
-  Serial.println();
+  SERIAL_EOL();
+}
+
+
+void reportSpeeds() {
+  // The stepping frequency limits for each multistepping rate
+  static const uint32_t limit[] PROGMEM = {
+    (  MAX_STEP_ISR_FREQUENCY_1X     ),
+    (  MAX_STEP_ISR_FREQUENCY_2X >> 1),
+    (  MAX_STEP_ISR_FREQUENCY_4X >> 2),
+    (  MAX_STEP_ISR_FREQUENCY_8X >> 3),
+    ( MAX_STEP_ISR_FREQUENCY_16X >> 4),
+    ( MAX_STEP_ISR_FREQUENCY_32X >> 5),
+    ( MAX_STEP_ISR_FREQUENCY_64X >> 6),
+    (MAX_STEP_ISR_FREQUENCY_128X >> 7)
+  };
+
+  for(int i=0;i<8;++i) {
+    SERIAL_ECHO(i);
+    SERIAL_CHAR(' ');
+    SERIAL_ECHOLN(pgm_read_dword(&limit[i]));
+  }
+
+  SERIAL_ECHOLNPAIR("ISR_EXECUTION_CYCLES(1UL)=",ISR_EXECUTION_CYCLES(1UL));
+  SERIAL_ECHOLNPAIR("ISR_BASE_CYCLES=",ISR_BASE_CYCLES);
+  SERIAL_ECHOLNPAIR("ISR_S_CURVE_CYCLES=",ISR_S_CURVE_CYCLES);
+  SERIAL_ECHOLNPAIR("ISR_LOOP_CYCLES=",ISR_LOOP_CYCLES);
+  
+  SERIAL_ECHOLNPAIR("ISR_LOOP_BASE_CYCLES=",ISR_LOOP_BASE_CYCLES);
+  SERIAL_ECHOLNPAIR("MIN_STEPPER_PULSE_CYCLES=",MIN_STEPPER_PULSE_CYCLES);
+  SERIAL_ECHOLNPAIR("MIN_ISR_LOOP_CYCLES=",MIN_ISR_LOOP_CYCLES);
 }
 
 // runs once on machine start
@@ -195,6 +225,7 @@ void setup() {
 
   // run tests
   //testCircle();
+  //reportSpeeds();
 }
 
 // after setup runs over and over.

@@ -41,7 +41,7 @@ uint8_t EEPROMManager::loadVersion() {
 }
 
 void EEPROMManager::saveUID() {
-  Serial.println(F("Saving UID."));
+  SERIAL_ECHOLNPGM("Saving UID.");
   writeLong(EEPROM_UUID, (long)robot_uid);
 }
 
@@ -50,7 +50,7 @@ uint8_t EEPROMManager::loadUID() {
 }
 
 void EEPROMManager::saveLimits() {
-  Serial.println(F("Saving limits."));
+  SERIAL_ECHOLNPGM("Saving limits.");
   int j = EEPROM_LIMITS;
   for (ALL_AXIES(i)) {
     writeLong(j, axies[i].limitMax * 100);
@@ -67,13 +67,13 @@ void EEPROMManager::loadLimits() {
     j += 4;
     axies[i].limitMin = (float)readLong(j) / 100.0f;
     j += 4;
-    // Serial.print("Axis ");
-    // Serial.print(i);
-    // Serial.print(" Min ");
-    // Serial.print(axies[i].limitMin);
-    // Serial.print(" Max ");
-    // Serial.print(axies[i].limitMax);
-    // Serial.println();
+    // MYSERIAL1.print("Axis ");
+    // MYSERIAL1.print(i);
+    // MYSERIAL1.print(" Min ");
+    // MYSERIAL1.print(axies[i].limitMin);
+    // MYSERIAL1.print(" Max ");
+    // MYSERIAL1.print(axies[i].limitMax);
+    // SERIAL_EOL();
   }
 }
 
@@ -81,7 +81,7 @@ void EEPROMManager::loadLimits() {
  * @param limits NUM_AXIES*2 floats.  Each pair is one float for max limit and one for min limit.
  */
 void EEPROMManager::adjustLimits(float* limits) {
-  Serial.println(F("Adjusting limits."));
+  SERIAL_ECHOLNPGM("Adjusting limits.");
   int j       = 0;
   int changed = 0;
   float v;
@@ -106,7 +106,7 @@ void EEPROMManager::adjustLimits(float* limits) {
 }
 
 void EEPROMManager::saveHome() {
-  Serial.println(F("Saving home."));
+  SERIAL_ECHOLNPGM("Saving home.");
   int j = EEPROM_HOME;
   for (ALL_AXIES(i)) {
     writeLong(j, (long)(axies[i].homePos * 100.0f));
@@ -115,20 +115,20 @@ void EEPROMManager::saveHome() {
 }
 
 void EEPROMManager::loadHome() {
-  // Serial.print(F("Loading home:"));
+  // MYSERIAL1.print(F("Loading home:"));
   int j = EEPROM_HOME;
   for (ALL_AXIES(i)) {
     axies[i].homePos = (float)readLong(j) / 100.0f;
-    // Serial.print(' ');
-    // Serial.print(motors[i].letter);
-    // Serial.print(axies[i].homePos);
+    // MYSERIAL1.print(' ');
+    // MYSERIAL1.print(motors[i].letter);
+    // MYSERIAL1.print(axies[i].homePos);
     j += SIZEOF_FLOAT_BYTES;
   }
-  // Serial.println();
+  // SERIAL_EOL();
 }
 
 void EEPROMManager::saveCalibration() {
-  Serial.println(F("Saving calibration."));
+  SERIAL_ECHOLNPGM("Saving calibration.");
   writeLong(EEPROM_CALIBRATION_LEFT, calibrateLeft * 100);
   writeLong(EEPROM_CALIBRATION_RIGHT, calibrateRight * 100);
 }
@@ -139,7 +139,7 @@ void EEPROMManager::loadCalibration() {
 }
 
 void EEPROMManager::saveSPU() {
-  Serial.println(F("Saving SPU."));
+  SERIAL_ECHOLNPGM("Saving SPU.");
   int j = EEPROM_SPU;
   for(ALL_MUSCLES(i)) {
     writeLong(j, motor_spu[i]*100.0f);
@@ -156,7 +156,7 @@ void EEPROMManager::loadSPU() {
 }
 
 void EEPROMManager::saveJerk() {
-  Serial.println(F("Saving jerk."));
+  SERIAL_ECHOLNPGM("Saving jerk.");
   int j = EEPROM_JERK;
   for(ALL_MUSCLES(i)) {
     writeLong(j, max_jerk[i]*100.0f);
@@ -173,7 +173,7 @@ void EEPROMManager::loadJerk() {
 }
 
 void EEPROMManager::saveStepRate() {
-  Serial.println(F("Saving step rate."));
+  SERIAL_ECHOLNPGM("Saving step rate.");
   int j = EEPROM_STEP_RATE;
   for(ALL_MUSCLES(i)) {
     writeLong(j, max_step_rate[i]*100.0f);
@@ -246,13 +246,13 @@ void EEPROMManager::reportAll() {
   
 #if MACHINE_STYLE == SIXI
   // Sixi only home angle values
-  Serial.print(F("Home angles "));
+  MYSERIAL1.print(F("Home angles "));
   for (ALL_MOTORS(i)) {
-    Serial.print(' ');
-    Serial.print(motors[i].letter);
-    Serial.print(axies[i].homePos);
+    MYSERIAL1.print(' ');
+    MYSERIAL1.print(motors[i].letter);
+    MYSERIAL1.print(axies[i].homePos);
   }
-  Serial.println();
+  SERIAL_EOL();
   // current angle values
   parser.D17();
 #endif

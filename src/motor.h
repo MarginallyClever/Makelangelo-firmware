@@ -46,7 +46,7 @@
 #  define ISR_LOOP_BASE_CYCLES            4UL
 #  define ISR_STEPPER_CYCLES              16UL
 // S curve interpolation adds 40 cycles
-#  if defined(S_CURVE_ACCELERATION)
+#  if ENABLED(S_CURVE_ACCELERATION)
 #    define ISR_S_CURVE_CYCLES 40UL
 #  else
 #    define ISR_S_CURVE_CYCLES 0UL
@@ -55,8 +55,9 @@
 #  define ISR_BASE_CYCLES                 752UL
 #  define ISR_LOOP_BASE_CYCLES            32UL
 #  define ISR_STEPPER_CYCLES              88UL
-// S curve interpolation adds 160 cycles
-#  if defined(S_CURVE_ACCELERATION)
+
+// S curve interpolation adds 160 cycles0
+#  if ENABLED(S_CURVE_ACCELERATION)
 #    define ISR_S_CURVE_CYCLES 160UL
 #  else
 #    define ISR_S_CURVE_CYCLES 0UL
@@ -71,7 +72,7 @@
 // https://reprap.org/wiki/Step_rates
 #define CLOCK_MIN_STEP_FREQUENCY (F_CPU / MAXIMUM_STEPPER_RATE)
   
-#define _MIN_STEPPER_PULSE_CYCLES(N) _MAX( uint32_t(F_CPU / MAXIMUM_STEPPER_RATE),  (F_CPU / 500000UL) * (N) )
+#define _MIN_STEPPER_PULSE_CYCLES(N) _MAX( uint32_t((F_CPU) / (MAXIMUM_STEPPER_RATE)),  ((F_CPU) / 500000UL) * (N) )
   
 #define MIN_STEPPER_PULSE_CYCLES       _MIN_STEPPER_PULSE_CYCLES(uint32_t(MINIMUM_STEPPER_PULSE))
 #define ISR_LOOP_CYCLES                (ISR_LOOP_BASE_CYCLES + _MAX(MIN_STEPPER_PULSE_CYCLES, MIN_ISR_LOOP_CYCLES))
@@ -170,6 +171,10 @@
 #endif
 
 //------------------------------------------------------------------------------
+
+#define GET_AXIS_NAME(NN) (pgm_read_byte_near(AxisNames+NN))
+
+//------------------------------------------------------------------------------
 // STRUCTURES
 //------------------------------------------------------------------------------
 
@@ -198,7 +203,18 @@ public:
   static uint32_t acc_step_rate; // needed for deceleration start point
 #endif
 
+  static uint32_t steps_total;
+  static uint32_t steps_taken;
+  static uint32_t accel_until;
+  static uint32_t decel_after;
+  static uint8_t isr_step_multiplier;
+  static uint16_t directionBits;
+  static uint32_t advance_divisor;
+
+  static int32_t isr_nominal_rate;
   static uint32_t acceleration_time, deceleration_time;
+  static uint32_t min_segment_time_us;
+
 
   static void setup();
   static void home();
@@ -227,7 +243,7 @@ public:
      Set the clock 2 timer frequency.
     @input desired_freq_hz the desired frequency
   */
-  FORCE_INLINE static uint32_t calc_interval(uint32_t desired_freq_hz, uint8_t * loops) {
+  FORCE_INLINE static uint32_t calc_interval(uint32_t step_rate, uint8_t * loops) {
     uint32_t timer;
     uint8_t step_multiplier = 1;
     
@@ -244,9 +260,9 @@ public:
     };
 
     int idx=0;
-    while( idx<7 && desired_freq_hz > (uint32_t)pgm_read_dword(&limit[idx]) ) {
+    while( idx<7 && step_rate > (uint32_t)pgm_read_dword(&limit[idx]) ) {
       step_multiplier <<= 1;
-      desired_freq_hz >>= 1;
+      step_rate >>= 1;
       ++idx;
     }
     *loops = step_multiplier;
@@ -255,19 +271,19 @@ public:
     #ifdef CPU_32_BIT
       timer = uint32_t(STEPPER_TIMER_RATE) / desired_freq_hz;
     #else
-      if(desired_freq_hz < CLOCK_MIN_STEP_FREQUENCY) desired_freq_hz = CLOCK_MIN_STEP_FREQUENCY;
-      desired_freq_hz -= CLOCK_MIN_STEP_FREQUENCY;
-      if(desired_freq_hz >= 8 * 256) {
-        const uint8_t tmp_step_rate  = (desired_freq_hz & 0x00FF);
-        const uint16_t table_address = (uint16_t)&speed_lookuptable_fast[(uint8_t)(desired_freq_hz >> 8)][0],
+      NOLESS(step_rate,CLOCK_MIN_STEP_FREQUENCY);
+      step_rate -= CLOCK_MIN_STEP_FREQUENCY;
+      if(step_rate >= 8 * 256) {
+        const uint8_t tmp_step_rate  = (step_rate & 0x00FF);
+        const uint16_t table_address = (uint16_t)&speed_lookuptable_fast[(uint8_t)(step_rate >> 8)][0],
                        gain          = (uint16_t)pgm_read_word_near(table_address + 2);
         timer                        = MultiU16X8toH16(tmp_step_rate, gain);
         timer                        = (uint16_t)pgm_read_word_near(table_address) - timer;
       } else {  // lower step rates
         uint16_t table_address = (uint16_t)&speed_lookuptable_slow[0][0];
-        table_address += ((desired_freq_hz) >> 1) & 0xFFFC;
+        table_address += ((step_rate) >> 1) & 0xFFFC;
         timer = (uint16_t)pgm_read_word_near(table_address) -
-                (((uint16_t)pgm_read_word_near(table_address + 2) * (uint8_t)(desired_freq_hz & 0x0007)) >> 3);
+                (((uint16_t)pgm_read_word_near(table_address + 2) * (uint8_t)(step_rate & 0x0007)) >> 3);
       }
     #endif
 
@@ -280,18 +296,14 @@ public:
 //------------------------------------------------------------------------------
 
 extern Motor motors[NUM_MUSCLES];
-extern const char *AxisNames;
+extern const char AxisNames[] PROGMEM;
 
 // max jerk value per axis
 extern float max_jerk[NUM_MUSCLES];
-
 // maximum steps/s per motor/servo 
 extern float max_step_rate[NUM_MUSCLES];
-
 // motor steps-per-unit.  one value per motor/servo
 extern float motor_spu[NUM_MUSCLES];
-
-extern uint32_t min_segment_time_us;
 
 #if NUM_SERVOS>0
 #ifndef ESP8266

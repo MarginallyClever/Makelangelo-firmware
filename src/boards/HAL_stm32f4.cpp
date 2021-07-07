@@ -12,7 +12,7 @@ void HAL_init() {
 
 void HAL_timer_enable_interrupt(const uint8_t timerIndex) {
   if (HAL_timer_initialized(timerIndex) && !timer_enabled[timerIndex]) {
-    //Serial.println("HAL_timer_enable_interrupt");
+    //MYSERIAL1.println("HAL_timer_enable_interrupt");
     timer_enabled[timerIndex] = true;
     timer_instance[timerIndex]->attachInterrupt(Step_Handler);
   }
@@ -24,7 +24,7 @@ bool HAL_timer_interrupt_enabled(const uint8_t timerIndex) {
 
 void HAL_timer_disable_interrupt(const uint8_t timerIndex) {
   if (HAL_timer_interrupt_enabled(timerIndex)) {
-    //Serial.println("HAL_timer_disable_interrupt");
+    //MYSERIAL1.println("HAL_timer_disable_interrupt");
     timer_instance[timerIndex]->detachInterrupt();
     timer_enabled[timerIndex] = false;
   }
@@ -33,7 +33,7 @@ void HAL_timer_disable_interrupt(const uint8_t timerIndex) {
 void HAL_timer_start(const uint8_t timerIndex) {
   if(HAL_timer_initialized(timerIndex)) return;
 
-  Serial.println("HAL_timer_start");
+  MYSERIAL1.println("HAL_timer_start");
   timer_instance[timerIndex] = new HardwareTimer(STEP_TIMER_DEV);
   timer_instance[timerIndex]->pause();
   timer_instance[timerIndex]->setMode(2,TIMER_OUTPUT_COMPARE);

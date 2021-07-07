@@ -8,7 +8,7 @@
 #ifdef HAS_GRIPPER
 
 #  include "gripper_hande.h"
-#  include <SoftwareSerial.h>
+#  include <SoftwareMYSERIAL1.h>
 
 // DEFINES
 
@@ -119,10 +119,10 @@
 #  ifdef DEBUG_GRIPPER
 #    define PRINTHEX(x)                  \
       {                                  \
-        if (x < 0x10) Serial.print('0'); \
-        Serial.print(x, HEX);            \
+        if (x < 0x10) MYSERIAL1.print('0'); \
+        MYSERIAL1.print(x, HEX);            \
       }
-#    define PRINT(x) Serial.print(x)
+#    define PRINT(x) MYSERIAL1.print(x)
 #  else
 #    define PRINTHEX(x)
 #    define PRINT(x)
@@ -157,10 +157,10 @@
       WRITE_HIGH_NOCRC(x);          \
       crc = crc16_update(crc, _b1); \
     }
-#  define WRITE_END gripperSerial.write(outBuf, packed);
+#  define WRITE_END gripperMYSERIAL1.write(outBuf, packed);
 
 // GLOBALS
-SoftwareSerial gripperSerial(GRIPPER_RX, GRIPPER_TX);
+SoftwareMYSERIAL1 gripperMYSERIAL1(GRIPPER_RX, GRIPPER_TX);
 Gripper gripper;
 
 uint16_t Gripper::crc16_update(uint16_t crc, uint8_t a) {
@@ -178,8 +178,8 @@ uint16_t Gripper::crc16_update(uint16_t crc, uint8_t a) {
 }
 
 void Gripper::setup() {
-  Serial.begin(57600);
-  gripperSerial.begin(GRIPPER_BAUD);
+  MYSERIAL1.begin(57600);
+  gripperMYSERIAL1.begin(GRIPPER_BAUD);
   sendActionRequest(0);
   delay(5);
   sendActionRequest(1);
@@ -378,8 +378,8 @@ void Gripper::readResponse(int bytesExpected) {
   // PRINT("<< ");
   long t = millis();
 
-  if (gripperSerial.available()) {
-    uint8_t b        = gripperSerial.read();
+  if (gripperMYSERIAL1.available()) {
+    uint8_t b        = gripperMYSERIAL1.read();
     inBuf[arrived++] = b;
     // PRINTHEX(b);
     // PRINT(' ');

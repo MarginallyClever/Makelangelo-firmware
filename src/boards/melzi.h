@@ -69,6 +69,6 @@
 
 #endif
 
-#include "HAL_default.h"
+#include "HAL_avr.h"
 
 #endif  // BOARD_MELZI_H

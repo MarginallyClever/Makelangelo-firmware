@@ -84,18 +84,18 @@ void IK(const float *const axies, int32_t *motorStepArray) {
   // angles are now in radians
 
 #  if VERBOSE > 2
-  Serial.print(x);
-  Serial.print("\t");
-  Serial.print(y);
-  Serial.print("\t");
-  Serial.print(z);
-  Serial.print("\t=\t");
-  Serial.print(angle_0 * RAD2DEG);
-  Serial.print("\t");
-  Serial.print(angle_1 * RAD2DEG);
-  Serial.print("\t");
-  Serial.print(angle_2 * RAD2DEG);
-  Serial.print("\n");
+  MYSERIAL1.print(x);
+  MYSERIAL1.print("\t");
+  MYSERIAL1.print(y);
+  MYSERIAL1.print("\t");
+  MYSERIAL1.print(z);
+  MYSERIAL1.print("\t=\t");
+  MYSERIAL1.print(angle_0 * RAD2DEG);
+  MYSERIAL1.print("\t");
+  MYSERIAL1.print(angle_1 * RAD2DEG);
+  MYSERIAL1.print("\t");
+  MYSERIAL1.print(angle_2 * RAD2DEG);
+  MYSERIAL1.print("\n");
 #  endif
   motor_spu[0] = STEPS_PER_TURN * GEAR_RATIO / (PI * 2.0f);
   motor_spu[1] = motor_spu[0];
@@ -129,7 +129,7 @@ void robot_findHome() {
     pause(500);
   }
 #  if VERBOSE > 1
-  Serial.println(F("Found 1"));
+  MYSERIAL1.println(F("Found 1"));
 #  endif
 
   // AXIS 2
@@ -146,7 +146,7 @@ void robot_findHome() {
     pause(500);
   }
 #  if VERBOSE > 1
-  Serial.println(F("Found 0"));
+  MYSERIAL1.println(F("Found 0"));
 #  endif
 
   // hit switch
@@ -162,13 +162,13 @@ void robot_findHome() {
     pause(500);
   }
 #  if VERBOSE > 1
-  Serial.println(F("Found 2"));
+  MYSERIAL1.println(F("Found 2"));
 #  endif
 
   float homePos[3] = { HOME_X, HOME_Y, HOME_Z };  // set staring position
   teleport(homePos);
 
-  Serial.println(F("Found home."));
+  MYSERIAL1.println(F("Found home."));
 }
 
 void robot_setup() {}

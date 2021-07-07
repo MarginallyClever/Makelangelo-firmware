@@ -12,7 +12,7 @@
 //#define VERBOSE           (1)  // add to get a lot more serial output.
 //#define DEBUG_STEPPING         // uncomment to debug stepper internal timer
 #ifdef DEBUG_STEPPING
-#  define DEBUG_STEP_TIMING  // how many ticks per 
+//#  define DEBUG_STEP_TIMING  // how many ticks per 
 #endif
 
 //------------------------------------------------------------------------------
@@ -119,6 +119,11 @@
 
 // after this many milliseconds with no serial communication, the robot pings anyone connected by calling ready().
 #define TIMEOUT_OK (2000)
+
+#define SERIAL_PORT 0
+#define NUM_SERIAL 1
+#include "boards/MarlinSerial.h"
+#include "boards/serial.h"
 
 #include "config_motors.h"
 #include <Arduino.h>

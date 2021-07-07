@@ -94,7 +94,7 @@ void tmc2130_disable_stealthChop() {
   }
 
 #  ifdef MEASURED_TSTEP
-  Serial.println("measured_tstep is inputting");
+  MYSERIAL1.println("measured_tstep is inputting");
   for(ALL_MOTORS(j)) {
     drivers[j]->TCOOLTHRS((float)MEASURED_TSTEP * (100 + MEASURED_TSTEP_MARGIN_PCT) / 100.0f);  // + margin %
     drivers[j]->THIGH((float)MEASURED_TSTEP * (100 - MEASURED_TSTEP_MARGIN_PCT) / 100.0f);      // - margin %
@@ -102,7 +102,7 @@ void tmc2130_disable_stealthChop() {
 #  endif // MEASURED_TSTEP
 
 #  ifdef STEALTHCHOP
-  Serial.println(F("Disabling StealthChop"));
+  MYSERIAL1.println(F("Disabling StealthChop"));
   for(ALL_MOTORS(j)) {
     drivers[j]->stealthChop(0);
   }
@@ -110,7 +110,7 @@ void tmc2130_disable_stealthChop() {
 }
 
 void tmc2130_enable_stealthChop() {
-  Serial.println(F("enabling StealthChop"));
+  MYSERIAL1.println(F("enabling StealthChop"));
 
   HAL_timer_disable_interrupt(0);
   HAL_timer_set_compare(0,2000);
@@ -158,14 +158,14 @@ void tmc2130_motor_home() {
   HAL_timer_enable_interrupt(0);
 
   while (homing == true) {
-    Serial.print(drivers[0]->TSTEP());
+    MYSERIAL1.print(drivers[0]->TSTEP());
     for(ALL_MOTORS(j)) {
-      Serial.print(' ');
-      Serial.print(digitalRead(motors[j].limit_switch_pin));
+      MYSERIAL1.print(' ');
+      MYSERIAL1.print(digitalRead(motors[j].limit_switch_pin));
     }
-    Serial.println("\tstill homing");
+    MYSERIAL1.println("\tstill homing");
   }
-  Serial.println("Done.");
+  MYSERIAL1.println("Done.");
   tmc2130_enable_stealthChop();
 }
 
@@ -189,13 +189,13 @@ void tmc2130_homing_sequence() {
 
 void tmc2130_status() {
    for(ALL_MOTORS(i)) {
-      Serial.println(i);
+      MYSERIAL1.println(i);
       uint32_t drv_status = drivers[i]->DRV_STATUS();
       uint32_t stallValue = (drv_status & SG_RESULT_bm) >> SG_RESULT_bp;
-      Serial.print("\tstall=");        Serial.println(stallValue, DEC);
-      Serial.print("\tmicrosteps=");   Serial.println(drivers[i]->microsteps(), DEC);
-      Serial.print("\tTSTEP=");  Serial.println(drivers[i]->TSTEP());
-      Serial.print("\tTHIGH=");  Serial.println(drivers[i]->THIGH());
+      MYSERIAL1.print("\tstall=");        MYSERIAL1.println(stallValue, DEC);
+      MYSERIAL1.print("\tmicrosteps=");   MYSERIAL1.println(drivers[i]->microsteps(), DEC);
+      MYSERIAL1.print("\tTSTEP=");  MYSERIAL1.println(drivers[i]->TSTEP());
+      MYSERIAL1.print("\tTHIGH=");  MYSERIAL1.println(drivers[i]->THIGH());
     }
 }
 #endif  // HAS_TMC2130

@@ -24,41 +24,33 @@ void tmc2130_test1() {
 void unitTestWrapDegrees() {
   // unit test WRAP_DEGREES
   for (float i = -360; i <= 360; i += 0.7) {
-    Serial.print(i);
-    Serial.print("\t");
-    Serial.println(WRAP_DEGREES(i));
+    SERIAL_ECHO(i);
+    SERIAL_ECHO("\t");
+    SERIAL_ECHOLN(WRAP_DEGREES(i));
   }
 }
 
 void unitTestBitMacros() {
   uint32_t a = 0;
-  Serial.print("on=");
+  SERIAL_ECHO("on=");
   SET_BIT_ON(a, 1);
-  Serial.println(a, BIN);
+  SERIAL_PRINTLN(a, BIN);
+  SERIAL_ECHOPAIR("test=",TEST(a, 1) ? "on" : "off");
 
-  Serial.print("test=");
-  Serial.println(TEST(a, 1) ? "on" : "off");
-
-  Serial.print("off=");
+  SERIAL_ECHO("off=");
   SET_BIT_OFF(a, 1);
-  Serial.println(a, BIN);
+  SERIAL_PRINTLN(a, BIN);
+  SERIAL_ECHOPAIR("test=",TEST(a, 1) ? "on" : "off");
 
-  Serial.print("test=");
-  Serial.println(TEST(a, 1) ? "on" : "off");
-
-  Serial.print("flip=");
+  SERIAL_ECHO("flip=");
   FLIP_BIT(a, 1);
-  Serial.println(a, BIN);
+  SERIAL_PRINTLN(a, BIN);
+  SERIAL_ECHOPAIR("test=",TEST(a, 1) ? "on" : "off");
 
-  Serial.print("test=");
-  Serial.println(TEST(a, 1) ? "on" : "off");
-
-  Serial.print("set=");
+  SERIAL_ECHO("set=");
   SET_BIT(a, 1, false);
-  Serial.println(a, BIN);
-
-  Serial.print("test=");
-  Serial.println(TEST(a, 1) ? "on" : "off");
+  SERIAL_PRINTLN(a, BIN);
+  SERIAL_ECHOPAIR("test=",TEST(a, 1) ? "on" : "off");
 
   while (1) {}
 }
@@ -76,28 +68,28 @@ void testKinematics() {
     FK(A, axies2);
 
     for (j = 0; j < NUM_AXIES; ++j) {
-      Serial.print('\t');
-      Serial.print(AxisNames[j]);
-      Serial.print(axies1[j]);
+      SERIAL_CHAR('\t');
+      SERIAL_CHAR(GET_AXIS_NAME(j));
+      SERIAL_ECHO(axies1[j]);
     }
     for (j = 0; j < NUM_MOTORS; ++j) {
-      Serial.print('\t');
-      Serial.print(motors[j].letter);
-      Serial.print(A[j]);
+      SERIAL_CHAR('\t');
+      SERIAL_CHAR(motors[j].letter);
+      SERIAL_ECHO(A[j]);
     }
     for (j = 0; j < NUM_AXIES; ++j) {
-      Serial.print('\t');
-      Serial.print(AxisNames[j]);
-      Serial.print('\'');
-      Serial.print(axies2[j]);
+      SERIAL_CHAR('\t');
+      SERIAL_CHAR(GET_AXIS_NAME(j));
+      SERIAL_CHAR('\'');
+      SERIAL_ECHO(axies2[j]);
     }
     for (j = 0; j < NUM_AXIES; ++j) {
-      Serial.print(F("\td"));
-      Serial.print(AxisNames[j]);
-      Serial.print('=');
-      Serial.print(axies2[j] - axies1[j]);
+      SERIAL_ECHOPGM("\td");
+      SERIAL_CHAR(GET_AXIS_NAME(j));
+      SERIAL_CHAR('=');
+      SERIAL_ECHO(axies2[j] - axies1[j]);
     }
-    Serial.println();
+    SERIAL_EOL();
   }
 }
 

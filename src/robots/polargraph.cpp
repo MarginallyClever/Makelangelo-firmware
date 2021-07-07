@@ -60,20 +60,20 @@ int FK(int32_t *motorStepArray, float *cartesian) {
 
   cartesian[0] = theta * a + left;
   /*
-  Serial.print("ymax=");   Serial.println(top);
-  Serial.print("theta=");  Serial.println(theta);
-  Serial.print("a=");      Serial.println(a);
-  Serial.print("b=");      Serial.println(b);
-  Serial.print("c=");      Serial.println(c);
-  Serial.print("S0=");     Serial.println(motorStepArray[0]);
-  Serial.print("S1=");     Serial.println(motorStepArray[1]);
+  MYSERIAL1.print("ymax=");   MYSERIAL1.println(top);
+  MYSERIAL1.print("theta=");  MYSERIAL1.println(theta);
+  MYSERIAL1.print("a=");      MYSERIAL1.println(a);
+  MYSERIAL1.print("b=");      MYSERIAL1.println(b);
+  MYSERIAL1.print("c=");      MYSERIAL1.println(c);
+  MYSERIAL1.print("S0=");     MYSERIAL1.println(motorStepArray[0]);
+  MYSERIAL1.print("S1=");     MYSERIAL1.println(motorStepArray[1]);
   */
   cartesian[1] = top - sqrtf(1.0 - theta * theta) * a;
   cartesian[2] = motorStepArray[2];
   /*
-  Serial.print("C0=");      Serial.println(cartesian[0]);
-  Serial.print("C1=");      Serial.println(cartesian[1]);
-  Serial.print("C2=");      Serial.println(cartesian[2]);
+  MYSERIAL1.print("C0=");      MYSERIAL1.println(cartesian[0]);
+  MYSERIAL1.print("C1=");      MYSERIAL1.println(cartesian[1]);
+  MYSERIAL1.print("C2=");      MYSERIAL1.println(cartesian[2]);
   */
   return 0;
 }
@@ -87,7 +87,7 @@ void recordHome() {
 #    endif
   hal_timer_t stepDelay = findStepDelay();
 
-  Serial.println(F("Record home..."));
+  SERIAL_ECHOLNPGM("Record home...");
 
   digitalWrite(MOTOR_0_DIR_PIN, LOW);
   digitalWrite(MOTOR_1_DIR_PIN, LOW);
@@ -101,19 +101,18 @@ void recordHome() {
   homes[1] = axies[1].homePos;
   homes[2] = axies[2].pos;
   IK(homes, count);
-  Serial.print(F("HX="));
-  Serial.println(homes[0]);
-  Serial.print(F("HY="));
-  Serial.println(homes[1]);
-  // Serial.print(F("L1="));  Serial.println(leftCount);
-  // Serial.print(F("R1="));  Serial.println(rightCount);
 
-  Serial.println(F("A..."));
+  SERIAL_ECHOLNPAIR_F("HX=",homes[0]);
+  SERIAL_ECHOLNPAIR_F("HY=",homes[1]);
+  //SERIAL_ECHOLNPAIR_F("L1=",leftCount);
+  //SERIAL_ECHOLNPAIR_F("R1=",rightCount);
+  SERIAL_ECHOLNPGM("A...");
+  
   do {
     if (left == 0) {
       if (digitalRead(LIMIT_SWITCH_PIN_LEFT) == LOW) {
         left = 1;
-        Serial.println(F("Left..."));
+        SERIAL_ECHOLNPGM("Left...");
       }
       ++count[0];
       digitalWrite(MOTOR_0_STEP_PIN, HIGH);
@@ -122,7 +121,7 @@ void recordHome() {
     if (right == 0) {
       if (digitalRead(LIMIT_SWITCH_PIN_RIGHT) == LOW) {
         right = 1;
-        Serial.println(F("Right..."));
+        SERIAL_ECHOLNPGM("Right...");
       }
       ++count[1];
       digitalWrite(MOTOR_1_STEP_PIN, HIGH);
@@ -131,7 +130,7 @@ void recordHome() {
     pause(stepDelay * 2);
   } while (left + right < 2);
 
-  Serial.println(F("B..."));
+  SERIAL_ECHOLNPGM("B...");
   digitalWrite(MOTOR_0_DIR_PIN, HIGH);
   digitalWrite(MOTOR_1_DIR_PIN, HIGH);
   for (int i = 0; i < STEPS_PER_TURN; ++i) {
@@ -145,14 +144,14 @@ void recordHome() {
   }
 
   left = right = 0;
-  Serial.println(F("C..."));
+  SERIAL_ECHOLNPGM("C...");
   digitalWrite(MOTOR_0_DIR_PIN, LOW);
   digitalWrite(MOTOR_1_DIR_PIN, LOW);
   do {
     if (left == 0) {
       if (digitalRead(LIMIT_SWITCH_PIN_LEFT) == LOW) {
         left = 1;
-        Serial.println(F("Left..."));
+        SERIAL_ECHOLNPGM("Left...");
       }
       ++count[0];
       digitalWrite(MOTOR_0_STEP_PIN, HIGH);
@@ -161,7 +160,7 @@ void recordHome() {
     if (right == 0) {
       if (digitalRead(LIMIT_SWITCH_PIN_RIGHT) == LOW) {
         right = 1;
-        Serial.println(F("Right..."));
+        SERIAL_ECHOLNPGM("Right...");
       }
       ++count[1];
       digitalWrite(MOTOR_1_STEP_PIN, HIGH);
@@ -182,7 +181,7 @@ void recordHome() {
   FK(count, offset);
   teleport(offset);
   parser.M114();
-  Serial.println(F("Done."));
+  SERIAL_ECHOLNPGM("Done.");
 #  endif  // defined(CAN_HOME)
 }
 
@@ -228,7 +227,7 @@ void robot_findHome() {
   motor.setPenAngle(PEN_UP_ANGLE);
 #    endif
 
-  Serial.println(F("Find Home..."));
+  SERIAL_ECHOLNPGM("Find Home...");
 
 #    ifdef HAS_TMC2130
   delay(500);
@@ -259,14 +258,14 @@ void robot_findHome() {
 
 #    endif  // HAS_TMC2130
 
-  // Serial.println(F("Estimating position..."));
-  long count[NUM_MUSCLES];
+  // SERIAL_ECHOLNPGM("Estimating position...");
+  int32_t count[NUM_MUSCLES];
   count[0] = calibrateLeft / UNITS_PER_STEP;
   count[1] = calibrateRight / UNITS_PER_STEP;
   count[2] = axies[2].pos;
-  // Serial.print("cl=");        Serial.println(calibrateLeft);
-  // Serial.print("cr=");        Serial.println(calibrateRight);
-  // Serial.print("t*1000=");    Serial.println(UNITS_PER_STEP*1000);
+  // SERIAL_ECHOLNPGM("cl=");        MYSERIAL1.println(calibrateLeft);
+  // SERIAL_ECHOLNPGM("cr=");        MYSERIAL1.println(calibrateRight);
+  // SERIAL_ECHOLNPGM("t*1000=");    MYSERIAL1.println(UNITS_PER_STEP*1000);
 
   // current position is...
   float offset[NUM_AXIES];
@@ -281,13 +280,13 @@ void robot_findHome() {
   offset[1] = axies[1].homePos;
   planner.bufferLine(offset, desiredFeedRate);
 
-  Serial.println(F("Done."));
+  SERIAL_ECHOLNPGM("Done.");
 #  endif  // defined(CAN_HOME)
 }
 
 /**
  * Starting from the home position, bump the switches and measure the length of each belt.
- * Does not save the values, only reports them to serial.
+ * Does not save the values, only reports them to MYSERIAL1.
  * @Deprecated
  */
 void calibrateBelts() {
@@ -298,7 +297,7 @@ void calibrateBelts() {
   motor.setPenAngle(PEN_UP_ANGLE);
 #    endif
 
-  Serial.println(F("Find switches..."));
+  SERIAL_ECHOLNPGM("Find switches...");
 
   // reel in the left motor and the right motor out until contact is made.
   digitalWrite(MOTOR_0_DIR_PIN, LOW);
@@ -339,7 +338,7 @@ void calibrateBelts() {
   // make sure there's no momentum to skip the belt on the pulley.
   delay(500);
 
-  Serial.println(F("Estimating position..."));
+  SERIAL_ECHOLNPGM("Estimating position...");
   calibrateLeft  = (float)steps[0] * UNITS_PER_STEP;
   calibrateRight = (float)steps[1] * UNITS_PER_STEP;
 
@@ -352,14 +351,14 @@ void calibrateBelts() {
   parser.M114();
 
   // go home.
-  Serial.println(F("Homing..."));
+  SERIAL_ECHOLNPGM("Homing...");
 
   float offset[NUM_AXIES];
   get_end_plus_offset(offset);
   offset[0] = axies[0].homePos;
   offset[1] = axies[1].homePos;
   planner.bufferLine(offset, desiredFeedRate);
-  Serial.println(F("Done."));
+  SERIAL_ECHOLNPGM("Done.");
 #  endif  // defined(CAN_HOME)
 }
 

@@ -95,13 +95,23 @@ class Parser {
 
   void start();
   // parse the number starting at p.
-  float parseFloat(char *p);
+  static float parseFloat(char *p);
+
+  // parse the number starting at p.
+  FORCE_INLINE static int16_t parseInt(char *p) {
+    return strtol(p,NULL,10);
+  }
+
   // find the matching code and return the number that immediately follows it.
-  float parseFloat(char code,float valueIfNotFound);
+  float parseFloat(const char code,float valueIfNotFound);
+
+  // find the matching code and return the number that immediately follows it.
+  int16_t parseInt(const char code,int16_t valueIfNotFound);
 
   // does this command have the matching code?
-  int8_t hasGCode(char *p,char code);
-  int8_t hasGCode(char code);
+  int8_t hasGCode(char *p,const char code);
+  int8_t hasGCode(const char code);
+  
   // if there is a line number, checks it is the correct line number.  if there is a * at the end, checks the string is
   // valid.
   char checkLineNumberAndCRCisOK();

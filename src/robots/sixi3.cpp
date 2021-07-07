@@ -51,7 +51,7 @@ void robot_findHome() {
 
   hal_timer_t stepDelay = findStepDelay();
 
-  Serial.println(F("Finding..."));
+  MYSERIAL1.println(F("Finding..."));
 
   uint8_t hits;
   // back up until all switches are hit
@@ -63,18 +63,18 @@ void robot_findHome() {
       // if this switch hasn't been hit yet
       if (digitalRead(motors[i].limit_switch_pin) == HIGH) {
         // move "down"
-        Serial.print('|');
+        MYSERIAL1.print('|');
         digitalWrite(motors[i].step_pin, HIGH);
         digitalWrite(motors[i].step_pin, LOW);
       } else {
         ++hits;
-        Serial.print('*');
+        MYSERIAL1.print('*');
       }
     }
-    Serial.println();
+    SERIAL_EOL();
     pause(stepDelay);
   } while (hits < NUM_MOTORS);
-  Serial.println(F("Found."));
+  MYSERIAL1.println(F("Found."));
 
   float zeros[6] = { 0, 0, 0, 0, 0, 0 };
   teleport(zeros);

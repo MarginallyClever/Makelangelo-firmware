@@ -70,7 +70,7 @@
 
 #  if MACHINE_HARDWARE_VERSION == MAKELANGELO_5
 #    ifndef MAX_SEGMENTS
-#      define MAX_SEGMENTS (32)
+#      define MAX_SEGMENTS (16)
 #    endif
 #    define USE_LIMIT_SWITCH
 #    define HAS_SD

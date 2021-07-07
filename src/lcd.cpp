@@ -337,12 +337,12 @@ void LCD_read() {
     }
     // for debugging potentiometer
     {
-      //if(lcd_turn !=0) Serial.print(lcd_turn>0?'+':'-');
-      //else Serial.print(' ');
-      //Serial.print(millis());     Serial.print('\t');
-      //Serial.print(lcd_rot_old);  Serial.print('\t');
-      //Serial.print(lcd_rot);      Serial.print('\t');
-      //Serial.print(lcd_turn);     Serial.print('\n');
+      //if(lcd_turn !=0) MYSERIAL1.print(lcd_turn>0?'+':'-');
+      //else MYSERIAL1.print(' ');
+      //MYSERIAL1.print(millis());     MYSERIAL1.print('\t');
+      //MYSERIAL1.print(lcd_rot_old);  MYSERIAL1.print('\t');
+      //MYSERIAL1.print(lcd_rot);      MYSERIAL1.print('\t');
+      //MYSERIAL1.print(lcd_turn);     MYSERIAL1.print('\n');
     }
 
     lcd_rot_old = lcd_rot;
@@ -496,10 +496,10 @@ void LCD_start_menu() {
   if(lcd_turn!=0 || lcd_click_now==1) lcd_dirty=1;
 
   if(lcd_dirty==1) {
-    //Serial.print(menuStack[menuStackDepth].menu_position    );  Serial.print("\t");  // 0
-    //Serial.print(menuStack[menuStackDepth].menu_position_sum);  Serial.print("\t");  // 1
-    //Serial.print(screen_position  );  Serial.print("\t");  // 0
-    //Serial.print(num_menu_items   );  Serial.print("\n");  // 8
+    //MYSERIAL1.print(menuStack[menuStackDepth].menu_position    );  MYSERIAL1.print("\t");  // 0
+    //MYSERIAL1.print(menuStack[menuStackDepth].menu_position_sum);  MYSERIAL1.print("\t");  // 1
+    //MYSERIAL1.print(screen_position  );  MYSERIAL1.print("\t");  // 0
+    //MYSERIAL1.print(num_menu_items   );  MYSERIAL1.print("\n");  // 8
 
     MENU_START()
     MENU_BACK("Main");
@@ -758,13 +758,13 @@ void LCD_update() {
     dialRotationFrequencyCounter = _MAX(dialRotationFrequencyCounter,0);
     lcd_turnMultiplier = lcd_turn * (dialRotationFrequencyCounter * 0.5);
 
-    // Serial.print(lcd_turn,DEC);
-    // Serial.print('\t');  Serial.print(menuStack[menuStackDepth].menu_position,DEC);
-    // Serial.print('\t');  Serial.print(menuStack[menuStackDepth].menu_position_sum,DEC);
-    // Serial.print('\t');  Serial.print(screen_position,DEC);
-    // Serial.print('\t');  Serial.print(screen_end,DEC);
-    // Serial.print('\t');  Serial.print(num_menu_items,DEC);
-    // Serial.print('\n');
+    // MYSERIAL1.print(lcd_turn,DEC);
+    // MYSERIAL1.print('\t');  MYSERIAL1.print(menuStack[menuStackDepth].menu_position,DEC);
+    // MYSERIAL1.print('\t');  MYSERIAL1.print(menuStack[menuStackDepth].menu_position_sum,DEC);
+    // MYSERIAL1.print('\t');  MYSERIAL1.print(screen_position,DEC);
+    // MYSERIAL1.print('\t');  MYSERIAL1.print(screen_end,DEC);
+    // MYSERIAL1.print('\t');  MYSERIAL1.print(num_menu_items,DEC);
+    // MYSERIAL1.print('\n');
 
     // update the menu position
     if (lcd_turn != 0 && num_menu_items > 1) {
@@ -784,7 +784,7 @@ void LCD_update() {
       }
       menuStack[menuStackDepth].menu_position = newMenuPosition;
 
-      // Serial.println(menu_position);
+      // MYSERIAL1.println(menu_position);
 
       if (screen_position > newMenuPosition) screen_position = newMenuPosition;
       if (screen_position < newMenuPosition - (LCD_HEIGHT - 1)) screen_position = newMenuPosition - (LCD_HEIGHT - 1);
@@ -831,7 +831,7 @@ void LCD_settings_menu() {
 
   MENU_FLOAT("mm/s", desiredFeedRate);
   MENU_FLOAT("mm/s/s", desiredAcceleration);
-  MENU_LONG("seg min", min_segment_time_us);
+  MENU_LONG("seg min", Stepper::min_segment_time_us);
 
 #  if MACHINE_STYLE == POLARGRAPH
   MENU_FLOAT("Home X", axies[0].homePos);

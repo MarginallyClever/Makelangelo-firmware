@@ -62,8 +62,8 @@ void IK(const float *const axies, int32_t *motorStepArray) {
 #  ifdef HAS_GRIPPER
   float jT = axies[6] * 255.0 / 180.0;
   jT       = _MIN(_MAX(jT, 0), 255);
-  // Serial.print("jT=");
-  // Serial.println(jT);
+  // MYSERIAL1.print("jT=");
+  // MYSERIAL1.println(jT);
   motorStepArray[6] = jT;
 #  else
   motorStepArray[6] = axies[6];
@@ -74,19 +74,19 @@ void IK(const float *const axies, int32_t *motorStepArray) {
   }
 
 #  ifdef DEBUG_IK
-  Serial.print("J=");
-  Serial.print(J0);
-  Serial.print('\t');
-  Serial.print(J1);
-  Serial.print('\t');
-  Serial.print(J2);
-  Serial.print('\t');
-  Serial.print(J3);
-  Serial.print('\t');
-  Serial.print(J4);
-  Serial.print('\t');
-  Serial.print(J5);
-  Serial.print('\n');
+  MYSERIAL1.print("J=");
+  MYSERIAL1.print(J0);
+  MYSERIAL1.print('\t');
+  MYSERIAL1.print(J1);
+  MYSERIAL1.print('\t');
+  MYSERIAL1.print(J2);
+  MYSERIAL1.print('\t');
+  MYSERIAL1.print(J3);
+  MYSERIAL1.print('\t');
+  MYSERIAL1.print(J4);
+  MYSERIAL1.print('\t');
+  MYSERIAL1.print(J5);
+  MYSERIAL1.print('\n');
 #  endif
 }
 
@@ -173,7 +173,7 @@ boolean SensorAS5147::getRawValue(uint16_t &result) {
 
     input = digitalRead(pin_MISO);  // miso
 #  ifdef VERBOSE
-    Serial.print(input, DEC);
+    MYSERIAL1.print(input, DEC);
 #  endif
     result |= input;
     parity ^= (i > 0) & input;
@@ -221,13 +221,13 @@ void SensorManager::updateAll() {
     if (sensors[i].getRawValue(rawValue)) continue;
     v = extractAngleFromRawValue(rawValue);
     if (i != 1 && i != 2) v = -v;
-    // Serial.print(motors[i].letter);
-    // Serial.print("\traw=");  Serial.print(rawValue,BIN);
-    // Serial.print("\tbefore=");  Serial.print(v);
-    // Serial.print("\thome=");  Serial.print(axies[i].homePos);
+    // MYSERIAL1.print(motors[i].letter);
+    // MYSERIAL1.print("\traw=");  MYSERIAL1.print(rawValue,BIN);
+    // MYSERIAL1.print("\tbefore=");  MYSERIAL1.print(v);
+    // MYSERIAL1.print("\thome=");  MYSERIAL1.print(axies[i].homePos);
     v -= axies[i].homePos;
     v = WRAP_DEGREES(v);
-    // Serial.print("\tafter=");  Serial.println(v);
+    // MYSERIAL1.print("\tafter=");  MYSERIAL1.println(v);
     sensors[i].angle = v;
 
     // if limit testing is on and no problem at the moment
@@ -236,15 +236,15 @@ void SensorManager::updateAll() {
         // and the max limit is passed, barf
         SET_BIT_ON(sensorManager.positionErrorFlags, POSITION_ERROR_FLAG_ERROR);
         CRITICAL_SECTION_START();
-        Serial.print(motors[i].letter);
-        Serial.println(F(" MAX LIMIT"));
+        MYSERIAL1.print(motors[i].letter);
+        MYSERIAL1.println(F(" MAX LIMIT"));
       }
       if (v < axies[i].limitMin) {
         // and the min limit is passed, barf
         SET_BIT_ON(sensorManager.positionErrorFlags, POSITION_ERROR_FLAG_ERROR);
         CRITICAL_SECTION_START();
-        Serial.print(motors[i].letter);
-        Serial.println(F(" MIN LIMIT"));
+        MYSERIAL1.print(motors[i].letter);
+        MYSERIAL1.println(F(" MIN LIMIT"));
       }
     }
   }
@@ -267,25 +267,25 @@ void reportError() {
   planner.wait_for_empty_segment_buffer();
   sensorManager.updateAll();
 
-  Serial.print(F("DP"));
+  SERIAL_ECHOPGM("DP"));
 
   for (ALL_SENSORS(i)) {
-    Serial.print('\t');
-    Serial.print(AxisNames[i]);
+    SERIAL_CHAR('\t');
+    SERIAL_CHAR(GET_AXIS_NAME(i));
     float dp = axies[i].pos - sensorManager.sensors[i].angle;
-    Serial.print(dp, 3);
+    SERIAL_PRINT(dp, 3);
   }
-  Serial.println();
+  SERIAL_EOL();
 }
 
 void printGoto(float *pos) {
-  Serial.print(F("G0"));
+  SERIAL_ECHOPGM("G0"));
   for (ALL_AXIES(i)) {
-    Serial.print('\t');
-    Serial.print(AxisNames[i]);
-    Serial.print(pos[i], 3);
+    SERIAL_CHAR('\t');
+    SERIAL_CHAR(GET_AXIS_NAME(i));
+    SERIAL_PRINT(pos[i], 3);
   }
-  Serial.println();
+  SERIAL_EOL();
 }
 
 void drive(int i, int totalSteps, int t) {
@@ -322,14 +322,13 @@ void sixiDemo3a(int i, float t) {
   float vStart = sensorManager.sensors[4].angle;
   float wStart = sensorManager.sensors[5].angle;
 
-  Serial.print(AxisNames[i]);
-  Serial.print('s');
-  Serial.print('\t');
-  Serial.print(uStart, 5);
-  Serial.print('\t');
-  Serial.print(vStart, 5);
-  Serial.print('\t');
-  Serial.println(wStart, 5);
+  SERIAL_CHAR(GET_AXIS_NAME(i));
+  SERIAL_ECHOPGM("s\t");
+  SERIAL_PRINT(uStart, 5);
+  SERIAL_CHAR('\t');
+  SERIAL_PRINT(vStart, 5);
+  SERIAL_CHAR('\t');
+  SERIAL_PRINTLN(wStart, 5);
 
   digitalWrite(motors[i].dir_pin, LOW);
   // drive(i,6000,t);
@@ -340,30 +339,30 @@ void sixiDemo3a(int i, float t) {
   float vEnd = sensorManager.sensors[4].angle;
   float wEnd = sensorManager.sensors[5].angle;
 
-  Serial.print(AxisNames[i]);
-  Serial.print('e');
-  Serial.print('\t');
-  Serial.print(uEnd, 5);
-  Serial.print('\t');
-  Serial.print(vEnd, 5);
-  Serial.print('\t');
-  Serial.println(wEnd, 5);
+  SERIAL_CHAR(GET_AXIS_NAME(i));
+  SERIAL_CHAR('e');
+  SERIAL_CHAR('\t');
+  SERIAL_PRINT(uEnd, 5);
+  SERIAL_CHAR('\t');
+  SERIAL_PRINT(vEnd, 5);
+  SERIAL_CHAR('\t');
+  SERIAL_PRINTLN(wEnd, 5);
 
-  Serial.print(AxisNames[i]);
-  Serial.print('d');
-  Serial.print('\t');
-  Serial.print((uEnd - uStart), 5);
-  Serial.print('\t');
-  Serial.print((vEnd - vStart), 5);
-  Serial.print('\t');
-  Serial.println((wEnd - wStart), 5);
+  SERIAL_PRINT(AxisNames[i]);
+  SERIAL_CHAR('d');
+  SERIAL_CHAR('\t');
+  SERIAL_PRINT((uEnd - uStart), 5);
+  SERIAL_CHAR('\t');
+  SERIAL_PRINT((vEnd - vStart), 5);
+  SERIAL_CHAR('\t');
+  SERIAL_PRINTLN((wEnd - wStart), 5);
 
   // put it back where we found it
   digitalWrite(motors[i].dir_pin, HIGH);
   // drive(i,3000,t);
   drive2(i, 0);
 
-  Serial.println();
+  SERIAL_EOL();
 }
 
 // move each axis and measure the degree-per-step of just that one axis.
@@ -373,9 +372,9 @@ void sixiDemo3() {
   float of  = desiredFeedRate;
   desiredFeedRate = 60;
 
-  Serial.println("Jn\tU\tV\tW");
+  SERIAL_ECHOPGM("Jn\tU\tV\tW");
 
-  for (int i = 3; i < 6; ++i) { sixiDemo3a(i, 5); }
+  for (int i = 3; i < 6; ++i) sixiDemo3a(i, 5);
 
   desiredFeedRate = of;
 }
@@ -385,7 +384,7 @@ void sixiDemo2a(float t) {
 
   int totalSteps = 200;
 
-  Serial.print(t);
+  SERIAL_ECHO_F(t);
 
   for (ALL_SENSORS(i)) {
     digitalWrite(motors[i].dir_pin, LOW);
@@ -400,8 +399,8 @@ void sixiDemo2a(float t) {
     float aEnd    = sensorManager.sensors[i].angle;
     float perStep = fabs(aEnd - aStart) / (float)totalSteps;
 
-    Serial.print('\t');
-    Serial.print(perStep, 5);
+    SERIAL_CHAR('\t');
+    SERIAL_PRINT(perStep, 5);
 
     // put it back where we found it
     digitalWrite(motors[i].dir_pin, HIGH);
@@ -411,20 +410,20 @@ void sixiDemo2a(float t) {
       delay(t);
     }
   }
-  Serial.println();
+  SERIAL_EOL();
 }
 
 // move each axis and measure the degree-per-step of just that one axis.
 void sixiDemo2() {
   robot_findHome();
 
-  Serial.print("\ndt");
+  SERIAL_CHARPGM("\ndt");
 
-#  define PPX(NN)                             \
-    {                                         \
-      Serial.print('\t');                     \
-      Serial.print(AxisNames[NN]);            \
-      Serial.print(UNITS_PER_STEP_##NN, 5); \
+#  define PPX(NN)                           \
+    {                                       \
+      SERIAL_CHAR('\t');                    \
+      SERIAL_CHAR(GET_AXIS_NAME(NN));       \
+      SERIAL_PRINT(UNITS_PER_STEP_##NN, 5); \
     }
   PPX(0);
   PPX(1);
@@ -432,15 +431,14 @@ void sixiDemo2() {
   PPX(3);
   PPX(4);
   PPX(5);
-  Serial.println();
+  SERIAL_EOL();
 
-  for (int i = 50; i >= 20; --i) { sixiDemo2a(i); }
+  for (int i = 50; i >= 20; --i) sixiDemo2a(i);
 }
 
 void sixiDemo1() {
-  Serial.println(F("SIXI DEMO START"));
-  Serial.print("AXIES=");
-  Serial.println(NUM_AXIES);
+  SERIAL_ECHOPGM("SIXI DEMO START AXIES=");
+  SERIAL_ECHOLNPGM(NUM_AXIES);
 
 
   float posHome[NUM_AXIES];
@@ -496,7 +494,7 @@ void sixiDemo1() {
   desiredFeedRate    = fr;
   desiredAcceleration = aa;
 
-  Serial.println(F("SIXI DEMO END"));
+  SERIAL_ECHOPGM("SIXI DEMO END");
 }
 
 // d15

@@ -35,12 +35,12 @@ int delta_calcAngleYZ(float x0, float y0, float z0, long &theta) {
             (2.0 * z0);
   float b = (y1 - y0) / z0;
 
-  // Serial.print("a=");  Serial.println(a);
-  // Serial.print("b=");  Serial.println(b);
+  // MYSERIAL1.print("a=");  MYSERIAL1.println(a);
+  // MYSERIAL1.print("b=");  MYSERIAL1.println(b);
 
   // discriminant
   float d = -(a + b * y1) * (a + b * y1) + SHOULDER_TO_ELBOW * (b * b * SHOULDER_TO_ELBOW + SHOULDER_TO_ELBOW);
-  // Serial.print("d=");  Serial.println(d);
+  // MYSERIAL1.print("d=");  MYSERIAL1.println(d);
   if (d < 0) return 1;  // non-existing povar.  return error, theta
 
   float yj = (y1 - a * b - sqrtf(d)) / (b * b + 1);  // choosing outer povar
@@ -48,9 +48,9 @@ int delta_calcAngleYZ(float x0, float y0, float z0, long &theta) {
   theta    = atan(-zj / (y1 - yj)) * 180.0 / PI + ((yj > y1) ? 180.0 : 0.0);
   theta *= MICROSTEP_PER_DEGREE;
 
-  // Serial.print("yj=");  Serial.println(yj);
-  // Serial.print("zj=");  Serial.println(zj);
-  // Serial.print("theta=");  Serial.println(theta);
+  // MYSERIAL1.print("yj=");  MYSERIAL1.println(yj);
+  // MYSERIAL1.print("zj=");  MYSERIAL1.println(zj);
+  // MYSERIAL1.print("theta=");  MYSERIAL1.println(theta);
 
   return 0;  // return error, theta
 }
@@ -88,14 +88,14 @@ void IK(const float *const axies, int32_t *motorStepArray) {
   motorStepArray[1] *= motor_spu[1];
   motorStepArray[2] *= motor_spu[2];
 
-  // Serial.print("IK ");
-  // Serial.print('\t');  Serial.print(axies[0]);
-  // Serial.print('\t');  Serial.print(axies[1]);
-  // Serial.print('\t');  Serial.print(axies[2]);
-  // Serial.print('\t');  Serial.print(motorStepArray[0]);
-  // Serial.print('\t');  Serial.print(motorStepArray[1]);
-  // Serial.print('\t');  Serial.print(motorStepArray[2]);
-  // Serial.print('\n');
+  // MYSERIAL1.print("IK ");
+  // MYSERIAL1.print('\t');  MYSERIAL1.print(axies[0]);
+  // MYSERIAL1.print('\t');  MYSERIAL1.print(axies[1]);
+  // MYSERIAL1.print('\t');  MYSERIAL1.print(axies[2]);
+  // MYSERIAL1.print('\t');  MYSERIAL1.print(motorStepArray[0]);
+  // MYSERIAL1.print('\t');  MYSERIAL1.print(motorStepArray[1]);
+  // MYSERIAL1.print('\t');  MYSERIAL1.print(motorStepArray[2]);
+  // MYSERIAL1.print('\n');
 }
 
 /**
@@ -179,20 +179,20 @@ void robot_findHome() {
     // move to home position
     digitalWrite(motors[i].dir_pin, DELTA_HOME_DIRECTION == LOW ? HIGH : LOW);
     for (j = 0; j < steps_to_zero; ++j) {
-      Serial.println(i, DEC);
+      MYSERIAL1.println(i, DEC);
       digitalWrite(motors[i].step_pin, HIGH);
       digitalWrite(motors[i].step_pin, LOW);
       pause(stepDelay);
     }
   }
 
-  Serial.println("Done.");
+  MYSERIAL1.println("Done.");
   float aa = CENTER_TO_SHOULDER + SHOULDER_TO_ELBOW - EFFECTOR_TO_WRIST;
   float cc = ELBOW_TO_WRIST;
   float bb = sqrtf(cc * cc - aa * aa);
-  // Serial.print("aa=");  Serial.println(aa);
-  // Serial.print("bb=");  Serial.println(bb);
-  // Serial.print("cc=");  Serial.println(cc);
+  // MYSERIAL1.print("aa=");  MYSERIAL1.println(aa);
+  // MYSERIAL1.print("bb=");  MYSERIAL1.println(bb);
+  // MYSERIAL1.print("cc=");  MYSERIAL1.println(cc);
   axies[0].pos = 0;
   axies[1].pos = 0;
   axies[2].pos = CENTER_TO_FLOOR - bb;

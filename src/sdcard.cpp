@@ -61,9 +61,9 @@ void SDCard::load_card() {
 void SDCard::check() {
   int state = (digitalRead(SDCARDDETECT) == LOW);
   if (sd_inserted != state) {
-    Serial.print("SD is ");
+    SERIAL_ECHOPGM("SD is ");
     if (!state) {
-      Serial.println(F("removed"));
+      SERIAL_ECHOLNPGM("removed");
       if (sd_printing_now) {
         // TODO: uh oh!  Please reinsert SD card!
         // TODO: lift pen if needed
@@ -71,7 +71,7 @@ void SDCard::check() {
       }
       sd_printing_now = false;
     } else {
-      Serial.println(F("added"));
+      SERIAL_ECHOLNPGM("added");
       load_card();
       // TODO: is flag waiting for SD return active?
       // TODO: lower pen if needed
@@ -96,7 +96,7 @@ void SDCard::check() {
           // update the % visible on the LCD.
           sd_percent_complete = 100.0 * (float)sd_bytes_read / (float)sd_file_size;
           // echo command?
-          // Serial.println(buffer);
+          // SERIAL_ECHOLN(buffer);
 
           bufferPos=0;
           // quit this loop so we can update the LCD and listen for commands from the laptop (if any)
@@ -106,7 +106,7 @@ void SDCard::check() {
     }
 
     if (sd_print_file.peek() == -1) {
-      Serial.println("EOF Drawing done.");
+      SERIAL_ECHOLNPGM("EOF Drawing done.");
       sd_print_file.close();
       sd_printing_now = false;
       if (sd_inserted) {
@@ -143,7 +143,7 @@ void SDCard::listFiles() {
   while (entry.openNext(&root)) {
     if (!entry.isSubDir() && !entry.isHidden()) {
       entry.getName(filename, 32);
-      Serial.println(filename);
+      SERIAL_ECHOLN(filename);
     }
     entry.close();
   }

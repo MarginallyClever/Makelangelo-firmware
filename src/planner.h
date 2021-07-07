@@ -18,7 +18,9 @@
 #endif
 
 // if a segment added to the buffer is less than this many motor steps, roll it into the next move.
+#ifndef MIN_STEPS_PER_SEGMENT
 #define MIN_STEPS_PER_SEGMENT 6
+#endif
 
 #define MINIMUM_PLANNER_SPEED 0.05  // (mm/s)
 

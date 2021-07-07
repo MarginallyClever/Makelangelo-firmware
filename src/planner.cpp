@@ -709,63 +709,63 @@ void Planner::describeAllSegments() {
   static uint8_t once = 0;
   if(once == 0) {
     once = 1;
-    Serial.println("A = index");
-    Serial.println("B = distance");
-    Serial.println("C = acceleration");
-    Serial.println("D = acceleration steps s2");
-    Serial.println("E = acceleration rate");
+    MYSERIAL1.println("A = index");
+    MYSERIAL1.println("B = distance");
+    MYSERIAL1.println("C = acceleration");
+    MYSERIAL1.println("D = acceleration steps s2");
+    MYSERIAL1.println("E = acceleration rate");
 
-    Serial.println("F = entry_speed");
-    Serial.println("G = nominal_speed");
-    Serial.println("H = entry_speed_max");
+    MYSERIAL1.println("F = entry_speed");
+    MYSERIAL1.println("G = nominal_speed");
+    MYSERIAL1.println("H = entry_speed_max");
 
-    Serial.println("I = entry rate");
-    Serial.println("J = nominal rate");
-    Serial.println("K = exit rate");
+    MYSERIAL1.println("I = entry rate");
+    MYSERIAL1.println("J = nominal rate");
+    MYSERIAL1.println("K = exit rate");
 
-    Serial.println("L = accel_until");
-    Serial.println("M = coast steps");
-    Serial.println("N = decel steps");
-    Serial.println("O = total steps");
+    MYSERIAL1.println("L = accel_until");
+    MYSERIAL1.println("M = coast steps");
+    MYSERIAL1.println("N = decel steps");
+    MYSERIAL1.println("O = total steps");
 
-    Serial.println("P = nominal?");
-    Serial.println("Q = recalculate?");
-    Serial.println("R = busy?");
-    Serial.println("\nA\tB\tC\tD\tE\tF\tG\tH\tI\tJ\tK\tL\tM\tN\tO\tP\tQ\tR");
+    MYSERIAL1.println("P = nominal?");
+    MYSERIAL1.println("Q = recalculate?");
+    MYSERIAL1.println("R = busy?");
+    MYSERIAL1.println("\nA\tB\tC\tD\tE\tF\tG\tH\tI\tJ\tK\tL\tM\tN\tO\tP\tQ\tR");
   }
-  Serial.println("---------------------------------------------------------------------------------------------------------------------------");
+  MYSERIAL1.println("---------------------------------------------------------------------------------------------------------------------------");
 
   int s = block_buffer_tail;
   while (s != block_buffer_head) {
     Segment *next = &blockBuffer[s];
     int coast     = next->decel_after - next->accel_until;
     int decel     = next->steps_total - next->decel_after;
-    Serial.print(s);
-    Serial.print(F("\t"));   Serial.print(next->distance);
-    Serial.print(F("\t"));   Serial.print(next->acceleration);
-    Serial.print(F("\t"));   Serial.print(next->acceleration_steps_per_s2);
+    MYSERIAL1.print(s);
+    SERIAL_CHAR('\t');   MYSERIAL1.print(next->distance);
+    SERIAL_CHAR('\t');   MYSERIAL1.print(next->acceleration);
+    SERIAL_CHAR('\t');   MYSERIAL1.print(next->acceleration_steps_per_s2);
 #ifndef S_CURVE_ACCELERATION
-    Serial.print(F("\t"));   Serial.print(next->acceleration_rate);
+    SERIAL_CHAR('\t');   MYSERIAL1.print(next->acceleration_rate);
 #endif
 
-    Serial.print(F("\t"));   Serial.print(next->entry_speed_sqr);
-    Serial.print(F("\t"));   Serial.print(next->nominal_speed_sqr);
-    Serial.print(F("\t"));   Serial.print(next->entry_speed_max_sqr);
+    SERIAL_CHAR('\t');   MYSERIAL1.print(next->entry_speed_sqr);
+    SERIAL_CHAR('\t');   MYSERIAL1.print(next->nominal_speed_sqr);
+    SERIAL_CHAR('\t');   MYSERIAL1.print(next->entry_speed_max_sqr);
 
-    Serial.print(F("\t"));   Serial.print(next->initial_rate);
-    Serial.print(F("\t"));   Serial.print(next->nominal_rate);
-    Serial.print(F("\t"));   Serial.print(next->final_rate);
+    SERIAL_CHAR('\t');   MYSERIAL1.print(next->initial_rate);
+    SERIAL_CHAR('\t');   MYSERIAL1.print(next->nominal_rate);
+    SERIAL_CHAR('\t');   MYSERIAL1.print(next->final_rate);
 
-    Serial.print(F("\t"));   Serial.print(next->accel_until);
-    Serial.print(F("\t"));   Serial.print(coast);
-    Serial.print(F("\t"));   Serial.print(decel);
-    Serial.print(F("\t"));   Serial.print(next->steps_total);
-    //Serial.print(F("\t"));   Serial.print(next->steps_taken);
+    SERIAL_CHAR('\t');   MYSERIAL1.print(next->accel_until);
+    SERIAL_CHAR('\t');   MYSERIAL1.print(coast);
+    SERIAL_CHAR('\t');   MYSERIAL1.print(decel);
+    SERIAL_CHAR('\t');   MYSERIAL1.print(next->steps_total);
+    //SERIAL_CHAR('\t');   MYSERIAL1.print(next->steps_taken);
 
-    Serial.print(F("\t"));   Serial.print(TEST(next->flags,BIT_FLAG_NOMINAL) != 0 ? 'Y' : 'N');
-    Serial.print(F("\t"));   Serial.print(TEST(next->flags,BIT_FLAG_RECALCULATE) != 0 ? 'Y' : 'N');
-    Serial.print(F("\t"));   Serial.print(motor.isBlockBusy(next) != 0 ? 'Y' : 'N');
-    Serial.println();
+    SERIAL_CHAR('\t');   MYSERIAL1.print(TEST(next->flags,BIT_FLAG_NOMINAL) != 0 ? 'Y' : 'N');
+    SERIAL_CHAR('\t');   MYSERIAL1.print(TEST(next->flags,BIT_FLAG_RECALCULATE) != 0 ? 'Y' : 'N');
+    SERIAL_CHAR('\t');   MYSERIAL1.print(motor.isBlockBusy(next) != 0 ? 'Y' : 'N');
+    SERIAL_EOL();
     s = getNextBlock(s);
   }
   CRITICAL_SECTION_END();
@@ -824,9 +824,9 @@ void Planner::populateBlock(Segment *newBlock,const float *const target, float f
     #endif
   if(movesQueued>=2 && movesQueued<=(MAX_SEGMENTS / SLOWDOWN_DIVISOR) - 1) {
     uint32_t segment_time_us = lroundf(1000000.0f / inverse_secs);
-    const int32_t time_diff = min_segment_time_us - segment_time_us;
+    const int32_t time_diff = Stepper::min_segment_time_us - segment_time_us;
     if(time_diff > 0) {
-      //Serial.print("was ");  Serial.print(1.0f/inverse_secs);
+      //MYSERIAL1.print("was ");  MYSERIAL1.print(1.0f/inverse_secs);
       const uint32_t nst = segment_time_us + lroundf(2 * time_diff  / movesQueued);
       inverse_secs       = 1000000.0f / nst;
       //REPORT(" now ",1.0f/inverse_secs);
@@ -943,15 +943,15 @@ void Planner::populateBlock(Segment *newBlock,const float *const target, float f
 }
 
 void Planner::segmentReport(Segment &new_seg) {
-  Serial.print("seg:");  Serial.println((long)&new_seg,HEX);
-  Serial.print("distance=");  Serial.println(new_seg.distance);
-  Serial.print("nominal_speed=");  Serial.println(new_seg.nominal_speed_sqr);
-  Serial.print("nominal_rate=");  Serial.println(new_seg.nominal_rate);
-  Serial.print("acceleration_steps_per_s2=");  Serial.println(new_seg.acceleration_steps_per_s2);
-  Serial.print("acceleration=");  Serial.println(new_seg.acceleration);
-  Serial.print("nominal_speed=");  Serial.println(new_seg.nominal_speed_sqr);
-  Serial.print("entry_speed_max=");  Serial.println(new_seg.entry_speed_max_sqr);
-  Serial.print("entry_speed=");  Serial.println(new_seg.entry_speed_sqr);
+  MYSERIAL1.print("seg:");  MYSERIAL1.println((long)&new_seg,HEX);
+  MYSERIAL1.print("distance=");  MYSERIAL1.println(new_seg.distance);
+  MYSERIAL1.print("nominal_speed=");  MYSERIAL1.println(new_seg.nominal_speed_sqr);
+  MYSERIAL1.print("nominal_rate=");  MYSERIAL1.println(new_seg.nominal_rate);
+  MYSERIAL1.print("acceleration_steps_per_s2=");  MYSERIAL1.println(new_seg.acceleration_steps_per_s2);
+  MYSERIAL1.print("acceleration=");  MYSERIAL1.println(new_seg.acceleration);
+  MYSERIAL1.print("nominal_speed=");  MYSERIAL1.println(new_seg.nominal_speed_sqr);
+  MYSERIAL1.print("entry_speed_max=");  MYSERIAL1.println(new_seg.entry_speed_max_sqr);
+  MYSERIAL1.print("entry_speed=");  MYSERIAL1.println(new_seg.entry_speed_sqr);
 }
 
 /**
@@ -1023,21 +1023,21 @@ void Planner::bufferLine(float *pos, float new_feed_rate_units) {
 #define MIN_SEGMENT_LENGTH 0.5f
 #endif
   const float seconds = totalDistance / new_feed_rate_units;
-  uint16_t segments   = seconds * SEGMENTS_PER_SECOND;
+  int16_t segments   = seconds * SEGMENTS_PER_SECOND;
   segments = _MIN(segments, totalDistance / MIN_SEGMENT_LENGTH);
   segments = _MAX(segments, 1);
 
 #ifdef HAS_GRIPPER
   // if we have a gripper and only gripper is moving, don't split the movement.
   if(lenSquared == sq(deltaCartesian[6])) {
-    Serial.println("only t");
+    MYSERIAL1.println("only t");
     segments = 1;
-    Serial.print("seconds=");
-    Serial.println(seconds);
-    Serial.print("len_units=");
-    Serial.println(len_units);
-    Serial.print("new_feed_rate_units=");
-    Serial.println(new_feed_rate_units);
+    MYSERIAL1.print("seconds=");
+    MYSERIAL1.println(seconds);
+    MYSERIAL1.print("len_units=");
+    MYSERIAL1.println(len_units);
+    MYSERIAL1.print("new_feed_rate_units=");
+    MYSERIAL1.println(new_feed_rate_units);
   }
 #endif
 
@@ -1095,9 +1095,12 @@ void Planner::bufferArc(float cx, float cy, float *destination, char clockwise, 
   // float len=theta*circ/(PI*2.0);
   // simplifies to
   float len1 = abs(da) * sr;
-  float len  = sqrtf(len1 * len1 + dr * dr);  // mm
+  float totalDistance  = sqrtf(len1 * len1 + dr * dr);  // mm
 
-  int i, segments = ceilf(len);
+  const float seconds = totalDistance / new_feed_rate_units;
+  int16_t segments   = seconds * SEGMENTS_PER_SECOND;
+  segments = _MIN(segments, totalDistance / MIN_SEGMENT_LENGTH);
+  segments = _MAX(segments, 1);
 
   float n[NUM_AXIES], scale;
   float a, r;
@@ -1106,7 +1109,7 @@ void Planner::bufferArc(float cx, float cy, float *destination, char clockwise, 
   float z  = destination[2];
 #endif
 
-  for (i = 0; i <= segments; ++i) {
+  for(int16_t i = 0; i <= segments; ++i) {
     // interpolate around the arc
     scale = ((float)i) / ((float)segments);
 

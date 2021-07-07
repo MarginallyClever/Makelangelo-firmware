@@ -24,16 +24,16 @@ uint8_t current_tool  = 0;
 uint8_t equalEpsilon(float a, float b) {
   int aa = floorf(a * 10);
   int bb = floorf(b * 10);
-  // Serial.print("aa=");        Serial.print(aa);
-  // Serial.print("\tbb=");      Serial.print(bb);
-  // Serial.print("\taa==bb ");  Serial.println(aa==bb?"yes":"no");
+  // MYSERIAL1.print("aa=");        MYSERIAL1.print(aa);
+  // MYSERIAL1.print("\tbb=");      MYSERIAL1.print(bb);
+  // MYSERIAL1.print("\taa==bb ");  MYSERIAL1.println(aa==bb?"yes":"no");
 
   return aa == bb;
 }
 
 void Parser::start() {
   // start communications
-  Serial.begin(BAUD);
+  MYSERIAL1.begin(BAUD);
   // clear input buffer
   sofar = 0;
 
@@ -42,14 +42,14 @@ void Parser::start() {
 #ifdef HAS_WIFI
   // Start WIFI
   WiFi.mode(WIFI_AP);
-  Serial.println(WiFi.softAP(SSID_NAME, SSID_PASS) ? "WIFI OK" : "WIFI FAILED");
-  Serial.println(port.begin(localPort) ? "UDP OK" : "UDP FAILED");
+  MYSERIAL1.println(WiFi.softAP(SSID_NAME, SSID_PASS) ? "WIFI OK" : "WIFI FAILED");
+  MYSERIAL1.println(port.begin(localPort) ? "UDP OK" : "UDP FAILED");
   // Print the IP address
-  Serial.print("Use this URL to connect: http://");
-  Serial.print(WiFi.softAPIP());
-  Serial.print(':');
-  Serial.print(localPort);
-  Serial.println('/');
+  MYSERIAL1.print("Use this URL to connect: http://");
+  MYSERIAL1.print(WiFi.softAPIP());
+  MYSERIAL1.print(':');
+  MYSERIAL1.print(localPort);
+  MYSERIAL1.println('/');
 #endif  // HAS_WIFI
 }
 
@@ -70,13 +70,19 @@ float Parser::parseFloat(char *p) {
   return g;
 }
 
-float Parser::parseFloat(char code,float valueIfNotFound) {
+float Parser::parseFloat(const char code,float valueIfNotFound) {
   int8_t n = hasGCode(currentCommand,code);
   if(n>=0) return parseFloat(currentCommand+n+1);
   return valueIfNotFound;
 }
 
-int8_t Parser::hasGCode(char *p,char code) {
+int16_t Parser::parseInt(const char code,int16_t valueIfNotFound) {
+  int8_t n = hasGCode(currentCommand,code);
+  if(n>=0) return parseInt(currentCommand+n+1);
+  return valueIfNotFound;
+}
+
+int8_t Parser::hasGCode(char *p,const char code) {
   char *ptr = p;  // start at the beginning of buffer
   for(;;) {  // walk to the end
     char c = *ptr;
@@ -89,7 +95,7 @@ int8_t Parser::hasGCode(char *p,char code) {
   return -1;  // not found
 }
 
-int8_t Parser::hasGCode(char code) {
+int8_t Parser::hasGCode(const char code) {
   return hasGCode(currentCommand,code);
 }
 
@@ -97,16 +103,14 @@ int8_t Parser::hasGCode(char code) {
 char Parser::checkLineNumberAndCRCisOK() {
   // is there a line number?
   if(*serialBuffer == 'N') {  // line number must appear first on the line
-    int32_t cmd = parseFloat(serialBuffer+1);
+    int32_t cmd = parseInt(serialBuffer+1);
     if(cmd != lineNumber) {
       // wrong line number error
-      Serial.print(F("BADLINENUM "));
-      Serial.println(lineNumber);
+      SERIAL_ECHOLNPAIR("BADLINENUM ",lineNumber);
       return 0;
     }
   } else if(IS_STRICT) {
-    Serial.print(F("NOLINENUM "));
-    Serial.println(lineNumber);
+    SERIAL_ECHOLNPAIR("NOLINENUM ",lineNumber);
     return 0;
   }
 
@@ -121,8 +125,7 @@ char Parser::checkLineNumberAndCRCisOK() {
   }
 
   if(IS_STRICT && found == -1) {
-    Serial.print(F("NOCHECKSUM "));
-    Serial.println(lineNumber);
+    SERIAL_ECHOLNPAIR("NOCHECKSUM ",lineNumber);
     return 0;
   }
 
@@ -135,8 +138,7 @@ char Parser::checkLineNumberAndCRCisOK() {
   c++;  // skip *
   int against = strtod(serialBuffer + c, NULL);
   if(found != -1 && checksum != against) {
-    Serial.print(F("BADCHECKSUM"));
-    Serial.println(lineNumber);
+    SERIAL_ECHOLNPAIR("BADCHECKSUM",lineNumber);
     return 0;
   }
 
@@ -149,19 +151,19 @@ char Parser::checkLineNumberAndCRCisOK() {
 }
 
 /**
- * prepares the input buffer to receive a new message and tells the serial connected device it is ready for more.
+ * prepares the input buffer to receive a new message and tells the MYSERIAL1 connected device it is ready for more.
  */
 void Parser::ready() {
-  Serial.print(F("\n> "));  // signal ready to receive input
+  SERIAL_ECHOLNPGM("\n> ");  // signal ready to receive input
   lastCmdTimeMs = millis();
 }
 
-// See also http://www.marginallyclever.com/2011/10/controlling-your-arduino-through-the-serial-monitor/
+// See also http://www.marginallyclever.com/2011/10/controlling-your-arduino-through-the-MYSERIAL1-monitor/
 void Parser::update() {
-  // listen for serial commands
-  if(Serial.available() > 0) {
-    char c = Serial.read();
-    // Serial.print(c);
+  // listen for MYSERIAL1 commands
+  if(MYSERIAL1.available() > 0) {
+    char c = MYSERIAL1.read();
+    // MYSERIAL1.print(c);
     if(sofar < PARSER_BUFFER_LENGTH) serialBuffer[sofar++] = c;
     if(c == '\r' || c == '\n') {
       serialBuffer[sofar - 1] = 0;
@@ -169,7 +171,7 @@ void Parser::update() {
       if(checkLineNumberAndCRCisOK()) {
         // echo confirmation
         if(MUST_ECHO) { 
-          Serial.println(serialBuffer);
+          MYSERIAL1.println(serialBuffer);
         }
 
         ringBuffer.waitToAdd(serialBuffer);
@@ -187,7 +189,7 @@ void Parser::update() {
     int len = port.read(serialBuffer, MAX_BUF);
     sofar   = len;
     if(len > 0) serialBuffer[len - 1] = 0;
-    Serial.println(serialBuffer);
+    MYSERIAL1.println(serialBuffer);
     processCommand();
     port.beginPacket(port.remoteIP(), port.remotePort());
     port.write("ok\r\n");
@@ -212,13 +214,12 @@ void Parser::advance() {
 }
 
 void Parser::reportQueue() {
-  Serial.print(F("length="));  Serial.println(ringBuffer.length);
-  Serial.print(F("current_r="));  Serial.println(ringBuffer.current_r);
-  Serial.print(F("current_w="));  Serial.println(ringBuffer.current_w);
+  SERIAL_ECHOLNPAIR("length=",ringBuffer.length);
+  SERIAL_ECHOLNPAIR("current_r=",ringBuffer.current_r);
+  SERIAL_ECHOLNPAIR("current_w=",ringBuffer.current_w);
   for(uint8_t i=0;i<ringBuffer.length;++i) {
     uint8_t n = (ringBuffer.current_r+i)%RING_BUFFER_SIZE;
-    Serial.print(F("  "));
-    Serial.println(ringBuffer.commands[n].buffer);
+    SERIAL_ECHOLNPAIR("  ",ringBuffer.commands[n].buffer);
   }
 }
 
@@ -258,7 +259,7 @@ void Parser::processCommand() {
   
   // M codes
   if(c=='M') {
-    cmd = parseFloat(currentCommand+1);
+    cmd = parseInt(currentCommand+1);
     switch (cmd) {
       case   6:        M6();          break;
       case  17:        M17();         break;
@@ -296,7 +297,7 @@ void Parser::processCommand() {
 
   // machine style-specific codes
   if(c=='D') {
-    cmd = parseFloat(currentCommand+1);
+    cmd = parseInt(currentCommand+1);
     if(cmd!=-1) {
       switch (cmd) {
         case 0:        D0();        break;
@@ -336,7 +337,7 @@ void Parser::processCommand() {
 
   // no M or D commands were found.  This is a G* command.
   if(c=='G') {
-    cmd = parseFloat(currentCommand+1);
+    cmd = parseInt(currentCommand+1);
   } else cmd = lastGcommand;
 
   lastGcommand = -1;
@@ -371,29 +372,24 @@ void Parser::D0() {
   motor.engage();
 
   int stepDelay = findStepDelay();
-  Serial.print(F("Step delay="));   Serial.println(stepDelay);
-  Serial.print(F("feed rate="));    Serial.println(desiredFeedRate);
-  Serial.print(F("UNITS_PER_STEP="));  Serial.println(UNITS_PER_STEP,4);
+  SERIAL_ECHOLNPAIR("Step delay=",stepDelay);
+  SERIAL_ECHOLNPAIR("feed rate=",desiredFeedRate);
+  SERIAL_ECHOLNPAIR("UNITS_PER_STEP=",UNITS_PER_STEP);
 
-  Serial.print(F("STEPPER_TIMER_PRESCALE="));      Serial.println(STEPPER_TIMER_PRESCALE);
-  Serial.print(F("HAL_TIMER_RATE="));              Serial.println(HAL_TIMER_RATE);
-  Serial.print(F("STEPPER_TIMER_RATE="));          Serial.println(STEPPER_TIMER_RATE);
-  Serial.print(F("STEPPER_TIMER_TICKS_PER_US="));  Serial.println(STEPPER_TIMER_TICKS_PER_US);
+  SERIAL_ECHOLNPAIR("STEPPER_TIMER_PRESCALE=",STEPPER_TIMER_PRESCALE);
+  SERIAL_ECHOLNPAIR("HAL_TIMER_RATE=",HAL_TIMER_RATE);
+  SERIAL_ECHOLNPAIR("STEPPER_TIMER_RATE=",STEPPER_TIMER_RATE);
+  SERIAL_ECHOLNPAIR("STEPPER_TIMER_TICKS_PER_US=",STEPPER_TIMER_TICKS_PER_US);
 
   for(ALL_MOTORS(i)) {
     if(motors[i].letter == 0) continue;
-    amount = parseFloat(motors[i].letter, 0);
+    amount = parseInt(motors[i].letter, 0);
     if(amount != 0) {
-      Serial.print(F("Moving "));
-      Serial.print(motors[i].letter);
-      Serial.print(F("("));
-      Serial.print(i);
-      Serial.print(F(") "));
-      Serial.print(amount);
-      Serial.print(F(" steps. Dir="));
-      Serial.print(motors[i].dir_pin);
-      Serial.print(F(" Step="));
-      Serial.print(motors[i].step_pin);
+      SERIAL_ECHOPAIR("Moving ",motors[i].letter);
+      SERIAL_ECHOPAIR("(",i);
+      SERIAL_ECHOPAIR(") ",amount);
+      SERIAL_ECHOPAIR(" steps. Dir=",motors[i].dir_pin);
+      SERIAL_ECHOPAIR(" Step=",motors[i].step_pin);
 
       int x = amount < 0 ? STEPPER_DIR_HIGH : STEPPER_DIR_LOW;
       digitalWrite(motors[i].dir_pin, x);
@@ -403,10 +399,10 @@ void Parser::D0() {
         digitalWrite(motors[i].step_pin, HIGH);
         digitalWrite(motors[i].step_pin, LOW);
         pause(stepDelay);
-        if(j%100) Serial.print('.');
+        if(j%100) MYSERIAL1.print('.');
         digitalWrite(LED_BUILTIN,!digitalRead(LED_BUILTIN));
       }
-      Serial.println();
+      SERIAL_EOL();
     }
   }
 }
@@ -417,9 +413,7 @@ void Parser::D0() {
 */
 void Parser::D5() {
   char versionNumber = eepromManager.loadVersion();
-
-  Serial.print(F("Firmware v"));
-  Serial.println(versionNumber, DEC);
+  SERIAL_ECHOLNPAIR("Firmware v",versionNumber);
 }
 
 /**
@@ -427,15 +421,15 @@ void Parser::D5() {
    Set home position for each axis.
 */
 void Parser::D6() {
-  Serial.print(F("D6"));
+  SERIAL_ECHOPGM("D6");
   float homePos[NUM_AXIES];
   for(ALL_AXIES(i)) {
-    homePos[i] = parseFloat(AxisNames[i], axies[i].homePos);
-    Serial.print(' ');
-    Serial.print(AxisNames[i]);
-    Serial.print(homePos[i],2);
+    homePos[i] = parseFloat(GET_AXIS_NAME(i), axies[i].homePos);
+    SERIAL_CHAR(' ');
+    SERIAL_CHAR(GET_AXIS_NAME(i));
+    SERIAL_PRINT(homePos[i],2);
   }
-  Serial.println();
+  SERIAL_EOL();
   setHome(homePos);
 }
 
@@ -457,10 +451,8 @@ void Parser::D7() {
    Report calibration values for left and right belts
 */
 void Parser::D8() {
-  Serial.print(F("D8 L"));
-  Serial.print(calibrateLeft);
-  Serial.print(F(" R"));
-  Serial.println(calibrateRight);
+  SERIAL_ECHOPAIR("D8 L",calibrateLeft);
+  SERIAL_ECHOPAIR(" R",calibrateRight);
 }
 #endif
 
@@ -469,8 +461,7 @@ void Parser::D8() {
    get hardware version
 */
 void Parser::D10() {
-  Serial.print(F("D10 V"));
-  Serial.println(MACHINE_HARDWARE_VERSION);
+  SERIAL_ECHOPAIR("D10 V",MACHINE_HARDWARE_VERSION);
 }
 
 void Parser::D13() {
@@ -479,46 +470,41 @@ void Parser::D13() {
 
 void Parser::D14() {
   // get machine style
-  Serial.print(F("D14 "));
-  Serial.println(MACHINE_STYLE_NAME);
+  SERIAL_ECHOPAIR("D14 ",MACHINE_STYLE_NAME);
 }
 
 #if MACHINE_STYLE == SIXI
 // D17 report the 6 axis sensor values from the Sixi robot arm.
 void Parser::D17() {
-  Serial.print(F("D17"));
+  SERIAL_ECHOPGM("D17"));
   for (ALL_SENSORS(i)) {
-    Serial.print('\t');
     // 360/(2^14) aka 0.02197265625deg is the minimum sensor resolution.  as such more than 3 decimal places is useless.
-    Serial.print(WRAP_DEGREES(sensorManager.sensors[i].angle), 3);
+    SERIAL_ECHOPAIR_F('\t',WRAP_DEGREES(sensorManager.sensors[i].angle), 3);
   }
 
 #  if NUM_SERVOS > 0
-  Serial.print(' ');
-  Serial.print((float)servos[0].read(), 2);
+  SERIAL_ECHOPAIR_F(' ',(float)servos[0].read(), 2);
 #  endif
 
   /*
     if(current_segment==last_segment) {
     // report estimated position
-    Serial.print(F("\t-\t"));
+    SERIAL_ECHO("\t-\t");
 
     working_seg = get_current_segment();
     for (ALL_SENSORS(i)) {
       //float diff = working_seg->a[i].expectedPosition - sensorAngles[i];
-      //Serial.print('\t');
-      //Serial.print(abs(diff),3);
-      Serial.print('\t');
-      Serial.print(working_seg->a[i].expectedPosition,2);
+      //SERIAL_ECHO_F(abs(diff),3);
+      SERIAL_ECHOPAIR_F('\t',working_seg->a[i].expectedPosition,2);
     }
     }*/
 
-  Serial.print('\t');
-  // Serial.print(TEST(sensorManager.positionErrorFlags,POSITION_ERROR_FLAG_CONTINUOUS)?'+':'-');
-  Serial.print(TEST(sensorManager.positionErrorFlags, POSITION_ERROR_FLAG_ERROR) ? '+' : '-');
-  // Serial.print(TEST(sensorManager.positionErrorFlags,POSITION_ERROR_FLAG_FIRSTERROR)?'+':'-');
-  // Serial.print(TEST(sensorManager.positionErrorFlags,POSITION_ERROR_FLAG_ESTOP)?'+':'-');
-  Serial.println();
+  SERIAL_ECHO('\t');
+  // SERIAL_ECHO(TEST(sensorManager.positionErrorFlags,POSITION_ERROR_FLAG_CONTINUOUS)?'+':'-');
+  SERIAL_ECHO(TEST(sensorManager.positionErrorFlags, POSITION_ERROR_FLAG_ERROR) ? '+' : '-');
+  // SERIAL_ECHO(TEST(sensorManager.positionErrorFlags,POSITION_ERROR_FLAG_FIRSTERROR)?'+':'-');
+  // SERIAL_ECHO(TEST(sensorManager.positionErrorFlags,POSITION_ERROR_FLAG_ESTOP)?'+':'-');
+  SERIAL_EOL();
 }
 #endif
 
@@ -546,11 +532,10 @@ void Parser::D18() {
 // D19 - Sixi only.  toggle continuous D17 reporting
 void Parser::D19() {
   boolean p = TEST(sensorManager.positionErrorFlags, POSITION_ERROR_FLAG_CONTINUOUS);
-  int state = parseFloat('P', p ? 1 : 0);
+  int state = parseInt('P', p ? 1 : 0);
   SET_BIT(sensorManager.positionErrorFlags, POSITION_ERROR_FLAG_CONTINUOUS, state);
 
-  Serial.print(F("D19 P"));
-  Serial.println(state ? 1 : 0, DEC);
+  SERIAL_ECHO_PAIR(F("D19 P",state ? 1 : 0, DEC);
 }
 
 void Parser::D20() {
@@ -558,17 +543,16 @@ void Parser::D20() {
 }
 
 void Parser::D21() {
-  int isOn = parseFloat('P', TEST_LIMITS ? 1 : 0);
+  int isOn = parseInt('P', TEST_LIMITS ? 1 : 0);
 
   SET_BIT(sensorManager.positionErrorFlags, POSITION_ERROR_FLAG_CHECKLIMIT, isOn);
 
-  Serial.print(F("D21 "));
-  Serial.println(TEST_LIMITS ? "1" : "0");
+  SERIAL_ECHO("D21 ",TEST_LIMITS ? "1" : "0");
 }
 
 // D23 - Sixi is at the calibration position.  Set the home position accordingly.
 void Parser::D23() {
-  Serial.println(F("D23"));
+  SERIAL_ECHO("D23");
   
   // cancel the current home offsets
   sensorManager.resetAll();
@@ -602,10 +586,9 @@ void Parser::D23() {
 // D50 Snn - Set and report strict mode.  where nn=0 for off and 1 for on.
 void Parser::D50() {
   int oldValue = IS_STRICT;
-  int newValue = parseFloat('S', oldValue);
+  int newValue = parseInt('S', oldValue);
   SET_BIT(parserFlags, FLAG_STRICT, newValue);
-  Serial.print(F("D50 S"));
-  Serial.println(newValue ? 1 : 0);
+  SERIAL_ECHOPAIR("D50 S",newValue ? 1 : 0);
 }
 
 // G commands
@@ -621,7 +604,7 @@ void Parser::G01() {
     // and a limit is exceeeded
     if(TEST(sensorManager.positionErrorFlags, POSITION_ERROR_FLAG_ERROR)) {
       // refuse to move
-      Serial.println(F("LIMIT ERROR"));
+      SERIAL_ECHOLNPGM("LIMIT ERROR"));
       return;
     }
   }
@@ -650,29 +633,23 @@ void Parser::G01() {
   bool bad=false;
 
   float pos[NUM_AXIES];
-  for (ALL_AXIES(i)) {
+  for(ALL_AXIES(i)) {
     float p = axies[i].pos;
-    offset=hasGCode(AxisNames[i]);
+    offset=hasGCode(GET_AXIS_NAME(i));
     if(offset>=0) {
       float g = parseFloat(currentCommand+offset+1);
       if(absolute_mode) p = g;
       else p += g;
 
       if(p > axies[i].limitMax) {
-        Serial.print(F("LIMIT MAX "));
-        Serial.print(i);
-        Serial.print(F(" | pos[i] = "));
-        Serial.print(p);
-        Serial.print(F(" | axies[i].limitMax = "));
-        Serial.println(axies[i].limitMax);
+        SERIAL_ECHOPAIR("LIMIT MAX ",i);
+        SERIAL_ECHOPAIR_F(" | pos[i] = ",p);
+        SERIAL_ECHOPAIR_F(" | axies[i].limitMax = ",axies[i].limitMax);
         bad=true;
       } else if(p < axies[i].limitMin) {
-        Serial.print(F("LIMIT MIN "));
-        Serial.print(i);
-        Serial.print(F(" | pos[i] = "));
-        Serial.print(p);
-        Serial.print(F(" | axies[i].limitMin = "));
-        Serial.println(axies[i].limitMin);
+        SERIAL_ECHOPAIR("LIMIT MIN ",i);
+        SERIAL_ECHOPAIR_F(" | pos[i] = ",p);
+        SERIAL_ECHOPAIR_F(" | axies[i].limitMin = ",axies[i].limitMin);
         bad=true;
       }
     }
@@ -686,10 +663,9 @@ void Parser::G01() {
 }
 
 void Parser::printOK() {
-  Serial.print(F("OK"));
-  REPORT(" N",lineNumber);
-  REPORT(" P",Planner::movesFree());
-  REPORTLN(" B",ringBuffer.spaceFree());
+  SERIAL_ECHOPAIR("OK N",lineNumber);
+  SERIAL_ECHOPAIR(" P",Planner::movesFree());
+  SERIAL_ECHOLNPAIR(" B",ringBuffer.spaceFree());
 }
 
 /**
@@ -707,7 +683,7 @@ void Parser::G02(int8_t clockwise) {
   float pos[NUM_AXIES];
   for (i = 0; i < NUM_AXIES; ++i) {
     float p = axies[i].pos;
-    pos[i]  = parseFloat(AxisNames[i], (absolute_mode ? p : 0)) + (absolute_mode ? 0 : p);
+    pos[i]  = parseFloat(GET_AXIS_NAME(i), (absolute_mode ? p : 0)) + (absolute_mode ? 0 : p);
   }
 
   float p0 = axies[0].pos;
@@ -728,7 +704,7 @@ void Parser::G02(int8_t clockwise) {
 */
 void Parser::G04() {
   planner.wait_for_empty_segment_buffer();
-  uint32_t delayTime = parseFloat('S', 0) + parseFloat('P', 0) * 1000.0f;
+  uint32_t delayTime = parseInt('S', 0) + parseFloat('P', 0) * 1000.0f;
   pause(delayTime);
 }
 
@@ -741,7 +717,7 @@ void Parser::G92() {
   float pos[NUM_AXIES];
   for (i = 0; i < NUM_AXIES; ++i) {
     float p = axies[i].pos;
-    pos[i]  = parseFloat(AxisNames[i], (absolute_mode ? p : 0)) + (absolute_mode ? 0 : p);
+    pos[i]  = parseFloat(GET_AXIS_NAME(i), (absolute_mode ? p : 0)) + (absolute_mode ? 0 : p);
   }
   teleport(pos);
 }
@@ -753,7 +729,7 @@ void Parser::G92() {
    Change the currently active tool
 */
 void Parser::M6() {
-  int tool_id = parseFloat('T', current_tool);
+  int tool_id = parseInt('T', current_tool);
   if(tool_id < 0) tool_id = 0;
   if(tool_id >= NUM_TOOLS) tool_id = NUM_TOOLS - 1;
   current_tool = tool_id;
@@ -761,14 +737,14 @@ void Parser::M6() {
 
 
 void Parser::M17() {
-  Serial.print(F("M17"));
+  SERIAL_ECHOPGM("M17");
 
   motor.engage();
 }
 
 
 void Parser::M18() {
-  Serial.print(F("M18"));
+  SERIAL_ECHOPGM("M18");
   
   motor.disengage();
 }
@@ -780,8 +756,8 @@ void Parser::M18() {
    default pin is LED_BUILTIN.  default state is LOW
 */
 void Parser::M42() {
-  int pin      = parseFloat('P', LED_BUILTIN);
-  int newState = parseFloat('S', 0);
+  int pin      = parseInt('P', LED_BUILTIN);
+  int newState = parseInt('S', 0);
   digitalWrite(pin, newState ? HIGH : LOW);
 }
 
@@ -789,50 +765,47 @@ void Parser::M42() {
  * M92 [Xn] [Yn] [Zn] [Un] [Vn] [Wn] - Set steps per unit
  */
 void Parser::M92() {
-  Serial.print(F("M92 "));
+  SERIAL_ECHOPGM("M92 ");
   for(ALL_MUSCLES(i)) {
     motor_spu[i] = parseFloat(motors[i].letter, motor_spu[i]);
-    Serial.print(motors[i].letter);
-    Serial.print(motor_spu[i]);
-    Serial.print(' ');
+    SERIAL_CHAR(motors[i].letter);
+    SERIAL_ECHO_F(motor_spu[i]);
+    SERIAL_ECHO(' ');
   }
-  Serial.println();
+  SERIAL_EOL();
 }
 
 void Parser::sayBuildDateAndTime() {
-  Serial.print(F("Built "));
-  Serial.println(__DATE__ " " __TIME__);
+  SERIAL_ECHOLNPAIR("Built ",__DATE__ " " __TIME__);
 }
 
 void Parser::sayModelAndUID() {
-  Serial.print(F("I AM "));
-  Serial.print(MACHINE_STYLE_NAME);
-  Serial.print(F(" #"));
-  Serial.println(robot_uid);
+  SERIAL_ECHOPAIR("I AM ",MACHINE_STYLE_NAME);
+  SERIAL_ECHOLNPAIR(" #",robot_uid);
 }
 
 /**
    M100
-   Print a M100ful message to serial.  The first line must never be changed to play nice with the JAVA software.
+   Print a M100ful message to MYSERIAL1.  The first line must never be changed to play nice with the JAVA software.
 */
 void Parser::M100() {
-  Serial.print(F("\n\nHELLO WORLD! "));
+  SERIAL_ECHOPGM("\n\nHELLO WORLD! ");
   sayModelAndUID();
   // report firmware version
   D5();
   sayBuildDateAndTime();
-  Serial.println(F("Please see http://makelangelo.com/ for more information."));
-  Serial.println(F("Try these (with a newline): G00,G01,G02,G03,G04,G28,G90,G91,G92,M18,M101,M100,M114"));
+  SERIAL_ECHOLNPGM("Please see http://makelangelo.com/ for more information.");
+  SERIAL_ECHOLNPGM("Try these (with a newline): G00,G01,G02,G03,G04,G28,G90,G91,G92,M18,M101,M100,M114");
 #ifdef HAS_WIFI
   // Print the IP address
-  Serial.print("Use this URL to connect: http://");
-  Serial.print(WiFi.softAPIP());
-  Serial.print(':');
-  Serial.print(localPort);
-  Serial.println('/');
+  SERIAL_ECHOPGM("Use this URL to connect: http://");
+  SERIAL_ECHO(WiFi.softAPIP());
+  SERIAL_ECHOPGM(':');
+  SERIAL_ECHO(localPort);
+  SERIAL_ECHOLNPGM('/');
 #endif  // HAS_WIFI
 #ifdef HAS_LCD
-  Serial.println(F("Has LCD"));
+  SERIAL_ECHOPGM("Has LCD");
 #endif
 }
 
@@ -842,7 +815,7 @@ void Parser::M100() {
    look for change to dimensions in command, apply and save changes.
 */
 void Parser::M101() {
-  int axisNumber = parseFloat('A', -1);
+  int axisNumber = parseInt('A', -1);
   if(axisNumber >= 0 && axisNumber < NUM_AXIES) {
     float newT      = parseFloat('T', axies[axisNumber].limitMax);
     float newB      = parseFloat('B', axies[axisNumber].limitMin);
@@ -859,25 +832,25 @@ void Parser::M101() {
     if(changed == 1) { eepromManager.saveLimits(); }
   }
 
-  Serial.print(F("M101 ("));
+  SERIAL_ECHOPGM("M101 (");
 
   for (ALL_AXIES(i)) {
-    Serial.print(axies[i].limitMin);
-    if(i < NUM_AXIES - 1) Serial.print(',');
+    SERIAL_ECHO_F(axies[i].limitMin);
+    if(i < NUM_AXIES - 1) SERIAL_CHAR(',');
   }
 
-  Serial.print(F(") - ("));
+  SERIAL_ECHOPGM(") - (");
 
   for (ALL_AXIES(i)) {
-    Serial.print(axies[i].limitMax);
-    if(i < NUM_AXIES - 1) Serial.print(',');
+    SERIAL_ECHO_F(axies[i].limitMax);
+    if(i < NUM_AXIES - 1) SERIAL_CHAR(',');
   }
 
-  Serial.print(F(")\n"));
+  SERIAL_ECHOLNPGM(")");
 }
 
 void Parser::M110() {
-  lineNumber = parseFloat('N', lineNumber);
+  lineNumber = parseInt('N', lineNumber);
 }
 
 /**
@@ -901,21 +874,18 @@ void Parser::M112() {
 void Parser::M114() {
   planner.wait_for_empty_segment_buffer();
 
-  Serial.print(F("M114"));
+  SERIAL_ECHOPGM("M114");
 
   for(ALL_AXIES(i)) {
-    Serial.print(' ');
-    Serial.print(AxisNames[i]);
-    Serial.print(axies[i].pos);
+    SERIAL_CHAR(' ');
+    SERIAL_CHAR(GET_AXIS_NAME(i));
+    SERIAL_ECHO_F(axies[i].pos);
   }
 
-  Serial.print(F(" F"));
-  Serial.print(desiredFeedRate);
+  SERIAL_ECHOPAIR_F(" F",desiredFeedRate);
+  SERIAL_ECHOPAIR_F(" A",desiredAcceleration);
 
-  Serial.print(F(" A"));
-  Serial.print(desiredAcceleration);
-
-  Serial.println();
+  SERIAL_EOL();
 }
 
 #ifdef HAS_LCD
@@ -957,14 +927,14 @@ void Parser::M117() {
    adjust the max feedrate of each axis
 */
 void Parser::M203() {
-  Serial.print(F("M203 "));
+  SERIAL_ECHOPGM("M203 ");
   for(ALL_MUSCLES(i)) {
     max_step_rate[i] = parseFloat(motors[i].letter, max_step_rate[i]);
-    Serial.print(motors[i].letter);
-    Serial.print(max_step_rate[i]);
-    Serial.print(' ');
+    SERIAL_CHAR(motors[i].letter);
+    SERIAL_ECHO_F(max_step_rate[i]);
+    SERIAL_CHAR(' ');
   }
-  Serial.println();
+  SERIAL_EOL();
 }
 
 /**
@@ -974,21 +944,21 @@ void Parser::M203() {
 */
 void Parser::M205() {
   float f;
-  Serial.print("M205");
+  SERIAL_ECHOPGM("M205");
 
 #ifdef HAS_JUNCTION_DEVIATION
   f = parseFloat('J',Planner::junction_deviation);
   Planner::junction_deviation = _MAX(_MIN(f, (float)JUNCTION_DEVIATION_MAX), (float)JUNCTION_DEVIATION_MIN);
-  Serial.print(" J");
-  Serial.print(Planner::junction_deviation);
+  SERIAL_ECHOPGM(" J");
+  SERIAL_ECHO_F(Planner::junction_deviation);
 #endif
 
 #define PARSE_205_AXIS(AA,BB) \
   f = parseFloat(AA, max_jerk[BB]); \
   max_jerk[BB] = _MAX(_MIN(f, (float)MAX_JERK), (float)0); \
-  Serial.print(" "); \
-  Serial.print(AA); \
-  Serial.print(max_jerk[BB]);
+  SERIAL_CHAR(' '); \
+  SERIAL_CHAR(AA); \
+  SERIAL_ECHO_F(max_jerk[BB]);
 
   PARSE_205_AXIS('X',0);
 #if NUM_AXIES > 1
@@ -1006,10 +976,9 @@ void Parser::M205() {
 #if NUM_AXIES > 5
   PARSE_205_AXIS('W',5);
 #endif
-  f                   = parseFloat('B', min_segment_time_us);
-  min_segment_time_us = _MAX(_MIN(f, 1000000.0f), (float)0);
-  Serial.print(" B");
-  Serial.println(min_segment_time_us);
+  int16_t i = parseInt('B', Stepper::min_segment_time_us);
+  Stepper::min_segment_time_us = _MAX(_MIN(i, 30000), 0);
+  SERIAL_ECHOLNPAIR(" B",Stepper::min_segment_time_us);
 }
 
 /**
@@ -1020,13 +989,13 @@ void Parser::M205() {
 */
 void Parser::M226() {
 #ifdef HAS_LCD
-  int pin = parseFloat('P', BTN_ENC);
+  int pin = parseInt('P', BTN_ENC);
 #else
-  int pin = parseFloat('P', -1);
+  int pin = parseInt('P', -1);
 #endif
   if(pin == -1) return;  // no pin specified.
 
-  int oldState = parseFloat('S', -1);
+  int oldState = parseInt('S', -1);
   if(oldState == -1) {
     // default: assume the pin is not in the requested state
     oldState = digitalRead(pin);
@@ -1034,7 +1003,7 @@ void Parser::M226() {
     // 0 for HIGH, anything else for LOW
     oldState = (oldState == 0) ? HIGH : LOW;
   }
-  Serial.print("pausing");
+  SERIAL_ECHOPGM("pausing");
 #ifdef HAS_SD
   sd.sd_printing_paused = true;
 #endif
@@ -1048,23 +1017,23 @@ void Parser::M226() {
 #ifdef HAS_LCD
     // LCD_update();  // causes menu to change when we don't want it to change.
 #endif
-    // Serial.print(".");
+    //SERIAL_CHAR('.');
   }
 
 #ifdef HAS_SD
   sd.sd_printing_paused = false;
 #endif
 
-  Serial.println(" ended.");
+  SERIAL_ECHOPGM(" ended.");
 }
 
 // M270 P[a] S[b] - Move servo P to angle S (1..180 for degrees, >=500 for pwm).
 void Parser::M280() {
 #if NUM_SERVOS > 0
-  Serial.println("M280");
+  SERIAL_ECHOPGM("M280");
   
-  int id = parseFloat('P', 0);
-  int v = parseFloat('S', servos[0].read());
+  int id = parseInt('P', 0);
+  int v = parseInt('S', servos[0].read());
 
   if(id <0 || id>=NUM_SERVOS) return;
   if(v>=0 && v <=180) {
@@ -1081,8 +1050,8 @@ void Parser::M280() {
 */
 void Parser::M300() {
 #ifdef HAS_LCD
-  int ms = parseFloat('P', 250);
-  // int freq = parseFloat('S', 60);
+  int ms = parseInt('P', 250);
+  // int freq = parseInt('S', 60);
 
   digitalWrite(BEEPER, HIGH);
   delay(ms);

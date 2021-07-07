@@ -44,7 +44,7 @@ void robot_findHome() {
 
   hal_timer_t stepDelay = findStepDelay();
 
-  Serial.println(F("Finding..."));
+  MYSERIAL1.println(F("Finding..."));
 
   uint8_t i, hits;
   // back up until all switches are hit
@@ -61,10 +61,10 @@ void robot_findHome() {
         ++hits;
       }
     }
-    Serial.println();
+    SERIAL_EOL();
     pause(stepDelay);
   } while (hits < NUM_MOTORS);
-  Serial.println(F("Found."));
+  MYSERIAL1.println(F("Found."));
 
   float zeros[2] = { 0, 0 };
   teleport(zeros);

@@ -42,6 +42,6 @@
 
 #  define USE_ALT_SERVO
 
-#include "HAL_default.h"
+#include "HAL_avr.h"
 
 #endif

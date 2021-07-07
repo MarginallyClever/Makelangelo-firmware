@@ -68,4 +68,4 @@
 
 // define to activate smoother acceleration
 // See https://github.com/synthetos/TinyG/wiki/Jerk-Controlled-Motion-Explained
-#define S_CURVE_ACCELERATION
+//#define S_CURVE_ACCELERATION
