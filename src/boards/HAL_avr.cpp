@@ -1,4 +1,4 @@
 
-#ifdef TARGET_DEFAULT
+#ifdef TARGET_AVR
 
-#endif // TARGET_DEFAULT
+#endif // TARGET_AVR

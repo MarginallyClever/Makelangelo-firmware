@@ -98,7 +98,7 @@ class Parser {
   static float parseFloat(char *p);
 
   // parse the number starting at p.
-  FORCE_INLINE static int16_t parseInt(char *p) {
+  FORCE_INLINE static int32_t parseInt(char *p) {
     return strtol(p,NULL,10);
   }
 
@@ -106,7 +106,7 @@ class Parser {
   float parseFloat(const char code,float valueIfNotFound);
 
   // find the matching code and return the number that immediately follows it.
-  int16_t parseInt(const char code,int16_t valueIfNotFound);
+  int32_t parseInt(const char code,int32_t valueIfNotFound);
 
   // does this command have the matching code?
   int8_t hasGCode(char *p,const char code);

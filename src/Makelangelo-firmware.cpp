@@ -116,6 +116,9 @@ void setHome(float *pos) {
 }
 
 void meanwhile() {
+  // keep the command buffer filled up.
+  parser.update();
+
 #if MACHINE_STYLE == SIXI
   // MYSERIAL1.println(REPORT_ANGLES_CONTINUOUSLY?"Y":"N");
 
@@ -201,7 +204,7 @@ void setup() {
 
   planner.zeroSpeeds();
   motor.setup();
-  // easyPWM_init();
+  servo_init();
 
   // initialize the plotter position.
   float pos[NUM_AXIES];
@@ -236,8 +239,6 @@ void loop() {
 #ifdef HAS_LCD
   LCD_update();
 #endif
-
-  parser.update();
 
   parser.advance();
   // The PC will wait forever for the ready signal.

@@ -109,11 +109,13 @@ void TIMER1_COMPA_vect_bottom()
 // the software clock id
 #define STEP_TIMER_NUM 0
 
+#define SHARED_SERVOS HAS_SERVOS
+#define HAL_SERVO_LIB Servo
 #define SERVO0  0
-#define SERVO_ANGLE(index,angle)  servos[index].write(angle)
 
 FORCE_INLINE void HAL_init() {}
 
+// Uses Timer1
 // TCNT* - Timer/Counter Register.  The actual timer value is stored here.
 // OCR*  - Output Compare Register
 

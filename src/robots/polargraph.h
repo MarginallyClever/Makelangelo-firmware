@@ -31,6 +31,8 @@
 #  define NUM_SERVOS (1)
 #  define NUM_TOOLS  (1)
 
+//#define DEACTIVATE_SERVOS_AFTER_MOVE 1
+
 #  define MAX_FEEDRATE (200.0f)  // linear travel speed
 #  define MIN_FEEDRATE (0.0f)
 

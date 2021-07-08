@@ -14,6 +14,10 @@
 #define NO_INLINE      __attribute__((noinline))
 #define _UNUSED      __attribute__((unused))
 
+#ifndef UNUSED
+  #define UNUSED(x) ((void)(x))
+#endif
+
 // convenience
 #define PENDING(NOW, SOON) ((uint32_t)(NOW - (SOON)) < 0)
 #define ELAPSED(NOW, SOON) (!PENDING(NOW, SOON))

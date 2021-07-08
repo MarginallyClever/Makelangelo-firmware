@@ -2,14 +2,6 @@
 #include "lcd.h"
 #include "sdcard.h"
 
-#if NUM_SERVOS > 0
-#ifdef USE_ALT_SERVO
-# include "mservo.h"
-# else
-#  include <Servo.h>
-#endif
-#endif
-
 // GLOBALS
 
 Parser parser;
@@ -76,7 +68,7 @@ float Parser::parseFloat(const char code,float valueIfNotFound) {
   return valueIfNotFound;
 }
 
-int16_t Parser::parseInt(const char code,int16_t valueIfNotFound) {
+int32_t Parser::parseInt(const char code,int32_t valueIfNotFound) {
   int8_t n = hasGCode(currentCommand,code);
   if(n>=0) return parseInt(currentCommand+n+1);
   return valueIfNotFound;
@@ -154,25 +146,23 @@ char Parser::checkLineNumberAndCRCisOK() {
  * prepares the input buffer to receive a new message and tells the MYSERIAL1 connected device it is ready for more.
  */
 void Parser::ready() {
-  SERIAL_ECHOLNPGM("\n> ");  // signal ready to receive input
+  SERIAL_ECHOPGM("\n> ");  // signal ready to receive input
   lastCmdTimeMs = millis();
 }
 
 // See also http://www.marginallyclever.com/2011/10/controlling-your-arduino-through-the-MYSERIAL1-monitor/
 void Parser::update() {
-  // listen for MYSERIAL1 commands
+  if(ringBuffer.isFull()) return;
+
   if(MYSERIAL1.available() > 0) {
     char c = MYSERIAL1.read();
-    // MYSERIAL1.print(c);
     if(sofar < PARSER_BUFFER_LENGTH) serialBuffer[sofar++] = c;
     if(c == '\r' || c == '\n') {
       serialBuffer[sofar - 1] = 0;
 
       if(checkLineNumberAndCRCisOK()) {
         // echo confirmation
-        if(MUST_ECHO) { 
-          MYSERIAL1.println(serialBuffer);
-        }
+        if(MUST_ECHO) SERIAL_ECHO(serialBuffer);
 
         ringBuffer.waitToAdd(serialBuffer);
       }
@@ -452,7 +442,7 @@ void Parser::D7() {
 */
 void Parser::D8() {
   SERIAL_ECHOPAIR("D8 L",calibrateLeft);
-  SERIAL_ECHOPAIR(" R",calibrateRight);
+  SERIAL_ECHOLNPAIR(" R",calibrateRight);
 }
 #endif
 
@@ -461,7 +451,7 @@ void Parser::D8() {
    get hardware version
 */
 void Parser::D10() {
-  SERIAL_ECHOPAIR("D10 V",MACHINE_HARDWARE_VERSION);
+  SERIAL_ECHOLNPAIR("D10 V",MACHINE_HARDWARE_VERSION);
 }
 
 void Parser::D13() {
@@ -470,7 +460,7 @@ void Parser::D13() {
 
 void Parser::D14() {
   // get machine style
-  SERIAL_ECHOPAIR("D14 ",MACHINE_STYLE_NAME);
+  SERIAL_ECHOLNPAIR("D14 ",MACHINE_STYLE_NAME);
 }
 
 #if MACHINE_STYLE == SIXI
@@ -1033,13 +1023,13 @@ void Parser::M280() {
   SERIAL_ECHOPGM("M280");
   
   int id = parseInt('P', 0);
-  int v = parseInt('S', servos[0].read());
+  int v = parseInt('S', servo[0].read());
 
   if(id <0 || id>=NUM_SERVOS) return;
   if(v>=0 && v <=180) {
-    servos[id].write(v);
+    MOVE_SERVO(id,v);
   } else if(v>500) {
-    servos[id].writeMicroseconds(v);
+    servo[id].writeMicroseconds(v);
   }
 #endif
 }

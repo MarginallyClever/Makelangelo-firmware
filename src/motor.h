@@ -6,19 +6,8 @@
 //------------------------------------------------------------------------------
 
 #include <Arduino.h>
-
 #include "macros.h"
-
 #include "tmc2130.h"
-
-#if NUM_SERVOS > 0
-#ifdef USE_ALT_SERVO
-#  include "mservo.h"
-#else
-#  include <Servo.h>
-#endif
-#endif
-
 #include "assembly_math.h"
 #include "speed_lookuptable.h"
 
@@ -210,6 +199,8 @@ public:
   static uint8_t isr_step_multiplier;
   static uint16_t directionBits;
   static uint32_t advance_divisor;
+  
+  static uint8_t oversampling_factor;
 
   static int32_t isr_nominal_rate;
   static uint32_t acceleration_time, deceleration_time;
@@ -247,6 +238,8 @@ public:
     uint32_t timer;
     uint8_t step_multiplier = 1;
     
+    step_rate <<= oversampling_factor;
+
     // The stepping frequency limits for each multistepping rate
     static const uint32_t limit[] PROGMEM = {
       (  MAX_STEP_ISR_FREQUENCY_1X     ),
@@ -261,8 +254,8 @@ public:
 
     int idx=0;
     while( idx<7 && step_rate > (uint32_t)pgm_read_dword(&limit[idx]) ) {
-      step_multiplier <<= 1;
       step_rate >>= 1;
+      step_multiplier <<= 1;
       ++idx;
     }
     *loops = step_multiplier;
@@ -291,6 +284,8 @@ public:
   }
 };
 
+#define MIN_STEP_ISR_FREQUENCY (MAX_STEP_ISR_FREQUENCY_1X/2)
+
 //------------------------------------------------------------------------------
 // GLOBALS
 //------------------------------------------------------------------------------
@@ -304,11 +299,5 @@ extern float max_jerk[NUM_MUSCLES];
 extern float max_step_rate[NUM_MUSCLES];
 // motor steps-per-unit.  one value per motor/servo
 extern float motor_spu[NUM_MUSCLES];
-
-#if NUM_SERVOS>0
-#ifndef ESP8266
-extern Servo servos[NUM_SERVOS];
-#endif
-#endif
 
 extern Stepper motor;

@@ -829,12 +829,6 @@ Stepper motor;
 
 Motor motors[NUM_MUSCLES];
 
-#if NUM_SERVOS>0
-#ifndef ESP8266
-Servo servos[NUM_SERVOS];
-#endif
-#endif
-
 Segment *working_block = NULL;
 
 // used by timer1 to optimize interrupt inner loop
@@ -851,6 +845,8 @@ uint8_t Stepper::isr_step_multiplier  = 1;
 uint32_t Stepper::min_segment_time_us = DEFAULT_MIN_SEGMENT_TIME_US;
 uint16_t Stepper::directionBits=0;
 uint32_t Stepper::advance_divisor;
+
+uint8_t Stepper::oversampling_factor;
 
 float max_jerk[NUM_MUSCLES];
 float max_step_rate[NUM_MUSCLES];  // steps/s
@@ -928,24 +924,6 @@ void Stepper::setup() {
   // setup servos
 #if NUM_SERVOS > 0
   motors[NUM_MOTORS].letter = 'T';
-#  ifdef ESP8266
-  pinMode(SERVO0_PIN, OUTPUT);
-#  else
-  servos[0].attach(SERVO0_PIN);
-#  endif  // ESP8266
-#endif
-
-#if NUM_SERVOS > 1
-  servos[1].attach(SERVO1_PIN);
-#endif
-#if NUM_SERVOS > 2
-  servos[2].attach(SERVO2_PIN);
-#endif
-#if NUM_SERVOS > 3
-  servos[3].attach(SERVO3_PIN);
-#endif
-#if NUM_SERVOS > 4
-  servos[4].attach(SERVO4_PIN);
 #endif
 
   int32_t steps[NUM_MUSCLES];
@@ -1016,11 +994,7 @@ void Stepper::setPenAngle(int arg0) {
 #endif  // NUM_AXIES>=3
 
 #if NUM_SERVOS > 0
-#ifdef ESP8266
-  analogWrite(SERVO0_PIN, arg0);
-#else
-  servos[0].write(arg0);
-#endif  // ESP8266
+  MOVE_SERVO(0,arg0);
 #endif    // NUM_SERVOS>0
 }
 
@@ -1103,20 +1077,19 @@ void Stepper::isrPulsePhase() {
 
 #if NUM_SERVOS > 0
     // servo 0
-    if(servoOver0 > 0) {
-      servoOver0 -= steps_total;
+    if(servoOver0 >= 0) {
       global_servoSteps_0 += global_servoStep_dir_0;
+      servoOver0 -= advance_divisor;
 
 #  ifdef ESP8266
-      // analogWrite(SERVO0_PIN, global_servoSteps_0);
 #  elif !defined(HAS_GRIPPER)
-      servos[0].write(global_servoSteps_0);
+      //servo[0].write(global_servoSteps_0);
+      //servo[0].move(global_servoSteps_0);
 #  endif
     }
 #endif
   } while( --stepsToDo);
 }
-
 
 
 #ifdef DEBUG_STEPPING
@@ -1232,11 +1205,25 @@ hal_timer_t Stepper::isrBlockPhase() {
       //describeSegment(working_block);
 #endif
 
+      #if ENABLED(ADAPTIVE_STEP_SMOOTHING)
+        uint8_t oversampling = 0;                           // Assume no axis smoothing (via oversampling)
+        // Decide if axis smoothing is possible
+        uint32_t max_rate = working_block->nominal_rate;    // Get the step event rate
+        while (max_rate < MIN_STEP_ISR_FREQUENCY) {         // As long as more ISRs are possible...
+          max_rate <<= 1;                                   // Try to double the rate
+          if (max_rate < MIN_STEP_ISR_FREQUENCY)            // Don't exceed the estimated ISR limit
+            ++oversampling;                                 // Increase the oversampling (used for left-shift)
+        }
+        oversampling_factor = oversampling;                 // For all timer interval calculations
+      #else
+        constexpr uint8_t oversampling = 0;
+      #endif
+
       // defererencing some data so the ISR runs faster.
-      steps_total = working_block->steps_total;
+      steps_total = working_block->steps_total << oversampling;
       steps_taken = 0;
-      accel_until = working_block->accel_until;
-      decel_after = working_block->decel_after;
+      accel_until = working_block->accel_until << oversampling;
+      decel_after = working_block->decel_after << oversampling;
       acceleration_time = 0;
       deceleration_time = 0;
       isr_nominal_rate = -1;
@@ -1255,18 +1242,17 @@ hal_timer_t Stepper::isrBlockPhase() {
         acc_step_rate = working_block->initial_rate;
       #endif
 
+      // setup bresenham
       advance_divisor = steps_total << 1;
 
 #define PREPARE_DELTA(NN) \
       delta##NN = working_block->a[NN].absdelta << 1; \
       over##NN = -int32_t(steps_total);
-
       ALL_MOTOR_MACRO(PREPARE_DELTA);
 
 #if NUM_SERVOS > 0
-      //global_servoSteps_0 = working_block->a[NUM_MOTORS].step_count - working_block->a[NUM_MOTORS].delta_steps;
-      servoDelta0 = working_block->a[NUM_MOTORS].absdelta;
-      servoOver0  = -(steps_total >> 1);
+      servoDelta0 = working_block->a[NUM_MOTORS].absdelta << 1;
+      servoOver0  = -int32_t(steps_total);
 
 #  if defined(HAS_GRIPPER)
       gripper.sendPositionRequest(working_block->a[NUM_MOTORS].step_count, 255, 32);
