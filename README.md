@@ -10,6 +10,8 @@ Control boards are the PCB that surrounds each CPU.  Think of it as the nervous 
 
 Kinematic systems is more complicated.  All the different types of robots supported eventually boil down to a few motors moving in concert.  These moving motors can be rearranged physically to make different shapes.  The firmware only knows the state of each motor.  BUT there is some room in some brains to add more.  More powerful brains can run [Forward Kinematics](https://en.wikipedia.org/wiki/Forward_kinematics) and even [Inverse Kinematics](https://en.wikipedia.org/wiki/Inverse_kinematics) with [Gradient Descent](https://www.marginallyclever.com/2020/04/gradient-descent-inverse-kinematics-for-6dof-robot-arms/).
 
+The two leading alternatives right now are [GRBL](https://github.com/gnea/grbl) and [Marlin](https://marlinfw.org/).  GRBL is made for three axis spingle type cutting CNC machines.  Marlin is made for multi-axis 3D printing.  Makelangelo-firmware was initially developped by Marginally Clever Robots, Ltd. to address the need for a multi-axis stepper driven system that was neither of these - Plotters, robot arms, stewart platforms, and more.  Things without a spindle or hot bits.
+
 This firmware fully or partially supports many kinematic models.  It was originally written for the http://www.makelangelo.com/ Makelangelo art robot, a 3 motor polargraph art machine.  It has since expanded to suport more types.  Please feel free to make a pull request with your favorite flavor.
 
 It pairs really well with Makelangelo Software, a project to give humans a pleasant GUI.
