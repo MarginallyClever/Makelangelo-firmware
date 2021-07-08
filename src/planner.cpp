@@ -709,62 +709,62 @@ void Planner::describeAllSegments() {
   static uint8_t once = 0;
   if(once == 0) {
     once = 1;
-    MYSERIAL1.println("A = index");
-    MYSERIAL1.println("B = distance");
-    MYSERIAL1.println("C = acceleration");
-    MYSERIAL1.println("D = acceleration steps s2");
-    MYSERIAL1.println("E = acceleration rate");
+    SERIAL_ECHOLNPGM("A = index");
+    SERIAL_ECHOLNPGM("B = distance");
+    SERIAL_ECHOLNPGM("C = acceleration");
+    SERIAL_ECHOLNPGM("D = acceleration steps s2");
+    SERIAL_ECHOLNPGM("E = acceleration rate");
 
-    MYSERIAL1.println("F = entry_speed");
-    MYSERIAL1.println("G = nominal_speed");
-    MYSERIAL1.println("H = entry_speed_max");
+    SERIAL_ECHOLNPGM("F = entry_speed");
+    SERIAL_ECHOLNPGM("G = nominal_speed");
+    SERIAL_ECHOLNPGM("H = entry_speed_max");
 
-    MYSERIAL1.println("I = entry rate");
-    MYSERIAL1.println("J = nominal rate");
-    MYSERIAL1.println("K = exit rate");
+    SERIAL_ECHOLNPGM("I = entry rate");
+    SERIAL_ECHOLNPGM("J = nominal rate");
+    SERIAL_ECHOLNPGM("K = exit rate");
 
-    MYSERIAL1.println("L = accel_until");
-    MYSERIAL1.println("M = coast steps");
-    MYSERIAL1.println("N = decel steps");
-    MYSERIAL1.println("O = total steps");
+    SERIAL_ECHOLNPGM("L = accel_until");
+    SERIAL_ECHOLNPGM("M = coast steps");
+    SERIAL_ECHOLNPGM("N = decel steps");
+    SERIAL_ECHOLNPGM("O = total steps");
 
-    MYSERIAL1.println("P = nominal?");
-    MYSERIAL1.println("Q = recalculate?");
-    MYSERIAL1.println("R = busy?");
-    MYSERIAL1.println("\nA\tB\tC\tD\tE\tF\tG\tH\tI\tJ\tK\tL\tM\tN\tO\tP\tQ\tR");
+    SERIAL_ECHOLNPGM("P = nominal?");
+    SERIAL_ECHOLNPGM("Q = recalculate?");
+    SERIAL_ECHOLNPGM("R = busy?");
+    SERIAL_ECHOLNPGM("\nA\tB\tC\tD\tE\tF\tG\tH\tI\tJ\tK\tL\tM\tN\tO\tP\tQ\tR");
   }
-  MYSERIAL1.println("---------------------------------------------------------------------------------------------------------------------------");
+  SERIAL_ECHOLNPGM("---------------------------------------------------------------------------------------------------------------------------");
 
   int s = block_buffer_tail;
   while (s != block_buffer_head) {
     Segment *next = &blockBuffer[s];
     int coast     = next->decel_after - next->accel_until;
     int decel     = next->steps_total - next->decel_after;
-    MYSERIAL1.print(s);
-    SERIAL_CHAR('\t');   MYSERIAL1.print(next->distance);
-    SERIAL_CHAR('\t');   MYSERIAL1.print(next->acceleration);
-    SERIAL_CHAR('\t');   MYSERIAL1.print(next->acceleration_steps_per_s2);
+    SERIAL_ECHO(s);
+    SERIAL_CHAR('\t');   SERIAL_ECHO(next->distance);
+    SERIAL_CHAR('\t');   SERIAL_ECHO(next->acceleration);
+    SERIAL_CHAR('\t');   SERIAL_ECHO(next->acceleration_steps_per_s2);
 #ifndef S_CURVE_ACCELERATION
-    SERIAL_CHAR('\t');   MYSERIAL1.print(next->acceleration_rate);
+    SERIAL_CHAR('\t');   SERIAL_ECHO(next->acceleration_rate);
 #endif
 
-    SERIAL_CHAR('\t');   MYSERIAL1.print(next->entry_speed_sqr);
-    SERIAL_CHAR('\t');   MYSERIAL1.print(next->nominal_speed_sqr);
-    SERIAL_CHAR('\t');   MYSERIAL1.print(next->entry_speed_max_sqr);
+    SERIAL_CHAR('\t');   SERIAL_ECHO(next->entry_speed_sqr);
+    SERIAL_CHAR('\t');   SERIAL_ECHO(next->nominal_speed_sqr);
+    SERIAL_CHAR('\t');   SERIAL_ECHO(next->entry_speed_max_sqr);
 
-    SERIAL_CHAR('\t');   MYSERIAL1.print(next->initial_rate);
-    SERIAL_CHAR('\t');   MYSERIAL1.print(next->nominal_rate);
-    SERIAL_CHAR('\t');   MYSERIAL1.print(next->final_rate);
+    SERIAL_CHAR('\t');   SERIAL_ECHO(next->initial_rate);
+    SERIAL_CHAR('\t');   SERIAL_ECHO(next->nominal_rate);
+    SERIAL_CHAR('\t');   SERIAL_ECHO(next->final_rate);
 
-    SERIAL_CHAR('\t');   MYSERIAL1.print(next->accel_until);
-    SERIAL_CHAR('\t');   MYSERIAL1.print(coast);
-    SERIAL_CHAR('\t');   MYSERIAL1.print(decel);
-    SERIAL_CHAR('\t');   MYSERIAL1.print(next->steps_total);
-    //SERIAL_CHAR('\t');   MYSERIAL1.print(next->steps_taken);
+    SERIAL_CHAR('\t');   SERIAL_ECHO(next->accel_until);
+    SERIAL_CHAR('\t');   SERIAL_ECHO(coast);
+    SERIAL_CHAR('\t');   SERIAL_ECHO(decel);
+    SERIAL_CHAR('\t');   SERIAL_ECHO(next->steps_total);
+    //SERIAL_CHAR('\t');   SERIAL_ECHO(next->steps_taken);
 
-    SERIAL_CHAR('\t');   MYSERIAL1.print(TEST(next->flags,BIT_FLAG_NOMINAL) != 0 ? 'Y' : 'N');
-    SERIAL_CHAR('\t');   MYSERIAL1.print(TEST(next->flags,BIT_FLAG_RECALCULATE) != 0 ? 'Y' : 'N');
-    SERIAL_CHAR('\t');   MYSERIAL1.print(motor.isBlockBusy(next) != 0 ? 'Y' : 'N');
+    SERIAL_CHAR('\t');   SERIAL_ECHO(TEST(next->flags,BIT_FLAG_NOMINAL) != 0 ? 'Y' : 'N');
+    SERIAL_CHAR('\t');   SERIAL_ECHO(TEST(next->flags,BIT_FLAG_RECALCULATE) != 0 ? 'Y' : 'N');
+    SERIAL_CHAR('\t');   SERIAL_ECHO(motor.isBlockBusy(next) != 0 ? 'Y' : 'N');
     SERIAL_EOL();
     s = getNextBlock(s);
   }
@@ -787,7 +787,7 @@ void Planner::populateBlock(Segment *newBlock,const float *const target, float f
   float deltaSteps[NUM_MUSCLES];
 
   for (ALL_MUSCLES(i)) {
-    newBlock->a[i].step_count  = steps[i];
+    newBlock->a[i].step_count = steps[i];
     deltaSteps[i] = steps[i] - oldBlock.a[i].step_count;
     if(deltaSteps[i] < 0) newBlock->dir |= (1UL<<i);
     newBlock->a[i].absdelta = abs(deltaSteps[i]);
@@ -826,7 +826,7 @@ void Planner::populateBlock(Segment *newBlock,const float *const target, float f
     uint32_t segment_time_us = lroundf(1000000.0f / inverse_secs);
     const int32_t time_diff = Stepper::min_segment_time_us - segment_time_us;
     if(time_diff > 0) {
-      //MYSERIAL1.print("was ");  MYSERIAL1.print(1.0f/inverse_secs);
+      //SERIAL_ECHOPAIR("was ",1.0f/inverse_secs);
       const uint32_t nst = segment_time_us + lroundf(2 * time_diff  / movesQueued);
       inverse_secs       = 1000000.0f / nst;
       //REPORT(" now ",1.0f/inverse_secs);
@@ -943,15 +943,16 @@ void Planner::populateBlock(Segment *newBlock,const float *const target, float f
 }
 
 void Planner::segmentReport(Segment &new_seg) {
-  MYSERIAL1.print("seg:");  MYSERIAL1.println((long)&new_seg,HEX);
-  MYSERIAL1.print("distance=");  MYSERIAL1.println(new_seg.distance);
-  MYSERIAL1.print("nominal_speed=");  MYSERIAL1.println(new_seg.nominal_speed_sqr);
-  MYSERIAL1.print("nominal_rate=");  MYSERIAL1.println(new_seg.nominal_rate);
-  MYSERIAL1.print("acceleration_steps_per_s2=");  MYSERIAL1.println(new_seg.acceleration_steps_per_s2);
-  MYSERIAL1.print("acceleration=");  MYSERIAL1.println(new_seg.acceleration);
-  MYSERIAL1.print("nominal_speed=");  MYSERIAL1.println(new_seg.nominal_speed_sqr);
-  MYSERIAL1.print("entry_speed_max=");  MYSERIAL1.println(new_seg.entry_speed_max_sqr);
-  MYSERIAL1.print("entry_speed=");  MYSERIAL1.println(new_seg.entry_speed_sqr);
+  uint32_t addr=(long)&new_seg;
+  SERIAL_ECHOLNPAIR("seg:",addr);
+  SERIAL_ECHOLNPAIR("distance=",new_seg.distance);
+  SERIAL_ECHOLNPAIR("nominal_speed=",new_seg.nominal_speed_sqr);
+  SERIAL_ECHOLNPAIR("nominal_rate=",new_seg.nominal_rate);
+  SERIAL_ECHOLNPAIR("acceleration_steps_per_s2=",new_seg.acceleration_steps_per_s2);
+  SERIAL_ECHOLNPAIR("acceleration=",new_seg.acceleration);
+  SERIAL_ECHOLNPAIR("nominal_speed=",new_seg.nominal_speed_sqr);
+  SERIAL_ECHOLNPAIR("entry_speed_max=",new_seg.entry_speed_max_sqr);
+  SERIAL_ECHOLNPAIR("entry_speed=",new_seg.entry_speed_sqr);
 }
 
 /**
@@ -1030,14 +1031,11 @@ void Planner::bufferLine(float *pos, float new_feed_rate_units) {
 #ifdef HAS_GRIPPER
   // if we have a gripper and only gripper is moving, don't split the movement.
   if(lenSquared == sq(deltaCartesian[6])) {
-    MYSERIAL1.println("only t");
+    SERIAL_ECHOLN("only t");
     segments = 1;
-    MYSERIAL1.print("seconds=");
-    MYSERIAL1.println(seconds);
-    MYSERIAL1.print("len_units=");
-    MYSERIAL1.println(len_units);
-    MYSERIAL1.print("new_feed_rate_units=");
-    MYSERIAL1.println(new_feed_rate_units);
+    SERIAL_ECHOLNPAIR("seconds=",seconds);
+    SERIAL_ECHOLNPAIR("len_units=",len_units);
+    SERIAL_ECHOLNPAIR("new_feed_rate_units=",new_feed_rate_units);
   }
 #endif
 
