@@ -1005,7 +1005,7 @@ void Planner::bufferLine(float *pos, float new_feed_rate_units) {
 
   for (ALL_AXIES(i)) {
     intermediatePos[i] = axies[i].pos;
-    deltaCartesian[i]    = pos[i] - intermediatePos[i];
+    deltaCartesian[i] = pos[i] - intermediatePos[i];
     lenSquared += sq(deltaCartesian[i]);
   }
 

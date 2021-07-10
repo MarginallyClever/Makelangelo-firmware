@@ -132,7 +132,8 @@ extern void meanwhile();
 #include "planner.h"
 
 #if defined(NUM_SERVOS) && NUM_SERVOS>0
-#define HAS_SERVOS 1
+#  define HAS_SERVOS 1
+#  define HAS_SERVO_0 1
 #endif
 #include "servo.h"
 #include "motor.h"

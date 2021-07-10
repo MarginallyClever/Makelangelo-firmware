@@ -755,12 +755,12 @@ void Parser::M42() {
  * M92 [Xn] [Yn] [Zn] [Un] [Vn] [Wn] - Set steps per unit
  */
 void Parser::M92() {
-  SERIAL_ECHOPGM("M92 ");
+  SERIAL_ECHOPGM("M92");
   for(ALL_MUSCLES(i)) {
     motor_spu[i] = parseFloat(motors[i].letter, motor_spu[i]);
+    SERIAL_CHAR(' ');
     SERIAL_CHAR(motors[i].letter);
     SERIAL_ECHO_F(motor_spu[i]);
-    SERIAL_ECHO(' ');
   }
   SERIAL_EOL();
 }
@@ -1024,13 +1024,15 @@ void Parser::M280() {
   
   int id = parseInt('P', 0);
   int v = parseInt('S', servo[0].read());
-
   if(id <0 || id>=NUM_SERVOS) return;
   if(v>=0 && v <=180) {
     MOVE_SERVO(id,v);
   } else if(v>500) {
     servo[id].writeMicroseconds(v);
   }
+
+  SERIAL_ECHOPAIR(" P",id);
+  SERIAL_ECHOLNPAIR(" S",v);
 #endif
 }
 

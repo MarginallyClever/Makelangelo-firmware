@@ -66,6 +66,8 @@
  *                   With DEACTIVATE_SERVOS_AFTER_MOVE wait SERVO_DELAY and detach.
  */
 
+#define SERVO_DELAY 300
+
 #if IS_TEENSY32
   #include "../TEENSY31_32/Servo.h"
 #elif IS_TEENSY35 || IS_TEENSY36
@@ -99,7 +101,7 @@
       void detach();
       void write(int value);             // if value is < 200 it is treated as an angle, otherwise as pulse width in microseconds
       void writeMicroseconds(int value); // write pulse width in microseconds
-      void move(const int value);        // attach the servo, then move to value
+      void move(const int value,const int delay_ms=SERVO_DELAY);  // attach the servo, then move to value
                                          // if value is < 200 it is treated as an angle, otherwise as pulse width in microseconds
                                          // if DEACTIVATE_SERVOS_AFTER_MOVE wait SERVO_DELAY, then detach
       int read();                        // returns current pulse width as an angle between 0 and 180 degrees

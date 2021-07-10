@@ -142,14 +142,13 @@ int Servo::readMicroseconds() {
 
 bool Servo::attached() { return servo_info[servoIndex].Pin.isActive; }
 
-#define SERVO_DELAY 300
-void Servo::move(const int value) {
+void Servo::move(const int value,int delay_ms) {
   //constexpr uint16_t servo_delay[] = SERVO_DELAY;
   //static_assert(COUNT(servo_delay) == NUM_SERVOS, "SERVO_DELAY must be an array NUM_SERVOS long.");
   if (attach(0) >= 0) {
     write(value);
     //safe_delay(servo_delay[servoIndex]);
-    delay(SERVO_DELAY);
+    delay(delay_ms);
     TERN_(DEACTIVATE_SERVOS_AFTER_MOVE, detach());
   }
 }

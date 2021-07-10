@@ -1083,8 +1083,7 @@ void Stepper::isrPulsePhase() {
 
 #  ifdef ESP8266
 #  elif !defined(HAS_GRIPPER)
-      //servo[0].write(global_servoSteps_0);
-      //servo[0].move(global_servoSteps_0);
+      servo[0].write(global_servoSteps_0);
 #  endif
     }
 #endif
@@ -1254,11 +1253,16 @@ hal_timer_t Stepper::isrBlockPhase() {
       servoDelta0 = working_block->a[NUM_MOTORS].absdelta << 1;
       servoOver0  = -int32_t(steps_total);
 
+      if(!!servoDelta0) servo[0].attach(SERVO0_PIN);
+      else servo[0].detach();
+
 #  if defined(HAS_GRIPPER)
       gripper.sendPositionRequest(working_block->a[NUM_MOTORS].step_count, 255, 32);
 #  endif
 #endif
       interval = calc_interval(working_block->initial_rate, &isr_step_multiplier);
+    } else {
+      servo[0].detach();
     }
   }
 

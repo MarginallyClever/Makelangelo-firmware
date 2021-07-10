@@ -110,6 +110,7 @@
 #endif // HAS_SERVO_ANGLES
 
 #define MOVE_SERVO(I, P) servo[I].move(P)
+#define WRITE_SERVO(I, P) servo[I].write(P)
 
 extern HAL_SERVO_LIB servo[NUM_SERVOS];
 void servo_init();
