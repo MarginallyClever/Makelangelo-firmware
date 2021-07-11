@@ -88,10 +88,8 @@ void pause(const uint32_t us) {
 void teleport(float *pos) {
   planner.wait_for_empty_segment_buffer();
 
-  // MYSERIAL1.println(F("Teleport"));
   for (ALL_AXIES(i)) {
     axies[i].pos = pos[i];
-    // MYSERIAL1.println(pos[i]);
   }
 
   int32_t steps[NUM_MUSCLES];

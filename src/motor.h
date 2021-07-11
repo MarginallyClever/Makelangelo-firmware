@@ -206,6 +206,10 @@ public:
   static uint32_t acceleration_time, deceleration_time;
   static uint32_t min_segment_time_us;
 
+  static uint32_t delta[NUM_MUSCLES];
+  static int32_t over[NUM_MUSCLES];
+  static uint32_t global_steps[NUM_MUSCLES];
+  static int8_t global_step_dir[NUM_MUSCLES];
 
   static void setup();
   static void home();

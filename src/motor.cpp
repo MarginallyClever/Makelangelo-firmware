@@ -864,32 +864,16 @@ float motor_spu[NUM_MUSCLES];
   bool Stepper::bezier_2nd_half;    // =false If Bézier curve has been initialized or not
 #endif
 
-#define DECL_MOT(NN)      \
-  uint32_t delta##NN;          \
-  int32_t over##NN;           \
-  uint32_t global_steps_##NN; \
-  int8_t global_step_dir_##NN;
-
-ALL_MOTOR_MACRO(DECL_MOT)
-
-#if NUM_SERVOS > 0
-uint32_t servoDelta0;
-int32_t servoOver0;
-uint32_t global_servoSteps_0;
-int8_t global_servoStep_dir_0;
-#endif
+uint32_t Stepper::delta[NUM_MUSCLES];
+int32_t Stepper::over[NUM_MUSCLES];
+uint32_t Stepper::global_steps[NUM_MUSCLES];
+int8_t Stepper::global_step_dir[NUM_MUSCLES];
 
 const char AxisNames[] PROGMEM = "XYZUVWT";
 
 //------------------------------------------------------------------------------
 // METHODS
 //------------------------------------------------------------------------------
-
-#ifdef ESP8266
-void itr();
-#endif
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // set up the pins for each motor
 void Stepper::setup() {
@@ -921,15 +905,18 @@ void Stepper::setup() {
   tmc2130_setup_all();
 #endif
 
-  // setup servos
-#if NUM_SERVOS > 0
-  motors[NUM_MOTORS].letter = 'T';
-#endif
 
   int32_t steps[NUM_MUSCLES];
   memset(steps, 0, (NUM_MUSCLES) * sizeof(long));
-  set_step_count(steps);
 
+  // setup servos
+#if NUM_SERVOS > 0
+  motors[NUM_MOTORS].letter = 'T';
+  steps[NUM_MOTORS] = servo[0].read();
+#endif
+
+
+  set_step_count(steps);
   setDirections(0);
 
   HAL_timer_start(STEP_TIMER_NUM);
@@ -941,18 +928,14 @@ void Stepper::setup() {
  * Set the step count for each muscle.
  * @input NUM_MUSCLES in length.
  */
-void Stepper::set_step_count(int32_t *a) {
+void Stepper::set_step_count(int32_t *steps) {
   planner.zeroSpeeds();
 
   Segment &old_seg = planner.blockBuffer[planner.getPrevBlock(planner.block_buffer_head)];
-  for (ALL_MUSCLES(i)) old_seg.a[i].step_count = a[i];
+  for (ALL_MUSCLES(i)) old_seg.a[i].step_count = steps[i];
 
-#define SETUP_STEP(NN) global_steps_##NN = 0;
-  ALL_MOTOR_MACRO(SETUP_STEP);
-
-#if NUM_SERVOS > 0
-  global_servoSteps_0 = 0;
-#endif
+#define SETUP_STEP(NN) global_steps[NN] = 0;
+  for(ALL_MUSCLES(i)) SETUP_STEP(i);
 }
 
 
@@ -1055,11 +1038,11 @@ void Stepper::isrPulsePhase() {
 #endif
 
 #define PULSE_PREP(NN) { \
-    over##NN += delta##NN; \
-    stepNeeded[NN] = (over##NN >= 0); \
+    over[NN] += delta[NN]; \
+    stepNeeded[NN] = (over[NN] >= 0); \
     if(stepNeeded[NN]) { \
-      global_steps_##NN += global_step_dir_##NN; \
-      over##NN -= advance_divisor; \
+      global_steps[NN] += global_step_dir[NN]; \
+      over[NN] -= advance_divisor; \
     } \
   }
 #define PULSE_START(NN)      if(stepNeeded[NN]) digitalWrite(MOTOR_##NN##_STEP_PIN, START##NN);
@@ -1068,7 +1051,7 @@ void Stepper::isrPulsePhase() {
     ALL_MOTOR_MACRO(PULSE_PREP);
 
 #if NUM_SERVOS > 0
-    servoOver0 += servoDelta0;
+    PULSE_PREP(NUM_MOTORS);
 #endif
 
     ALL_MOTOR_MACRO(PULSE_START);
@@ -1077,13 +1060,13 @@ void Stepper::isrPulsePhase() {
 
 #if NUM_SERVOS > 0
     // servo 0
-    if(servoOver0 >= 0) {
-      global_servoSteps_0 += global_servoStep_dir_0;
-      servoOver0 -= advance_divisor;
+    if(stepNeeded[NUM_MOTORS]) {
+      global_steps[NUM_MOTORS] += global_step_dir[NUM_MOTORS];
+      over[NUM_MOTORS] -= advance_divisor;
 
 #  ifdef ESP8266
 #  elif !defined(HAS_GRIPPER)
-      servo[0].write(global_servoSteps_0);
+      servo[0].write(global_steps[NUM_MOTORS]);
 #  endif
     }
 #endif
@@ -1245,15 +1228,15 @@ hal_timer_t Stepper::isrBlockPhase() {
       advance_divisor = steps_total << 1;
 
 #define PREPARE_DELTA(NN) \
-      delta##NN = working_block->a[NN].absdelta << 1; \
-      over##NN = -int32_t(steps_total);
+      delta[NN] = working_block->a[NN].absdelta << 1; \
+      over[NN] = -int32_t(steps_total);
       ALL_MOTOR_MACRO(PREPARE_DELTA);
 
 #if NUM_SERVOS > 0
-      servoDelta0 = working_block->a[NUM_MOTORS].absdelta << 1;
-      servoOver0  = -int32_t(steps_total);
+      delta[NUM_MOTORS] = working_block->a[NUM_MOTORS].absdelta << 1;
+      over[NUM_MOTORS]  = -int32_t(steps_total);
 
-      if(!!servoDelta0) servo[0].attach(SERVO0_PIN);
+      if(!!delta[NUM_MOTORS]) servo[0].attach(SERVO0_PIN);
       else servo[0].detach();
 
 #  if defined(HAS_GRIPPER)
@@ -1364,15 +1347,15 @@ void Stepper::setDirections(uint16_t bits) {
 #define SET_STEP_DIR(NN) \
   if(!!(directionBits&(1UL<<NN))) { \
     digitalWrite(MOTOR_##NN##_DIR_PIN, STEPPER_DIR_HIGH); \
-    global_step_dir_##NN = 1; \
+    global_step_dir[NN] = 1; \
   } else { \
     digitalWrite(MOTOR_##NN##_DIR_PIN, STEPPER_DIR_LOW); \
-    global_step_dir_##NN = -1; \
+    global_step_dir[NN] = -1; \
   }
 
   ALL_MOTOR_MACRO(SET_STEP_DIR);
 
 #if NUM_SERVOS > 0
-  global_servoStep_dir_0 = (!!(working_block->dir&(1<<NUM_MOTORS))) ? -1 : 1;
+  global_step_dir[NUM_MOTORS] = (!!(working_block->dir&(1<<NUM_MOTORS))) ? -1 : 1;
 #endif
 }
