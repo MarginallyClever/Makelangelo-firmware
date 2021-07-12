@@ -771,7 +771,7 @@ void Planner::describeAllSegments() {
   CRITICAL_SECTION_END();
 }
 
-void Planner::populateBlock(Segment *newBlock,const float *const target, float fr_units_s, float cartesianDistance) {
+bool Planner::populateBlock(Segment *newBlock,const float *const target, float fr_units_s, float cartesianDistance) {
   int prevBlockID = getPrevBlock(block_buffer_head);
   Segment &oldBlock = blockBuffer[prevBlockID];
 
@@ -806,7 +806,7 @@ void Planner::populateBlock(Segment *newBlock,const float *const target, float f
   }
 
   // No steps?  No work!  Stop now.
-  if(newBlock->steps_total < MIN_STEPS_PER_SEGMENT) return;
+  if(newBlock->steps_total < MIN_STEPS_PER_SEGMENT) return false;
 
   newBlock->distance = cartesianDistance;
 
@@ -940,6 +940,7 @@ void Planner::populateBlock(Segment *newBlock,const float *const target, float f
   for(ALL_AXIES(i)) {
     axies[i].pos = target[i];
   }
+  return true;
 }
 
 void Planner::segmentReport(Segment &new_seg) {
@@ -966,7 +967,7 @@ void Planner::addSegment(const float *const target_position, float fr_units_s, f
   uint8_t next_buffer_head;
   Segment *newBlock = getNextFreeBlock(next_buffer_head);
 
-  populateBlock(newBlock,target_position,fr_units_s,longest_distance);
+  if(!populateBlock(newBlock,target_position,fr_units_s,longest_distance)) return;
 
   // when should we accelerate and decelerate in this segment?
   //segment_update_trapezoid(newBlock, newBlock->entry_speed_sqr / newBlock->nominal_speed_sqr,(float)MIN_FEEDRATE / newBlock->nominal_speed_sqr);

@@ -177,7 +177,7 @@ class Planner {
   static void zeroSpeeds();
   static void wait_for_empty_segment_buffer();
 
-  static void populateBlock(Segment *newBlock,const float *const target_position, float fr_units_s, float longest_distance);
+  static bool populateBlock(Segment *newBlock,const float *const target_position, float fr_units_s, float longest_distance);
   static void addSegment(const float *const target_position, float fr_units_s, float millimeters);
   static void bufferLine(float *pos, float new_feed_rate_units);
   static void bufferArc(float cx, float cy, float *destination, char clockwise, float new_feed_rate_units);
