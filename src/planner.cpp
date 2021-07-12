@@ -17,7 +17,7 @@ float Planner::previous_nominal_speed_sqr;
 float Planner::previous_safe_speed;
 float Planner::previous_speed[NUM_MUSCLES];
 float Planner::prev_unit_vec[NUM_AXIES];
-float Planner::position[NUM_MUSCLES];
+int32_t Planner::position[NUM_MUSCLES];
 
 #ifdef HAS_JUNCTION_DEVIATION
 float Planner::junction_deviation = JUNCTION_DEVIATION_UNITS;
@@ -771,7 +771,7 @@ void Planner::describeAllSegments() {
   CRITICAL_SECTION_END();
 }
 
-void Planner::populateBlock(Segment *newBlock,const float *const target, float fr_units_s, float cartesianDistance) {
+bool Planner::populateBlock(Segment *newBlock,const float *const target, float fr_units_s, float cartesianDistance) {
   // convert from the cartesian position to the motor steps
   int32_t steps[NUM_MUSCLES];
   IK(target, steps);
@@ -793,10 +793,7 @@ void Planner::populateBlock(Segment *newBlock,const float *const target, float f
     newBlock->a[i].positionStart = axies[i].pos;
     newBlock->a[i].positionEnd   = target_position[i];
 #endif
-    SERIAL_ECHOPAIR("\t",steps[i]);
-    SERIAL_ECHOPAIR("/",position[i]);
   }
-  SERIAL_EOL();
 
   float oldP[NUM_AXIES];
   float deltaCartesian[NUM_AXIES];
@@ -806,7 +803,7 @@ void Planner::populateBlock(Segment *newBlock,const float *const target, float f
   }
 
   // No steps?  No work!  Stop now.
-  if(newBlock->steps_total < MIN_STEPS_PER_SEGMENT) return;
+  if(newBlock->steps_total < MIN_STEPS_PER_SEGMENT) return false;
 
   newBlock->distance = cartesianDistance;
 
@@ -941,6 +938,7 @@ void Planner::populateBlock(Segment *newBlock,const float *const target, float f
   for(ALL_AXIES(i)) {
     axies[i].pos = target[i];
   }
+  return true;
 }
 
 void Planner::segmentReport(Segment &new_seg) {
@@ -967,7 +965,9 @@ void Planner::addSegment(const float *const target_position, float fr_units_s, f
   uint8_t next_buffer_head;
   Segment *newBlock = getNextFreeBlock(next_buffer_head);
 
-  populateBlock(newBlock,target_position,fr_units_s,longest_distance);
+  if(!populateBlock(newBlock,target_position,fr_units_s,longest_distance)) {
+    return;
+  }
 
   // when should we accelerate and decelerate in this segment?
   //segment_update_trapezoid(newBlock, newBlock->entry_speed_sqr / newBlock->nominal_speed_sqr,(float)MIN_FEEDRATE / newBlock->nominal_speed_sqr);
