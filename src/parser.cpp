@@ -878,7 +878,7 @@ void Parser::M114() {
   for(ALL_AXIES(i)) {
     SERIAL_CHAR(' ');
     SERIAL_CHAR(GET_AXIS_NAME(i));
-    SERIAL_ECHO(Stepper::global_steps[i]);
+    SERIAL_ECHO(Stepper::count_position[i]);
   }
 
   SERIAL_EOL();
