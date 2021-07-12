@@ -17,7 +17,7 @@ float Planner::previous_nominal_speed_sqr;
 float Planner::previous_safe_speed;
 float Planner::previous_speed[NUM_MUSCLES];
 float Planner::prev_unit_vec[NUM_AXIES];
-
+float Planner::position[NUM_MUSCLES];
 
 #ifdef HAS_JUNCTION_DEVIATION
 float Planner::junction_deviation = JUNCTION_DEVIATION_UNITS;
@@ -772,9 +772,6 @@ void Planner::describeAllSegments() {
 }
 
 void Planner::populateBlock(Segment *newBlock,const float *const target, float fr_units_s, float cartesianDistance) {
-  int prevBlockID = getPrevBlock(block_buffer_head);
-  Segment &oldBlock = blockBuffer[prevBlockID];
-
   // convert from the cartesian position to the motor steps
   int32_t steps[NUM_MUSCLES];
   IK(target, steps);
@@ -788,14 +785,16 @@ void Planner::populateBlock(Segment *newBlock,const float *const target, float f
 
   for (ALL_MUSCLES(i)) {
     newBlock->a[i].step_count = steps[i];
-    deltaSteps[i] = steps[i] - oldBlock.a[i].step_count;
-    if(deltaSteps[i] < 0) newBlock->dir |= (1UL<<i);
+    deltaSteps[i] = steps[i] - position[i];
+    if(deltaSteps[i] > 0) newBlock->dir |= (1UL<<i);
     newBlock->a[i].absdelta = abs(deltaSteps[i]);
     newBlock->steps_total = _MAX(newBlock->steps_total, newBlock->a[i].absdelta);
 #if MACHINE_STYLE == SIXI
     newBlock->a[i].positionStart = axies[i].pos;
     newBlock->a[i].positionEnd   = target_position[i];
 #endif
+    SERIAL_ECHOPAIR("\t",steps[i]);
+    SERIAL_ECHOPAIR("/",position[i]);
   }
   SERIAL_EOL();
 
@@ -937,6 +936,7 @@ void Planner::populateBlock(Segment *newBlock,const float *const target, float f
   previous_nominal_speed_sqr = newBlock->nominal_speed_sqr;
   for(ALL_MUSCLES(i)) {
     previous_speed[i] = current_speed[i];
+    position[i] = steps[i];
   }
   for(ALL_AXIES(i)) {
     axies[i].pos = target[i];
@@ -1447,15 +1447,12 @@ float Planner::classicJerk(Segment *newBlock,float *current_speed,int movesQueue
 void Planner::teleport(float *cartesianPosition) {
   planner.zeroSpeeds();
 
-  for (ALL_AXIES(i)) {
-    axies[i].pos = cartesianPosition[i];
-  }
-
+  // remember cartesian position
+  for(ALL_AXIES(i)) axies[i].pos = cartesianPosition[i];
+  // get step count
   int32_t steps[NUM_MUSCLES];
   IK(cartesianPosition, steps);
-
-  Segment &old_seg = planner.blockBuffer[planner.getPrevBlock(planner.block_buffer_head)];
-  for (ALL_MUSCLES(i)) old_seg.a[i].step_count = steps[i];
-
+  // remember step count
+  for(ALL_MUSCLES(i)) position[i] = steps[i];
   motor.set_step_count(steps);
 }

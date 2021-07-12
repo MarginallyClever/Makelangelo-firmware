@@ -1341,16 +1341,16 @@ void Stepper::setDirections(uint16_t bits) {
   directionBits = bits;
 #define SET_STEP_DIR(NN) \
   if(!!(directionBits&(1UL<<NN))) { \
-    digitalWrite(MOTOR_##NN##_DIR_PIN, STEPPER_DIR_HIGH); \
+    digitalWrite(MOTOR_##NN##_DIR_PIN, STEPPER_DIR_LOW); \
     count_direction[NN] = 1; \
   } else { \
-    digitalWrite(MOTOR_##NN##_DIR_PIN, STEPPER_DIR_LOW); \
+    digitalWrite(MOTOR_##NN##_DIR_PIN, STEPPER_DIR_HIGH); \
     count_direction[NN] = -1; \
   }
 
   ALL_MOTOR_MACRO(SET_STEP_DIR);
 
 #if NUM_SERVOS > 0
-  count_direction[FIRST_SERVO] = (!!(working_block->dir&(1UL<<FIRST_SERVO))) ? -1 : 1;
+  count_direction[FIRST_SERVO] = (!!(working_block->dir&(1UL<<FIRST_SERVO))) ? 1 : -1;
 #endif
 }

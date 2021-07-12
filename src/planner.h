@@ -114,6 +114,9 @@ class Planner {
   static float previous_speed[NUM_MUSCLES];
   static float prev_unit_vec[NUM_AXIES];
   
+  // step count
+  static float position[NUM_MUSCLES];
+
 #ifdef HAS_JUNCTION_DEVIATION
   static float junction_deviation;
 #endif
