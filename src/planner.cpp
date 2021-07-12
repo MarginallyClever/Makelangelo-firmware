@@ -970,10 +970,6 @@ void Planner::addSegment(const float *const target_position, float fr_units_s, f
     return;
   }
 
-  // when should we accelerate and decelerate in this segment?
-  //segment_update_trapezoid(newBlock, newBlock->entry_speed_sqr / newBlock->nominal_speed_sqr,(float)MIN_FEEDRATE / newBlock->nominal_speed_sqr);
-  //segmentReport(new_seg);
-
   if(block_buffer_tail == block_buffer_head) {
     first_segment_delay = BLOCK_DELAY_FOR_1ST_MOVE;
   }
