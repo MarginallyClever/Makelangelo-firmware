@@ -966,6 +966,7 @@ void Planner::addSegment(const float *const target_position, float fr_units_s, f
   Segment *newBlock = getNextFreeBlock(next_buffer_head);
 
   if(!populateBlock(newBlock,target_position,fr_units_s,longest_distance)) {
+    // move was too short.  bail!
     return;
   }
 
