@@ -516,7 +516,7 @@ void Parser::D18() {
   }
   for (ALL_AXIES(j)) { a[j] /= (float)numSamples; }
 
-  teleport(a);
+  Planner::teleport(a);
 }
 
 // D19 - Sixi only.  toggle continuous D17 reporting
@@ -709,7 +709,7 @@ void Parser::G92() {
     float p = axies[i].pos;
     pos[i]  = parseFloat(GET_AXIS_NAME(i), (absolute_mode ? p : 0)) + (absolute_mode ? 0 : p);
   }
-  teleport(pos);
+  Planner::teleport(pos);
 }
 
 // M commands
@@ -875,6 +875,12 @@ void Parser::M114() {
   SERIAL_ECHOPAIR_F(" F",desiredFeedRate);
   SERIAL_ECHOPAIR_F(" A",desiredAcceleration);
 
+  for(ALL_AXIES(i)) {
+    SERIAL_CHAR(' ');
+    SERIAL_CHAR(GET_AXIS_NAME(i));
+    SERIAL_ECHO(Stepper::global_steps[i]);
+  }
+
   SERIAL_EOL();
 }
 
@@ -1022,6 +1028,8 @@ void Parser::M280() {
 #if NUM_SERVOS > 0
   SERIAL_ECHOPGM("M280");
   
+  Planner::wait_for_empty_segment_buffer();
+
   int id = parseInt('P', 0);
   int v = parseInt('S', servo[0].read());
   if(id <0 || id>=NUM_SERVOS) return;

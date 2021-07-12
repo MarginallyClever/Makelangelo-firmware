@@ -408,7 +408,7 @@ void robot_findHome() {
   robot.ee.relative.set(0, 0, bb + B2S_Z - T2W_Z);
 
   float zeros[6] = { 0, 0, 0, 0, 0, 0 };
-  teleport(zeros);
+  Planner::teleport(zeros);
 }
 
 #endif

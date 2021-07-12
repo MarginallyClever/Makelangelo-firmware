@@ -166,7 +166,7 @@ void robot_findHome() {
 #  endif
 
   float homePos[3] = { HOME_X, HOME_Y, HOME_Z };  // set staring position
-  teleport(homePos);
+  Planner::teleport(homePos);
 
   MYSERIAL1.println(F("Found home."));
 }

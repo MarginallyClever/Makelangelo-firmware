@@ -99,7 +99,7 @@ void robot_findHome() {
   MYSERIAL1.println(F("Found."));
 
   float zeros[2] = { 0, 0 };
-  teleport(zeros);
+  Planner::teleport(zeros);
 }
 
 void robot_setup() {}

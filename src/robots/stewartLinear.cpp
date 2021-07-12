@@ -142,7 +142,7 @@ void robot_findHome() {
 
   // set robot to home position
   float zeros[6] = { 0, 0, 0, 0, 0, 0 };
-  teleport(zeros);
+  Planner::teleport(zeros);
 }
 
 

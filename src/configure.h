@@ -116,6 +116,9 @@
 #include "robots/stewartLinear.h"
 
 #define NUM_MUSCLES (NUM_MOTORS + NUM_SERVOS)
+#if NUM_SERVOS>0
+#define FIRST_SERVO NUM_MOTORS
+#endif
 
 // after this many milliseconds with no serial communication, the robot pings anyone connected by calling ready().
 #define TIMEOUT_OK (2000)

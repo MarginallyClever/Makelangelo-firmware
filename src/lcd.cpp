@@ -391,7 +391,7 @@ void LCD_find_home() {
 void LCD_this_is_home() {
   float offset[NUM_AXIES];
   for (ALL_AXIES(i)) offset[i] = axies[i].homePos;
-  teleport(offset);
+  Planner::teleport(offset);
   MENU_POP();
 }
 

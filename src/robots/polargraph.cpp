@@ -179,7 +179,7 @@ void recordHome() {
   // current position is...
   float offset[NUM_AXIES];
   FK(count, offset);
-  teleport(offset);
+  Planner::teleport(offset);
   parser.M114();
   SERIAL_ECHOLNPGM("Done.");
 #  endif  // defined(CAN_HOME)
@@ -270,7 +270,7 @@ void robot_findHome() {
   // current position is...
   float offset[NUM_AXIES];
   FK(count, offset);
-  teleport(offset);
+  Planner::teleport(offset);
   parser.M114();
 
   motor.setDirections(0);
@@ -347,7 +347,7 @@ void calibrateBelts() {
   // current position is...
   float axies2[NUM_AXIES];
   FK(steps, axies2);
-  teleport(axies2);
+  Planner::teleport(axies2);
   parser.M114();
 
   // go home.
@@ -365,13 +365,12 @@ void calibrateBelts() {
 // convert belt length to cartesian position, save that as home pos.
 void calibrationToPosition() {
   float axies2[NUM_AXIES];
-  long steps[3];
+  int32_t steps[3];
   steps[0] = calibrateLeft;
   steps[1] = calibrateRight;
   steps[2] = axies[2].pos;
   FK(steps, axies2);
-
-  teleport(axies2);
+  Planner::teleport(axies2);
 }
 
 /**

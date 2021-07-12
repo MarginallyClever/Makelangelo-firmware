@@ -911,8 +911,8 @@ void Stepper::setup() {
 
   // setup servos
 #if NUM_SERVOS > 0
-  motors[NUM_MOTORS].letter = 'T';
-  steps[NUM_MOTORS] = servo[0].read();
+  motors[FIRST_SERVO].letter = 'T';
+  steps[FIRST_SERVO] = 90;
 #endif
 
 
@@ -929,13 +929,11 @@ void Stepper::setup() {
  * @input NUM_MUSCLES in length.
  */
 void Stepper::set_step_count(int32_t *steps) {
-  planner.zeroSpeeds();
-
-  Segment &old_seg = planner.blockBuffer[planner.getPrevBlock(planner.block_buffer_head)];
-  for (ALL_MUSCLES(i)) old_seg.a[i].step_count = steps[i];
-
-#define SETUP_STEP(NN) global_steps[NN] = 0;
-  for(ALL_MUSCLES(i)) SETUP_STEP(i);
+#define SETUP_STEP(NN) global_steps[NN] = steps[NN];
+  ALL_MOTOR_MACRO(SETUP_STEP);
+#if HAS_SERVO
+  SETUP_STEP(FIRST_SERVO);
+#endif
 }
 
 
@@ -1051,7 +1049,7 @@ void Stepper::isrPulsePhase() {
     ALL_MOTOR_MACRO(PULSE_PREP);
 
 #if NUM_SERVOS > 0
-    PULSE_PREP(NUM_MOTORS);
+    PULSE_PREP(FIRST_SERVO);
 #endif
 
     ALL_MOTOR_MACRO(PULSE_START);
@@ -1060,13 +1058,10 @@ void Stepper::isrPulsePhase() {
 
 #if NUM_SERVOS > 0
     // servo 0
-    if(stepNeeded[NUM_MOTORS]) {
-      global_steps[NUM_MOTORS] += global_step_dir[NUM_MOTORS];
-      over[NUM_MOTORS] -= advance_divisor;
-
+    if(stepNeeded[FIRST_SERVO]) {
 #  ifdef ESP8266
 #  elif !defined(HAS_GRIPPER)
-      servo[0].write(global_steps[NUM_MOTORS]);
+      servo[0].write(global_steps[FIRST_SERVO]);
 #  endif
     }
 #endif
@@ -1233,14 +1228,14 @@ hal_timer_t Stepper::isrBlockPhase() {
       ALL_MOTOR_MACRO(PREPARE_DELTA);
 
 #if NUM_SERVOS > 0
-      delta[NUM_MOTORS] = working_block->a[NUM_MOTORS].absdelta << 1;
-      over[NUM_MOTORS]  = -int32_t(steps_total);
+      delta[FIRST_SERVO] = working_block->a[FIRST_SERVO].absdelta << 1;
+      over[FIRST_SERVO]  = -int32_t(steps_total);
 
-      if(!!delta[NUM_MOTORS]) servo[0].attach(SERVO0_PIN);
+      if(!!delta[FIRST_SERVO]) servo[0].attach(SERVO0_PIN);
       else servo[0].detach();
 
 #  if defined(HAS_GRIPPER)
-      gripper.sendPositionRequest(working_block->a[NUM_MOTORS].step_count, 255, 32);
+      gripper.sendPositionRequest(working_block->a[FIRST_SERVO].step_count, 255, 32);
 #  endif
 #endif
       interval = calc_interval(working_block->initial_rate, &isr_step_multiplier);
@@ -1356,6 +1351,6 @@ void Stepper::setDirections(uint16_t bits) {
   ALL_MOTOR_MACRO(SET_STEP_DIR);
 
 #if NUM_SERVOS > 0
-  global_step_dir[NUM_MOTORS] = (!!(working_block->dir&(1<<NUM_MOTORS))) ? -1 : 1;
+  global_step_dir[FIRST_SERVO] = (!!(working_block->dir&(1UL<<FIRST_SERVO))) ? -1 : 1;
 #endif
 }

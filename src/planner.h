@@ -201,6 +201,8 @@ class Planner {
 
   static void estop();
 
+  static void teleport(float *cartesianPosition);
+
 #  if MACHINE_STYLE == POLARGRAPH && defined(DYNAMIC_ACCELERATION)
   static float limitPolargraphAcceleration(const float *target_position,const float *oldP,float maxAcceleration);
 #  endif

@@ -797,6 +797,7 @@ void Planner::populateBlock(Segment *newBlock,const float *const target, float f
     newBlock->a[i].positionEnd   = target_position[i];
 #endif
   }
+  SERIAL_EOL();
 
   float oldP[NUM_AXIES];
   float deltaCartesian[NUM_AXIES];
@@ -1440,3 +1441,21 @@ float Planner::classicJerk(Segment *newBlock,float *current_speed,int movesQueue
   return vmax_junction_sqr;
 }
 #endif
+
+// Instantly move the virtual plotter position.  Does not check if the move is valid.
+// @input cartesianPosition NUM_AXIES number of values.
+void Planner::teleport(float *cartesianPosition) {
+  planner.zeroSpeeds();
+
+  for (ALL_AXIES(i)) {
+    axies[i].pos = cartesianPosition[i];
+  }
+
+  int32_t steps[NUM_MUSCLES];
+  IK(cartesianPosition, steps);
+
+  Segment &old_seg = planner.blockBuffer[planner.getPrevBlock(planner.block_buffer_head)];
+  for (ALL_MUSCLES(i)) old_seg.a[i].step_count = steps[i];
+
+  motor.set_step_count(steps);
+}

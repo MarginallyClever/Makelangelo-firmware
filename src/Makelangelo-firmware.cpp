@@ -82,21 +82,6 @@ void pause(const uint32_t us) {
   delayMicroseconds(us % 1000);
 }
 
-/**
- * Instantly move the virtual plotter position.  Does not check if the move is valid.
- */
-void teleport(float *pos) {
-  planner.wait_for_empty_segment_buffer();
-
-  for (ALL_AXIES(i)) {
-    axies[i].pos = pos[i];
-  }
-
-  int32_t steps[NUM_MUSCLES];
-  IK(pos, steps);
-  motor.set_step_count(steps);
-}
-
 void setHome(float *pos) {
   int i;
   int j=0;
@@ -216,7 +201,7 @@ void setup() {
   gripper.setup();
 #endif
 
-  teleport(pos);
+  Planner::teleport(pos);
   setFeedRate(DEFAULT_FEEDRATE);
   robot_setup();
   // reportAllMotors();
