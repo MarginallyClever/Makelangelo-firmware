@@ -496,7 +496,7 @@ void Planner::zeroSpeeds() {
   previous_nominal_speed_sqr = 0;
   previous_safe_speed = 0;
   for(ALL_MUSCLES(i)) previous_speed[i] = 0;
-  for(ALL_MOTORS(i)) prev_unit_vec[i] = 0;
+  for(ALL_AXIES(i)) prev_unit_vec[i] = 0;
 
   block_buffer_tail = 0;
   block_buffer_head = 0;
@@ -806,12 +806,7 @@ bool Planner::populateBlock(Segment *newBlock,const float *const target, float f
   if(newBlock->steps_total < MIN_STEPS_PER_SEGMENT) return false;
 
   newBlock->distance = cartesianDistance;
-
-  // record the new target position & feed rate for the next movement.
   float inverseCartesianDistance = 1.0f / cartesianDistance;
-  // s = v / d
-  // d*s = v
-  //
   float inverse_secs = fr_units_s * inverseCartesianDistance;
 
   int movesQueued = movesPlannedNotBusy();
@@ -895,7 +890,9 @@ bool Planner::populateBlock(Segment *newBlock,const float *const target, float f
 
   // BEGIN JERK LIMITING
   float vmax_junction_sqr;
-
+#ifdef NO_JERK
+  vmax_junction_sqr = newBlock->nominal_speed_sqr;
+#endif
 #ifdef HAS_CLASSIC_JERK
   vmax_junction_sqr = classicJerk(newBlock,current_speed,movesQueued);
 #endif
@@ -903,23 +900,21 @@ bool Planner::populateBlock(Segment *newBlock,const float *const target, float f
   vmax_junction_sqr = junctionDeviation(newBlock,deltaCartesian,movesQueued,inverseCartesianDistance,max_acceleration);
 #endif
 #ifdef DOT_PRODUCT_JERK
-  
-  float unit_vec[NUM_MOTORS] = {
-    #define COPY_4(NN) (delta[NN]) * inverseCartesianDistance,
-    ALL_MOTOR_MACRO(COPY_4)
+  float unit_vec[NUM_AXIES] = {
+    #define COPY_4(NN) (deltaCartesian[NN] * inverseCartesianDistance),
+    ALL_AXIS_MACRO(COPY_4)
   };
 
-  float dot = 0
-  #define NORM_MOTOR(NN) +(unit_vec[NN]*prev_unit_vec[NN])
-  ALL_MOTOR_MACRO(NORM_MOTOR)
-  ;
+  float dot = 0;
+  #define NORM_MOTOR(NN) dot+=(unit_vec[NN]*prev_unit_vec[NN]);
+  ALL_AXIS_MACRO(NORM_MOTOR)
  
   vmax_junction_sqr = newBlock->nominal_speed_sqr * dot * 1.1f;
   vmax_junction_sqr = _MIN(vmax_junction_sqr, newBlock->nominal_speed_sqr);
   vmax_junction_sqr = _MAX(vmax_junction_sqr, MINIMUM_PLANNER_SPEED);
   
   #define COPY_5(NN) prev_unit_vec[NN] = unit_vec[NN];
-  ALL_MOTOR_MACRO(COPY_5)
+  ALL_AXIS_MACRO(COPY_5)
 #endif
   // END JERK LIMITING
 

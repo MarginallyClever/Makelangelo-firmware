@@ -51,7 +51,7 @@ void robot_findHome() {
 
   hal_timer_t stepDelay = findStepDelay();
 
-  MYSERIAL1.println(F("Finding..."));
+  SERIAL_ECHOLNPGM("Finding...");
 
   uint8_t hits;
   // back up until all switches are hit
@@ -68,13 +68,13 @@ void robot_findHome() {
         digitalWrite(motors[i].step_pin, LOW);
       } else {
         ++hits;
-        MYSERIAL1.print('*');
+        SERIAL_CHAR('*');
       }
     }
     SERIAL_EOL();
     pause(stepDelay);
   } while (hits < NUM_MOTORS);
-  MYSERIAL1.println(F("Found."));
+  SERIAL_ECHOLNPGM("Found.");
 
   float zeros[6] = { 0, 0, 0, 0, 0, 0 };
   Planner::teleport(zeros);
@@ -91,7 +91,7 @@ void factory_reset() {
   
   for (ALL_MUSCLES(i)) {
     max_jerk[i] = MAX_JERK_DEFAULT;
-    max_step_rate_s[i] = MAX_STEP_RATE_DEFAULT;
+    max_step_rate[i] = MAX_STEP_RATE_DEFAULT;
   }
 
   // if you accidentally upload m3 firmware to an m5 then upload it ONCE with this line uncommented.

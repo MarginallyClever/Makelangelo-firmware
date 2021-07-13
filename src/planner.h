@@ -28,16 +28,17 @@
 #define MIN_STEP_RATE            120
 #define GRAVITYmag               (9800.0)
 
+// Jerk styles
 //#define HAS_CLASSIC_JERK
-#if !defined(HAS_CLASSIC_JERK)
-#define HAS_JUNCTION_DEVIATION 1
-#define JUNCTION_DEVIATION_UNITS 0.05
-#define JUNCTION_DEVIATION_MAX 0.5
-#define JUNCTION_DEVIATION_MIN 0.001
-#define JD_HANDLE_SMALL_SEGMENTS
-#endif
-#if !defined(HAS_CLASSIC_JERK) && !defined(HAS_JUNCTION_DEVIATION)
-#define DOT_PRODUCT_JERK
+#define HAS_JUNCTION_DEVIATION
+//#define DOT_PRODUCT_JERK
+//#define NO_JERK
+
+#if defined(HAS_JUNCTION_DEVIATION)
+  #define JUNCTION_DEVIATION_UNITS 0.05
+  #define JUNCTION_DEVIATION_MAX 0.5
+  #define JUNCTION_DEVIATION_MIN 0.001
+  #define JD_HANDLE_SMALL_SEGMENTS
 #endif
 
 //------------------------------------------------------------------------------

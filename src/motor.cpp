@@ -1231,7 +1231,7 @@ hal_timer_t Stepper::isrBlockPhase() {
       delta_error[FIRST_SERVO] = working_block->a[FIRST_SERVO].absdelta << 1;
       over[FIRST_SERVO]  = -int32_t(steps_total);
 
-      if(!!delta_error[FIRST_SERVO]) servo[0].attach(SERVO0_PIN);
+      if(!!delta_error[FIRST_SERVO]) servo[0].attach(0);
       else servo[0].detach();
 
 #  if defined(HAS_GRIPPER)

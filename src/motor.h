@@ -159,6 +159,29 @@
 #define ALL_MOTOR_MACRO(NN) NN(0) NN(1) NN(2) NN(3) NN(4) NN(5)
 #endif
 
+
+#if NUM_AXIES == 0
+#define ALL_AXIS_MACRO(NN) 
+#endif
+#if NUM_AXIES == 1
+#define ALL_AXIS_MACRO(NN) NN(0) 
+#endif
+#if NUM_AXIES == 2
+#define ALL_AXIS_MACRO(NN) NN(0) NN(1)
+#endif
+#if NUM_AXIES == 3
+#define ALL_AXIS_MACRO(NN) NN(0) NN(1) NN(2)
+#endif
+#if NUM_AXIES == 4
+#define ALL_AXIS_MACRO(NN) NN(0) NN(1) NN(2) NN(3)
+#endif
+#if NUM_AXIES == 5
+#define ALL_AXIS_MACRO(NN) NN(0) NN(1) NN(2) NN(3) NN(4)
+#endif
+#if NUM_AXIES == 6
+#define ALL_AXIS_MACRO(NN) NN(0) NN(1) NN(2) NN(3) NN(4) NN(5)
+#endif
+
 //------------------------------------------------------------------------------
 
 #define GET_AXIS_NAME(NN) (pgm_read_byte_near(AxisNames+NN))

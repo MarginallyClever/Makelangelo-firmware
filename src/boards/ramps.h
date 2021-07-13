@@ -107,8 +107,6 @@
 #    define KILL_PIN 41
 #  endif  // LCD_IS_SMART
 
-#  define USE_ALT_SERVO
-
 #include "HAL_avr.h"
 
 #endif
