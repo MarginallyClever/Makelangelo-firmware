@@ -23,6 +23,6 @@
 #  define NUM_BOARD_SERVOS (1)
 #  define SERVO0_PIN       (24)
 
-#include "HAL_avr.h"
+#include "AVR/hal.h"
 
 #endif

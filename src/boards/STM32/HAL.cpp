@@ -1,4 +1,4 @@
-#include "configure.h"
+#include "../../configure.h"
 
 #ifdef TARGET_STM32F4
 

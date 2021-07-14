@@ -40,6 +40,6 @@
 #  undef HAS_LCD
 #  undef HAS_SD
 
-#include "HAL_avr.h"
+#include "AVR/hal.h"
 
 #endif

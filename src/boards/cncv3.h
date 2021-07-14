@@ -54,6 +54,6 @@
 #  undef HAS_SD
 #  undef HAS_LCD
 
-#include "HAL_avr.h"
+#include "AVR/hal.h"
 
 #endif  // MOTHERBOARD == BOARD_CNCV3

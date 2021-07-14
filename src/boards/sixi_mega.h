@@ -99,6 +99,6 @@
 #    define TEST_GRIPPER_PIN (12)
 #  endif
 
-#include "HAL_avr.h"
+#include "AVR/hal.h"
 
 #endif  // MOTHERBOARD == BOARD_SIXI_MEGA

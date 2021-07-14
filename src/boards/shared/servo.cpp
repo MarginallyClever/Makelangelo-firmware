@@ -50,12 +50,12 @@
  * detach()              - Stop an attached servo from pulsing its i/o pin.
  */
 
-#include "configure.h"
+#include "../../configure.h"
 
 #if SHARED_SERVOS
 
 #include "servo.h"
-#include "shared_servo_private.h"
+#include "servo_private.h"
 
 ServoInfo_t servo_info[MAX_SERVOS];             // static array of servo info structures
 uint8_t ServoCount = 0;                         // the total number of attached servos

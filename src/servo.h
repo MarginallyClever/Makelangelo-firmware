@@ -26,7 +26,7 @@
  */
 
 #include "configure.h"
-#include "shared_servo.h"
+#include "boards/shared/servo.h"
 
 #if HAS_SERVO_ANGLES
 

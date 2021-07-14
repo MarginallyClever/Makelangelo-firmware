@@ -146,6 +146,6 @@
 #define STEPPER_TIMER_RATE (HAL_TIMER_RATE / STEPPER_TIMER_PRESCALE) 
 #define STEPPER_TIMER_TICKS_PER_US ((STEPPER_TIMER_RATE) / 1000000) // stepper timer ticks per µs
 
-#include "HAL_stm32f4.h"
+#include "STM32/hal.h"
 
 #endif

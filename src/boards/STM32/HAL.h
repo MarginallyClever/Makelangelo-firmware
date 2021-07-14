@@ -4,7 +4,7 @@
 
 #include <stdint.h>
 #include <HardwareTimer.h>
-#include "macros.h"
+#include "../../macros.h"
 
 
 #define NUM_HARDWARE_TIMERS 2

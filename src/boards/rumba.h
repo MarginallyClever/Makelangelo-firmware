@@ -104,6 +104,6 @@
 
 #  endif  // HAS_TMC2130
 
-#include "HAL_avr.h"
+#include "AVR/hal.h"
 
 #endif

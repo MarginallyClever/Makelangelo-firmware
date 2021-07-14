@@ -82,6 +82,6 @@
 #  define encrot2 3
 #  define encrot3 1
 
-#include "HAL_avr.h"
+#include "AVR/hal.h"
 
 #endif  // BOARD_MKS

@@ -107,6 +107,6 @@
 #    define KILL_PIN 41
 #  endif  // LCD_IS_SMART
 
-#include "HAL_avr.h"
+#include "AVR/hal.h"
 
 #endif

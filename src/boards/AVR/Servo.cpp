@@ -52,14 +52,14 @@
 
 #ifdef __AVR__
 
-#include "configure.h"
+#include "../../configure.h"
 
 #if HAS_SERVOS
 
 #include <avr/interrupt.h>
 
-#include "shared_servo.h"
-#include "shared_servo_private.h"
+#include "../shared/servo.h"
+#include "../shared/servo_private.h"
 
 static volatile int8_t Channel[_Nbr_16timers];              // counter for the servo being pulsed for each timer (or -1 if refresh interval)
 

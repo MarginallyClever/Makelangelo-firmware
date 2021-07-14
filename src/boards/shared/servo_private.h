@@ -44,7 +44,7 @@
 
 // Architecture specific include
 #ifdef __AVR__
-  #include "AVR_ServoTimers.h"
+  #include "../AVR/ServoTimers.h"
 #elif defined(ARDUINO_ARCH_SAM)
   #include "../DUE/ServoTimers.h"
 #elif defined(__SAMD51__)

@@ -3,7 +3,7 @@
 #ifdef TARGET_DEFAULT
 
 #include <Arduino.h>
-#include "macros.h"
+#include "../../macros.h"
 
 #define CPU_16_BIT
 
