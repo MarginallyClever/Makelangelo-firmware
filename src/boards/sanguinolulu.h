@@ -40,8 +40,6 @@
 #  undef HAS_LCD
 #  undef HAS_SD
 
-#  define USE_ALT_SERVO
-
 #include "HAL_avr.h"
 
 #endif
