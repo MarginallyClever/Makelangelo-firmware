@@ -704,6 +704,7 @@ void Parser::G02(int8_t clockwise) {
 */
 void Parser::G04() {
   planner.wait_for_empty_segment_buffer();
+  SERIAL_ECHOPGM("G04");
   uint32_t delayTime = parseInt('S', 0) + parseFloat('P', 0) * 1000.0f;
   pause(delayTime);
 }
@@ -713,6 +714,8 @@ void Parser::G04() {
    Teleport mental position
 */
 void Parser::G92() {
+  Planner::wait_for_empty_segment_buffer();
+  SERIAL_ECHOPGM("G92");
   int i;
   float pos[NUM_AXIES];
   for (i = 0; i < NUM_AXIES; ++i) {
@@ -729,6 +732,8 @@ void Parser::G92() {
    Change the currently active tool
 */
 void Parser::M6() {
+  Planner::wait_for_empty_segment_buffer();
+  SERIAL_ECHOPGM("M6");
   int tool_id = parseInt('T', current_tool);
   if(tool_id < 0) tool_id = 0;
   if(tool_id >= NUM_TOOLS) tool_id = NUM_TOOLS - 1;
@@ -737,6 +742,7 @@ void Parser::M6() {
 
 
 void Parser::M17() {
+  Planner::wait_for_empty_segment_buffer();
   SERIAL_ECHOPGM("M17");
 
   motor.engage();
@@ -744,6 +750,7 @@ void Parser::M17() {
 
 
 void Parser::M18() {
+  Planner::wait_for_empty_segment_buffer();
   SERIAL_ECHOPGM("M18");
   
   motor.disengage();
@@ -756,6 +763,8 @@ void Parser::M18() {
    default pin is LED_BUILTIN.  default state is LOW
 */
 void Parser::M42() {
+  Planner::wait_for_empty_segment_buffer();
+  SERIAL_ECHOPGM("M42");
   int pin      = parseInt('P', LED_BUILTIN);
   int newState = parseInt('S', 0);
   digitalWrite(pin, newState ? HIGH : LOW);
