@@ -18,7 +18,7 @@ It pairs really well with Makelangelo Software, a project to give humans a pleas
 
 ## Installation and Usage ##
 
-Please see the pictoral guide at https://mcr.dozuki.com/Guide/How+to+upload+Makelangelo-firmware/
+Please see the pictoral guide at https://mcr.dozuki.com/Guide/How+to+update+Makelangelo+firmware/4?lang=en
 
 ## Kinematics aka Shapes ##
 
@@ -73,7 +73,7 @@ Makelangelo-firmware depends on a few other libraries.  SPI, EEPROM, LiquidCryst
 
 https://mcr.dozuki.com/Guide/How+to+update+Makelangelo+firmware/4?lang=en
 
-For developers, please see https://github.com/MarginallyClever/Makelangelo/wiki/Home/
+For developers, please see https://github.com/MarginallyClever/Makelangelo/wiki/Home/ and https://github.com/MarginallyClever/Makelangelo-firmware/wiki
 
 ## Get help ##
 
