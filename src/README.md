@@ -23,9 +23,7 @@ Makelangelo-firmware can be recompiled to work as one of many different types of
 #define ARM3             8  // Arm3: 3DOF palletizing robot arm.
 #define SIXI             9  // Sixi: 6DOF robot arm.
 #define TRADITIONAL6    10  // Traditional6: 6 axis machine, no restrictions.
-#define SCARA           11  // SCARA: two link, two joint, 2D motion
-#define 
-````
+#define SCARA           11  // SCARA: two link, two joint, 2D motion````
 
 ## Controllers aka Brains ##
 
@@ -36,7 +34,7 @@ Makelangelo-firmware can be recompiled to work with one of many different types 
 #define BOARD_RAMPS        2  // Mega2560 + Ramps 1.4
 #define BOARD_SANGUINOLULU 3  // Sanguinolulu
 #define BOARD_TEENSYLU     4  // Teensylu
-#define BOARD_WEMOS        5  // Wemos D1 R2 + CNC Shield v3 (see board_wemos.h)
+#define BOARD_WEMOS        5  // Wemos D1 R2 + CNC Shield v3
 #define BOARD_SIXI_MEGA    6  // Arduino Mega + custom shield for Sixi 2 robot
 #define BOARD_CNCV3        7  // Mega2560 + CNC Shield v3
 #define BOARD_ESP32        8  // ESP32 + Marginally Clever Polargraph PCB.
@@ -53,15 +51,15 @@ Newer versions might be available at https://www.marginallyclever.com/product/ma
 Unless otherwise stated in the code, the default units of measurement are millimeters (mm), kilograms (kg), and seconds (s).
 ## Instructions ##
 
-- Make sure the parent folder is called Makelangelo-firmware.
-- Open Makelangelo-firmware/Makelangelo-firmware.ino in arduino
-- in Makelangelo-firmware/configure.h make sure BOARD_TYPE and MACHINE_STYLE are set for your board and machine style
-  - For Makelangelo 3 or Makelangelo 5, choose POLARGRAPH
-- For Makelangelo robots, in Makelangelo-firmware/polargraph.h, set
-  for Makelangelo 3 #define MACHINE_HARDWARE_VERSION 3 
-  for Makelangelo 5 #define MACHINE_HARDWARE_VERSION 5
+- Make sure the parent folder is called `Makelangelo-firmware`.
+- Open `Makelangelo-firmware/Makelangelo-firmware.ino` in arduino
+- in `Makelangelo-firmware/configure.h` make sure `BOARD_TYPE` and `MACHINE_STYLE` are set for your board and machine style (see above for detailled configuration)
+  - For Makelangelo 3 or Makelangelo 5, choose `POLARGRAPH`
+- For Makelangelo robots, in `Makelangelo-firmware/polargraph.h`, set the following :
+  - for Makelangelo 3 `#define MACHINE_HARDWARE_VERSION 3`
+  - for Makelangelo 5 `#define MACHINE_HARDWARE_VERSION 5`
 - Tools > board > set type for your flavor of arduino 
-- Tools > port > set the connection for your arudio
+- Tools > port > set the connection for your arduino
 - upload
 
 For developers, please see
