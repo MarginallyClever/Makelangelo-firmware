@@ -23,7 +23,7 @@ Makelangelo-firmware can be recompiled to work as one of many different types of
 #define ARM3             8  // Arm3: 3DOF palletizing robot arm.
 #define SIXI             9  // Sixi: 6DOF robot arm.
 #define TRADITIONAL6    10  // Traditional6: 6 axis machine, no restrictions.
-#define SCARA           11  // SCARA: two link, two joint, 2D motion````
+#define SCARA           11  // SCARA: two link, two joint, 2D motion```
 
 ## Controllers aka Brains ##
 
