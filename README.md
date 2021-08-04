@@ -24,7 +24,7 @@ Please see the pictoral guide at https://mcr.dozuki.com/Guide/How+to+update+Make
 
 Makelangelo-firmware can be recompiled to work as one of many different types of CNC:
 
-````
+```
 #define POLARGRAPH       1  // Polargraph: wall hanging V shape like Makelangelo
 #define TRADITIONALXY    3  // Traditional: classic XYZ gantry
 #define COREXY           2  // CoreXY: gantry with cross-belt tensioning
@@ -38,7 +38,7 @@ Makelangelo-firmware can be recompiled to work as one of many different types of
 #define SCARA           11  // SCARA: two link, two joint, 2D motion
 #define SIXI3           12  // Sixi 3 robot arm.  5-6 DOF + Servo
 #define STEWART_LINEAR  13  // Stewart platform: 6 arm stewart platform, linear action.
-````
+```
 
 ## Controllers aka Brains ##
 
@@ -53,7 +53,7 @@ Makelangelo-firmware can be recompiled to work with one of many different types 
 #define BOARD_SIXI_MEGA    6  // Arduino Mega + custom shield for Sixi 2 robot
 #define BOARD_CNCV3        7  // Mega2560 + CNC Shield v3
 #define BOARD_ESP32        8  // ESP32 + Marginally Clever Polargraph PCB.
-````
+```
 
 Not all brains can support all kinematics.
 
