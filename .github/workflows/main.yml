@@ -7,6 +7,7 @@ jobs:
 
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         env: [ramps-polargraph, rumba-polargraph, BIGTREE_SKR_PRO-Sixi3, sixi2, BIGTREE_SKR_PRO-Stewart, rumba-sixi3]
 
