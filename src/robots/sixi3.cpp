@@ -88,10 +88,10 @@ void factory_reset() {
     motor_spu[i]=STEPS_PER_UNIT;
   }
   motor_spu[NUM_MOTORS]=1;
-  
+
   for (ALL_MUSCLES(i)) {
     max_jerk[i] = MAX_JERK_DEFAULT;
-    max_step_rate_s[i] = MAX_STEP_RATE_DEFAULT;
+    max_step_rate[i] = MAX_STEP_RATE_DEFAULT * motor_spu[i];
   }
 
   // if you accidentally upload m3 firmware to an m5 then upload it ONCE with this line uncommented.
