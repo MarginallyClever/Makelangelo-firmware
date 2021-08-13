@@ -49,6 +49,7 @@ local_config.h
 .clang_complete
 .gcc-flags.json
 .pio
+__pycache__
 
 # Editor stuff
 
