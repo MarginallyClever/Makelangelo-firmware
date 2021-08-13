@@ -499,7 +499,7 @@ void Parser::D17() {
     }
     }*/
 
-  SERIAL_ECHO('\t');
+  SERIAL_CHAR('\t');
   // SERIAL_ECHO(TEST(sensorManager.positionErrorFlags,POSITION_ERROR_FLAG_CONTINUOUS)?'+':'-');
   SERIAL_ECHO(TEST(sensorManager.positionErrorFlags, POSITION_ERROR_FLAG_ERROR) ? '+' : '-');
   // SERIAL_ECHO(TEST(sensorManager.positionErrorFlags,POSITION_ERROR_FLAG_FIRSTERROR)?'+':'-');
@@ -779,7 +779,7 @@ void Parser::M92() {
     motor_spu[i] = parseFloat(motors[i].letter, motor_spu[i]);
     SERIAL_CHAR(motors[i].letter);
     SERIAL_ECHO_F(motor_spu[i]);
-    SERIAL_ECHO(' ');
+    SERIAL_CHAR(' ');
   }
   SERIAL_EOL();
 }

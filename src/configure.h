@@ -34,9 +34,9 @@
 #define STEWART_LINEAR  13  // Stewart platform: 6 arm stewart platform, linear action.
 
 // default value
-// !! this is now handeled via pio.ini !!
+// !! this is now handeled via platformio.ini !!
 #ifndef MACHINE_STYLE
-#error No machine style defined.
+#error No MACHINE_STYLE defined.
 #endif
 
 #if MACHINE_STYLE==STEWART_ROTARY || MACHINE_STYLE==STEWART_LINEAR
@@ -74,7 +74,7 @@
 // default value 
 // !! this is now handeled via platformio.ini !!
 #ifndef MOTHERBOARD
-#define MOTHERBOARD BOARD_RUMBA
+#error No MOTHERBOARD defined.
 #endif
 
 //------------------------------------------------------------------------------

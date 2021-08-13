@@ -51,7 +51,7 @@ void robot_findHome() {
 
   hal_timer_t stepDelay = findStepDelay();
 
-  MYSERIAL1.println(F("Finding..."));
+  SERIAL_ECHOLNPGM("Finding...");
 
   uint8_t hits;
   // back up until all switches are hit
@@ -63,18 +63,18 @@ void robot_findHome() {
       // if this switch hasn't been hit yet
       if (digitalRead(motors[i].limit_switch_pin) == HIGH) {
         // move "down"
-        MYSERIAL1.print('|');
+        SERIAL_CHAR('|');
         digitalWrite(motors[i].step_pin, HIGH);
         digitalWrite(motors[i].step_pin, LOW);
       } else {
         ++hits;
-        MYSERIAL1.print('*');
+        SERIAL_CHAR('*');
       }
     }
     SERIAL_EOL();
     pause(stepDelay);
   } while (hits < NUM_MOTORS);
-  MYSERIAL1.println(F("Found."));
+  SERIAL_ECHOLNPGM("Found.");
 
   float zeros[6] = { 0, 0, 0, 0, 0, 0 };
   teleport(zeros);
@@ -91,14 +91,14 @@ void factory_reset() {
   
   for (ALL_MUSCLES(i)) {
     max_jerk[i] = MAX_JERK_DEFAULT;
-    max_step_rate_s[i] = MAX_STEP_RATE_DEFAULT;
+    max_step_rate[i] = MAX_STEP_RATE_DEFAULT;
   }
 
   // if you accidentally upload m3 firmware to an m5 then upload it ONCE with this line uncommented.
   float limits[NUM_AXIES * 2];
   for(ALL_AXIES(i)) {
-    limits[i*2+0] = -360.0;
-    limits[i*2+1] =  360.0;
+    limits[i*2+0] = 360.0;
+    limits[i*2+1] = -360.0;
   }
 
   eepromManager.adjustLimits(limits);
