@@ -6,6 +6,9 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        env: [ramps-polargraph, rumba-polargraph, BIGTREE_SKR_PRO-Sixi3, sixi2, BIGTREE_SKR_PRO-Stewart, rumba-sixi3]
 
     steps:
     - uses: actions/checkout@v2
@@ -28,4 +31,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install --upgrade platformio
     - name: Run PlatformIO
-      run: pio run 
+      run: pio run
+      env:
+        PLATFORMIO_DEFAULT_ENVS: ${{ matrix.env }}
