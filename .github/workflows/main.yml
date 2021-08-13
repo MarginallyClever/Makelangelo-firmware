@@ -32,6 +32,6 @@ jobs:
         python -m pip install --upgrade pip
         pip install --upgrade platformio
     - name: Run PlatformIO
-      run: pio run
+      run: pio run --environment ${MATRIX_ENV}
       env:
-        PLATFORMIO_DEFAULT_ENVS: ${{ matrix.env }}
+        MATRIX_ENV: ${{ matrix.env }}
