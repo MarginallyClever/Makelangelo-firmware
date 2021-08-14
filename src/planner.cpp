@@ -794,7 +794,7 @@ bool Planner::populateBlock(Segment *newBlock,const float *const target, float f
     newBlock->steps_total = _MAX(newBlock->steps_total, newBlock->a[i].absdelta);
 #if MACHINE_STYLE == SIXI
     newBlock->a[i].positionStart = axies[i].pos;
-    newBlock->a[i].positionEnd   = target_position[i];
+    newBlock->a[i].positionEnd   = target[i];
 #endif
   }
 

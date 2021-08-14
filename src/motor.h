@@ -269,7 +269,7 @@ public:
 
 
     #ifdef CPU_32_BIT
-      timer = uint32_t(STEPPER_TIMER_RATE) / desired_freq_hz;
+      timer = uint32_t(STEPPER_TIMER_RATE) / step_rate;
     #else
       NOLESS(step_rate,CLOCK_MIN_STEP_FREQUENCY);
       step_rate -= CLOCK_MIN_STEP_FREQUENCY;

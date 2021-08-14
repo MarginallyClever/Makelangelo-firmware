@@ -99,7 +99,9 @@
 #    define TEST_GRIPPER_PIN (12)
 #  endif
 
+#ifndef USE_ALT_SERVO
 #  define USE_ALT_SERVO
+#endif
 
 #include "HAL_avr.h"
 

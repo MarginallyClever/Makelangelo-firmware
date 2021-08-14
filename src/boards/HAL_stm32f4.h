@@ -41,8 +41,10 @@
 #define SERVO0  PA1
 #define SERVO_ANGLE(index,angle)  pwmWrite(index,angle)
 
+#define PGMSTR(NAM,STR) const char NAM[] = STR
+
 extern void Step_Handler();
-#define HAL_STEP_TIMER_ISR void Step_Handler()
+#define HAL_STEP_TIMER_ISR void Step_Handler
 
 extern HardwareTimer *timer_instance[NUM_HARDWARE_TIMERS];
 

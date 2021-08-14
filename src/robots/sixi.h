@@ -38,7 +38,6 @@
 #  define MAX_JERK   (30.0)
 #  define MAX_JERK_DEFAULT (3.0)
 #  define MAX_Z_JERK (5.0)
-#  define MAX_JERK_DEFAULT (0.3)
 
 #  define MAX_SEGMENTS     (16)  // override the default to save RAM
 #  define UNITS_PER_STEP (1.8)

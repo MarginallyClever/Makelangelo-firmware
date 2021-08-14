@@ -315,7 +315,7 @@
 
 // Serial ports
 #ifdef USBCON
-  #include "../../core/serial_hook.h"
+  #include "../serial_hook.h"
   typedef ForwardSerial1Class< decltype(Serial) > DefaultSerial1;
   extern DefaultSerial1 MSerial0;
   #ifdef BLUETOOTH

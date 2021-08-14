@@ -110,7 +110,7 @@ void tmc2130_disable_stealthChop() {
 }
 
 void tmc2130_enable_stealthChop() {
-  MYSERIAL1.println(F("enabling StealthChop"));
+  SERIAL_ECHOLNPGM("enabling StealthChop");
 
   HAL_timer_disable_interrupt(0);
   HAL_timer_set_compare(0,2000);
@@ -158,14 +158,14 @@ void tmc2130_motor_home() {
   HAL_timer_enable_interrupt(0);
 
   while (homing == true) {
-    MYSERIAL1.print(drivers[0]->TSTEP());
+    SERIAL_ECHO(drivers[0]->TSTEP());
     for(ALL_MOTORS(j)) {
-      MYSERIAL1.print(' ');
-      MYSERIAL1.print(digitalRead(motors[j].limit_switch_pin));
+      SERIAL_CHAR(' ');
+      SERIAL_ECHO(digitalRead(motors[j].limit_switch_pin));
     }
     MYSERIAL1.println("\tstill homing");
   }
-  MYSERIAL1.println("Done.");
+  SERIAL_ECHOLNPGM("Done.");
   tmc2130_enable_stealthChop();
 }
 
@@ -189,13 +189,13 @@ void tmc2130_homing_sequence() {
 
 void tmc2130_status() {
    for(ALL_MOTORS(i)) {
-      MYSERIAL1.println(i);
+      SERIAL_ECHOLN(i);
       uint32_t drv_status = drivers[i]->DRV_STATUS();
       uint32_t stallValue = (drv_status & SG_RESULT_bm) >> SG_RESULT_bp;
-      MYSERIAL1.print("\tstall=");        MYSERIAL1.println(stallValue, DEC);
-      MYSERIAL1.print("\tmicrosteps=");   MYSERIAL1.println(drivers[i]->microsteps(), DEC);
-      MYSERIAL1.print("\tTSTEP=");  MYSERIAL1.println(drivers[i]->TSTEP());
-      MYSERIAL1.print("\tTHIGH=");  MYSERIAL1.println(drivers[i]->THIGH());
+      SERIAL_ECHOPGM("\tstall=");        SERIAL_ECHOLN(stallValue);
+      SERIAL_ECHOPGM("\tmicrosteps=");   SERIAL_ECHOLN(drivers[i]->microsteps());
+      SERIAL_ECHOPGM("\tTSTEP=");        SERIAL_ECHOLN(drivers[i]->TSTEP());
+      SERIAL_ECHOPGM("\tTHIGH=");        SERIAL_ECHOLN(drivers[i]->THIGH());
     }
 }
 #endif  // HAS_TMC2130

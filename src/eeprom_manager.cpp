@@ -246,11 +246,11 @@ void EEPROMManager::reportAll() {
   
 #if MACHINE_STYLE == SIXI
   // Sixi only home angle values
-  MYSERIAL1.print(F("Home angles "));
+  SERIAL_ECHOLNPGM("Home angles ");
   for (ALL_MOTORS(i)) {
-    MYSERIAL1.print(' ');
-    MYSERIAL1.print(motors[i].letter);
-    MYSERIAL1.print(axies[i].homePos);
+    SERIAL_CHAR(' ');
+    SERIAL_CHAR(motors[i].letter);
+    SERIAL_ECHO(axies[i].homePos);
   }
   SERIAL_EOL();
   // current angle values

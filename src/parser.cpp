@@ -476,14 +476,14 @@ void Parser::D14() {
 #if MACHINE_STYLE == SIXI
 // D17 report the 6 axis sensor values from the Sixi robot arm.
 void Parser::D17() {
-  SERIAL_ECHOPGM("D17"));
+  SERIAL_ECHOPGM("D17");
   for (ALL_SENSORS(i)) {
     // 360/(2^14) aka 0.02197265625deg is the minimum sensor resolution.  as such more than 3 decimal places is useless.
-    SERIAL_ECHOPAIR_F('\t',WRAP_DEGREES(sensorManager.sensors[i].angle), 3);
+    SERIAL_ECHOPAIR_F("\t",WRAP_DEGREES(sensorManager.sensors[i].angle), 3);
   }
 
 #  if NUM_SERVOS > 0
-  SERIAL_ECHOPAIR_F(' ',(float)servos[0].read(), 2);
+  SERIAL_ECHOPAIR_F(" ",(float)servos[0].read(), 2);
 #  endif
 
   /*
@@ -535,7 +535,8 @@ void Parser::D19() {
   int state = parseInt('P', p ? 1 : 0);
   SET_BIT(sensorManager.positionErrorFlags, POSITION_ERROR_FLAG_CONTINUOUS, state);
 
-  SERIAL_ECHO_PAIR(F("D19 P",state ? 1 : 0, DEC);
+  SERIAL_ECHOPGM("D19 P");
+  SERIAL_ECHOLN(state ? 1 : 0);
 }
 
 void Parser::D20() {
@@ -547,7 +548,8 @@ void Parser::D21() {
 
   SET_BIT(sensorManager.positionErrorFlags, POSITION_ERROR_FLAG_CHECKLIMIT, isOn);
 
-  SERIAL_ECHO("D21 ",TEST_LIMITS ? "1" : "0");
+  SERIAL_ECHOPGM("D21 ");
+  SERIAL_ECHOLN(TEST_LIMITS ? 1:0);
 }
 
 // D23 - Sixi is at the calibration position.  Set the home position accordingly.
@@ -604,7 +606,7 @@ void Parser::G01() {
     // and a limit is exceeeded
     if(TEST(sensorManager.positionErrorFlags, POSITION_ERROR_FLAG_ERROR)) {
       // refuse to move
-      SERIAL_ECHOLNPGM("LIMIT ERROR"));
+      SERIAL_ECHOLNPGM("LIMIT ERROR");
       return;
     }
   }
