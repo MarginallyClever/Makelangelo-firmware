@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        env: [ramps-polargraph, rumba-polargraph, BIGTREE_SKR_PRO-Sixi3, sixi2, BIGTREE_SKR_PRO-Stewart, rumba-sixi3]
+        env: [ramps-polargraph, rumba-polargraph, BIGTREE_SKR_PRO-Sixi3, sixi2, BIGTREE_SKR_PRO-Stewart, rumba-sixi3, cncv3-polargraph]
 
     steps:
     - uses: actions/checkout@v2

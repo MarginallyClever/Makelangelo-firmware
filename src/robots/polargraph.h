@@ -15,7 +15,9 @@
 #  define MAKELANGELO_5   5
 #  define MAKELANGELO_6   6  // for testing
 
+#ifndef MACHINE_HARDWARE_VERSION
 #  define MACHINE_HARDWARE_VERSION MAKELANGELO_5  // Change me
+#endif
 
 #  define MACHINE_HAS_LIFTABLE_PEN
 
