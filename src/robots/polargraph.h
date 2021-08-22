@@ -55,8 +55,6 @@
 #    ifndef MAX_SEGMENTS
 #      define MAX_SEGMENTS (8)
 #    endif
-#    define HAS_SD
-#    define LCD_TYPE LCD_IS_SMART
 #  endif
 
 #  if MACHINE_HARDWARE_VERSION == MAKELANGELO_3_3
@@ -64,8 +62,6 @@
 #      define MAX_SEGMENTS (8)
 #    endif
 #    define USE_LIMIT_SWITCH
-#    define HAS_SD
-#    define LCD_TYPE LCD_IS_SMART
 #  endif
 
 #  if MACHINE_HARDWARE_VERSION == MAKELANGELO_5
@@ -73,8 +69,6 @@
 #      define MAX_SEGMENTS (16)
 #    endif
 #    define USE_LIMIT_SWITCH
-#    define HAS_SD
-#    define LCD_TYPE LCD_IS_SMART
 #  endif
 
 #  if MACHINE_HARDWARE_VERSION == MAKELANGELO_6
@@ -84,8 +78,6 @@
 #    define USE_LIMIT_SWITCH
 #    define HAS_TMC2130  // driver type
 #    define STEALTHCHOP  // quiet operation
-#    define HAS_SD
-#    define LCD_TYPE LCD_IS_SMART
 #  endif
 
 #  if defined(HAS_TMC2130) || defined(USE_LIMIT_SWITCH)
