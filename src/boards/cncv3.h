@@ -14,8 +14,8 @@
 #if MOTHERBOARD == BOARD_CNCV3
 
 // wrong board type set
-#  ifndef __AVR_ATmega328P__
-#    error "Oops!  Make sure you have 'Arduino UNO' selected from the 'Tools -> Boards' menu."
+#  ifndef __AVR_ATmega2560__
+#    error "Oops!  Make sure you have 'Arduino Mega 2560' selected from the 'Tools -> Boards' menu."
 #  endif
 
 #  define MAX_SEGMENTS (1)
