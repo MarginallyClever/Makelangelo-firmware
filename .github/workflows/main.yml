@@ -52,3 +52,5 @@ jobs:
         pip install --upgrade platformio
     - name: Run PlatformIO
       run: pio run --environment ${MATRIX_ENV}
+      env:
+        MATRIX_ENV: ${{ matrix.env }}
