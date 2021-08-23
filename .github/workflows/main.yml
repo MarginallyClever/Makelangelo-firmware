@@ -17,11 +17,11 @@ jobs:
     # This step is explained more in a following section
     - id: set-matrix
       run: |
-        matrix=$((
+        matrix=$(
           echo '['
           sed -n 's/\[env:\(.*\)\]/"\1"/p' platformio.ini | tr '\n' ',' | sed 's/,$/\n/'
-          echo "]"
-        ))
+          echo ']'
+        )
         echo $matrix
         echo $matrix | jq .
         echo "::set-output name=matrix::$matrix"
