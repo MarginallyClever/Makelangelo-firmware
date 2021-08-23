@@ -32,7 +32,7 @@ jobs:
     steps:
       - name: Check matrix definition
         run: |
-          matrix='${{ needs.matrix.outputs.matrix }}'
+          matrix='${{ needs.matrix_prep.outputs.matrix }}'
           echo $matrix
           echo $matrix | jq .
 
