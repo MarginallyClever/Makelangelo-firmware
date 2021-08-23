@@ -18,23 +18,13 @@ jobs:
     - id: set-matrix
       run: |
         matrix=$((
-          echo '{ "build" : ['
+          echo '['
           sed -n 's/\[env:\(.*\)\]/"\1"/p' platformio.ini | tr '\n' ',' | sed 's/,$/\n/'
-          echo " ]}"
-        ) | jq -c .)
+          echo "]"
+        ))
         echo $matrix
         echo $matrix | jq .
         echo "::set-output name=matrix::$matrix"
-
-  check-matrix:
-    runs-on: ubuntu-latest
-    needs: matrix_prep
-    steps:
-      - name: Check matrix definition
-        run: |
-          matrix='${{ needs.matrix_prep.outputs.matrix }}'
-          echo $matrix
-          echo $matrix | jq .
 
   build:
     runs-on: ubuntu-latest
