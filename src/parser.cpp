@@ -308,7 +308,6 @@ void Parser::processCommand() {
         case 6:        D6();        break;
   #if MACHINE_STYLE == POLARGRAPH
         case 7:        D7();        break;
-        case 8:        D8();        break;
   #endif
         case 9:        eepromManager.saveCalibration();        break;
         case 10:       D10();        break;
@@ -436,30 +435,20 @@ void Parser::D6() {
 #if MACHINE_STYLE == POLARGRAPH
 /**
    D7 [Lnnn] [Rnnn]
-   Set calibration length of each belt
+   Set and report calibration length of each belt
 */
 void Parser::D7() {
+  SERIAL_ECHOPGM("D7");
   calibrateLeft  = parseFloat('L', calibrateLeft);
   calibrateRight = parseFloat('R', calibrateRight);
-  D8();
-}
-#endif
-
-#if MACHINE_STYLE == POLARGRAPH
-/**
-   D8
-   Report calibration values for left and right belts
-*/
-void Parser::D8() {
-  SERIAL_ECHOPAIR("D8 L",calibrateLeft);
-  SERIAL_ECHOPAIR(" R",calibrateRight);
+  SERIAL_ECHOLNPAIR_P(" L",calibrateLeft," R",calibrateRight);
 }
 #endif
 
 /**
-   D10
-   get hardware version
-*/
+ * D10
+ * get hardware version
+ */
 void Parser::D10() {
   SERIAL_ECHOPAIR("D10 V",MACHINE_HARDWARE_VERSION);
 }
@@ -1075,10 +1064,8 @@ void Parser::M300() {
 void Parser::M428() {
   // cancel the current home offsets
   sensorManager.resetAll();
-
   // read the sensor
   sensorManager.updateAll();
-
   // apply the new offsets
   for (ALL_MOTORS(i)) axies[i].homePos = sensorManager.sensors[i].angle;
   D18();

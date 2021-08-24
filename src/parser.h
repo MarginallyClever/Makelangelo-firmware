@@ -135,8 +135,7 @@ class Parser {
   void D5();  // D5 - report current firmware version
   void D6();  // D6 [Xnn] [Ynn] [Znn] [Unn] [Vnn] [Wnn] - Set home position for each axis.
 #if MACHINE_STYLE == POLARGRAPH
-  void D7();  // D7 [Lnn] [Rnn] - Polargraph only.  Set calibration length of each belt (mm)
-  void D8();  // D8 - Polargraph only.  Report calibration values for left and right belts (mm)
+  void D7();  // D7 [Lnn] [Rnn] - Polargraph only.  Set and report calibration length of each belt (mm)
 #endif
   void D10();  // D10 - get hardware version
   void D13();  // D12 Zn - move servo
