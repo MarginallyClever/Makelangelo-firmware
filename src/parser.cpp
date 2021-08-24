@@ -1095,12 +1095,16 @@ void Parser::M501() {
   eepromManager.loadAll();
 }
 
-// M502 - factory reset
+/**
+ * M502 - factory reset
+ */
 void Parser::M502() {
   factory_reset();
 }
 
-// M503 - report all settings
+/**
+ * M503 - report all settings
+ */
 void Parser::M503() {
   eepromManager.reportAll();
 }
