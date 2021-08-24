@@ -141,8 +141,10 @@
 #  define POSITION_ERROR_FLAG_CONTINUOUS (0)  // report position (d17) continuously?
 #  define POSITION_ERROR_FLAG_ERROR      (1)  // has error occurred?
 #  define POSITION_ERROR_FLAG_ESTOP      (2)  // emergency stop!
-#  define POSITION_ERROR_FLAG_CHECKLIMIT \
-    (3)  // check limits and throw error if needed (normally only disabled to drive the robot back inside limits)
+#  define POSITION_ERROR_FLAG_CHECKLIMIT (3)  // check limits and throw error if needed
+
+#define HAS_POSITION_SENSORS
+#define POSITION_SENSOR_AS5147
 
 // SENSORS
 #  define REPORT_ANGLES_CONTINUOUSLY (TEST(sensorManager.positionErrorFlags, POSITION_ERROR_FLAG_CONTINUOUS))
@@ -150,10 +152,7 @@
 #  define OUT_OF_BOUNDS              (TEST(sensorManager.positionErrorFlags, POSITION_ERROR_FLAG_ERROR))
 
 // use in for(ALL_SENSORS(i)) { //i will be rising
-#  define ALL_SENSORS(NN) \
-    int NN = 0;           \
-    NN < NUM_SENSORS;     \
-    ++NN
+#  define ALL_SENSORS(NN)   int NN = 0; NN < NUM_SENSORS; ++NN
 
 // sensor bits, flags, and masks
 #  define BOTTOM_14_MASK       (0x3FFF)
@@ -206,7 +205,6 @@ extern SensorManager sensorManager;
 
 extern void sixiDemo();
 extern void factory_reset();
-
 extern void gripperUpdate(float currentGripperCmd);
 
 #endif  // #ifdef SIXI

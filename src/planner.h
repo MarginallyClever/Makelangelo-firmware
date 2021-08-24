@@ -46,7 +46,7 @@ class Muscle {
 public:
   int32_t step_count;   // current motor position, in steps.
   uint32_t absdelta;
-#if MACHINE_STYLE == SIXI
+#ifdef HAS_POSITION_SENSORS
   float expectedPosition;
   float positionStart;
   float positionEnd;

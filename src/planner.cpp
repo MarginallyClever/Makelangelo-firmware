@@ -792,7 +792,7 @@ bool Planner::populateBlock(Segment *newBlock,const float *const target, float f
     if(deltaSteps[i] < 0) newBlock->dir |= (1UL<<i);
     newBlock->a[i].absdelta = abs(deltaSteps[i]);
     newBlock->steps_total = _MAX(newBlock->steps_total, newBlock->a[i].absdelta);
-#if MACHINE_STYLE == SIXI
+#ifdef HAS_POSITION_SENSORS
     newBlock->a[i].positionStart = axies[i].pos;
     newBlock->a[i].positionEnd   = target[i];
 #endif

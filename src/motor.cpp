@@ -1034,7 +1034,7 @@ void Stepper::isrPulsePhase() {
   uint8_t stepsToDo = _MIN(pendingSteps,isr_step_multiplier);
   steps_taken+=stepsToDo;
 
-#if MACHINE_STYLE == SIXI
+#ifdef HAS_POSITION_SENSORS
   if(TEST(sensorManager.positionErrorFlags, POSITION_ERROR_FLAG_ESTOP)) {
     // check if the sensor position differs from the estimated position.
     float fraction = (float)steps_taken / (float)steps_total;
