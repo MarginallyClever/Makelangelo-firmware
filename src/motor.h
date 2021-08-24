@@ -180,7 +180,6 @@
 // loop unrolling
 //------------------------------------------------------------------------------
 
-
 #if NUM_MOTORS == 0
 #define ALL_MOTOR_MACRO(NN) 
 #endif
@@ -202,6 +201,30 @@
 #if NUM_MOTORS == 6
 #define ALL_MOTOR_MACRO(NN) NN(0) NN(1) NN(2) NN(3) NN(4) NN(5)
 #endif
+
+
+#if NUM_AXIES == 0
+#define ALL_AXIS_MACRO(NN) 
+#endif
+#if NUM_AXIES == 1
+#define ALL_AXIS_MACRO(NN) NN(0) 
+#endif
+#if NUM_AXIES == 2
+#define ALL_AXIS_MACRO(NN) NN(0) NN(1)
+#endif
+#if NUM_AXIES == 3
+#define ALL_AXIS_MACRO(NN) NN(0) NN(1) NN(2)
+#endif
+#if NUM_AXIES == 4
+#define ALL_AXIS_MACRO(NN) NN(0) NN(1) NN(2) NN(3)
+#endif
+#if NUM_AXIES == 5
+#define ALL_AXIS_MACRO(NN) NN(0) NN(1) NN(2) NN(3) NN(4)
+#endif
+#if NUM_AXIES == 6
+#define ALL_AXIS_MACRO(NN) NN(0) NN(1) NN(2) NN(3) NN(4) NN(5)
+#endif
+
 
 //------------------------------------------------------------------------------
 
