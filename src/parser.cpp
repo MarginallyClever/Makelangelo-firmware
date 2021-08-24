@@ -603,13 +603,13 @@ void Parser::G01() {
       return;
     }
   }
-#endif  // MACHINE_STYLE == SIXI
 
 #ifdef HAS_GRIPPER
   if(hasGCode('T')>=0) {
     float toolStatus = parseFloat('T', 0);
     gripperUpdate(toolStatus);
   }
+#endif
 #endif
 
   int8_t offset=hasGCode('A');
@@ -1063,7 +1063,6 @@ void Parser::M300() {
 }
 
 #if MACHINE_STYLE == SIXI
-
 // M428 - set home position to the current angle values
 void Parser::M428() {
   // cancel the current home offsets
