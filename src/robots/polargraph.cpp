@@ -286,7 +286,7 @@ void robot_findHome() {
 
 /**
  * Starting from the home position, bump the switches and measure the length of each belt.
- * Does not save the values, only reports them to MYSERIAL1.
+ * Does not save the values, only reports them to serial.
  * @Deprecated
  */
 void calibrateBelts() {
@@ -365,7 +365,7 @@ void calibrateBelts() {
 // convert belt length to cartesian position, save that as home pos.
 void calibrationToPosition() {
   float axies2[NUM_AXIES];
-  long steps[3];
+  int32_t steps[3];
   steps[0] = calibrateLeft;
   steps[1] = calibrateRight;
   steps[2] = axies[2].pos;
