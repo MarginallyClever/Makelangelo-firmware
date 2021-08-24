@@ -65,6 +65,7 @@
 #  define UNITS_PER_STEP (1.0/STEPS_PER_UNIT)  // 0.00952380952?
 
 extern void factory_reset();
+FORCE_INLINE void robotMeanwhile() {}
 
 // DM320T drivers want high for enabled
 #ifdef MOTOR_ENABLE_ON_4

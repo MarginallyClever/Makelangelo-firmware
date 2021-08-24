@@ -10,6 +10,10 @@
 
 #  include "vector3.h"
 
+
+uint32_t reportDelay = 0;
+
+
 //#define DEBUG_IK
 
 SensorManager sensorManager;
@@ -552,6 +556,25 @@ void factory_reset() {
   homePos[5] += 0;
 
   setHome(homePos);
+}
+
+void robotMeanwhile() {
+#if MACHINE_STYLE == SIXI
+  // SERIAL_ECHO(REPORT_ANGLES_CONTINUOUSLY?"Y":"N");
+
+  sensorManager.updateAll();
+
+  if (REPORT_ANGLES_CONTINUOUSLY) {
+    if (millis() > reportDelay) {
+      reportDelay = millis() + 100;
+      parser.D17();
+    }
+  }
+
+#  if defined(HAS_GRIPPER)
+  gripper.update();
+#  endif
+#endif  // MACHINE_STYLE == SIXI
 }
 
 #endif

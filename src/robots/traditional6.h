@@ -50,4 +50,6 @@
 #define STEPS_PER_UNIT (STEP_PER_INCH/UNITS_PER_INCH)
 
 FORCE_INLINE void factory_reset() {}
+FORCE_INLINE void robotMeanwhile() {}
+
 #endif  // #ifdef TRADITIONAL6

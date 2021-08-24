@@ -52,4 +52,6 @@
 #  define HOME_Z (22.2)
 
 FORCE_INLINE void factory_reset() {}
+FORCE_INLINE void robotMeanwhile() {}
+
 #endif  // #ifdef ARM3

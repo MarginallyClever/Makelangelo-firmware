@@ -9,6 +9,8 @@
 #if MACHINE_STYLE == SIXI3
 
 #  include <Arduino.h>
+
+
 /**
  * Inverse Kinematics turns cartesian coordinates into step counts from each motor
  * @param cartesian array of cartesian coordinates

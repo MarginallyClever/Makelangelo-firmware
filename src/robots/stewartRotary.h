@@ -52,4 +52,6 @@
 extern void stewartDemo();
 
 FORCE_INLINE void factory_reset() {}
+FORCE_INLINE void robotMeanwhile() {}
+
 #endif  // #ifdef STEWART_ROTARY

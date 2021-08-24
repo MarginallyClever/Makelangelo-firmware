@@ -41,4 +41,6 @@
 #  define PEN_DOWN_ANGLE (90)  // Some steppers don't like 0 degrees
 
 FORCE_INLINE void factory_reset() {}
+FORCE_INLINE void robotMeanwhile() {}
+
 #endif  // SKYCAM

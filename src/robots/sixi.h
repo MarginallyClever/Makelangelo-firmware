@@ -206,5 +206,6 @@ extern SensorManager sensorManager;
 extern void sixiDemo();
 extern void factory_reset();
 extern void gripperUpdate(float currentGripperCmd);
+extern void robotMeanwhile();
 
 #endif  // #ifdef SIXI

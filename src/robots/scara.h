@@ -48,4 +48,6 @@
 #  define SEGMENTS_PER_SECOND (10)
 
 FORCE_INLINE void factory_reset() {}
+FORCE_INLINE void robotMeanwhile() {}
+
 #endif  // #ifdef TRADITIONALXY

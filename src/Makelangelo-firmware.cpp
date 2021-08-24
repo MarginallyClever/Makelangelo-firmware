@@ -33,10 +33,6 @@ float calibrateLeft  = 1011.0;
 float desiredFeedRate     = DEFAULT_FEEDRATE;
 float desiredAcceleration = DEFAULT_ACCELERATION;
 
-#if MACHINE_STYLE == SIXI
-uint32_t reportDelay = 0;
-#endif
-
 #ifdef HAS_WIFI
 
 #  ifdef ESP32
@@ -116,39 +112,25 @@ void setHome(float *pos) {
 }
 
 void meanwhile() {
-#if MACHINE_STYLE == SIXI
-  // SERIAL_ECHO(REPORT_ANGLES_CONTINUOUSLY?"Y":"N");
-
-  sensorManager.updateAll();
-
-  if (REPORT_ANGLES_CONTINUOUSLY) {
-    if (millis() > reportDelay) {
-      reportDelay = millis() + 100;
-      parser.D17();
-    }
-  }
-
-#  if defined(HAS_GRIPPER)
-  gripper.update();
-#  endif
-#endif  // MACHINE_STYLE == SIXI
+  // robot specific meanwhile tasks
+  robotMeanwhile();
 
 #ifdef DEBUG_STEPPING
   Stepper::isr();
 #endif  // DEBUG_STEPPING
 }
 
+
 void reportAllMotors() {
   for (ALL_MOTORS(i)) {
-    MYSERIAL1.println(motors[i].letter);
-    MYSERIAL1.print("\tangleHome=");
-    MYSERIAL1.println(axies[i].homePos);
+    SERIAL_CHAR(motors[i].letter);
+    SERIAL_ECHOPGM("\tangleHome=");
+    SERIAL_ECHOLN(axies[i].homePos);
 #if MACHINE_STYLE == SIXI
-    MYSERIAL1.print("\tsensor=");
-    MYSERIAL1.println(sensorManager.sensors[i].angle);
+    SERIAL_ECHOPGM("\tsensor=");
+    SERIAL_ECHOLN(sensorManager.sensors[i].angle);
 #endif
   }
-  SERIAL_EOL();
 }
 
 

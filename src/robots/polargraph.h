@@ -93,5 +93,6 @@ extern void recordHome();
 extern void calibrationToPosition();
 
 extern void factory_reset();
+FORCE_INLINE void robotMeanwhile() {}
 
 #endif  // #ifdef POLARGRAPH

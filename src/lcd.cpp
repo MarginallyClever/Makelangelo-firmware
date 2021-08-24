@@ -841,14 +841,13 @@ void LCD_settings_menu() {
   MENU_FLOAT("mm/s/s", desiredAcceleration);
   MENU_LONG("seg min", Stepper::min_segment_time_us);
 
-#  if MACHINE_STYLE == POLARGRAPH
-  MENU_FLOAT("Home X", axies[0].homePos);
-  MENU_FLOAT("Home Y", axies[1].homePos);
+#if MACHINE_STYLE == POLARGRAPH
   MENU_FLOAT("Belt L", calibrateLeft);
   MENU_FLOAT("Belt R", calibrateRight);
 #endif
 
 #define MAKE_AXIS_MENUS(NN,BB) \
+    MENU_FLOAT(NN " home", axies[BB].homePos); \
     MENU_FLOAT(NN " min", axies[BB].limitMin); \
     MENU_FLOAT(NN " max", axies[BB].limitMax); \
     MENU_FLOAT(NN " jerk", max_jerk[BB])
@@ -931,8 +930,6 @@ void LCD_main_menu() {
     } else {
       MENU_ACTION("Pen up", LCD_togglePenUp);
     }
-#  endif
-#  if NUM_AXIES == 3
     MENU_SUBMENU("Draw border", LCD_draw_border);
 #  endif
     MENU_SUBMENU("Drive", LCD_drive_menu);

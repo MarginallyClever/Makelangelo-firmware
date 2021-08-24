@@ -70,4 +70,6 @@
 #  endif
 
 FORCE_INLINE void factory_reset() {}
+FORCE_INLINE void robotMeanwhile() {}
+
 #endif  // MACHINE_STYLE == DELTA

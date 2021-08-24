@@ -48,4 +48,6 @@
 #  define UNITS_PER_STEP_Y UNITS_PER_STEP
 
 FORCE_INLINE void factory_reset() {}
+FORCE_INLINE void robotMeanwhile() {}
+
 #endif  // #ifdef TRADITIONALXY

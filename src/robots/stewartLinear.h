@@ -67,5 +67,6 @@
 extern void stewartDemo();
 
 extern void factory_reset();
+FORCE_INLINE void robotMeanwhile() {}
 
 #endif  // #ifdef STEWART_LINEAR
