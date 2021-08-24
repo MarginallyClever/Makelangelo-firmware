@@ -3,13 +3,32 @@ name: PlatformIO CI
 on: [push]
 
 jobs:
-  build:
 
+  matrix_prep:
+    # Using a separate job and agent so as to be able to use tools like 'sed' and 'jq'
     runs-on: ubuntu-latest
+    # Defining outputs of a job allows for easier consumption and use
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+    # Checking out code as the set-matrix step utilizes a file named matrix_includes.json
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v2
+    # This step is explained more in a following section
+    - id: set-matrix
+      run: |
+        matrix="[$(sed -n 's/\[env:\(.*\)\]/"\1"/p' platformio.ini | tr '\n' ',' | sed 's/,$/\n/')]"
+        echo $matrix
+        echo $matrix | jq .
+        echo "::set-output name=matrix::$matrix"
+
+  build:
+    runs-on: ubuntu-latest
+    needs: matrix_prep
     strategy:
       fail-fast: false
       matrix:
-        env: [ramps-polargraph, rumba-polargraph, BIGTREE_SKR_PRO-Sixi3, sixi2, BIGTREE_SKR_PRO-Stewart, rumba-sixi3, cnc3-polargraph]
+        env: ${{fromJson(needs.matrix_prep.outputs.matrix)}}
 
     steps:
     - uses: actions/checkout@v2
