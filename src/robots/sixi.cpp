@@ -209,6 +209,10 @@ void SensorManager::setup() {
 
   for (ALL_SENSORS(i)) { sensors[i].start(); }
 
+#if defined(HAS_GRIPPER)
+  gripper.setup();
+#endif
+
   // slow the servo on pin D13 down to 61.04Hz
   // see https://arduinoinfo.mywikis.net/wiki/Arduino-PWM-Frequency
   // TCCR0B = (TCCR0B & B11111000) | B00000101;

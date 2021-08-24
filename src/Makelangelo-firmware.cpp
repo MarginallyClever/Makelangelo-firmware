@@ -193,10 +193,6 @@ void setup() {
   if (NUM_AXIES >= 3) pos[2] = PEN_UP_ANGLE;
 #endif
 
-#if MACHINE_STYLE == SIXI && defined(HAS_GRIPPER)
-  gripper.setup();
-#endif
-
   teleport(pos);
   setFeedRate(DEFAULT_FEEDRATE);
   robot_setup();
