@@ -209,9 +209,6 @@ void EEPROMManager::loadAll() {
     parser.M502();
 #  endif
 #endif
-    if(versionNumber==10) {
-      saveSPU();
-    }
   }
 
   // Retrieve stored configuration
@@ -243,16 +240,8 @@ void EEPROMManager::reportAll() {
   parser.M92();
   parser.M203();
   parser.M205();
-  
+
 #if MACHINE_STYLE == SIXI
-  // Sixi only home angle values
-  SERIAL_ECHOLNPGM("Home angles ");
-  for (ALL_MOTORS(i)) {
-    SERIAL_CHAR(' ');
-    SERIAL_CHAR(motors[i].letter);
-    SERIAL_ECHO(axies[i].homePos);
-  }
-  SERIAL_EOL();
   // current angle values
   parser.D17();
 #endif
