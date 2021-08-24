@@ -935,7 +935,7 @@ void Parser::M117() {
 
 /**
    M203 [Xnn] [Ynn] [Znn] [Unn] [Vnn] [Wnn]
-   adjust the max feedrate of each axis
+   set the max feedrate of each axis
 */
 void Parser::M203() {
   SERIAL_ECHOPGM("M203 ");
@@ -950,8 +950,7 @@ void Parser::M203() {
 
 /**
    M205 X<jerk> Y<jerk> Z<jerk> U<jerk> V<jerk> W<jerk> B<us>
-   adjust max jerk for axies XYZUVW.
-   Adjust minimum segment time B
+   Set max jerk for axies XYZUVW.  Set minimum segment time B
 */
 void Parser::M205() {
   float f;
@@ -1081,7 +1080,7 @@ void Parser::M428() {
   sensorManager.updateAll();
 
   // apply the new offsets
-  for (ALL_MOTORS(i)) { axies[i].homePos = sensorManager.sensors[i].angle; }
+  for (ALL_MOTORS(i)) axies[i].homePos = sensorManager.sensors[i].angle;
   D18();
 }
 #endif
