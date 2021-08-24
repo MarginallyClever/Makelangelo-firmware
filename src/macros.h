@@ -40,10 +40,8 @@
 #undef SET_BIT
 #define SET_BIT(NN, BB, TF) \
   do {                      \
-    if (TF)                 \
-      SBI(NN, BB);          \
-    else                    \
-      CBI(NN, BB);          \
+    if (TF) SBI(NN, BB);    \
+    else    CBI(NN, BB);    \
   } while (0);
 
 #undef FLIP_BIT
@@ -351,7 +349,7 @@ FORCE_INLINE float WRAP_RADIANS(float n) {
 #define PROBE() ~, 1                    // Second item will be 1 if this is passed
 #define _NOT_0 PROBE()
 #define NOT(x) IS_PROBE(_CAT(_NOT_, x)) // NOT('0') gets '1'. Anything else gets '0'.
-#define _BOOL(x) NOT(NOT(x))            // NOT('0') gets '0'. Anything else gets '1'.
+#define _BOOL(x) NOT(NOT(x))            // NOT(NOT('0')) gets '0'. Anything else gets '1'.
 
 #define IF_ELSE(TF) _IF_ELSE(_BOOL(TF))
 #define _IF_ELSE(TF) _CAT(_IF_, TF)
