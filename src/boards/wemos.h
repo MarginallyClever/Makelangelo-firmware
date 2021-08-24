@@ -51,6 +51,6 @@
 
 #  define USE_ALT_SERVO
 
-#include "HAL_esp8266.h"
+#include "HAL/ESP8266/HAL.h"
 
 #endif  // MOTHERBOARD == BOARD_WEMOS

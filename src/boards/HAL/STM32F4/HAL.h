@@ -6,6 +6,11 @@
 #include <HardwareTimer.h>
 #include "macros.h"
 
+#define NUM_SERIAL 1
+#define SERIAL_PORT 0
+#include "boards/MarlinSerial.h"
+#include "serial.h"
+
 
 #define NUM_HARDWARE_TIMERS 2
 

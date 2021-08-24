@@ -103,6 +103,6 @@
 #  define USE_ALT_SERVO
 #endif
 
-#include "HAL_avr.h"
+#include "HAL/AVR/HAL.h"
 
 #endif  // MOTHERBOARD == BOARD_SIXI_MEGA

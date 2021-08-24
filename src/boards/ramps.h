@@ -109,6 +109,6 @@
 
 #  define USE_ALT_SERVO
 
-#include "HAL_avr.h"
+#include "HAL/AVR/HAL.h"
 
 #endif

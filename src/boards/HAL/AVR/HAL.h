@@ -7,6 +7,12 @@
 
 #define CPU_16_BIT
 
+#define NUM_SERIAL 1
+#define SERIAL_PORT 0
+#include "boards/MarlinSerial.h"
+#include "serial.h"
+
+
 #define hal_timer_t uint16_t
 #define HAL_TIMER_TYPE_MAX 0xFFFF
 #define HAL_TIMER_RATE ((F_CPU) / 8)
