@@ -820,8 +820,16 @@ void LCD_refresh_display() {
 #endif  // HAS_LCD
 }
 
+void LCD_factoryReset() {
+  parser.M502();
+}
+
 void LCD_saveChanges() {
-  eepromManager.saveAll();
+  parser.M500();
+}
+
+void LCD_cancelChanges() {
+  parser.M501();
 }
 
 void LCD_settings_menu() {
@@ -841,9 +849,9 @@ void LCD_settings_menu() {
 #endif
 
 #define MAKE_AXIS_MENUS(NN,BB) \
-    MENU_FLOAT(NN" min", axies[BB].limitMin); \
-    MENU_FLOAT(NN" max", axies[BB].limitMax); \
-    MENU_FLOAT(NN" jerk", max_jerk[BB])
+    MENU_FLOAT(NN " min", axies[BB].limitMin); \
+    MENU_FLOAT(NN " max", axies[BB].limitMax); \
+    MENU_FLOAT(NN " jerk", max_jerk[BB])
 
   MAKE_AXIS_MENUS("X",0);
 #if NUM_AXIES>=1
@@ -887,6 +895,8 @@ void LCD_settings_menu() {
   MAKE_MOTOR_MENUS("T",6);
 #endif
 
+  MENU_ACTION("Factory reset",LCD_factoryReset);
+  MENU_ACTION("Cancel changes",LCD_cancelChanges);
   MENU_ACTION("Save changes",LCD_saveChanges);
   MENU_END()
 #endif
