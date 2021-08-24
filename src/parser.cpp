@@ -463,7 +463,7 @@ void Parser::D14() {
 }
 
 #if MACHINE_STYLE == SIXI
-// D17 report the 6 axis sensor values from the Sixi robot arm.
+// D17 - Sixi only.  report the 6 axis sensor values from the Sixi robot arm.
 void Parser::D17() {
   SERIAL_ECHOPGM("D17");
   for (ALL_SENSORS(i)) {
@@ -495,10 +495,9 @@ void Parser::D17() {
   // SERIAL_ECHO(TEST(sensorManager.positionErrorFlags,POSITION_ERROR_FLAG_ESTOP)?'+':'-');
   SERIAL_EOL();
 }
-#endif
 
-#if MACHINE_STYLE == SIXI
-// D18 copy sensor values to motor step positions.
+
+// D18 - Sixi only.  copy sensor values to motor step positions.
 void Parser::D18() {
   planner.wait_for_empty_segment_buffer();
 
@@ -528,10 +527,12 @@ void Parser::D19() {
   SERIAL_ECHOLN(state ? 1 : 0);
 }
 
+// D20 - Sixi only. toggle position error checking OFF.
 void Parser::D20() {
   SET_BIT_OFF(sensorManager.positionErrorFlags, POSITION_ERROR_FLAG_ERROR);
 }
 
+// D21 - Sixi only.  toggle error limit checing
 void Parser::D21() {
   int isOn = parseInt('P', TEST_LIMITS ? 1 : 0);
 
@@ -574,7 +575,10 @@ void Parser::D23() {
 }
 #endif
 
-// D50 Snn - Set and report strict mode.  where nn=0 for off and 1 for on.
+/**
+ * D50 Snn - Set and report strict mode.  where nn=0 for off and 1 for on.
+ * In stict mode all commands must have line number anc checksum.
+ */
 void Parser::D50() {
   int oldValue = IS_STRICT;
   int newValue = parseInt('S', oldValue);
@@ -585,9 +589,9 @@ void Parser::D50() {
 // G commands
 
 /**
-   G0-G1 [Xnnn] [Ynnn] [Znnn] [Unnn] [Vnnn] [Wnnn] [Ann] [Fnn]
-   straight lines.  distance in mm.
-*/
+ * G0-G1 [Xnnn] [Ynnn] [Znnn] [Unnn] [Vnnn] [Wnnn] [Ann] [Fnn]
+ * move in straight lines.  distance in mm.
+ */
 void Parser::G01() {
 #if MACHINE_STYLE == SIXI
   // if limit testing is on
