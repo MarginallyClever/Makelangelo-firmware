@@ -234,7 +234,7 @@ void EEPROMManager::reportAll() {
   parser.M114();
 #if MACHINE_STYLE == POLARGRAPH
   // belt calibration
-  parser.D8();
+  parser.D7();
 #endif
   parser.D6();
   parser.M92();
