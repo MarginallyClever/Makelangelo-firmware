@@ -66,4 +66,21 @@
 
 extern void factory_reset();
 
+// DM320T drivers want high for enabled
+#ifdef MOTOR_ENABLE_ON_4
+#undef MOTOR_ENABLE_ON_4
+#undef MOTOR_ENABLE_OFF_4
+#endif
+
+// DM320T drivers want high for enabled
+#ifdef MOTOR_ENABLE_ON_5
+#undef MOTOR_ENABLE_ON_5
+#undef MOTOR_ENABLE_OFF_5
+#endif
+
+#define  MOTOR_ENABLE_ON_4 HIGH
+#define  MOTOR_ENABLE_ON_5 HIGH
+#define  MOTOR_ENABLE_OFF_4 LOW
+#define  MOTOR_ENABLE_OFF_5 LOW
+
 #endif  // MACHINE_STYLE == SIXI3

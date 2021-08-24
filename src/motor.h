@@ -93,13 +93,46 @@
 // enable pin.  reverse if your board or drivers are odd.
 //------------------------------------------------------------------------------
 
-#ifndef MOTOR_ENABLE_ON
-#define MOTOR_ENABLE_ON  LOW
+
+#ifndef MOTOR_ENABLE_ON_0
+#define MOTOR_ENABLE_ON_0 LOW
+#endif
+#ifndef MOTOR_ENABLE_ON_1
+#define MOTOR_ENABLE_ON_1 LOW
+#endif
+#ifndef MOTOR_ENABLE_ON_2
+#define MOTOR_ENABLE_ON_2 LOW
+#endif
+#ifndef MOTOR_ENABLE_ON_3
+#define MOTOR_ENABLE_ON_3 LOW
+#endif
+#ifndef MOTOR_ENABLE_ON_4
+#define MOTOR_ENABLE_ON_4 LOW
+#endif
+#ifndef MOTOR_ENABLE_ON_5
+#define MOTOR_ENABLE_ON_5 LOW
 #endif
 
-#ifndef MOTOR_ENABLE_OFF
-#define MOTOR_ENABLE_OFF  HIGH
+
+#ifndef MOTOR_ENABLE_OFF_0
+#define MOTOR_ENABLE_OFF_0 LOW
 #endif
+#ifndef MOTOR_ENABLE_OFF_1
+#define MOTOR_ENABLE_OFF_1 LOW
+#endif
+#ifndef MOTOR_ENABLE_OFF_2
+#define MOTOR_ENABLE_OFF_2 LOW
+#endif
+#ifndef MOTOR_ENABLE_OFF_3
+#define MOTOR_ENABLE_OFF_3 LOW
+#endif
+#ifndef MOTOR_ENABLE_OFF_4
+#define MOTOR_ENABLE_OFF_4 LOW
+#endif
+#ifndef MOTOR_ENABLE_OFF_5
+#define MOTOR_ENABLE_OFF_5 LOW
+#endif
+
 
 //------------------------------------------------------------------------------
 // step direction

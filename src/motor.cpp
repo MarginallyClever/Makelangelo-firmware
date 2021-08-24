@@ -980,30 +980,14 @@ void Stepper::set_step_count(int32_t *a) {
 
 // turn on power to the motors (make them immobile)
 void Stepper::engage() {
-  for (ALL_MOTORS(i)) {
-    digitalWrite(motors[i].enable_pin, MOTOR_ENABLE_ON);
-  }
-  /*
-    #if MACHINE_STYLE == SIXI
-      // DM320T drivers want high for enabled
-      digitalWrite(motors[4].enable_pin,HIGH);
-      digitalWrite(motors[5].enable_pin,HIGH);
-    #endif
-  */
+#define ENABLE_MOTOR(NN) digitalWrite(motors[NN].enable_pin, MOTOR_ENABLE_ON_##NN);
+  ALL_MOTOR_MACRO(ENABLE_MOTOR);
 }
 
 // turn off power to the motors (make them move freely)
 void Stepper::disengage() {
-  for (ALL_MOTORS(i)) {
-    digitalWrite(motors[i].enable_pin, MOTOR_ENABLE_OFF);
-  }
-  /*
-  #if MACHINE_STYLE == SIXI
-  // DM320T drivers want low for disabled
-  digitalWrite(motors[4].enable_pin,LOW);
-  digitalWrite(motors[5].enable_pin,LOW);
-  #endif
-  */
+#define DISABLE_MOTOR(NN) digitalWrite(motors[NN].enable_pin, MOTOR_ENABLE_OFF_##NN);
+  ALL_MOTOR_MACRO(DISABLE_MOTOR);
 }
 
 // Change pen state.
