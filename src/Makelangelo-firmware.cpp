@@ -100,8 +100,8 @@ void teleport(float *pos) {
 }
 
 void setHome(float *pos) {
-  int i;
-  int j=0;
+  uint8_t i;
+  uint8_t j=0;
 
   for (i = 0; i < NUM_AXIES; ++i) {
     if(axies[i].homePos != pos[i]) {
@@ -117,7 +117,7 @@ void setHome(float *pos) {
 
 void meanwhile() {
 #if MACHINE_STYLE == SIXI
-  // MYSERIAL1.println(REPORT_ANGLES_CONTINUOUSLY?"Y":"N");
+  // SERIAL_ECHO(REPORT_ANGLES_CONTINUOUSLY?"Y":"N");
 
   sensorManager.updateAll();
 
