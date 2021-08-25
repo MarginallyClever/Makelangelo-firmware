@@ -149,7 +149,7 @@ void recordHome() {
   digitalWrite(MOTOR_1_DIR_PIN, LOW);
   do {
     if (left == 0) {
-      if (digitalRead(LIMIT_SWITCH_PIN_LEFT) == LOW) {
+      if (digitalRead(LIMIT_SWITCH_PIN_LEFT) == LIMIT_SWITCH_PRESSED_LEFT) {
         left = 1;
         SERIAL_ECHOLNPGM("Left...");
       }
@@ -158,7 +158,7 @@ void recordHome() {
       digitalWrite(MOTOR_0_STEP_PIN, LOW);
     }
     if (right == 0) {
-      if (digitalRead(LIMIT_SWITCH_PIN_RIGHT) == LOW) {
+      if (digitalRead(LIMIT_SWITCH_PIN_RIGHT) == LIMIT_SWITCH_PRESSED_RIGHT) {
         right = 1;
         SERIAL_ECHOLNPGM("Right...");
       }
@@ -313,7 +313,7 @@ void calibrateBelts() {
 
   do {
     if (left == 0) {
-      if (digitalRead(LIMIT_SWITCH_PIN_LEFT) == LOW) {
+      if (digitalRead(LIMIT_SWITCH_PIN_LEFT) == LIMIT_SWITCH_PRESSED_LEFT) {
         // switch hit
         left = 1;
       }
@@ -323,7 +323,7 @@ void calibrateBelts() {
       steps[0]++;
     }
     if (right == 0) {
-      if (digitalRead(LIMIT_SWITCH_PIN_RIGHT) == LOW) {
+      if (digitalRead(LIMIT_SWITCH_PIN_RIGHT) == LIMIT_SWITCH_PRESSED_RIGHT) {
         // switch hit
         right = 1;
       }
