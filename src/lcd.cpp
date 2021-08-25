@@ -966,7 +966,7 @@ void LCD_status_menu() {
   // LCD_setCursor(9, 0);  LCD_print('Z');  LCD_print_float(axies[2].pos,6);
 #  if MACHINE_STYLE == POLARGRAPH && defined(USE_LIMIT_SWITCH)
   LCD_setCursor(8, 0);
-  LCD_print((digitalRead(LIMIT_SWITCH_PIN_LEFT) == LOW) ? '*' : ' ');
+  LCD_print((digitalRead(LIMIT_SWITCH_PIN_LEFT) == LIMIT_SWITCH_PRESSED_LEFT) ? '*' : ' ');
 #  endif
 
   LCD_setCursor(0, 1);
@@ -978,7 +978,7 @@ void LCD_status_menu() {
   LCD_print_long(speed_adjust);
 #  if MACHINE_STYLE == POLARGRAPH && defined(USE_LIMIT_SWITCH)
   LCD_setCursor(8, 1);
-  LCD_print((digitalRead(LIMIT_SWITCH_PIN_RIGHT) == LOW) ? '*' : ' ');
+  LCD_print((digitalRead(LIMIT_SWITCH_PIN_RIGHT) == LIMIT_SWITCH_PRESSED_RIGHT) ? '*' : ' ');
 #  endif
 
   // LCD_setCursor( 1, 15);

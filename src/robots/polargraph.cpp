@@ -110,7 +110,7 @@ void recordHome() {
   
   do {
     if (left == 0) {
-      if (digitalRead(LIMIT_SWITCH_PIN_LEFT) == LOW) {
+      if (digitalRead(LIMIT_SWITCH_PIN_LEFT) == LIMIT_SWITCH_PRESSED_LEFT) {
         left = 1;
         SERIAL_ECHOLNPGM("Left...");
       }
@@ -119,7 +119,7 @@ void recordHome() {
       digitalWrite(MOTOR_0_STEP_PIN, LOW);
     }
     if (right == 0) {
-      if (digitalRead(LIMIT_SWITCH_PIN_RIGHT) == LOW) {
+      if (digitalRead(LIMIT_SWITCH_PIN_RIGHT) == LIMIT_SWITCH_PRESSED_RIGHT) {
         right = 1;
         SERIAL_ECHOLNPGM("Right...");
       }
@@ -195,7 +195,7 @@ void polargraph_homeAtSpeed(int delayTime) {
       digitalWrite(MOTOR_0_STEP_PIN, HIGH);
       digitalWrite(MOTOR_0_STEP_PIN, LOW);
 #  ifdef USE_LIMIT_SWITCH
-      if (digitalRead(LIMIT_SWITCH_PIN_LEFT) == LOW)
+      if (digitalRead(LIMIT_SWITCH_PIN_LEFT) == LIMIT_SWITCH_PRESSED_LEFT)
 #  endif
       {
         left = 1;
@@ -205,7 +205,7 @@ void polargraph_homeAtSpeed(int delayTime) {
       digitalWrite(MOTOR_1_STEP_PIN, HIGH);
       digitalWrite(MOTOR_1_STEP_PIN, LOW);
 #  ifdef USE_LIMIT_SWITCH
-      if (digitalRead(LIMIT_SWITCH_PIN_RIGHT) == LOW)
+      if (digitalRead(LIMIT_SWITCH_PIN_RIGHT) == LIMIT_SWITCH_PRESSED_RIGHT)
 #  endif
       {
         right = 1;
