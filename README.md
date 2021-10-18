@@ -1,3 +1,9 @@
+# Please note #
+
+This project is only here for historical reasons.  All features for Makelangelo-firmware are now better supported by Marlin-2.0.x or later.
+For more information please visit the Discord channel at https://discord.gg/Q5TZFmB
+
+
 # Makelangelo-firmware #
 
 CNC firmware for many different control boards and kinematic systems.
@@ -77,8 +83,7 @@ For developers, please see https://github.com/MarginallyClever/Makelangelo/wiki/
 
 ## Get help ##
 
-Please visit the forums
-https://marginallyclever.com/forum
+Please visit the forums at https://discord.gg/Q5TZFmB
 
 ## Special thanks ##
 
